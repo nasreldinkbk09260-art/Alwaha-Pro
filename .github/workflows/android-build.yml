@@ -1,81 +1,64 @@
-name: Build Alwaha Pro Ultra Hybrid APK
+name: Alwaha Pro Android Auto-Build
+
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # يتيح لك تشغيل البناء يدوياً من موقع جيتهاب
 
 jobs:
-  build:
+  android-package:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v3
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java Development Kit (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
       - name: Set up Node.js Environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Set up JDK 17 (Required for Modern Plugins)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Prepare Web Assets Directory
+      - name: Install Android Build & PWA Wrapper CLI
         run: |
-          mkdir -p www
-          cp index.html www/ 2>/dev/null || true
-          cp *.js www/ 2>/dev/null || true
-          cp *.css www/ 2>/dev/null || true
-          cp -r assets www/ 2>/dev/null || true
-          cp -r images www/ 2>/dev/null || true
+          npm install -g @bubblewrap/cli
+          npm install -g @capacitor/cli @capacitor/core
 
-      - name: Install Capacitor Core & CLI
-        run: npm install @capacitor/core @capacitor/cli
-
-      # 🌟 ذكي: يتم التهيئة فقط إذا لم تكن الإعدادات موجودة مسبقاً لمنع التعارض
-      - name: Initialize Capacitor Configuration if missing
+      - name: Verify Web App Assets & Icons
         run: |
-          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
-            npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
+          echo "Checking application core components..."
+          ls -la
+          # التحقق من وجود الأيقونات الأساسية المعتمدة بالتسمية الدقيقة
+          if [ -f "icon-192 (1).png" ] && [ -f "icon-512 (1).png" ]; then
+            echo "✔ الأيقونات الرسمية المعتمدة icon-192 (1).png و icon-512 (1).png موجودة وجاهزة للدمج."
+          else
+            echo "⚠️ تنبيه: يرجى التأكد من مطابقة أسماء ملفات الأيقونات في المستودع الرئيسي لضمان نجاح البناء."
           fi
 
-      - name: Install Plugins (Bluetooth, Wi-Fi, Network, OS)
+      - name: Initialize Android Project Framework
         run: |
-          npm install @capacitor-community/bluetooth-le
-          npm install @capacitor/network @capgo/capacitor-wifi
-          npm install @capacitor/android @capacitor/ios
+          # بناء الهيكل الأصلي للأندرويد وتجهيز الكاش للملفات الستة (HTML, CSS, JS, Manifest, SW)
+          npx cap init "Alwaha Pro" "com.alwahapro.digital" --web-dir=.
+          npm install @capacitor/android
+          npx cap add android
 
-      # 🌟 ذكي: إضافة منصة الأندرويد فقط إذا لم تكن مضافة مسبقاً في مشروعك
-      - name: Add Android Platform if missing
+      - name: Inject Alwaha Pro Assets into Android Source
         run: |
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
+          # مزامنة الكود والأزرار والواجهات الملكية داخل مجلد الأندرويد الأصلي
+          npx cap sync android
 
-      - name: Sync Web Assets & Plugins to Platforms
-        run: npx cap sync
-
-      # 🌟 ذكي: إعطاء صلاحيات وترقية الـ Gradle تلقائياً لحل مشكلة ملف التشفير bcprov
-      - name: Automatically Upgrade Gradle Wrapper to 8.7
+      - name: Build Official Production APK (Assemble Release)
         run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew wrapper --gradle-version 8.7 --distribution-type all
+          cd android && ./gradlew assembleRelease
 
-      # 🚀 بناء التطبيق النهائي مع صلاحيات كاملة وذاكرة مستقرة وبدون تعليق
-      - name: Build Android Release APK
-        env:
-          GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --no-parallel
-
-      - name: Upload Finished APK Artifact
+      - name: Upload Generated Alwaha Pro APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Alwaha-Pro-Ultra-APK
+          name: Alwaha-Pro-Official-Release-APK
           path: android/app/build/outputs/apk/release/app-release-unsigned.apk
