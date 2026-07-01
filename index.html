@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alwaha Pro - الواحة برو | المنصة المتكاملة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+    <!-- شريط التنقل العلوي المعتمد الاستراتيجي -->
+    <div class="top-navbar">
+        <div class="nav-item free-mode" onclick="showSection('free-section', this)"><i class="fa-solid fa-wifi"></i><span>الشبكة الحرة</span></div>
+        <div class="nav-item chat" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>التراسل</span></div>
+        <div class="nav-item games" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></div>
+        <div class="nav-item market-center" onclick="showSection('market-section', this)"><i class="fa-solid fa-basket-shopping"></i><span>الماركت</span></div>
+        <div class="nav-item reels" onclick="showSection('reels-section', this)"><i class="fa-solid fa-film"></i><span>المحتوى</span></div>
+        <div class="nav-item main-home active" onclick="showSection('home-section', this)"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+        <div class="nav-item profile-me" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>الملف الشخصي</span></div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- مركز التحكم بالخدمات الفورية والتثبيت المباشر -->
+        <div style="display: flex; justify-content: space-between; padding: 10px; margin-bottom: 10px;">
+            <button id="pwa-install-btn" class="btn-action golden-edge" style="display:none; background:#00ff88; color:#000;"><i class="fa-solid fa-download"></i> تثبيت التطبيق الفوري</button>
+            <button class="btn-action golden-edge" style="background:#ff00ff; color:#fff;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> مركز الإشعارات والطلبات <span id="notif-badge">3</span></button>
+        </div>
+
+        <!-- لوحة مركز الإشعارات الآمن السريع -->
+        <div id="internal-notification-center" class="news-box" style="display:none; margin-bottom:15px; border:2px solid #ffd700;">
+            <h4 style="color:#ffd700; margin-bottom:8px;"><i class="fa-solid fa-bolt"></i> خادم التحديثات وطلبات الاتصال</h4>
+            <ul style="list-style:none; font-size:12px; padding:0;" id="notifications-ul-list">
+                <li style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05);">👥 طلب اتصال وتبادل من "المهندس أحمد" <button class="btn-action" style="padding:2px 6px; font-size:10px;" onclick="acceptFriendSimulated()">قبول</button></li>
+                <li style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05);">✨ تم فحص وتحديث جدار الحماية بالذكاء الاصطناعي بنجاح كلي.</li>
+                <li style="padding:5px 0;">🎁 بروتوكول البلوتوث والشبكة المحلية جاهز للتراسل التلقائي.</li>
+            </ul>
+        </div>
+
+        <!-- قسم الرئيسية البوابة الرسمية والتحديثات -->
+        <div id="home-section" class="app-section active-section">
+            <div class="official-landing-banner" style="text-align: center; padding: 25px 15px; background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.08)); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(0,255,255,0.25);">
+                <div style="font-size: 40px; color: #00ffff; margin-bottom: 5px;"><i class="fa-solid fa-circle-nodes"></i></div>
+                <h2 style="color: #fff; font-size: 22px; margin-bottom: 5px;">خادم تطبيق الواحة Pro الرسمي</h2>
+                <p style="color: #ccc; font-size: 12.5px; max-width: 340px; margin: 0 auto 15px auto;">البيئة المتكاملة المحدثة لإدارة الأعمال والترفيه والتواصل اللامركزي الحُر.</p>
+                
+                <div class="download-buttons-flex" style="display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto;" id="download-platform-container">
+                    <a href="https://nasreldinkbk09260-art.github.io/Alwaha-Pro/Alwaha-Pro.apk" download class="btn-action golden-edge" style="justify-content:center; background:#00ff88; color:#000;">
+                        <i class="fa-brands fa-android" style="font-size: 18px;"></i> تحميل إصدار الأندرويد المباشر (APK)
+                    </a>
+                    <a href="#" onclick="alert('من متصفح Safari اضغط على أيقونة المشاركة ثم اختر Add to Home Screen'); return false;" class="btn-action golden-edge" style="justify-content:center; background:#fff; color:#000;">
+                        <i class="fa-brands fa-apple" style="font-size: 18px;"></i> تثبيت فوري لمنصة الآيفون (iOS)
+                    </a>
+                    <button onclick="triggerDesktopDownloadSimulation()" class="btn-action golden-edge" style="justify-content:center; background:#00ffff; color:#000;">
+                        <i class="fa-solid fa-desktop"></i> تنزيل نسخة سطح المكتب والكمبيوتر (PC)
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ساحة التدوين الإبداعي ونشر الأفكار الحرة -->
+            <div class="news-box publishing-area">
+                <h4 style="color:#ff00ff; margin-bottom:8px;"><i class="fa-solid fa-pen-to-square"></i> مشاركة تحديث أو فكرة برمجية حية</h4>
+                <textarea id="home-post-textarea" placeholder="ما هي آخر أفكارك أو تحديثاتك اليوم؟ (يتطلب تهيئة الحساب أولاً)..." class="keyboard-target"></textarea>
+                <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                    <select id="home-post-type" class="custom-select">
+                        <option value="عام">🌐 توجيه عام للمنصة</option>
+                        <option value="تقني">⚡ تحديث تكنولوجي وصيانة</option>
+                    </select>
+                    <button class="btn-action" onclick="publishNewHomePost()"><i class="fa-solid fa-paper-plane"></i> بث وتعميم فوري</button>
+                </div>
+            </div>
+
+            <h3 style="margin: 15px 5px 10px 0; color: #00ffff; font-size: 16px;"><i class="fa-solid fa-rss"></i> الخلاصة الإخبارية والمشاركات الأخيرة للرواد</h3>
+            <div id="home-posts-feed-container"></div>
+        </div>
+
+        <!-- قسم التراسل والتواصل الذكي المطور -->
+        <div id="chat-section" class="app-section">
+            <div class="active-friends-wrapper">
+                <h5 style="color:#00ff88; font-size:12px; margin-bottom:5px;"><i class="fa-solid fa-circle"></i> جهات الاتصال النشطة حلياً عبر الخادم</h5>
+                <div class="active-friends-list" id="active-friends-scroller-target">
+                    <div class="friend-status-node" onclick="openTargetUserDirectChat('المهندس نصر الدين')"><div class="avatar-glow">ن</div><span>نصر الدين</span></div>
+                    <div class="friend-status-node" onclick="openTargetUserDirectChat('المطور صابر')"><div class="avatar-glow">ص</div><span>صابر</span></div>
+                    <div class="friend-status-node" onclick="openTargetUserDirectChat('الأستاذ أحمد')"><div class="avatar-glow">أ</div><span>أحمد</span></div>
+                </div>
+            </div>
+
+            <div class="chat-tabs-container" style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <button class="tab-btn active" onclick="switchChatTab('recent', this)" style="flex:1; padding:10px; background:#1a0629; color:#fff; border:1px solid #3a86ff; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-message"></i> المراسلات الحالية</button>
+                <button class="tab-btn" onclick="switchChatTab('all-users', this)" style="flex:1; padding:10px; background:#1a0629; color:#fff; border:1px solid #3a86ff; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-user-plus"></i> إدارة الاتصالات والاتصال الآمن</button>
+            </div>
+
+            <div id="recent-chats-tab" class="chat-tab-content">
+                <div id="conversations-list" class="conversations-holder"></div>
+            </div>
+
+            <div id="all-users-tab" class="chat-tab-content" style="display:none;">
+                <div class="form-group">
+                    <input type="text" id="friend-search-input" placeholder="أدخل المعرّف الفريد لإضافته أو حظره..." class="keyboard-target" style="width:100%; padding:8px; margin-bottom:8px;">
+                    <div style="display:flex; gap:5px;">
+                        <button class="btn-action" style="flex:1; justify-content:center;" onclick="executeFriendAction('add')">ربط اتصال جديد</button>
+                        <button class="btn-action" style="flex:1; background:#ff0055; color:#fff; justify-content:center;" onclick="executeFriendAction('delete')">إنهاء ارتباط الاتصال</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- نافذة المحادثة النشطة المشفرة -->
+            <div id="active-chat-box" class="active-chat-window" style="display:none; margin-top:15px; border-top:2px solid #3a86ff; padding-top:10px;">
+                <div class="chat-header chat-window-header" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+                    <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">قناة محادثة آمنة</span>
+                    
+                    <div class="chat-call-actions" style="display: flex; gap: 12px; align-items: center;">
+                        <button onclick="initiateVoiceCall('bluetooth')" class="btn-action golden-edge" style="background:#00ff88; color:#000; padding:5px 10px;" title="اتصال مشبكي مجاني بالبلوتوث محلي"><i class="fa-brands fa-bluetooth-b"></i> مكالمة بلوتوث</button>
+                        <button onclick="initiateVoiceCall('global')" class="btn-action golden-edge" style="background:#00ffff; color:#000; padding:5px 10px;" title="اتصال معزز للشبكات الضعيفة جداً"><i class="fa-solid fa-phone"></i> اتصال عالي الدقة</button>
+                        <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i></button>
+                    </div>
+                </div>
+
+                <div id="chat-messages-container" style="height:220px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);"></div>
+                <div class="chat-input-row" style="display:flex; gap:5px; margin-top:10px;">
+                    <input type="text" id="chat-message-input" placeholder="اكتب رسالتك المشفرة بعناية..." class="keyboard-target" style="flex:1; padding:10px; background:#120820; border:1px solid #3a86ff; color:#fff; border-radius:6px;">
+                    <button onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- مودال الاتصال الرقمي المقاوم للتشويش والشبكات الضعيفة -->
+        <div id="voice-call-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(9,2,18,0.98); z-index:9999; justify-content:center; align-items:center; flex-direction:column; direction:rtl;">
+            <div style="background:linear-gradient(135deg, #18032b, #2c021b); border:2px solid #ffd700; padding:30px; border-radius:15px; text-align:center; max-width:400px; width:90%;">
+                <div style="font-size:50px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-phone-volume fa-bounce"></i></div>
+                <h3 id="call-status-title" style="color:#fff; margin-bottom:10px;">بروتوكول صوتي فائق التشفير...</h3>
+                <p id="call-target-user" style="color:#00ffff; font-size:16px; margin-bottom:20px; font-weight:bold;">الطرف المستلم</p>
+                <div style="margin-bottom:20px; font-size:12px; color:#00ff88; background:rgba(0,255,136,0.1); padding:8px; border-radius:6px;">
+                    <span><i class="fa-solid fa-shield"></i> نمط تجاوز ضعف التغطية وتخطي التشويش الإقليمي نشط ذاتياً</span>
+                </div>
+                <button onclick="terminateVoiceCall()" style="background:#ff0055; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة الصوتية</button>
+            </div>
+        </div>
+
+        <!-- قسم الترفيه والألعاب اللامركزية أوفلاين كلياً -->
+        <div id="games-section" class="app-section">
+            <div class="news-box">
+                <h3 style="color:#ff00ff; text-align:center; margin-bottom:10px;"><i class="fa-solid fa-gamepad"></i> المركز الرقمي للألعاب والترفيه الذاتي المحمول</h3>
+                
+                <!-- ليدو البلوتوث اللاسلكية الاستراتيجية -->
+                <div class="game-card golden-edge" style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border-radius:12px;">
+                    <h4 style="color:#ffd700;"><i class="fa-solid fa-dice"></i> لعبة الليدو الملكية اللاسلكية (Multiplayer Ludo Wireless)</h4>
+                    <p style="font-size:12px; color:#ccc; margin-bottom:8px;">محملة مسبقاً ضمن الكاش الداخلي وتعمل 100% دون أي اتصال إنترنت. تدعم اللعب الرباعي على نفس الشاشة أو بالاقتران المحلي العشوائي.</p>
+                    
+                    <div class="ludo-board-wrapper">
+                        <div class="ludo-grid-mock">
+                            <div class="ludo-corner ludo-red">الكتيبة الحمراء</div>
+                            <div class="ludo-corner ludo-blue">الكتيبة الزرقاء</div>
+                            <div class="ludo-corner ludo-green">الكتيبة الخضراء</div>
+                            <div class="ludo-corner ludo-yellow">الكتيبة الصفراء</div>
+                        </div>
+                        <p style="font-size:11px; color:#555; font-weight:bold;">منظومة محاكاة الساحات الجماعية جاهزة ومفعلة كلياً!</p>
+                    </div>
+                    
+                    <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="simulateLudoMatchLaunch()">تهيئة ساحة اللعب واختيار الألوان محلياً</button>
+                </div>
+
+                <!-- كرات الاسترخاء وتفريغ الطاقة الحركية -->
+                <div class="game-card golden-edge" style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border-radius:12px;">
+                    <h4 style="color:#00ffff;"><i class="fa-solid fa-circle-nodes"></i> منظومة فرقعة الكرات الذكية لتفريغ الشحنات</h4>
+                    <p style="font-size:12px; color:#ccc;">برنامج ترفيهي هندسي مصغر لتدمير العناصر المتطابقة بصرياً وحصد النقاط.</p>
+                    <div id="color-balls-game-container" style="height:80px; background:#110520; margin-top:10px; border-radius:8px; display:flex; justify-content:center; align-items:center; gap:10px;">
+                        <span style="width:20px; height:20px; background:#ff00ff; border-radius:50%; display:inline-block; cursor:pointer;" onclick="alert('تم تفكيك الكرة الأرجوانية! +10 نقاط طاقة')"></span>
+                        <span style="width:20px; height:20px; background:#00ffff; border-radius:50%; display:inline-block; cursor:pointer;" onclick="alert('تم تفكيك الكرة الفيروزية! +10 نقاط طاقة')"></span>
+                        <span style="width:20px; height:20px; background:#00ff88; border-radius:50%; display:inline-block; cursor:pointer;" onclick="alert('تم تفكيك الكرة الزمردية! +10 نقاط طاقة')"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم الماركت الذكي للتداول التجاري يمين وشمال وسحب متتابع -->
+        <div id="market-section" class="app-section">
+            <div class="market-tabs-header" style="display:flex; gap:5px; margin-bottom:10px;">
+                <button id="tab-buy" class="market-tab active-tab" style="flex:1; padding:10px; border-radius:6px; cursor:pointer;" onclick="switchMarketMode('buy')">استكشاف المعروضات التجارية الفورية</button>
+                <button id="tab-sell" class="market-tab" style="flex:1; padding:10px; border-radius:6px; cursor:pointer;" onclick="switchMarketMode('sell')">إدراج سلعة أو منتج للبيع</button>
+            </div>
+
+            <div id="market-buy-view">
+                <div class="search-bar-box" style="margin-bottom:10px;">
+                    <input type="text" id="market-search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع معروضة حالياً..." oninput="searchProducts()" class="keyboard-target" style="width:100%; padding:8px;">
+                </div>
+                <div style="font-size:11px; color:#00ffff; margin-bottom:8px; text-align:left; cursor:pointer;" onclick="renderProductsList()"><i class="fa-solid fa-rotate"></i> تحديث الخلاصة التجارية ومزامنة المعروضات سحابياً فوراً</div>
+                
+                <div id="market-products-list-container" class="market-mini-grid"></div>
+            </div>
+
+            <!-- لوحة إدارة المبيعات المعتمدة على التسجيل المسبق -->
+            <div id="market-sell-view" style="display:none;">
+                <div id="sell-access-blocked" class="news-box" style="text-align:center; border:2px dashed #ff0055;">
+                    <i class="fa-solid fa-lock" style="font-size:30px; color:#ff0055; margin-bottom:8px;"></i>
+                    <h4 style="color:#fff;">بوابة البيع مقيدة لحين تفعيل بروفايلك الخاص!</h4>
+                    <p style="font-size:12px; color:#ccc;">لضمان نزاهة وموثوقية التعاملات التجارية داخل الماركت، يتوجب عليك إنشاء حسابك التعريفي أولاً عبر لوحة التحكم.</p>
+                    <button class="btn-action" style="margin-top:10px;" onclick="showSection('profile-section')">التوجه الفوري لتسجيل وتهيئة الحساب</button>
+                </div>
+
+                <div id="sell-form-allowed" style="display:none;" class="news-box">
+                    <h4 style="color:#00ffff; margin-bottom:10px;"><i class="fa-solid fa-circle-plus"></i> إدراج منتج تجاري جديد بالسوق الرقمي</h4>
+                    <div class="form-group"><label>العنوان التجاري للمادة:</label><input type="text" id="prod-name" class="keyboard-target"></div>
+                    <div class="form-group"><label>القيمة السعرية المحددة:</label><input type="text" id="prod-price" class="keyboard-target" placeholder="مثال: 500 ج.م"></div>
+                    <div class="form-group"><label>قناة الاتصال أو هاتف البائع:</label><input type="text" id="prod-phone" class="keyboard-target"></div>
+                    <div class="form-group"><label>المواصفات الفنية والوصف الدقيق:</label><textarea id="prod-desc" class="keyboard-target"></textarea></div>
+                    <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="submitNewProductToMarket()">اعتماد ونشر المادة التجارية فوراً</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم صناعة المحتوى البصري ومعالجة الفلاتر الفورية بالذكاء الاصطناعي -->
+        <div id="reels-section" class="app-section">
+            <div class="reels-video-viewport">
+                <div class="reels-video-mock-bg"><i class="fa-solid fa-play-circle mock-play-icon fa-spin"></i></div>
+                <div class="reels-overlay-data">
+                    <span class="reels-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> محرك المعالجة الصورية AI المطور</span>
+                    <h4>@alwaha_pro_digital</h4>
+                    <p>خوارزميات التجميل الرقمي الفوري وتحويل الفيديوهات لثيمات الأنمي المعززة 🌟</p>
+                </div>
+                <div class="reels-actions-side-bar">
+                    <button class="reel-circle-btn"><i class="fa-solid fa-heart"></i><small>3.1k</small></button>
+                    <button class="reel-circle-btn" onclick="alert('قناة التعليقات النشطة تعمل بأقصى سرعة استجابة!')"><i class="fa-solid fa-comment"></i><small>150</small></button>
+                    <button class="reel-circle-btn camera-trigger" onclick="openProfessionalCameraView()"><i class="fa-solid fa-camera" style="color:#ff0055;"></i><small>صناعة كليب</small></button>
+                </div>
+            </div>
+
+            <!-- بوابة استوديو التصوير الفاخرة للذكاء الاصطناعي المباشر -->
+            <div id="pro-camera-modal" class="camera-fullscreen-view" style="display:none;">
+                <div class="camera-top-controls">
+                    <button class="cam-top-btn" onclick="closeProfessionalCameraView()"><i class="fa-solid fa-arrow-right"></i></button>
+                    <span style="color:#fff; font-size:13px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:#00ffff;"></i> فلاتر التعديل والتحسين التلقائي لوجوه المستخدمين الحية</span>
+                    <button class="cam-top-btn" onclick="alert('مستشعر الضبط التلقائي قيد المزامنة المستمرة للعدسات')"><i class="fa-solid fa-bolt"></i></button>
+                </div>
+                <div class="camera-preview-screen" id="camera-screen-lens" style="background:#221133; flex-direction:column;">
+                    <div style="color:rgba(255,255,255,0.4); font-size:12px; text-align:center; padding:20px;">[ المعاينة الحية المباشرة لعدسة خادم الكاميرا الفورية ]</div>
+                    
+                    <!-- أزرار مرشحات التجميل الدقيقة لوجوه البنات وثيمات الأنمي الاحترافية الفاخرة -->
+                    <div style="position:absolute; bottom:20px; right:15px; display:flex; flex-direction:column; gap:8px; z-index:100;">
+                        <button class="btn-action golden-edge" onclick="triggerFaceBeautyEnhancement()" style="background:rgba(0,0,0,0.7); color:#ff00ff;">
+                            <i class="fa-solid fa-face-smile-wink"></i> فلتر التنقية والتجميل فائق النقاء لملامح الوجه
+                        </button>
+                        <button class="btn-action golden-edge" onclick="triggerAnimeAiConverterFilter()" style="background:rgba(0,0,0,0.7); color:#00ffff;">
+                            <i class="fa-solid fa-user-astronaut"></i> مرشح تحويل المشهد لرسوم متحركة (Anime AI Ultra)
+                        </button>
+                    </div>
+                </div>
+                <div class="camera-bottom-dashboard">
+                    <div class="camera-shutter-row">
+                        <button class="cam-secondary-circle" onclick="alert('تم فتح معرض الوسائط بأمان لتلقي الملفات المرجعية')"><i class="fa-solid fa-images"></i><small>المعرض</small></button>
+                        <div class="main-shutter-outer" onclick="alert('تم تسجيل المقطع وحفظه بالفلتر المعالج في الذاكرة الموحدة!')"><div class="main-shutter-inner"></div></div>
+                        <button class="cam-secondary-circle" onclick="alert('تم تدوير اتجاه عدسة الكاميرا بنجاح')"><i class="fa-solid fa-camera-rotate"></i><small>تدوير</small></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم لوحة تحكم الشبكة الحرة والتبادل اللاسلكي الفوري للمستندات والملفات -->
+        <div id="free-section" class="app-section">
+            <div class="free-status-card">
+                <h3 style="color:#00ffff;"><i class="fa-solid fa-tower-cell"></i> لوحة التحكم بالربط اللاسلكي الحر (Free Mesh Share Center)</h3>
+                
+                <div style="margin:15px 0;">
+                    <button id="free-mode-toggle-main-btn" class="btn-action golden-edge" style="background:#ff0055; color:#fff; padding:10px 20px; font-weight:bold;" onclick="toggleFreeMeshShareSystem()">
+                        ❌ وضع المشاركة الحرة: غير نشط (اضغط للتشغيل والمزامنة القريبة)
+                    </button>
+                </div>
+
+                <div id="radar-circle" class="pulse-signal"><i class="fa-solid fa-wifi"></i></div>
+                <p style="font-size:13px; color:#e0ffff;">
+                    عند التفعيل السريع، يمكن للأجهزة المحيطة في نطاق الغرفة والمقترنة مسبقاً تبادل المستندات والرسائل والصور والملفات المعقدة بالكامل عبر قنوات البلوتوث والواي فاي المباشر مع تفعيل طبقة التشفير الذاتي والافتراضي صامتاً بالخلفية.
+                </p>
+                
+                <div id="radar-live-results" style="display: none; text-align: right;" class="news-box">
+                    <h5 style="color:#00ff88; margin-bottom:5px;"><i class="fa-solid fa-shield-halved"></i> منظومة التشفير والربط المباشر فعالة كلياً (Mesh Network Secure)</h5>
+                    <p style="font-size:11px; color:#ccc;">🔄 جاري فحص المستندات والملفات التبادلية بشكل آمن وسري مع البنية الشبكية القريبة صامتاً.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم إدارة الحساب والسمات ومركز الخصوصية المتكامل الهوية -->
+        <div id="profile-section" class="app-section">
+            <div class="profile-card-header-view">
+                <div class="profile-main-avatar-glow" id="my-profile-avatar-placeholder">?</div>
+                <h3 id="my-profile-name-tag" style="margin-top:10px; color:#fff;">هوية رقمية مؤقتة (زائر) <span id="verification-badge-slot"></span></h3>
+                <p id="my-profile-phone-tag" style="font-size:11px; color:#aaa;">يرجى تسجيل الدخول أو تهيئة ملف تعريفي رسمي متكامل</p>
+            </div>
+
+            <!-- قائمة الخيارات الشاملة والتحكم المطلق للواحة برو لضمان عدم نقصان أي زر -->
+            <div class="profile-options-menu-list">
+                
+                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-login-form')">
+                    <i class="fa-solid fa-right-to-bracket" style="color:#00ff88;"></i> <span>بوابة تسجيل الدخول للحساب القائم</span><i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-register')">
+                    <i class="fa-solid fa-user-plus" style="color:#00ffff;"></i> <span>بوابة تهيئة وإنشاء حساب رقمي جديد كلياً</span><i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-privacy-center')">
+                    <i class="fa-solid fa-shield-halved" style="color:#ffd700;"></i> <span>مركز إدارة الخصوصية المتقدمة والتشفير التام</span><i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-register-form')">
+                    <i class="fa-solid fa-certificate" style="color:#ffaa00;"></i> <span>طلب التوثيق المتقدم والشارات المعتمدة (قريباً)</span><i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-themes-picker')">
+                    <i class="fa-solid fa-palette" style="color:#ff00ff;"></i> <span>تخصيص الواجهات والسمات البصرية (أبيض / أسود / طبيعة)</span><i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <button class="profile-menu-btn golden-edge" onclick="togglePulseAnimationState()">
+                    <i class="fa-solid fa-heart-pulse" style="color:#ff3b30;"></i> <span id="pulse-toggle-text-status">إيقاف نبض وتموج العناصر والواجهات الحالية</span><i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+
+            <!-- لوحة فرعية: تسجيل الدخول السريع -->
+            <div id="sub-view-login-form" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header"><h4><i class="fa-solid fa-key"></i> تسجيل الدخول المعتمد</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-login-form')"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="form-group"><label>المعرّف الإلكتروني أو الهاتف الساري:</label><input type="text" id="login-user-id" class="keyboard-target"></div>
+                <div class="form-group"><label>رمز الحماية السري الخاص بك:</label><input type="password" id="login-user-pass" class="keyboard-target"></div>
+                <button class="btn-action" style="width:100%; justify-content:center; margin-top:5px;" onclick="executeAccountLoginSimulated()">تفعيل والولوج الفوري للمنصة</button>
+            </div>
+
+            <!-- لوحة فرعية: إنشاء وتعبئة حساب جديد بالكامل + ميزة رفع الصورة الاختيارية المطلوبة -->
+            <div id="sub-view-register" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header"><h4><i class="fa-solid fa-user-gear"></i> إنشاء ملف مستخدم رقمي جديد كلياً</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-register')"><i class="fa-solid fa-xmark"></i></button></div>
+                
+                <div class="form-group" style="margin-bottom: 12px; text-align: center;">
+                    <label style="display:block; margin-bottom:6px; font-size:12px; color:#00ffff;">الصورة الشخصية للحساب (اختياري بالكامل):</label>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <!-- زر اختيار الصورة بأكثر من نمط (ألبوم أو كاميرا فورية حسب رغبة المستخدم) -->
+                        <button type="button" class="btn-action" style="background: rgba(139, 92, 246, 0.2); color: #fff; border: 1px dashed #3a86ff; font-size: 11px;" onclick="document.getElementById('reg-optional-avatar-input').click()">
+                            <i class="fa-solid fa-image-portrait"></i> التقاط أو اختيار صورة من الأستوديو
+                        </button>
+                        <input type="file" id="reg-optional-avatar-input" accept="image/*" style="display:none;" onchange="previewRegisterOptionalAvatar(this)">
+                        <!-- معاينة الصورة الشخصية المختارة اختيارياً -->
+                        <img id="reg-optional-avatar-preview" style="display:none; width:65px; height:65px; border-radius:50%; object-fit:cover; border:2px solid #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.4);">
+                    </div>
+                </div>
+
+                <div class="form-group"><label>الاسم التعريفي الكامل المستهدف:</label><input type="text" id="reg-name" placeholder="الاسم الذي سيظهر لجميع الرواد بالسيرفر" class="keyboard-target"></div>
+                <div class="form-group"><label>رقم الهاتف النقال أو البريد النشط:</label><input type="text" id="reg-contact" class="keyboard-target"></div>
+                <div class="form-group"><label>تأسيس كلمة سر قوية وحصينة:</label><input type="password" id="reg-pass" class="keyboard-target"></div>
+                
+                <button class="btn-action" style="width:100%; justify-content:center; margin-top:8px;" onclick="saveUserProfileData()">تأكيد الإنشاء والتسجيل الفوري للملف</button>
+            </div>
+
+            <!-- لوحة فرعية: إدارة بروتوكولات الخصوصية والتشفير اللامركزي المباشر -->
+            <div id="sub-view-privacy-center" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header"><h4><i class="fa-solid fa-user-shield"></i> معايير ضبط الخصوصية والأمن الرقمي</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-privacy-center')"><i class="fa-solid fa-xmark"></i></button></div>
+                <p style="font-size:11px; color:#ccc; margin-bottom:10px;">إعدادات متكاملة لعزل المراسلات المحلية الفورية وحماية ملفك الفردي خارج السيرفرات المركزية:</p>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button class="profile-menu-btn" onclick="alert('تم تفعيل التشفير الشامل من الطرفين كلياً لكافة قنوات المراسلة بنجاح')">🔒 تفعيل تشفير المحادثات والتعليقات من الطرفين (E2EE)</button>
+                    <button class="profile-menu-btn" onclick="alert('تم تطهير ذاكرة التخزين المؤقت وحذف كافة الارتباطات بنجاح')">🗑️ مسح وإزالة ملفات الكاش المحلي والارتباط التبادلي</button>
+                    <button class="profile-menu-btn" onclick="alert('تم فرض الحظر الجغرافي وحماية الرادار بنجاح')">🚫 منع تتبع الرادار المفتوح وتعمية الموقع الجغرافي</button>
+                </div>
+            </div>
+
+            <!-- لوحة فرعية: منتقي السمات الجمالية والألوان الفاخرة للواجهة -->
+            <div id="sub-view-themes-picker" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header"><h4><i class="fa-solid fa-palette"></i> تعديل وضبط المظهر اللوني للتطبيق</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-themes-picker')"><i class="fa-solid fa-xmark"></i></button></div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <button class="profile-menu-btn" style="background:#fff; color:#000;" onclick="applyThemeSelected('white')">⚪ السمة البيضاء الناصعة الفاخرة</button>
+                    <button class="profile-menu-btn" style="background:#000; color:#fff; border:1px solid #fff;" onclick="applyThemeSelected('black')">⚫ السمة السوداء العميقة المطلقة</button>
+                    <button class="profile-menu-btn" style="background:linear-gradient(45deg, #228b22, #a0522d); color:#fff;" onclick="applyThemeSelected('nature')">🌳 سمة الطبيعة الخلابة (خلفية حية معالجة)</button>
+                </div>
+            </div>
+
+            <!-- لوحة فرعية: التوثيق المتقدم للهوية الوطنية المدمجة برادارات التأكيد الذكي بالـ OTP والكاميرا -->
+            <div id="sub-view-register-form" class="sub-profile-view-box" style="display:none; background: linear-gradient(135deg, #120524, #1b063a); border: 2px solid #38bdf8; padding: 20px; border-radius: 12px; color: #fff;">
+                <div class="sub-view-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h4><i class="fa-solid fa-user-shield"></i> إنشاء حساب متقدم وطلب التوثيق الهيكلي والتحقق والتوثيق المتقدم</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-view-register-form')"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="form-group">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#38bdf8;">الاسم الكامل للمستخدم (يكون غير موثق تلقائياً لحين المطابقة):</label>
+                        <input type="text" id="reg-full-name" placeholder="أدخل اسمك الثلاثي المطابق للأوراق الرسمية..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#38bdf8;">محل الإقامة الفعلي والعنوان التفصيلي:</label>
+                        <input type="text" id="reg-address" placeholder="المحافظة، المدينة، الحي، الشارع الرئيسي..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#38bdf8;">رقم الهاتف الجوال الفعال لتأكيد رمز التوثيق (OTP):</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="tel" id="reg-phone" placeholder="01xxxxxxxxx" style="flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff;">
+                            <button onclick="sendSimulatedOTP()" style="background:#00ff88; color:#000; border:none; padding:0 10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px;">توليد وإرسال الرمز</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="otp-verification-box" style="display:none;">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#ff00ff;">أدخل رمز التحقق (OTP) المكون من 4 أرقام المرسل لهاتفك:</label>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="reg-otp-code" placeholder="أدخل كود التحقق السري..." style="flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #ff00ff; border-radius:6px; color:#fff; text-align:center;">
+                            <button onclick="verifySimulatedOTP()" style="background:#ff00ff; color:#fff; border:none; padding:0 10px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:12px;">تأكيد وصيانة الرقم</button>
+                        </div>
+                        <span id="otp-status" style="font-size:11px; color:#00ff88; display:block; margin-top:3px;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#38bdf8;">التقاط الصورة الحية الفورية للوجه (كاميرا المزامنة الحية):</label>
+                        <input type="file" id="reg-profile-pic" accept="image/*" capture="user" onchange="previewImage(this, 'preview-avatar')" style="display:none;">
+                        <button onclick="document.getElementById('reg-profile-pic').click()" style="width:100%; padding:10px; background:#1a0629; border:1px dashed #38bdf8; border-radius:6px; color:#fff; cursor:pointer;"><i class="fa-solid fa-camera"></i> استدعاء منظومة الكاميرا والتقاط صورة الوجه فورا</button>
+                        <img id="preview-avatar" style="display:none; width:60px; height:60px; border-radius:50%; object-fit:cover; margin-top:8px; border:2px solid #00ff88;">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:block; margin-bottom:5px; font-size:13px; color:#38bdf8;">رفع وثيقة هويتك الشخصية الصالحة وبطاقة التأكيد الرسمية:</label>
+                        <input type="file" id="reg-id-card" accept="image/*" onchange="previewImage(this, 'preview-id')" style="display:none;">
+                        <button onclick="document.getElementById('reg-id-card').click()" style="width:100%; padding:10px; background:#1a0629; border:1px dashed #38bdf8; border-radius:6px; color:#fff; cursor:pointer;"><i class="fa-solid fa-id-card"></i> اختيار المسح الضوئي لبطاقة الهوية الوطنية</button>
+                        <img id="preview-id" style="display:none; width:100px; height:60px; border-radius:6px; object-fit:cover; margin-top:8px; border:2px solid #ff00ff;">
+                    </div>
+
+                    <button onclick="submitUserRegistrationForm()" style="width:100%; padding:12px; background:linear-gradient(45deg, #38bdf8, #ff00ff); border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer; font-size:15px; margin-top:10px; box-shadow:0 4px 15px rgba(255,0,255,0.2);">🚀 إرسال حزمة البيانات والإنشاء الفوري كعضو غير موثق حالياً</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- الرابط التكاملي والتشغيلي المباشر للواحة برو -->
+    <script src="app.js"></script>
+</body>
+</html>

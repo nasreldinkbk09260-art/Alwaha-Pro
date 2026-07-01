@@ -1,0 +1,23 @@
+{
+  "short_name": "الواحة Pro",
+  "name": "Alwaha Pro - المنصة الرقمية المتكاملة",
+  "icons": [
+    {
+      "src": "icon-192 (1)_5.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512 (1)_5.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#090212",
+  "theme_color": "#0f051c",
+  "display": "standalone",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "ar"
+}
