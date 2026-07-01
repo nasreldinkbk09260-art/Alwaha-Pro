@@ -17,7 +17,6 @@ jobs:
         with:
           node-version: '18'
 
-      # 🌟 بيئة الجافا الحديثة والمستقرة لدعم إضافاتك الجديدة
       - name: Set up JDK 17 (Required for Modern Plugins)
         uses: actions/setup-java@v3
         with:
@@ -36,8 +35,12 @@ jobs:
       - name: Install Capacitor Core & CLI
         run: npm install @capacitor/core @capacitor/cli
 
-      - name: Initialize Capacitor Configuration
-        run: npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
+      # 🌟 ذكي: يتم التهيئة فقط إذا لم تكن الإعدادات موجودة مسبقاً لمنع التعارض
+      - name: Initialize Capacitor Configuration if missing
+        run: |
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
+          fi
 
       - name: Install Plugins (Bluetooth, Wi-Fi, Network, OS)
         run: |
@@ -45,26 +48,30 @@ jobs:
           npm install @capacitor/network @capgo/capacitor-wifi
           npm install @capacitor/android @capacitor/ios
 
-      - name: Add Android and iOS Platforms
+      # 🌟 ذكي: إضافة منصة الأندرويد فقط إذا لم تكن مضافة مسبقاً في مشروعك
+      - name: Add Android Platform if missing
         run: |
-          npx cap add android
-          npx cap add ios
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
 
       - name: Sync Web Assets & Plugins to Platforms
         run: npx cap sync
 
-      # 🌟 الخطوة السحرية: ترقية الـ Gradle تلقائياً داخل السيرفر لحل مشكلة ملف التشفير bcprov نهائياً
+      # 🌟 ذكي: إعطاء صلاحيات وترقية الـ Gradle تلقائياً لحل مشكلة ملف التشفير bcprov
       - name: Automatically Upgrade Gradle Wrapper to 8.7
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew wrapper --gradle-version 8.7 --distribution-type all
 
-      # 🚀 بناء التطبيق بأعلى كفاءة وذاكرة مستقرة وبدون تعليق الملفات
+      # 🚀 بناء التطبيق النهائي مع صلاحيات كاملة وذاكرة مستقرة وبدون تعليق
       - name: Build Android Release APK
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --no-parallel
 
       - name: Upload Finished APK Artifact
