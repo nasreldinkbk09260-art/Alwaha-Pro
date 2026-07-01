@@ -17,8 +17,8 @@ jobs:
         with:
           node-version: '18'
 
-      # 🌟 الانتقال إلى التوزيعة الأكثر استقراراً لتفادي مشاكل التحقق من الشهادات
-      - name: Set up JDK 17 (Required for Android)
+      # 🌟 بيئة الجافا الحديثة والمستقرة لدعم إضافاتك الجديدة
+      - name: Set up JDK 17 (Required for Modern Plugins)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -53,12 +53,13 @@ jobs:
       - name: Sync Web Assets & Plugins to Platforms
         run: npx cap sync
 
-      # 🛠️ خطوة حقن إجبارية لاعتماد إصدار حماية مستقر وخفيف يتخطى أزمة التجميع
-      - name: Force Stable Crypto Library Version
+      # 🌟 الخطوة السحرية: ترقية الـ Gradle تلقائياً داخل السيرفر لحل مشكلة ملف التشفير bcprov نهائياً
+      - name: Automatically Upgrade Gradle Wrapper to 8.7
         run: |
-          echo "allprojects { configurations.all { resolutionStrategy { force 'org.bouncycastle:bcprov-jdk18on:1.78' } } }" >> android/build.gradle
+          cd android
+          ./gradlew wrapper --gradle-version 8.7 --distribution-type all
 
-      # 🚀 بناء التطبيق مع ضخ طاقة ذاكرة إضافية للسيرفر لمنع أي تعليق
+      # 🚀 بناء التطبيق بأعلى كفاءة وذاكرة مستقرة وبدون تعليق الملفات
       - name: Build Android Release APK
         env:
           GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
