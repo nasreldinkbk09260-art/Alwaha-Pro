@@ -23,7 +23,7 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # 🌟 هذه هي الخطوة المضافة لإنشاء المجلد وترتيب ملفاتك تلقائياً
+      # 🌟 خطوة إنشاء المجلد وترتيب ملفات الويب تلقائياً لمنع تعارض المسارات
       - name: Prepare Web Assets Directory
         run: |
           mkdir -p www
@@ -36,7 +36,7 @@ jobs:
       - name: Install Capacitor Core & CLI
         run: npm install @capacitor/core @capacitor/cli
 
-      # 🌟 هنا تم التعديل ليقرأ من مجلد www الصحيح لمنع الخطأ
+      # 🌟 هنا يقرأ من مجلد www الصحيح لمنع الخطأ الأولي
       - name: Initialize Capacitor Configuration
         run: npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
 
@@ -54,10 +54,11 @@ jobs:
       - name: Sync Web Assets & Plugins to Platforms
         run: npx cap sync
 
+      # 🛠️ تم ضبط هذا الجزء بإضافة --no-daemon لمنع قفل ملفات الحماية والتشفير وسط السيرفر
       - name: Build Android Release APK
         run: |
           cd android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --no-daemon
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
