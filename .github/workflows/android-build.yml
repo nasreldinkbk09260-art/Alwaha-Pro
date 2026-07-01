@@ -23,11 +23,22 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # 🌟 هذه هي الخطوة المضافة لإنشاء المجلد وترتيب ملفاتك تلقائياً
+      - name: Prepare Web Assets Directory
+        run: |
+          mkdir -p www
+          cp index.html www/ 2>/dev/null || true
+          cp *.js www/ 2>/dev/null || true
+          cp *.css www/ 2>/dev/null || true
+          cp -r assets www/ 2>/dev/null || true
+          cp -r images www/ 2>/dev/null || true
+
       - name: Install Capacitor Core & CLI
         run: npm install @capacitor/core @capacitor/cli
 
+      # 🌟 هنا تم التعديل ليقرأ من مجلد www الصحيح لمنع الخطأ
       - name: Initialize Capacitor Configuration
-        run: npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=.
+        run: npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
 
       - name: Install Plugins (Bluetooth, Wi-Fi, Network, OS)
         run: |
