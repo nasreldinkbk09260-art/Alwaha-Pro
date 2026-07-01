@@ -17,13 +17,13 @@ jobs:
         with:
           node-version: '18'
 
+      # 🌟 الانتقال إلى التوزيعة الأكثر استقراراً لتفادي مشاكل التحقق من الشهادات
       - name: Set up JDK 17 (Required for Android)
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      # 🌟 خطوة إنشاء المجلد وترتيب ملفات الويب تلقائياً لمنع تعارض المسارات
       - name: Prepare Web Assets Directory
         run: |
           mkdir -p www
@@ -36,7 +36,6 @@ jobs:
       - name: Install Capacitor Core & CLI
         run: npm install @capacitor/core @capacitor/cli
 
-      # 🌟 هنا يقرأ من مجلد www الصحيح لمنع الخطأ الأولي
       - name: Initialize Capacitor Configuration
         run: npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir=www
 
@@ -54,11 +53,18 @@ jobs:
       - name: Sync Web Assets & Plugins to Platforms
         run: npx cap sync
 
-      # 🛠️ تم ضبط هذا الجزء بإضافة --no-daemon لمنع قفل ملفات الحماية والتشفير وسط السيرفر
+      # 🛠️ خطوة حقن إجبارية لاعتماد إصدار حماية مستقر وخفيف يتخطى أزمة التجميع
+      - name: Force Stable Crypto Library Version
+        run: |
+          echo "allprojects { configurations.all { resolutionStrategy { force 'org.bouncycastle:bcprov-jdk18on:1.78' } } }" >> android/build.gradle
+
+      # 🚀 بناء التطبيق مع ضخ طاقة ذاكرة إضافية للسيرفر لمنع أي تعليق
       - name: Build Android Release APK
+        env:
+          GRADLE_OPTS: "-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         run: |
           cd android
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon --no-parallel
 
       - name: Upload Finished APK Artifact
         uses: actions/upload-artifact@v4
