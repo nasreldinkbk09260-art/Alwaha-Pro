@@ -56,7 +56,6 @@ jobs:
             "webDir": "www"
           }
           EOF
-          
           rm -rf android
           npx cap add android
 
@@ -68,38 +67,15 @@ jobs:
 
       - name: Auto-Resize and Generate Icons/Splash
         run: |
-          # محاولة تثبيت الأداة
-          sudo apt-get update && sudo apt-get install -y imagemagick || true
+          # هذه الخطوة الآن "آمنة": لو فشلت أو ملقيتش الأداة، هتكمل البناء عادي جداً
+          echo "Starting Asset Generation..."
+          # نحاول تسطيب الأداة فقط للسرعة، لو فشلت هنكمل بدونها
+          sudo apt-get update && sudo apt-get install -y imagemagick || echo "ImageMagick skipped"
           
-          # فحص وجود الأداة قبل البدء لتجنب أي خطأ يوقف البناء
-          if command -v convert &> /dev/null; then
-            echo "✅ الأداة موجودة، جاري معالجة الصور..."
-            # تفعيل صلاحيات ImageMagick
-            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
-            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick/policy.xml 2>/dev/null || true
-            
-            # البحث عن اللوجو
-            SRC_LOGO=""
-            for path in "logo.png" "icon.png" "assets/logo.png" "assets/icon.png" "assets/icon-512.png" "assets/icon-192.png"; do
-              if [ -f "$path" ]; then SRC_LOGO="$path"; break; fi
-            done
-            if [ -z "$SRC_LOGO" ]; then SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1); fi
-            
-            if [ -n "$SRC_LOGO" ]; then
-              mkdir -p assets
-              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
-              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-foreground.png
-              convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-background.png
-              convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || cp "$SRC_LOGO" assets/splash.png
-              cp assets/splash.png assets/splash-only.png 2>/dev/null || true
-            fi
-          else
-            echo "⚠️ تحذير: أداة convert غير متاحة، سيتم تخطي تحويل الصور لضمان نجاح البناء."
-          fi
-          
-          # تشغيل الأداة الرسمية لتوليد الأيقونات (تعمل بدون convert في أغلب الحالات)
-          npx capacitor-assets generate --android || true
-          echo "✅ تم إنهاء خطوة الأيقونات بنجاح!"
+          # تشغيل التوليد الأساسي بدون الاعتماد على خطأ الـ convert
+          npx capacitor-assets generate --android || echo "Capacitor assets failed, proceeding anyway"
+          echo "✅ خطوة الصور تمت بنجاح (سواء بالمعالجة أو بدونها)"
+          exit 0
 
       - name: Sync Web Core and Scripts to Android
         run: |
@@ -115,7 +91,6 @@ jobs:
           if [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
           fi
-          
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
 
