@@ -20,6 +20,12 @@ jobs:
         with:
           node-version: '22'
 
+      # الخطوة السحرية الجديدة لتثبيت أداة معالجة الصور على سيرفر Ubuntu المخصص للأندرويد
+      - name: Install ImageMagick on Ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
       - name: Initialize Project and Install Capacitor
         run: |
           if [ ! -f package.json ]; then npm init -y; fi
