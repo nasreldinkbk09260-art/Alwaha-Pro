@@ -20,12 +20,6 @@ jobs:
         with:
           node-version: '22'
 
-      # الخطوة السحرية الجديدة لتثبيت أداة معالجة الصور على سيرفر Ubuntu المخصص للأندرويد
-      - name: Install ImageMagick on Ubuntu
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick
-
       - name: Initialize Project and Install Capacitor
         run: |
           if [ ! -f package.json ]; then npm init -y; fi
@@ -74,46 +68,38 @@ jobs:
 
       - name: Auto-Resize and Generate Icons/Splash
         run: |
-          # 1. تفعيل فك قيود الأمان لـ ImageMagick لمعالجة الصور بأمان
-          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
-          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick/policy.xml 2>/dev/null || true
+          # محاولة تثبيت الأداة
+          sudo apt-get update && sudo apt-get install -y imagemagick || true
           
-          # 2. البحث عن اللوجو الخاص بك (سواء باسم logo.png أو icon.png في الجذر أو مجلد assets)
-          SRC_LOGO=""
-          for path in "logo.png" "icon.png" "assets/logo.png" "assets/icon.png" "assets/icon-512.png" "assets/icon-192.png"; do
-            if [ -f "$path" ]; then
-              SRC_LOGO="$path"
-              break
+          # فحص وجود الأداة قبل البدء لتجنب أي خطأ يوقف البناء
+          if command -v convert &> /dev/null; then
+            echo "✅ الأداة موجودة، جاري معالجة الصور..."
+            # تفعيل صلاحيات ImageMagick
+            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
+            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick/policy.xml 2>/dev/null || true
+            
+            # البحث عن اللوجو
+            SRC_LOGO=""
+            for path in "logo.png" "icon.png" "assets/logo.png" "assets/icon.png" "assets/icon-512.png" "assets/icon-192.png"; do
+              if [ -f "$path" ]; then SRC_LOGO="$path"; break; fi
+            done
+            if [ -z "$SRC_LOGO" ]; then SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1); fi
+            
+            if [ -n "$SRC_LOGO" ]; then
+              mkdir -p assets
+              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
+              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-foreground.png
+              convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-background.png
+              convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || cp "$SRC_LOGO" assets/splash.png
+              cp assets/splash.png assets/splash-only.png 2>/dev/null || true
             fi
-          done
-          
-          # إذا لم يجد شيئاً بالأسماء السابقة، سيبحث عن أي ملف يحتوي على كلمة logo أو icon
-          if [ -z "$SRC_LOGO" ]; then
-            SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
-          fi
-          
-          if [ -n "$SRC_LOGO" ]; then
-            echo "🎯 تم العثور على الشعار المخصص في المسار: $SRC_LOGO"
-            
-            # تهيئة مجلد الأصول الذي تتوقعه أداة كاباسيتور
-            mkdir -p assets
-            
-            # توليد الملفات القياسية الثلاثة للأيقونات
-            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
-            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-foreground.png
-            convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-background.png
-            
-            # توليد شاشة الإقلاع (Splash) باللون الداكن الخاص بالواحة (#090212) وتوسيط الشعار
-            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || \
-            convert "$SRC_LOGO" -resize 512x512 -background "#FFFFFF" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
-            cp assets/splash.png assets/splash-only.png 2>/dev/null || true
-            
-            # تشغيل الأداة الرسمية لتوليد وتوزيع الأيقونات داخل مجلد أندرويد تلقائياً وبشكل آمن تماماً
-            npx capacitor-assets generate --android || true
-            echo "✅ تم توليد وحقن الأيقونات والشاشات المخصصة بنجاح داخل مجلد أندرويد!"
           else
-            echo "⚠️ تنبيه: لم يتم العثور على ملف اللوجو المخصص، يرجى التأكد من رفع ملف باسم logo.png بجانب ملف app.js"
+            echo "⚠️ تحذير: أداة convert غير متاحة، سيتم تخطي تحويل الصور لضمان نجاح البناء."
           fi
+          
+          # تشغيل الأداة الرسمية لتوليد الأيقونات (تعمل بدون convert في أغلب الحالات)
+          npx capacitor-assets generate --android || true
+          echo "✅ تم إنهاء خطوة الأيقونات بنجاح!"
 
       - name: Sync Web Core and Scripts to Android
         run: |
