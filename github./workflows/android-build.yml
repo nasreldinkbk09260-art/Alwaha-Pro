@@ -68,34 +68,31 @@ jobs:
 
       - name: Auto-Resize and Generate Icons/Splash
         run: |
-          # 1. تثبيت الأداة المطلوبة (ImageMagick)
-          sudo apt-get update && sudo apt-get install -y imagemagick || true
+          set +e
+          # تثبيت الأداة
+          sudo apt-get update && sudo apt-get install -y imagemagick
           
-          # 2. تفعيل فك قيود الأمان لـ ImageMagick
-          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
-          
-          # 3. البحث عن اللوجو
-          SRC_LOGO=""
-          for path in "logo.png" "icon.png" "assets/logo.png" "assets/icon.png" "assets/icon-512.png" "assets/icon-192.png"; do
-            if [ -f "$path" ]; then SRC_LOGO="$path"; break; fi
-          done
-          if [ -z "$SRC_LOGO" ]; then SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1); fi
-          
-          # 4. معالجة الصور فقط إذا كانت الأداة متاحة
-          if [ -n "$SRC_LOGO" ] && command -v convert &> /dev/null; then
-            echo "🎯 تم العثور على الشعار والبدء في المعالجة..."
-            mkdir -p assets
-            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || true
-            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || true
-            convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || true
-            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
-            cp assets/splash.png assets/splash-only.png 2>/dev/null || true
-          else
-            echo "⚠️ تخطي المعالجة الاحترافية (الأداة غير متاحة أو الشعار مفقود)، المتابعة للبناء الأساسي..."
+          # فحص الأداة
+          if command -v convert &> /dev/null; then
+            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
+            
+            SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
+            
+            if [ -n "$SRC_LOGO" ]; then
+              mkdir -p assets
+              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png
+              convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png
+              convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png
+              convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png
+              cp assets/splash.png assets/splash-only.png
+            fi
           fi
           
-          # 5. تشغيل أداة كاباسيتور
-          npx capacitor-assets generate --android || true
+          # تشغيل كاباسيتور
+          npx capacitor-assets generate --android
+          
+          # إجبار السكريبت على النجاح مهما حدث في هذه الخطوة
+          exit 0
 
       - name: Sync Web Core and Scripts to Android
         run: |
