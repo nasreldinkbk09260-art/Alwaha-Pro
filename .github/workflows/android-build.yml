@@ -52,11 +52,13 @@ jobs:
 
       - name: Force Custom Icon
         run: |
-          # التأكد من وجود المجلدات ونسخ الأيقونة يدوياً لجميع الأحجام
-          # هذا يضمن تغيير الأيقونة بشكل قسري
-          for folder in android/app/src/main/res/mipmap-*; do
-            cp icon.png "$folder/ic_launcher.png"
-            cp icon.png "$folder/ic_launcher_round.png"
+          # سنقوم بنسخ الأيقونة فقط للمجلدات القياسية التي تقبل PNG
+          # نتجنب مجلدات anydpi-v26 لأنها تعتمد على ملفات XML
+          for folder in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
+            if [ -d "$folder" ]; then
+              cp icon.png "$folder/ic_launcher.png"
+              cp icon.png "$folder/ic_launcher_round.png"
+            fi
           done
 
       - name: Sync Web Core and Scripts to Android
