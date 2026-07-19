@@ -42,11 +42,9 @@ jobs:
 
       - name: Initialize Capacitor Android Platform
         run: |
-          # 1. إنشاء مجلد www ونقل ملفاتك إليه
           mkdir -p www
           cp -f *.html *.js *.css *.json *.png *.svg www/ 2>/dev/null || true
           
-          # 2. ضبط الإعدادات بشكل صحيح لاستخدام مجلد www
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.alwahapro.app",
@@ -60,10 +58,8 @@ jobs:
 
       - name: Process Assets
         run: |
-          # تثبيت المكتبة
           npm install @capacitor/assets
           
-          # إنشاء ملف إعدادات يوجه الأداة لاستخدام icon.png
           cat << 'EOF' > capacitor.assets.config.json
           {
             "android": {
@@ -72,7 +68,6 @@ jobs:
           }
           EOF
           
-          # تشغيل التوليد بدون خيارات إضافية (الأداة ستقرأ الملف أعلاه)
           npx capacitor-assets generate --android
 
       - name: Sync Web Core and Scripts to Android
@@ -88,7 +83,8 @@ jobs:
           cd android
           if [ -n "$ANDROID_HOME" ]; then echo "sdk.dir=$ANDROID_HOME" > local.properties; fi
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
+          # إضافة أمر clean لتنظيف ذاكرة التخزين المؤقت قبل البناء
+          ./gradlew clean assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
 
       - name: Upload Android APK Artifact
         uses: actions/upload-artifact@v4
