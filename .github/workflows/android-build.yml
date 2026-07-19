@@ -1,1 +1,89 @@
+name: Build Alwaha Pro (Android)
 
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android Package (APK)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Initialize Project and Install Capacitor
+        run: |
+          if [ ! -f package.json ]; then npm init -y; fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # خطوة التثبيت المضمونة
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          # التحقق من أن الأمر يعمل
+          convert -version
+
+      - name: Initialize Capacitor Android Platform
+        run: |
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.alwahapro.app",
+            "appName": "Alwaha Pro",
+            "webDir": "www"
+          }
+          EOF
+          rm -rf android
+          npx cap add android
+
+      # معالجة الصور بعد ضمان تثبيت الأداة
+      - name: Process Assets
+        run: |
+          mkdir -p assets
+          SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
+          if [ -n "$SRC_LOGO" ]; then
+            # تفعيل صلاحيات ImageMagick
+            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
+            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png || cp "$SRC_LOGO" assets/icon-only.png
+            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png || true
+            npx capacitor-assets generate --android || true
+          fi
+
+      - name: Sync Web Core and Scripts to Android
+        run: |
+          npx cap sync android
+
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Build Android App (Debug APK)
+        run: |
+          cd android
+          if [ -n "$ANDROID_HOME" ]; then echo "sdk.dir=$ANDROID_HOME" > local.properties; fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
