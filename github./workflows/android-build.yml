@@ -34,6 +34,14 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      # خطوة التثبيت المضمونة
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+          # التحقق من أن الأمر يعمل
+          convert -version
+
       - name: Initialize Capacitor Android Platform
         run: |
           cat << 'EOF' > capacitor.config.json
@@ -46,15 +54,16 @@ jobs:
           rm -rf android
           npx cap add android
 
-      - name: Install ImageMagick and Process Assets
+      # معالجة الصور بعد ضمان تثبيت الأداة
+      - name: Process Assets
         run: |
-          sudo apt-get update && sudo apt-get install -y imagemagick
-          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
           mkdir -p assets
           SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
           if [ -n "$SRC_LOGO" ]; then
-            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
-            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
+            # تفعيل صلاحيات ImageMagick
+            sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
+            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png || cp "$SRC_LOGO" assets/icon-only.png
+            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png || true
             npx capacitor-assets generate --android || true
           fi
 
