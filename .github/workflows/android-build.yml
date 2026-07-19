@@ -42,13 +42,19 @@ jobs:
 
       - name: Initialize Capacitor Android Platform
         run: |
+          # 1. إنشاء مجلد www ونقل ملفاتك إليه
+          mkdir -p www
+          cp -f *.html *.js *.css *.json *.png *.svg www/ 2>/dev/null || true
+          
+          # 2. ضبط الإعدادات بشكل صحيح لاستخدام مجلد www
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.alwahapro.app",
             "appName": "Alwaha Pro",
-            "webDir": "."
+            "webDir": "www"
           }
           EOF
+          
           rm -rf android
           npx cap add android
 
