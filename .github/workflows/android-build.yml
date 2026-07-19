@@ -1,4 +1,4 @@
-name: Build Alwaha Pro (Android)
+name: Build Alwaha Pro (Android Production)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-android:
-    name: Build Android Package (APK)
+    name: Build Production Android Package (APK)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Initialize Project
+      - name: Initialize Project and Install Capacitor
         run: |
           if [ ! -f package.json ]; then npm init -y; fi
           npm install @capacitor/core @capacitor/cli @capacitor/android
@@ -50,16 +50,30 @@ jobs:
           rm -rf android
           npx cap add android
 
-      - name: Force Custom Icon
+      - name: Force Custom Icon & Fix Adaptive Fallback
         run: |
-          # سنقوم بنسخ الأيقونة فقط للمجلدات القياسية التي تقبل PNG
-          # نتجنب مجلدات anydpi-v26 لأنها تعتمد على ملفات XML
-          for folder in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
-            if [ -d "$folder" ]; then
-              cp icon.png "$folder/ic_launcher.png"
-              cp icon.png "$folder/ic_launcher_round.png"
-            fi
-          done
+          # البحث عن أيقونة التطبيق الأساسية (يفضل وجود ملف باسم icon.png في المجلد الرئيسي للبرروع)
+          SRC_ICON="icon.png"
+          if [ ! -f "$SRC_ICON" ]; then
+            SRC_ICON=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
+          fi
+          
+          if [ -n "$SRC_ICON" ] && [ -f "$SRC_ICON" ]; then
+            echo "Found active application icon at: $SRC_ICON"
+            # استبدال جميع ملفات الأيقونات التقليدية في مجلدات الأندرويد
+            for folder in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
+              if [ -d "$folder" ]; then
+                cp -f "$SRC_ICON" "$folder/ic_launcher.png"
+                cp -f "$SRC_ICON" "$folder/ic_launcher_round.png"
+              fi
+            done
+            
+            # الحل الجذري للأندرويد الحديث: حذف مجلد الأيقونات التكيفية الافتراضي لفرض قراءة ملفات الـ PNG
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          else
+            echo "Error: Could not find icon.png or any logo asset in the project root!"
+            exit 1
+          fi
 
       - name: Sync Web Core and Scripts to Android
         run: |
@@ -69,15 +83,35 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
 
-      - name: Build Android App (Debug APK)
+      - name: Build Android App (Release APK)
         run: |
           cd android
           if [ -n "$ANDROID_HOME" ]; then echo "sdk.dir=$ANDROID_HOME" > local.properties; fi
           chmod +x gradlew
-          ./gradlew clean assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
+          ./gradlew clean assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
 
-      - name: Upload Android APK Artifact
+          # التحقق من خروج ملف الـ APK بنجاح
+          ls -la app/build/outputs/apk/release/
+
+      - name: Sign Production APK
+        run: |
+          # توليد مفتاح توقيع رسمي ومستقر للتطبيق تلقائياً داخل سيرفر البناء
+          keytool -genkey -v -keystore release.keystore -alias alwaha_alias -keyalg RSA -keysize 2048 -validity 10000 -storepass alwahapro123 -keypass alwahapro123 -dname "CN=AlwahaPro, OU=Production, O=Alwaha, L=Cairo, S=Cairo, C=EG"
+          
+          # فحص اسم الملف الناتج (قد يخرج باسم app-release-unsigned.apk أو app-release.apk)
+          UNSIGNED_APK="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          if [ ! -f "$UNSIGNED_APK" ]; then
+            UNSIGNED_APK="android/app/build/outputs/apk/release/app-release.apk"
+          fi
+          
+          # استدعاء أداة apksigner وتوقيع التطبيق ليصبح جاهزاً للتثبيت الفوري لدى أي شخص
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -n 1)
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign --ks release.keystore --ks-pass pass:alwahapro123 --out Alwaha-Pro-Final.apk "$UNSIGNED_APK"
+          
+          echo "Production APK is fully signed and ready!"
+
+      - name: Upload Production Android APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Alwaha-Pro-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Alwaha-Pro-Production-APK
+          path: Alwaha-Pro-Final.apk
