@@ -60,16 +60,20 @@ jobs:
 
       - name: Process Assets
         run: |
-          # تثبيت المكتبة اللازمة
+          # تثبيت المكتبة
           npm install @capacitor/assets
           
-          # استخدام صورتك icon.png الموجودة في المجلد الرئيسي
-          if [ -f icon.png ]; then
-            echo "Icon found, generating assets..."
-            npx capacitor-assets generate --android --icon icon.png
-          else
-            echo "icon.png not found, skipping icon generation."
-          fi
+          # إنشاء ملف إعدادات يوجه الأداة لاستخدام icon.png
+          cat << 'EOF' > capacitor.assets.config.json
+          {
+            "android": {
+              "input": "icon.png"
+            }
+          }
+          EOF
+          
+          # تشغيل التوليد بدون خيارات إضافية (الأداة ستقرأ الملف أعلاه)
+          npx capacitor-assets generate --android
 
       - name: Sync Web Core and Scripts to Android
         run: |
