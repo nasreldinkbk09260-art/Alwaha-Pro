@@ -1,4 +1,4 @@
-name: Build Alwaha Pro (Android Production)
+Name: Build Alwaha Pro (Android Production)
 
 on:
   push:
@@ -37,7 +37,9 @@ jobs:
       - name: Initialize Capacitor Android Platform
         run: |
           mkdir -p www
-          cp -f *.html *.js *.css *.json *.png *.svg www/ 2>/dev/null || true
+          
+          # [التعديل هنا] استخدام rsync لنسخ كافة المجلدات والملفات (بما فيها التبويبات الداخلية) بدلاً من الملفات السطحية فقط
+          rsync -av --exclude='node_modules' --exclude='android' --exclude='www' --exclude='.git' --exclude='.github' ./ www/
           
           cat << 'EOF' > capacitor.config.json
           {
@@ -87,9 +89,17 @@ jobs:
           ./gradlew clean assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
 
       - name: Decode Keystore from Secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          # تحويل المفتاح من نص Base64 إلى ملف حقيقي
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+          # [التعديل هنا] استخدام متغيرات البيئة لمنع تلف المفتاح ومسح أي مسافات زائدة
+          echo "$KEYSTORE_BASE64" | tr -d '\n\r ' | base64 --decode > release.keystore
+          
+          # التحقق من أن الملف لم يخرج فارغاً
+          if [ ! -s release.keystore ]; then
+            echo "Error: Keystore file is empty! Check your KEYSTORE_BASE64 secret."
+            exit 1
+          fi
 
       - name: Sign Production APK
         run: |
@@ -100,7 +110,6 @@ jobs:
           
           BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -n 1)
           
-          # استخدام المتغيرات السرية للتوقيع
           $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign \
             --ks release.keystore \
             --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" \
