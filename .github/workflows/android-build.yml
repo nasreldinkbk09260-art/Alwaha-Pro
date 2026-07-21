@@ -1,4 +1,4 @@
-Name: Build Alwaha Pro (Android Production)
+name: Build Alwaha Pro (Android Production)
 
 on:
   push:
