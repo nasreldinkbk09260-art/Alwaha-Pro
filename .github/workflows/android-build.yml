@@ -52,7 +52,6 @@ jobs:
 
       - name: Force Custom Icon & Fix Adaptive Fallback
         run: |
-          # البحث عن أيقونة التطبيق الأساسية (يفضل وجود ملف باسم icon.png في المجلد الرئيسي للبرروع)
           SRC_ICON="icon.png"
           if [ ! -f "$SRC_ICON" ]; then
             SRC_ICON=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
@@ -60,15 +59,12 @@ jobs:
           
           if [ -n "$SRC_ICON" ] && [ -f "$SRC_ICON" ]; then
             echo "Found active application icon at: $SRC_ICON"
-            # استبدال جميع ملفات الأيقونات التقليدية في مجلدات الأندرويد
             for folder in android/app/src/main/res/mipmap-mdpi android/app/src/main/res/mipmap-hdpi android/app/src/main/res/mipmap-xhdpi android/app/src/main/res/mipmap-xxhdpi android/app/src/main/res/mipmap-xxxhdpi; do
               if [ -d "$folder" ]; then
                 cp -f "$SRC_ICON" "$folder/ic_launcher.png"
                 cp -f "$SRC_ICON" "$folder/ic_launcher_round.png"
               fi
             done
-            
-            # الحل الجذري للأندرويد الحديث: حذف مجلد الأيقونات التكيفية الافتراضي لفرض قراءة ملفات الـ PNG
             rm -rf android/app/src/main/res/mipmap-anydpi-v26
           else
             echo "Error: Could not find icon.png or any logo asset in the project root!"
@@ -90,23 +86,27 @@ jobs:
           chmod +x gradlew
           ./gradlew clean assembleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
 
-          # التحقق من خروج ملف الـ APK بنجاح
-          ls -la app/build/outputs/apk/release/
+      - name: Decode Keystore from Secrets
+        run: |
+          # تحويل المفتاح من نص Base64 إلى ملف حقيقي
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
 
       - name: Sign Production APK
         run: |
-          # توليد مفتاح توقيع رسمي ومستقر للتطبيق تلقائياً داخل سيرفر البناء
-          keytool -genkey -v -keystore release.keystore -alias alwaha_alias -keyalg RSA -keysize 2048 -validity 10000 -storepass alwahapro123 -keypass alwahapro123 -dname "CN=AlwahaPro, OU=Production, O=Alwaha, L=Cairo, S=Cairo, C=EG"
-          
-          # فحص اسم الملف الناتج (قد يخرج باسم app-release-unsigned.apk أو app-release.apk)
           UNSIGNED_APK="android/app/build/outputs/apk/release/app-release-unsigned.apk"
           if [ ! -f "$UNSIGNED_APK" ]; then
             UNSIGNED_APK="android/app/build/outputs/apk/release/app-release.apk"
           fi
           
-          # استدعاء أداة apksigner وتوقيع التطبيق ليصبح جاهزاً للتثبيت الفوري لدى أي شخص
           BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools/ | sort -V | tail -n 1)
-          $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign --ks release.keystore --ks-pass pass:alwahapro123 --out Alwaha-Pro-Final.apk "$UNSIGNED_APK"
+          
+          # استخدام المتغيرات السرية للتوقيع
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.KEYSTORE_ALIAS }}" \
+            --ks-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.KEYSTORE_PASSWORD }}" \
+            --out Alwaha-Pro-Final.apk "$UNSIGNED_APK"
           
           echo "Production APK is fully signed and ready!"
 
