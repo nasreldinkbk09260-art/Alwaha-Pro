@@ -1,23 +1,21 @@
 {
-  "short_name": "الواحة Pro",
-  "name": "Alwaha Pro - المنصة الرقمية المتكاملة",
+  "name": "Alwaha Pro - الواحة برو",
+  "short_name": "Alwaha",
+  "description": "المنصة المتكاملة المحدثة لإدارة الأعمال والترفيه والتواصل",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#00ffff",
   "icons": [
     {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
     },
     {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
-  ],
-  "start_url": "index.html",
-  "background_color": "#090212",
-  "theme_color": "#0f051c",
-  "display": "standalone",
-  "orientation": "portrait",
-  "dir": "rtl",
-  "lang": "ar"
+  ]
 }
