@@ -122,7 +122,6 @@ function showSection(id, element) {
         if(navClasses[id]) document.querySelector(navClasses[id])?.classList.add('active');
     }
     
-    // عند تصفح التبويبات الكبيرة، نضمن إغلاق أي نافذة بروفايل فرعية لإعادة تصفير واجهة المستخدم
     if(id !== 'profile-section') {
         document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
         const header = document.querySelector('.profile-card-header-view');
@@ -254,9 +253,6 @@ function collapseChatSubWindows() {
     document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
 }
 
-// ==========================================
-// 8. نظام الاتصال الهاتفي والصوتي السحابي واللاسلكي
-// ==========================================
 function openTargetUserDirectChat(name) {
     currentChatUser = name;
     document.getElementById('chat-main-lobby-wrapper').style.display = 'none';
@@ -357,14 +353,14 @@ function terminateVoiceCall() {
 }
 
 // ==========================================
-// 9. الألعاب والترفيه الذاتي (Ludo Control)
+// 8. الألعاب والترفيه الذاتي (Ludo Control)
 // ==========================================
 function simulateLudoMatchLaunch() {
     alert("🎲 تم تهيئة خريطة الليدو الملكية وتوزيع المصفوفات الرقمية محلياً في الذاكرة الموحدة للعبة. جاهز للعب التنافسي ثنائي/رباعي الأطراف دون استهلاك أي ميغابايتس.");
 }
 
 // ==========================================
-// 10. إدارة الماركت والمبيعات والرفع (Market Section)
+// 9. إدارة الماركت والمبيعات والرفع (Market Section)
 // ==========================================
 function switchMarketMode(mode) {
     document.getElementById('tab-buy').classList.toggle('active-tab', mode === 'buy');
@@ -471,7 +467,7 @@ function searchProducts() {
 }
 
 // ==========================================
-// 11. صناعة الفيديوهات واستوديو الكاميرا (Reels/Camera)
+// 10. صناعة الفيديوهات واستوديو الكاميرا (Reels/Camera)
 // ==========================================
 function openProfessionalCameraView() {
     const modal = document.getElementById('pro-camera-modal');
@@ -492,7 +488,7 @@ function triggerAnimeAiConverterFilter() {
 }
 
 // ==========================================
-// 12. لوحة تحكم الشبكة اللاسلكية الحرة (Free Mesh)
+// 11. لوحة تحكم الشبكة اللاسلكية الحرة (Free Mesh)
 // ==========================================
 function toggleFreeMeshShareSystem() {
     const btn = document.getElementById('free-mode-toggle-main-btn');
@@ -515,22 +511,20 @@ function toggleFreeMeshShareSystem() {
 }
 
 // ==========================================
-// 13. الملف الشخصي المطور (فتح ديناميكي كصفحة جديدة لمنع ظهور التبويبات بالأسفل)
+// 12. الملف الشخصي المطور وإعدادات החשبون
 // ==========================================
 function openSubProfileView(id) {
-    // إخفاء القوائم والهيدر الرئيسي فوراً لجعل اللوحة الفرعية تفتح في أعلى الصفحة كلياً
     const header = document.querySelector('.profile-card-header-view');
     const menuList = document.querySelector('.profile-options-menu-list');
     if(header) header.style.display = 'none';
     if(menuList) menuList.style.display = 'none';
     
-    // إخفاء أي نوافذ فرعية أخرى منعاً للتداخل
     document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
     
     const target = document.getElementById(id);
     if(target) {
         target.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' }); // الصعود للأعلى لتأمين رؤية كاملة ومواكبة الكيبورد
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
 
@@ -538,7 +532,6 @@ function closeSubProfileView(id) {
     const target = document.getElementById(id);
     if(target) target.style.display = 'none';
     
-    // إعادة إظهار القائمة الرئيسية والهيدر لبروفايل المستخدم بشكل سلس
     const header = document.querySelector('.profile-card-header-view');
     const menuList = document.querySelector('.profile-options-menu-list');
     if(header) header.style.display = 'block';
@@ -635,7 +628,6 @@ function syncUiWithLoadedProfileData() {
         }
     }
 
-    // مزامنة حقول لوحة الإعدادات لتكون جاهزة للمستخدم دائماً
     const settingsName = document.getElementById('settings-name');
     const settingsEmail = document.getElementById('settings-email');
     const settingsPhone = document.getElementById('settings-phone');
@@ -684,9 +676,6 @@ function applyThemeSelected(theme) {
     closeSubProfileView('sub-view-themes-picker');
 }
 
-// ==========================================
-// 14. وظائف إضافية لإعدادات الحساب والتوثيق والخصوصية
-// ==========================================
 function sendEmailOTP() {
     const email = document.getElementById('settings-email').value.trim();
     if(!email) return alert("يرجى كتابة البريد الإلكتروني أولاً.");
@@ -754,7 +743,7 @@ function clearLocalStorageCache() {
 }
 
 // ==========================================
-// 15. التهيئة المبدئية عند التحميل
+// 13. التهيئة المبدئية عند التحميل
 // ==========================================
 window.onload = function() {
     initializeKeyboardInputGuard();
