@@ -1,0 +1,111 @@
+name: Alwaha Pro - Native Android Build Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # 1. تجهيز مجلد الويب النظيف وتجميع ملفات التطبيق فيه
+      - name: Prepare Web Assets
+        run: |
+          mkdir -p www
+          cp index.html app.js style.css manifest.json privacy.html sw.js icon.png www/ 2>/dev/null || true
+
+      # 2. إعداد package.json وتثبيت Capacitor
+      - name: Initialize Node Environment & Capacitor
+        run: |
+          if [ ! -f package.json ]; then
+            npm init -y
+          fi
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+
+      # 3. تهيئة إعدادات Capacitor وتمرير الشعار والأيقونة
+      - name: Configure and Build Capacitor Android App
+        run: |
+          cat <<JSON > capacitor.config.json
+          {
+            "appId": "com.alwaha.pro",
+            "appName": "Alwaha Pro",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          JSON
+
+          npx cap add android
+          
+          # نسخ أيقونة التطبيق لجميع أحجام الأندرويد (Mipmap)
+          if [ -f icon.png ]; then
+            mkdir -p android/app/src/main/res/mipmap-hdpi
+            mkdir -p android/app/src/main/res/mipmap-mdpi
+            mkdir -p android/app/src/main/res/mipmap-xhdpi
+            mkdir -p android/app/src/main/res/mipmap-xxhdpi
+            mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+            
+            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+            
+            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+          fi
+
+          npx cap sync android
+
+      # 4. بناء ملف APK
+      - name: Build Android Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      # 5. توقيع الـ APK النهائي
+      - name: Sign APK
+        run: |
+          cd android/app/build/outputs/apk/release
+          keytool -genkey -v -keystore release.keystore \
+            -alias alwahakey -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass alwahapropass -keypass alwahapropass \
+            -dname "CN=AlwahaPro, OU=Dev, O=Alwaha, L=Cairo, C=EG"
+
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign \
+            --ks release.keystore \
+            --ks-pass pass:alwahapropass \
+            --ks-key-alias alwahakey \
+            --key-pass pass:alwahapropass \
+            --out AlwahaPro-Final.apk \
+            app-release-unsigned.apk
+
+      # 6. رفع ملف ה-APK الجاهز للتثبيت
+      - name: Upload Artifacts (APK)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlwahaPro-Final-APK
+          path: android/app/build/outputs/apk/release/AlwahaPro-Final.apk
