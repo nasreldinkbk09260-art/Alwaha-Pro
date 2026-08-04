@@ -1,16 +1,22 @@
 {
+  "id": "com.alwahapro.app",
   "short_name": "AlwahaPro",
   "name": "Alwaha Pro - الواحة برو المنصة المتكاملة",
+  "description": "البيئة المتكاملة المحدثة لإدارة الأعمال والترفيه والتواصل اللامركزي الحُر.",
+  "lang": "ar",
+  "dir": "rtl",
   "icons": [
     {
       "src": "icon.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "icon.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "./index.html",
@@ -18,5 +24,6 @@
   "theme_color": "#090212",
   "display": "standalone",
   "orientation": "portrait",
-  "scope": "./"
+  "scope": "./",
+  "categories": ["business", "social", "productivity"]
 }
