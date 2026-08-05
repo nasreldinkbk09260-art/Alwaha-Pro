@@ -1,70 +1,40 @@
-// 1. التحقق من الجلسة عند فتح التطبيق
+import { supabase } from './supabaseClient.js';
+
+// عند تحميل الصفحة: التحقق من الجلسة
 document.addEventListener('DOMContentLoaded', async () => {
-  if (typeof supabase !== 'undefined') {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      showDashboard(session.user);
-    } else {
-      showAuthForms();
-    }
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    loadUserData(session.user);
   }
 });
 
-// 2. زر تسجيل الدخول
-document.getElementById('login-btn')?.addEventListener('click', async (e) => {
+// زر إرسال البيانات / حفظ الحساب
+document.getElementById('save-btn')?.addEventListener('click', async (e) => {
   e.preventDefault();
-  const email = document.getElementById('login-email')?.value;
-  const password = document.getElementById('login-password')?.value;
+  const inputData = document.getElementById('user-input')?.value;
 
-  if (!email || !password) {
-    alert('يرجى كتابة البريد وكلمة المرور');
-    return;
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('يرجى تسجيل الدخول أولاً');
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await supabase
+    .from('user_data') // اسم الجدول الجديد في Supabase
+    .insert([{ user_id: user.id, content: inputData }]);
+
   if (error) {
-    alert('خطأ في الدخول: ' + error.message);
+    alert('حدث خطأ أثناء الحفظ: ' + error.message);
   } else {
-    alert('تم تسجيل الدخول بنجاح!');
-    showDashboard(data.user);
+    alert('تم حفظ البيانات بنجاح!');
   }
 });
 
-// 3. زر إنشاء حساب جديد
-document.getElementById('signup-btn')?.addEventListener('click', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('signup-email')?.value;
-  const password = document.getElementById('signup-password')?.value;
+// دالة جلب البيانات وعرضها
+async function loadUserData(user) {
+  const { data, error } = await supabase
+    .from('user_data')
+    .select('*')
+    .eq('user_id', user.id);
 
-  if (!email || !password) {
-    alert('يرجى كتابة البريد وكلمة المرور');
-    return;
+  if (!error && data) {
+    console.log('بيانات المستخدم:', data);
   }
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) {
-    alert('خطأ في التسجيل: ' + error.message);
-  } else {
-    alert('تم إنشاء الحساب بنجاح!');
-  }
-});
-
-// 4. زر تسجيل الخروج
-document.getElementById('logout-btn')?.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  window.location.reload();
-});
-
-function showDashboard(user) {
-  const authBox = document.getElementById('auth-container');
-  const dashBox = document.getElementById('dashboard-container');
-  if (authBox) authBox.style.display = 'none';
-  if (dashBox) dashBox.style.display = 'block';
-}
-
-function showAuthForms() {
-  const authBox = document.getElementById('auth-container');
-  const dashBox = document.getElementById('dashboard-container');
-  if (authBox) authBox.style.display = 'block';
-  if (dashBox) dashBox.style.display = 'none';
 }
