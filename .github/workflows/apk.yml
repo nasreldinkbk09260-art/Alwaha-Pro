@@ -24,14 +24,17 @@ jobs:
       - name: Build Android App
         run: |
           mkdir -p www
-          cp -r index.html app.js supabaseClient.js css/ js/ assets/ www/ 2>/dev/null || cp index.html app.js www/
+          # نسخ كافة ملفات ومجلدات المشروع بالكامل بدون استثناء
+          cp -r * www/ 2>/dev/null || true
+          rm -rf www/www www/android www/node_modules www/.git www/.github
+
           npm init -y
           npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0
           npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir www
           npx cap add android
           npx cap copy android
           
-          # حظر التكرار في مكتبات Kotlin عبر gradle.properties
+          # إعدادات منع التضارب وتثبيت التنسيقات
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           
