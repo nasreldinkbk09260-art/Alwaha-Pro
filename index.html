@@ -41,123 +41,214 @@
             </ul>
         </div>
 
-        <!-- قسم الرئيسية -->
+        <!-- 1/ قسم الرئيسية (تم تنظيفه بوضع أ-الإشعارات ب-إضافة تغريدة أو صورة) -->
         <div id="home-section" class="app-section active-section">
-            <div class="official-landing-banner" style="text-align: center; padding: 25px 15px; background: linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.08)); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(0,255,255,0.25);">
-                <div style="font-size: 40px; color: #00ffff; margin-bottom: 5px;"><i class="fa-solid fa-circle-nodes"></i></div>
-                <h2 style="color: #fff; font-size: 22px; margin-bottom: 5px;">خادم تطبيق الواحة Pro الرسمي</h2>
-                <p style="color: #ccc; font-size: 12.5px; max-width: 340px; margin: 0 auto 15px auto;">البيئة المتكاملة المحدثة لإدارة الأعمال والترفيه والتواصل اللامركزي الحُر.</p>
-                
-                <div class="download-buttons-flex" style="display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto;" id="download-platform-container">
-                    <a href="Alwaha-Pro.apk" download class="btn-action golden-edge" style="justify-content:center; background:#00ff88; color:#000;">
-                        <i class="fa-brands fa-android" style="font-size: 18px;"></i> تحميل إصدار الأندرويد المباشر (APK)
-                    </a>
-                    <a href="#" onclick="showToast('من متصفح Safari اضغط مشاركة ثم Add to Home Screen', 'info'); return false;" class="btn-action golden-edge" style="justify-content:center; background:#fff; color:#000;">
-                        <i class="fa-brands fa-apple" style="font-size: 18px;"></i> تثبيت فوري لمنصة الآيفون (iOS)
-                    </a>
-                    <button onclick="triggerDesktopDownloadSimulation()" class="btn-action golden-edge" style="justify-content:center; background:#00ffff; color:#000;">
-                        <i class="fa-solid fa-desktop"></i> تنزيل نسخة سطح المكتب والكمبيوتر (PC)
-                    </button>
-                </div>
-            </div>
             
-            <div class="news-box publishing-area">
-                <h4 style="color:#ff00ff; margin-bottom:8px;"><i class="fa-solid fa-pen-to-square"></i> مشاركة تحديث أو فكرة برمجية حية</h4>
-                <textarea id="home-post-textarea" placeholder="ما هي آخر أفكارك أو تحديثاتك اليوم؟..." class="keyboard-target"></textarea>
-                <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                    <select id="home-post-type" class="custom-select">
-                        <option value="عام">🌐 توجيه عام للمنصة</option>
-                        <option value="تقني">⚡ تحديث تكنولوجي وصيانة</option>
-                    </select>
-                    <button class="btn-action" onclick="publishNewHomePost()"><i class="fa-solid fa-paper-plane"></i> بث وتعميم فوري</button>
+            <!-- أ - الإشعارات -->
+            <div class="news-box" style="margin-bottom:15px; border:1px solid rgba(0,255,255,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h4 style="color:#ffd700; margin:0;"><i class="fa-solid fa-bell"></i> الإشعارات</h4>
+                    <span class="badge" style="background:#ff00ff; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px;">جديد</span>
+                </div>
+                <div id="home-notifications-list" style="font-size:12.5px; color:#ccc;">
+                    <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><i class="fa-solid fa-circle-info" style="color:#00ffff;"></i> مرحباً بك في الواحة برو المحدث!</div>
+                    <div style="padding:6px 0;"><i class="fa-solid fa-bullhorn" style="color:#00ff88;"></i> يمكنك الآن إضافة تغريداتك وصورك ومشاركتها فورياً.</div>
                 </div>
             </div>
 
-            <h3 style="margin: 15px 5px 10px 0; color: #00ffff; font-size: 16px;"><i class="fa-solid fa-rss"></i> الخلاصة الإخبارية والمشاركات الأخيرة للرواد</h3>
+            <!-- ب - إضافة تغريدة أو صورة -->
+            <div class="news-box publishing-area" style="margin-bottom:20px;">
+                <h4 style="color:#ff00ff; margin-bottom:10px;"><i class="fa-solid fa-pen-to-square"></i> إضافة تغريدة أو صورة</h4>
+                
+                <textarea id="home-post-textarea" placeholder="اكتب تغريدتك هنا..." class="keyboard-target" style="width:100%; height:70px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-bottom:8px;"></textarea>
+                
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:12px; color:#00ffff; cursor:pointer; display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:6px; border:1px dashed #00ffff;">
+                        <i class="fa-solid fa-image"></i> إرفاق صورة للتغريدة
+                        <input type="file" id="home-post-image-input" accept="image/*" onchange="previewHomePostImage(this)" style="display:none;">
+                    </label>
+                    <img id="home-post-image-preview" style="display:none; width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px;">
+                </div>
+
+                <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="publishNewHomePost()"><i class="fa-solid fa-paper-plane"></i> نشر التغريدة</button>
+            </div>
+
+            <h3 style="margin: 15px 5px 10px 0; color: #00ffff; font-size: 16px;"><i class="fa-solid fa-rss"></i> خلاصة التغريدات والمنشورات</h3>
             <div id="home-posts-feed-container"></div>
         </div>
 
-        <!-- قسم التراسل -->
-        <div id="chat-section" class="app-section">
-            <div id="chat-main-lobby-wrapper">
-                <div class="active-friends-wrapper">
-                    <h5 style="color:#00ff88; font-size:12px; margin-bottom:5px;"><i class="fa-solid fa-circle"></i> جهات الاتصال النشطة حالياً عبر الخادم</h5>
-                    <div class="active-friends-list" id="active-friends-scroller-target">
-                        <div class="friend-status-node" onclick="openTargetUserDirectChat('المهندس نصر الدين')"><div class="avatar-glow">ن</div><span>نصر الدين</span></div>
-                        <div class="friend-status-node" onclick="openTargetUserDirectChat('المطور صابر')"><div class="avatar-glow">ص</div><span>صابر</span></div>
-                        <div class="friend-status-node" onclick="openTargetUserDirectChat('الأستاذ أحمد')"><div class="avatar-glow">أ</div><span>أحمد</span></div>
-                    </div>
+        <!-- 2/ قسم الماركت (مصغرات + تحديث بالسحب + بيع ما لديك مع كافة الحقول + معروضاتي) -->
+        <div id="market-section" class="app-section">
+            
+            <!-- أزرار التحكم العلوية بحجم مصغر -->
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <button id="market-mini-sell-btn" class="btn-action golden-edge" style="flex:1; padding:6px 10px; font-size:12px; justify-content:center; background:linear-gradient(135deg, #00ff88, #00b359); color:#000; border:none;" onclick="switchMarketSubView('sell')">
+                    <i class="fa-solid fa-plus-circle"></i> بيع ما لديك الآن
+                </button>
+                <button id="market-mini-myitems-btn" class="btn-action golden-edge" style="flex:1; padding:6px 10px; font-size:12px; justify-content:center; background:linear-gradient(135deg, #00ffff, #0088cc); color:#000; border:none;" onclick="switchMarketSubView('my-items')">
+                    <i class="fa-solid fa-box-open"></i> معروضاتي
+                </button>
+                <button id="market-mini-explore-btn" class="btn-action" style="padding:6px 10px; font-size:12px; justify-content:center; background:rgba(255,255,255,0.1); color:#fff;" onclick="switchMarketSubView('buy')">
+                    <i class="fa-solid fa-store"></i> السوق
+                </button>
+            </div>
+
+            <!-- عرض المعروضات العامة (شاشات مصغرة + تحديث بالسحب) -->
+            <div id="market-buy-view">
+                <div class="search-bar-box" style="margin-bottom:10px;">
+                    <input type="text" id="market-search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع..." oninput="searchProducts()" class="keyboard-target" style="width:100%; padding:8px;">
+                </div>
+                
+                <!-- منطقة التحديث السريع بالسحب/الضغط -->
+                <div id="market-pull-to-refresh" style="text-align:center; padding:6px; font-size:11px; color:#00ffff; background:rgba(0,255,255,0.05); border-radius:6px; margin-bottom:10px; cursor:pointer;" onclick="renderProductsList()">
+                    <i class="fa-solid fa-arrows-rotate"></i> اسحب للأسفل أو اضغط هنا لتحديث السلع الجديدة
                 </div>
 
-                <div class="chat-tabs-container" id="chat-gate-buttons" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('recent')">
-                        <span><i class="fa-solid fa-message" style="color:#00ffff; margin-left:8px;"></i> المحادثات والدردشات الجارية</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('all-users')">
-                        <span><i class="fa-solid fa-user-plus" style="color:#00ff88; margin-left:8px;"></i> إضافة أصدقاء وبحث ارتباط جديد</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('my-friends')">
-                        <span><i class="fa-solid fa-user-group" style="color:#ff00ff; margin-left:8px;"></i> الأصدقاء والاتصالات المعتمدة (<span id="friends-count">3</span>)</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
+                <!-- قائمة المنتجات بإطار مصغر (صورة واسم وسعر) -->
+                <div id="market-products-list-container" class="market-mini-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px;"></div>
+            </div>
+
+            <!-- أ ـ بيع ما لديك الآن -->
+            <div id="market-sell-view" style="display:none;">
+                <div class="news-box">
+                    <h4 style="color:#00ffff; margin-bottom:12px;"><i class="fa-solid fa-cart-plus"></i> إدراج منتج جديد للبيع</h4>
+                    
+                    <!-- أ ـ إضافة من صورتين لـ 4 صور -->
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:12px; color:#ffd700; display:block; margin-bottom:4px;">أ ـ إضافة الصور (من 2 إلى 4 صور عبر التصوير أو الملفات):</label>
+                        <input type="file" id="prod-images-input" accept="image/*" multiple onchange="handleMarketMultiImages(this)" style="font-size:11px; padding:4px;">
+                        <div id="prod-images-preview-container" style="display:flex; gap:6px; margin-top:8px; overflow-x:auto;"></div>
+                    </div>
+
+                    <!-- ب ـ اسم المنتج -->
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ب ـ اسم المنتج:</label>
+                        <input type="text" id="prod-name" class="keyboard-target" placeholder="أدخل اسم المنتج" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
+                    </div>
+
+                    <!-- ج ـ سعر المنتج -->
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ج ـ سعر المنتج:</label>
+                        <input type="text" id="prod-price" class="keyboard-target" placeholder="مثال: 500 ج.م" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
+                    </div>
+
+                    <!-- د ـ نوع المنتج -->
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">د ـ نوع المنتج:</label>
+                        <select id="prod-category" class="custom-select" style="width:100%; padding:8px; border-radius:6px; background:#18032b; border:1px solid rgba(255,255,255,0.1); color:#fff;">
+                            <option value="الكترونيات">هواتف وإلكترونيات</option>
+                            <option value="ملابس">ملابس وأزياء</option>
+                            <option value="معدات">معدات وآلات</option>
+                            <option value="منزليات">أثاث ومنزليات</option>
+                            <option value="آخر">أخرى</option>
+                        </select>
+                    </div>
+
+                    <!-- هـ ـ وصف المنتج ونقطة الالتقاء -->
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">هـ ـ وصف المنتج ونقطة الالتقاء:</label>
+                        <textarea id="prod-desc-location" class="keyboard-target" placeholder="اكتب وصف السلعة ومكان التسليم أو الالتقاء..." style="width:100%; height:60px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;"></textarea>
+                    </div>
+
+                    <!-- م ـ أضف رقم (اختياري) -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label style="font-size:12px; color:#ccc; display:block; margin-bottom:4px;">م ـ أضف رقم (اختياري):</label>
+                        <input type="tel" id="prod-phone-opt" class="keyboard-target" placeholder="رقم الموبايل / الواتساب (اختياري)" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
+                    </div>
+
+                    <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="submitNewProductToMarket()">نشر المنتج في الماركت</button>
                 </div>
             </div>
 
+            <!-- ب ـ معروضاتي (تعديل وحذف) -->
+            <div id="market-my-items-view" style="display:none;">
+                <div class="news-box">
+                    <h4 style="color:#00ff88; margin-bottom:10px;"><i class="fa-solid fa-boxes-packing"></i> معروضاتي الشخصية</h4>
+                    <p style="font-size:11px; color:#aaa; margin-bottom:10px;">يمكنك تعديل أي منشور أو حذفه نهائياً من هنا.</p>
+                    <div id="my-market-items-container"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3/ قسم الدردشة والتراسل (تنظيف وإضافة الأزرار والمزايا المطلوبة) -->
+        <div id="chat-section" class="app-section">
+            <div id="chat-main-lobby-wrapper">
+                
+                <!-- خيارات الدردشة الأساسية المفصلة -->
+                <div class="chat-tabs-container" id="chat-gate-buttons" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                    
+                    <!-- 1 ـ إضافة اصدقاء -->
+                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('all-users')">
+                        <span><i class="fa-solid fa-user-plus" style="color:#00ff88; margin-left:8px;"></i> ١ ـ إضافة أصدقاء</span>
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    
+                    <!-- ٢ ـ المحادثات الجارية -->
+                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('recent')">
+                        <span><i class="fa-solid fa-comments" style="color:#00ffff; margin-left:8px;"></i> ٢ ـ المحادثات الجارية</span>
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- نافذة 1: إضافة أصدقاء (صفحة لكل شخص + زر بحث بالرقم أو الاسم) -->
+            <div id="all-users-tab" class="chat-tab-content" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="color:#00ff88;"><i class="fa-solid fa-user-plus"></i> إضافة أصدقاء واستكشاف الدليل</h4>
+                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
+                </div>
+                
+                <!-- زر البحث عن شخص بالرقم أو الاسم -->
+                <div class="form-group" style="margin-bottom:12px;">
+                    <input type="text" id="friend-search-input" placeholder="ابحث عن شخص بالاسم أو رقم الهاتف..." class="keyboard-target" style="width:100%; padding:10px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid #00ff88; color:#fff;" oninput="searchUsersByPhoneOrName(this.value)">
+                </div>
+
+                <!-- عرض جميع المسجلين بالموقع ولكل شخص صفحة وزر إضافة -->
+                <div id="all-users-list" class="conversations-holder"></div>
+            </div>
+
+            <!-- نافذة 2: المحادثات الجارية -->
             <div id="recent-tab" class="chat-tab-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="color:#00ffff;"><i class="fa-solid fa-message"></i> قائمة المحادثات</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع للرئيسية</button>
+                    <h4 style="color:#00ffff;"><i class="fa-solid fa-comments"></i> المحادثات الجارية</h4>
+                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
                 </div>
                 <div id="conversations-list" class="conversations-holder"></div>
             </div>
 
-            <div id="all-users-tab" class="chat-tab-content" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="color:#00ff88;"><i class="fa-solid fa-user-plus"></i> محرك الارتباطات</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع للرئيسية</button>
-                </div>
-                <div class="form-group">
-                    <input type="text" id="friend-search-input" placeholder="أدخل المعرّف الفريد لإضافته أو حظره..." class="keyboard-target" style="width:100%; padding:8px; margin-bottom:8px;">
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn-action" style="flex:1; justify-content:center;" onclick="executeFriendAction('add')">ربط اتصال جديد</button>
-                        <button class="btn-action" style="flex:1; background:#ff0055; color:#fff; justify-content:center;" onclick="executeFriendAction('delete')">إنهاء الارتباط</button>
-                    </div>
-                </div>
-                <div id="all-users-list" class="conversations-holder" style="margin-top:10px;"></div>
-            </div>
-
-            <div id="my-friends-tab" class="chat-tab-content" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="color:#ff00ff;"><i class="fa-solid fa-user-group"></i> شبكة الأصدقاء المقربين</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع للرئيسية</button>
-                </div>
-                <div id="my-friends-list" class="conversations-holder"></div>
-            </div>
-
-            <!-- نافذة الدردشة المباشرة -->
+            <!-- نافذة المحادثة المباشرة (تحتوي على زر الاتصال دون إنترنت + المراسلة والاتصال الأساسيين + الرد والحذف والتعديل) -->
             <div id="active-chat-box" class="active-chat-window" style="display:none; margin-top:15px; border-top:2px solid #3a86ff; padding-top:10px;">
                 <div class="chat-header chat-window-header" style="display:flex; flex-direction:column; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; gap:8px;">
                     <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">قناة محادثة آمنة</span>
-                        <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> إغلاق</button>
+                        <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">محادثة مباشرة</span>
+                        <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> إغلاق</button>
                     </div>
                     
+                    <!-- أزرار الإتصال دون إنترنت + الإتصال والمراسلة الأساسية -->
                     <div class="chat-call-actions" style="display: flex; gap: 6px; width:100%;">
-                        <button onclick="initiateVoiceCall('bluetooth')" class="btn-action golden-edge" style="flex:1; background:#00ff88; color:#000; font-size:11px; justify-content:center;">
-                            <i class="fa-solid fa-signal"></i> اتصال حر (مباشر)
+                        <button onclick="initiateVoiceCall('offline')" class="btn-action golden-edge" style="flex:1; background:#00ff88; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
+                            <i class="fa-solid fa-wifi"></i> إتصال دون إنترنت (شبكة حرة)
                         </button>
-                        <button onclick="initiateVoiceCall('global')" class="btn-action golden-edge" style="flex:1; background:#00ffff; color:#000; font-size:11px; justify-content:center;">
-                            <i class="fa-solid fa-globe"></i> اتصال بالبيانات (سحابي)
+                        <button onclick="initiateVoiceCall('standard')" class="btn-action golden-edge" style="flex:1; background:#00ffff; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
+                            <i class="fa-solid fa-phone"></i> اتصال أساسي
                         </button>
                     </div>
                 </div>
 
-                <div id="chat-messages-container" style="height:220px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);"></div>
+                <!-- خيار مؤشر الرد على رسالة سابقة -->
+                <div id="reply-preview-bar" style="display:none; background:rgba(255,255,255,0.08); padding:6px 10px; border-right:3px solid #00ffff; margin-top:8px; font-size:11px; border-radius:4px; justify-content:space-between; align-items:center;">
+                    <span>الرد على: <span id="reply-target-text" style="color:#00ffff;">...</span></span>
+                    <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ff0055;" onclick="cancelReplyMode()"></i>
+                </div>
+
+                <!-- حاوية الرسائل (تدعم خيارات: الرد، التعديل، والحذف من الجهاز والجهاز الآخر) -->
+                <div id="chat-messages-container" style="height:230px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);"></div>
+                
                 <div class="chat-input-row" style="display:flex; gap:5px; margin-top:10px;">
                     <input type="text" id="chat-message-input" placeholder="اكتب رسالتك..." class="keyboard-target" style="flex:1; padding:10px; background:#120820; border:1px solid #3a86ff; color:#fff; border-radius:6px;">
-                    <button onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button id="send-chat-msg-btn" onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
         </div>
@@ -169,7 +260,7 @@
                 <h3 id="call-status-title" style="color:#fff; margin-bottom:10px;">جاري الاتصال...</h3>
                 <p id="call-target-user" style="color:#00ffff; font-size:16px; margin-bottom:20px; font-weight:bold;">الطرف المستلم</p>
                 <div style="margin-bottom:20px; font-size:12px; color:#00ff88; background:rgba(0,255,136,0.1); padding:8px; border-radius:6px;">
-                    <span id="call-method-indicator"><i class="fa-solid fa-shield"></i> اتصال صوتي مشفر ومباشر</span>
+                    <span id="call-method-indicator"><i class="fa-solid fa-shield"></i> اتصال صوتي مباشر</span>
                 </div>
                 <button onclick="terminateVoiceCall()" style="background:#ff0055; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
             </div>
@@ -191,57 +282,6 @@
                         </div>
                     </div>
                     <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="simulateLudoMatchLaunch()">بدء ساحة اللعب</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم الماركت -->
-        <div id="market-section" class="app-section">
-            <div class="market-tabs-header" style="display:flex; gap:5px; margin-bottom:10px;">
-                <button id="tab-buy" class="market-tab active-tab" style="flex:1; padding:10px; border-radius:6px; cursor:pointer;" onclick="switchMarketMode('buy')">استكشاف المعروضات</button>
-                <button id="tab-sell" class="market-tab" style="flex:1; padding:10px; border-radius:6px; cursor:pointer;" onclick="switchMarketMode('sell')">إدراج سلعة للبيع</button>
-            </div>
-
-            <div id="market-buy-view">
-                <div class="search-bar-box" style="margin-bottom:10px;">
-                    <input type="text" id="market-search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع..." oninput="searchProducts()" class="keyboard-target" style="width:100%; padding:8px;">
-                </div>
-                <div style="font-size:11px; color:#00ffff; margin-bottom:8px; text-align:left; cursor:pointer;" onclick="renderProductsList()"><i class="fa-solid fa-rotate"></i> تحديث الخلاصة الفورية</div>
-                <div id="market-products-list-container" class="market-mini-grid"></div>
-            </div>
-
-            <div id="market-sell-view" style="display:none;">
-                <div id="sell-access-blocked" class="news-box" style="text-align:center; border:2px dashed #ff0055;">
-                    <i class="fa-solid fa-lock" style="font-size:30px; color:#ff0055; margin-bottom:8px;"></i>
-                    <h4 style="color:#fff;">يرجى تسجيل الدخول أولاً لإدراج المنتجات في الماركت!</h4>
-                    <button class="btn-action" style="margin-top:10px;" onclick="showSection('profile-section')">التوجه لتسجيل الحساب</button>
-                </div>
-
-                <div id="sell-form-allowed" style="display:none;" class="news-box">
-                    <h4 style="color:#00ffff; margin-bottom:15px;"><i class="fa-solid fa-circle-plus"></i> إدراج منتج جديد في السوق الرقمي</h4>
-                    
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-image"></i> صورة السلعة:</label>
-                        <input type="file" id="prod-img-input" accept="image/*" onchange="previewMarketProductImage(this)" style="padding:5px;">
-                        <img id="prod-img-preview" class="product-card-img" style="display:none; margin-top:8px; max-height:140px;">
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-tags"></i> السعر:</label>
-                        <input type="text" id="prod-price" class="keyboard-target" placeholder="مثال: 750 ج.م">
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-phone"></i> رقم الهاتف:</label>
-                        <input type="text" id="prod-phone" class="keyboard-target" placeholder="رقم الموبايل أو الواتساب">
-                    </div>
-
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-map-location-dot"></i> وصف المنتج والتفاصيل:</label>
-                        <textarea id="prod-desc" class="keyboard-target" placeholder="اكتب وصف السلعة وتفاصيل التسليم هنا..."></textarea>
-                    </div>
-
-                    <button class="btn-action" style="width:100%; justify-content:center; margin-top:5px;" onclick="submitNewProductToMarket()">اعتماد ونشر المنتج</button>
                 </div>
             </div>
         </div>
@@ -315,7 +355,7 @@
             </div>
         </div>
 
-        <!-- قسم الملف الشخصي المحدث بالكامل -->
+        <!-- قسم الملف الشخصي (لم يتم المساس به إطلاقاً) -->
         <div id="profile-section" class="app-section">
             <div class="news-box golden-edge">
                 <div class="profile-card-header-view">
