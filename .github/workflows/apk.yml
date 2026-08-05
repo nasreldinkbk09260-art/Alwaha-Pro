@@ -24,17 +24,30 @@ jobs:
       - name: Build Android App
         run: |
           mkdir -p www
-          # نسخ كافة ملفات ومجلدات المشروع بالكامل بدون استثناء
+          # نسخ كل ملفات المجلد الأساسي إلى www
           cp -r * www/ 2>/dev/null || true
           rm -rf www/www www/android www/node_modules www/.git www/.github
 
           npm init -y
-          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0
+          npm install @capacitor/core@5.7.0 @capacitor/cli@5.7.0 @capacitor/android@5.7.0 @capacitor/assets --save-dev
+          
           npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir www
           npx cap add android
+
+          # فتح صلاحيات الإنترنت وحزم CORS لعمل السكربتات وSupabase في أندرويد
+          sed -i 's/<application>/<application android:usesCleartextTraffic="true" android:allowBackup="true"/g' android/app/src/main/AndroidManifest.xml
+          
+          # تنسيق اللوغو والأيقونة إذا كانت توجد صورة باسم icon.png أو logo.png
+          if [ -f "icon.png" ]; then
+            npx cap-assets generate --iconAvailable
+          elif [ -f "logo.png" ]; then
+            cp logo.png icon.png
+            npx cap-assets generate --iconAvailable
+          fi
+
           npx cap copy android
           
-          # إعدادات منع التضارب وتثبيت التنسيقات
+          # حظر تضارب المكتبات
           echo "android.enableJetifier=true" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
           
