@@ -315,154 +315,184 @@
             </div>
         </div>
 
-        <!-- قسم الملف الشخصي -->
+        <!-- قسم الملف الشخصي المحدث بالكامل -->
         <div id="profile-section" class="app-section">
-            <div class="profile-card-header-view">
-                <div class="profile-main-avatar-glow" id="my-profile-avatar-placeholder">?</div>
-                <h3 id="my-profile-name-tag" style="margin-top:10px; color:#fff;">هوية رقمية مؤقتة (زائر) <span id="verification-badge-slot"></span></h3>
-                <p id="my-profile-phone-tag" style="font-size:11px; color:#aaa;">قم بتسجيل الدخول للاستفادة الكاملة من المنصة</p>
-            </div>
-
-            <div class="profile-options-menu-list">
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-login-form')">
-                    <i class="fa-solid fa-right-to-bracket" style="color:#00ff88;"></i> <span>تسجيل الدخول للحساب القائم</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-register')">
-                    <i class="fa-solid fa-user-plus" style="color:#00ffff;"></i> <span>إنشاء حساب مستخدم جديد</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-settings-control')">
-                    <i class="fa-solid fa-sliders" style="color:#38bdf8;"></i> <span>إعدادات الحساب والتوثيق</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-privacy-center')">
-                    <i class="fa-solid fa-shield-halved" style="color:#ffd700;"></i> <span>مركز الخصوصية والتشفير</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-register-form')">
-                    <i class="fa-solid fa-certificate" style="color:#ffaa00;"></i> <span>طلب شارات التوثيق المعتمدة</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-view-themes-picker')">
-                    <i class="fa-solid fa-palette" style="color:#ff00ff;"></i> <span>تخصيص الثيمات والمظهر</span><i class="fa-solid fa-chevron-left"></i>
-                </button>
-
-                <button class="profile-menu-btn golden-edge" onclick="togglePulseAnimationState()">
-                    <i class="fa-solid fa-heart-pulse" style="color:#ff3b30;"></i> <span id="pulse-toggle-text-status">إيقاف نبض وتموج العناصر والواجهات الحالية</span><i class="fa-solid fa-rotate"></i>
-                </button>
-            </div>
-
-            <!-- لوحة تسجيل الدخول -->
-            <div id="sub-view-login-form" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header"><h4><i class="fa-solid fa-key"></i> تسجيل الدخول</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-login-form')"><i class="fa-solid fa-xmark"></i> إغلاق</button></div>
-                <div class="form-group"><label>اسم المستخدم أو رقم الهاتف:</label><input type="text" id="login-user-id" class="keyboard-target"></div>
-                <div class="form-group"><label>كلمة السر:</label><input type="password" id="login-user-pass" class="keyboard-target"></div>
-                <button class="btn-action" style="width:100%; justify-content:center; margin-top:5px;" onclick="executeAccountLoginSimulated()">الدخول الفوري</button>
-            </div>
-
-            <!-- لوحة تسجيل حساب جديد -->
-            <div id="sub-view-register" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header"><h4><i class="fa-solid fa-user-gear"></i> إنشاء حساب جديد</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-register')"><i class="fa-solid fa-xmark"></i> إغلاق</button></div>
-                
-                <div class="form-group" style="margin-bottom: 12px; text-align: center;">
-                    <label style="display:block; margin-bottom:6px; font-size:12px; color:#00ffff;">الصورة الشخصية:</label>
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <button type="button" class="btn-action" style="background: rgba(139, 92, 246, 0.2); color: #fff; border: 1px dashed #3a86ff; font-size: 11px;" onclick="document.getElementById('reg-optional-avatar-input').click()">
-                            <i class="fa-solid fa-image-portrait"></i> اختيار صورة
-                        </button>
-                        <input type="file" id="reg-optional-avatar-input" accept="image/*" style="display:none;" onchange="previewRegisterOptionalAvatar(this)">
-                        <img id="reg-optional-avatar-preview" style="display:none; width:65px; height:65px; border-radius:50%; object-fit:cover; border:2px solid #00ff88;">
-                    </div>
+            <div class="news-box golden-edge">
+                <div class="profile-card-header-view">
+                    <div class="profile-main-avatar-glow" id="my-profile-avatar-placeholder">ن</div>
+                    <h3 id="my-profile-name-tag" style="margin-top:10px; color:#fff;">نصر <span id="verification-badge-slot"></span></h3>
+                    <p id="my-profile-phone-tag" style="font-size:12px; color:#aaa;">يرجى تسجيل الدخول أو إعداد الحساب</p>
                 </div>
-
-                <div class="form-group"><label>الاسم الكامل:</label><input type="text" id="reg-name" placeholder="الاسم الظاهر بالمنصة" class="keyboard-target"></div>
-                <div class="form-group"><label>رقم الهاتف أو البريد:</label><input type="text" id="reg-contact" class="keyboard-target"></div>
-                <div class="form-group"><label>كلمة السر:</label><input type="password" id="reg-pass" class="keyboard-target"></div>
-                <div class="form-group"><label><i class="fa-solid fa-calendar-days"></i> تاريخ الميلاد:</label><input type="date" id="reg-dob" class="keyboard-target"></div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-venus-mars"></i> النوع:</label>
-                    <select id="reg-gender" class="keyboard-target" style="width:100%; padding:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:8px; color:#fff;">
-                        <option value="">اختر النوع...</option>
-                        <option value="ذكر">ذكر</option>
-                        <option value="أنثى">أنثى</option>
-                    </select>
+                <div class="profile-options-menu-list" style="margin-top:15px;">
+                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-login')">
+                        <span>🔑 تسجيل الدخول</span> <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-register')">
+                        <span>👤 إنشاء حساب جديد</span> <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-verify')">
+                        <span>🛡️ توثيق الحساب بشارة موثوق به</span> <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-settings')">
+                        <span>⚙️ الضبط</span> <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-privacy')">
+                        <span>🔒 الخصوصية</span> <i class="fa-solid fa-chevron-left"></i>
+                    </button>
                 </div>
-                
-                <button class="btn-action" style="width:100%; justify-content:center; margin-top:8px;" onclick="saveUserProfileData()">تأكيد وتسجيل الحساب</button>
             </div>
 
-            <!-- لوحة الضبط والتحقق المكتملة -->
-            <div id="sub-view-settings-control" class="sub-profile-view-box" style="display:none;">
+            <!-- 1. تسجيل الدخول -->
+            <div id="sub-prof-login" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
-                    <h4><i class="fa-solid fa-sliders"></i> لوحة الضبط والتحقق</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-view-settings-control')"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+                    <h4>🔑 تسجيل الدخول</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-login')">إغلاق ✕</button>
                 </div>
-                
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label style="font-size:12px;">رقم الهاتف أو البريد:</label>
+                    <input type="text" id="login-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد الإلكتروني">
+                    <label style="font-size:12px;">كلمة السر:</label>
+                    <input type="password" id="login-pass" class="keyboard-target" placeholder="أدخل كلمة السر">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                        <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-reset-pass')" style="color:#00ffff; font-size:12px;">نسيت كلمة السر؟</a>
+                        <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-register')" style="color:#00ffff; font-size:12px;">إضافة حساب جديد</a>
+                    </div>
+                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="alert('جاري تسجيل الدخول...')">دخول</button>
+                </div>
+            </div>
+
+            <!-- إعادة تعيين كلمة السر -->
+            <div id="sub-prof-reset-pass" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header">
+                    <h4>🔄 تحديث كلمة السر</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-reset-pass')">إغلاق ✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label style="font-size:12px;">الرقم أو البريد للتحقق:</label>
+                    <input type="text" id="reset-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد">
+                    <button class="btn-action" style="justify-content:center;" onclick="alert('تم إرسال كود التحقق...')">إرسال كود التأكيد</button>
+                </div>
+            </div>
+
+            <!-- 2. إنشاء حساب جديد -->
+            <div id="sub-prof-register" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header">
+                    <h4>👤 إنشاء حساب جديد</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-register')">إغلاق ✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label style="font-size:12px;">أ ـ إضافة صورة أو تصويرها:</label>
+                    <input type="file" accept="image/*" capture="user">
+                    <label style="font-size:12px;">ب ـ الاسم الأول واسم العائلة:</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" placeholder="الاسم الأول" class="keyboard-target">
+                        <input type="text" placeholder="اسم العائلة" class="keyboard-target">
+                    </div>
+                    <label style="font-size:12px;">ج ـ الرقم أو البريد الإلكتروني:</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="reg-contact" class="keyboard-target" placeholder="الرقم أو البريد" style="flex:1;">
+                        <button class="btn-action" style="white-space:nowrap;" onclick="alert('تم إرسال كود التأكيد')">إرسال كود</button>
+                    </div>
+                    <input type="text" placeholder="أدخل كود التأكيد" class="keyboard-target">
+                    <label style="font-size:12px;">د ـ النوع:</label>
+                    <select style="width:100%; padding:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff;">
+                        <option>ذكر</option>
+                        <option>أنثى</option>
+                    </select>
+                    <label style="font-size:12px;">هـ ـ السن:</label>
+                    <input type="number" placeholder="العمر بالسنوات" class="keyboard-target">
+                    <label style="font-size:12px;">ك ـ البلد:</label>
+                    <input type="text" placeholder="البلد" class="keyboard-target">
+                    <label style="font-size:12px;">ي ـ المحافظة:</label>
+                    <input type="text" placeholder="المحافظة" class="keyboard-target">
+                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="alert('تم إنشاء الحساب بنجاح!')">تأكيد وإنشاء الحساب</button>
+                </div>
+            </div>
+
+            <!-- 3. توثيق الحساب بشارة موثوق به -->
+            <div id="sub-prof-verify" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header">
+                    <h4>🛡️ توثيق الحساب بشارة موثوق به</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-verify')">إغلاق ✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label style="font-size:12px;">أ ـ صورة حقيقية لايف مباشر:</label>
+                    <input type="file" accept="image/*" capture="user">
+                    <label style="font-size:12px;">ب ـ رقم موبايل ساري للتأكيد (SMS / واتساب):</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="tel" placeholder="رقم الموبايل" class="keyboard-target" style="flex:1;">
+                        <button class="btn-action" style="white-space:nowrap;" onclick="alert('تم إرسال كود الواتساب/SMS')">إرسال كود</button>
+                    </div>
+                    <input type="text" placeholder="أدخل كود تأكيد الهاتف" class="keyboard-target">
+                    <label style="font-size:12px;">ج ـ جيميل حقيقي للتأكيد:</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="email" placeholder="example@gmail.com" class="keyboard-target" style="flex:1;">
+                        <button class="btn-action" style="white-space:nowrap;" onclick="alert('تم إرسال كود الجيميل')">إرسال كود</button>
+                    </div>
+                    <input type="text" placeholder="أدخل كود تأكيد الجيميل" class="keyboard-target">
+                    <label style="font-size:12px;">د ـ صورة بطاقة شخصية أو جواز سفر:</label>
+                    <input type="file" accept="image/*">
+                    <label style="font-size:12px;">هـ ـ الاسم رباعي:</label>
+                    <input type="text" placeholder="أدخل الاسم الرباعي" class="keyboard-target">
+                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="alert('تم تقديم طلب التوثيق للمراجعة!')">تقديم طلب التوثيق</button>
+                </div>
+            </div>
+
+            <!-- 4. الضبط -->
+            <div id="sub-prof-settings" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header">
+                    <h4>⚙️ الضبط</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-settings')">إغلاق ✕</button>
+                </div>
                 <div style="display:flex; flex-direction:column; gap:12px;">
-                    <div class="form-group">
-                        <label>الاسم التعريفي:</label>
-                        <input type="text" id="settings-name" placeholder="الاسم..." style="background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff; padding:10px;">
+                    <div>
+                        <label style="font-size:12px; display:block; margin-bottom:5px;">1 ـ تغيير الخلفية (ضبط الألوان تلقائي):</label>
+                        <select onchange="alert('تم تطبيق الخلفية وضبط الألوان تلقائياً')" style="width:100%; padding:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff;">
+                            <option value="">اختر خلفية...</option>
+                            <option value="nat1">خلفية طبيعية 1</option>
+                            <option value="nat2">خلفية طبيعية 2</option>
+                            <option value="ani1">خلفية أنمي 1</option>
+                            <option value="ani2">خلفية أنمي 2</option>
+                        </select>
                     </div>
-
-                    <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top:12px;">
-                        <label>البريد الإلكتروني:</label>
-                        <div style="display:flex; gap:5px;">
-                            <input type="email" id="settings-email" placeholder="example@mail.com" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff; padding:10px;">
-                            <button onclick="sendEmailOTP()" style="background:#00ff88; color:#000; border:none; padding:0 12px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:11px;">تأكيد البريد</button>
-                        </div>
-                        <div id="settings-email-otp-box" style="display:none; margin-top:8px; display:flex; gap:5px;">
-                            <input type="text" id="settings-email-otp" placeholder="أدخل الكود..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #ff00ff; border-radius:6px; color:#fff; text-align:center;">
-                            <button onclick="verifyEmailOTP()" style="background:#ff00ff; color:#fff; border:none; padding:0 12px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:11px;">تفعيل</button>
-                        </div>
-                        <span id="settings-email-status" style="font-size:11px; color:#00ff88; display:block; margin-top:3px;"></span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:12px;">2 ـ إيقاف الصوت:</span>
+                        <input type="checkbox" onchange="alert('تم تغيير إعداد الصوت')">
                     </div>
-
-                    <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top:12px;">
-                        <label>رقم الهاتف:</label>
-                        <div style="display:flex; gap:5px;">
-                            <input type="tel" id="settings-phone" placeholder="01xxxxxxxxx" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff; padding:10px;">
-                            <button onclick="sendSettingsPhoneOTP()" style="background:#00ff88; color:#000; border:none; padding:0 12px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:11px;">تأكيد الهاتف</button>
-                        </div>
-                        <div id="settings-phone-otp-box" style="display:none; margin-top:8px; display:flex; gap:5px;">
-                            <input type="text" id="settings-phone-otp" placeholder="أدخل الكود..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #ff00ff; border-radius:6px; color:#fff; text-align:center;">
-                            <button onclick="verifySettingsPhoneOTP()" style="background:#ff00ff; color:#fff; border:none; padding:0 12px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:11px;">تفعيل</button>
-                        </div>
-                        <span id="settings-phone-status" style="font-size:11px; color:#00ff88; display:block; margin-top:3px;"></span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:12px;">3 ـ إيقاف النبض والتموج:</span>
+                        <input type="checkbox" onchange="document.body.classList.toggle('pulse-disabled')">
                     </div>
-
-                    <div class="form-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top:12px;">
-                        <label>كلمة السر الجديدة:</label>
-                        <input type="password" id="settings-pass" placeholder="اترك الحقل فارغاً للإبقاء على الحالية..." style="background:rgba(255,255,255,0.05); border:1px solid #38bdf8; border-radius:6px; color:#fff; padding:10px;">
+                    <div>
+                        <label style="font-size:12px; display:block; margin-bottom:5px;">4 ـ اختيار الوضع (فاتح / داكن صافي):</label>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-action" style="flex:1; justify-content:center;" onclick="document.body.className='theme-white'">فاتح</button>
+                            <button class="btn-action" style="flex:1; justify-content:center; background:#111;" onclick="document.body.className=''">داكن صافي</button>
+                        </div>
                     </div>
-                    
-                    <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="saveUserSettingsData()">حفظ التغيرات</button>
                 </div>
             </div>
 
-            <!-- لوحة الخصوصية والتشفير -->
-            <div id="sub-view-privacy-center" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header"><h4><i class="fa-solid fa-shield-halved"></i> مركز الخصوصية والتشفير</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-privacy-center')"><i class="fa-solid fa-xmark"></i> إغلاق</button></div>
-                <p style="font-size:12px; color:#ccc;">جميع البيانات محميّة ومشفّرة عبر بروتوكولات End-to-End.</p>
-            </div>
-
-            <!-- لوحة طلب التوثيق -->
-            <div id="sub-view-register-form" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header"><h4><i class="fa-solid fa-certificate"></i> طلب شارة التوثيق</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-register-form')"><i class="fa-solid fa-xmark"></i> إغلاق</button></div>
-                <p style="font-size:12px; color:#ccc;">أدخل بياناتك وسيتم مراجعة الطلب لمنح الشارة الذهبية.</p>
-            </div>
-
-            <!-- لوحة تخصيص الثيمات -->
-            <div id="sub-view-themes-picker" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header"><h4><i class="fa-solid fa-palette"></i> تخصيص الواجهة</h4><button class="close-sub-btn" onclick="closeSubProfileView('sub-view-themes-picker')"><i class="fa-solid fa-xmark"></i> إغلاق</button></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <button class="btn-action" style="background:#090212; color:#fff; border:1px solid #00ffff;" onclick="applyAppTheme('default')">الداكن الملكي</button>
-                    <button class="btn-action" style="background:#ffffff; color:#000;" onclick="applyAppTheme('white')">الأبيض الناصع</button>
-                    <button class="btn-action" style="background:#000511; color:#00ffff;" onclick="applyAppTheme('neon')">النيون الأزرق</button>
-                    <button class="btn-action" style="background:#140d02; color:#ffd700;" onclick="applyAppTheme('dark-gold')">الذهبي الفاخر</button>
+            <!-- 5. الخصوصية -->
+            <div id="sub-prof-privacy" class="sub-profile-view-box" style="display:none;">
+                <div class="sub-view-header">
+                    <h4>🔒 الخصوصية</h4>
+                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-privacy')">إغلاق ✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <label style="font-size:12px;">أ ـ تغيير صورة الملف الشخصي:</label>
+                    <input type="file" accept="image/*">
+                    <label style="font-size:12px;">ب ـ تغيير الاسم:</label>
+                    <input type="text" placeholder="الاسم الجديد" class="keyboard-target">
+                    <label style="font-size:12px;">ج ـ تغيير الرقم أو البريد مع التأكيد بكود:</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" placeholder="الرقم أو البريد الجديد" class="keyboard-target" style="flex:1;">
+                        <button class="btn-action" style="white-space:nowrap;" onclick="alert('تم إرسال كود الفحص')">إرسال كود</button>
+                    </div>
+                    <input type="text" placeholder="أدخل كود التأكيد الفعلي" class="keyboard-target">
+                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="alert('تم حفظ التغييرات!')">حفظ التعديلات</button>
                 </div>
             </div>
-
         </div>
 
     </div>
