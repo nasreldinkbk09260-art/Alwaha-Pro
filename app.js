@@ -1,64 +1,113 @@
 import { supabase } from './supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. التحقق من الجلسة وإعادة التوجيه التلقائي
   const { data: { session } } = await supabase.auth.getSession();
   if (session) {
     showDashboard(session.user);
-    fetchPosts(); // جلب المنشورات عند فتح التطبيق
+    initApp(session.user);
   } else {
     showAuthForms();
   }
 });
 
-// 2. زر إنشاء منشور جديد وحفظه حقيقياً في Supabase
-document.getElementById('create-post-btn')?.addEventListener('click', async (e) => {
-  e.preventDefault();
-  const postContent = document.getElementById('post-content')?.value;
+function initApp(user) {
+  fetchPosts();
+  fetchMessages(user.id);
+  setupRealtimeListeners(user.id);
+}
 
+document.getElementById('create-post-btn')?.addEventListener('click', async () => {
+  const content = document.getElementById('post-content')?.value;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return alert('يرجى تسجيل الدخول أولاً');
 
-  if (!postContent) return alert('اكتب شيئاً لنشره');
+  if (!content) return alert('يرجى كتابة نص المنشور');
 
-  const { data, error } = await supabase
-    .from('posts') // اسم جدول المنشورات
-    .insert([{ user_id: user.id, content: postContent, created_at: new Date() }]);
+  const { error } = await supabase
+    .from('posts')
+    .insert([{ user_id: user.id, content }]);
 
-  if (error) {
-    alert('خطأ أثناء النشر: ' + error.message);
-  } else {
-    alert('تم نشر المنشور بنجاح!');
+  if (error) alert('خطأ في النشر: ' + error.message);
+  else {
     document.getElementById('post-content').value = '';
-    fetchPosts(); // تحديث القائمة فوراً
+    fetchPosts();
   }
 });
 
-// 3. دالة جلب كل المنشورات من Supabase وعرضها
+document.getElementById('send-msg-btn')?.addEventListener('click', async () => {
+  const text = document.getElementById('message-input')?.value;
+  const receiverId = document.getElementById('receiver-id-input')?.value;
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!text || !receiverId) return alert('يرجى تحديد المستقبل وكتابة الرسالة');
+
+  const { error } = await supabase
+    .from('messages')
+    .insert([{ sender_id: user.id, receiver_id: receiverId, text }]);
+
+  if (error) alert('خطأ في إرسال الرسالة: ' + error.message);
+  else {
+    document.getElementById('message-input').value = '';
+    fetchMessages(user.id);
+  }
+});
+
 async function fetchPosts() {
-  const postsContainer = document.getElementById('posts-container');
-  if (!postsContainer) return;
+  const container = document.getElementById('posts-container');
+  if (!container) return;
 
   const { data: posts, error } = await supabase
     .from('posts')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('خطأ في جلب المنشورات:', error.message);
-    return;
-  }
+  if (error) return console.error(error);
 
-  postsContainer.innerHTML = '';
-  posts.forEach(post => {
-    const postElement = document.createElement('div');
-    postElement.className = 'post-card';
-    postElement.innerHTML = `
-      <p>${post.content}</p>
-      <button onclick="likePost('${post.id}')">❤️ إعجاب</button>
-    `;
-    postsContainer.appendChild(postElement);
-  });
+  container.innerHTML = posts.map(p => `
+    <div class="post-card" id="post-${p.id}">
+      <p>${p.content}</p>
+      <button onclick="likePost('${p.id}')">❤️ إعجاب</button>
+    </div>
+  `).join('');
+}
+
+window.likePost = async (postId) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase
+    .from('likes')
+    .insert([{ post_id: postId, user_id: user.id }]);
+
+  if (error) alert('تم الإعجاب مسبقاً أو حدث خطأ');
+  else alert('تم تسجيل الإعجاب!');
+};
+
+async function fetchMessages(userId) {
+  const container = document.getElementById('messages-container');
+  if (!container) return;
+
+  const { data: messages, error } = await supabase
+    .from('messages')
+    .select('*')
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    .order('created_at', { ascending: true });
+
+  if (error) return console.error(error);
+
+  container.innerHTML = messages.map(m => `
+    <div class="message-bubble ${m.sender_id === userId ? 'sent' : 'received'}">
+      <p>${m.text}</p>
+    </div>
+  `).join('');
+}
+
+function setupRealtimeListeners(userId) {
+  supabase
+    .channel('public:messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+      if (payload.new.receiver_id === userId || payload.new.sender_id === userId) {
+        fetchMessages(userId);
+      }
+    })
+    .subscribe();
 }
 
 function showDashboard(user) {
