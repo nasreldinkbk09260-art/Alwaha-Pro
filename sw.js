@@ -1,6 +1,7 @@
 // sw.js - خدمة التخزين المؤقت والتشغيل بدون إنترنت (Service Worker)
-const CACHE_NAME = 'alwaha-pro-v1';
+const CACHE_NAME = 'alwaha-pro-v2.0.0';
 const ASSETS_TO_CACHE = [
+    './',
     './index.html',
     './style.css',
     './app.js',
