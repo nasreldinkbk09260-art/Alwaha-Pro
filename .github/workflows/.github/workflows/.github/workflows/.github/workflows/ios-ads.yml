@@ -1,0 +1,33 @@
+name: Build iOS Ads Module
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios-ads:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Cordova & AdMob Plugin
+        run: |
+          npm install -g cordova
+          cordova platform add ios || true
+          cordova plugin add cordova-plugin-admob-free || true
+
+      - name: Build iOS with Ads Framework
+        run: cordova build ios --no-sign
+
+      - name: Upload iOS Ads Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-Ads-Build
+          path: platforms/ios/build/
