@@ -1,4 +1,4 @@
-name: Build Alwaha Pro Android (APK & AAB)
+name: Build Alwaha Pro Android App
 
 on:
   push:
@@ -6,14 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -27,15 +27,15 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Initialize & Build Android Project
+      - name: Initialize and Build Android Application
         run: |
           npx @bubblewrap/cli init --manifest=https://nasreldinkbk09260-art.github.io/Alwaha-Pro/manifest.json
           npx @bubblewrap/cli build
 
-      - name: Upload APK Artifact
+      - name: Upload APK & AAB Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Alwaha-Pro-APK
+          name: Alwaha-Pro-Android-Build
           path: |
             *.apk
             *.aab
