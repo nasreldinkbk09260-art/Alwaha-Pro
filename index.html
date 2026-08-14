@@ -1,0 +1,521 @@
+<html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alwaha Pro | المنصة المتكاملة</title>
+    <style>
+        :root {
+            --bg-dark: #0f0720;
+            --card-bg: #1a0b36;
+            --border-glow: #eab308;
+            --neon-green: #00ffcc;
+            --neon-pink: #ff007f;
+            --text-light: #ffffff;
+            --text-sub: #a1a1aa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: linear-gradient(180deg, #180933 0%, #090314 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        /* Top Navigation Bar */
+        .top-nav {
+            display: flex;
+            overflow-x: auto;
+            background: rgba(20, 10, 40, 0.9);
+            padding: 10px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 6px;
+            scrollbar-width: none;
+        }
+
+        .top-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            cursor: pointer;
+            font-size: 11px;
+            gap: 3px;
+        }
+
+        .nav-item.active {
+            border-color: #facc15;
+            color: #facc15;
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+            background: rgba(250, 204, 21, 0.1);
+        }
+
+        /* Notification Banner */
+        .notif-banner {
+            margin: 12px 16px 4px 16px;
+            background: linear-gradient(90deg, #d946ef, #ec4899);
+            border: 2px solid #facc15;
+            border-radius: 12px;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 0 12px rgba(217, 70, 239, 0.5);
+            cursor: pointer;
+        }
+
+        /* Tab Content Views */
+        .tab-view {
+            display: none;
+            padding: 12px 16px;
+            flex: 1;
+        }
+
+        .tab-view.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Profile View Styles */
+        .profile-card {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 16px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #38ef7d, #11998e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 auto 10px auto;
+            box-shadow: 0 0 15px rgba(56, 239, 125, 0.4);
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #facc15;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Reels / Content View Styles */
+        .reel-box {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            height: 480px;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reel-actions {
+            position: absolute;
+            right: 12px;
+            bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .action-icon-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .action-text {
+            font-size: 11px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .reel-overlay {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            right: 70px;
+            z-index: 10;
+        }
+
+        .badge-live {
+            background: #db2777;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        /* Market View Styles */
+        .market-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-green {
+            flex: 1;
+            background: #10b981;
+            border: 2px solid #a3e635;
+            color: #000;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-dark-bordered {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 14px;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        /* Messaging View Styles */
+        .chat-header {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .call-options {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .call-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #facc15;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .call-btn-green { background: #00ffcc; color: #000; }
+        .call-btn-cyan { background: #06b6d4; color: #fff; }
+
+        .chat-body {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            height: 260px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+        }
+
+        .send-btn {
+            background: #3b82f6;
+            border: none;
+            width: 42px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Top Bar Navigation -->
+    <nav class="top-nav">
+        <div class="nav-item" onclick="switchTab('profile')">👤<br>الملف الشخصي</div>
+        <div class="nav-item" onclick="switchTab('main')">🏠<br>الرئيسية</div>
+        <div class="nav-item active" id="tab-btn-content" onclick="switchTab('content')">🎬<br>المحتوى</div>
+        <div class="nav-item" id="tab-btn-market" onclick="switchTab('market')">🛒<br>الماركت</div>
+        <div class="nav-item" onclick="switchTab('games')">🎮<br>الألعاب</div>
+        <div class="nav-item" id="tab-btn-chat" onclick="switchTab('chat')">💬<br>التراسل</div>
+        <div class="nav-item" onclick="switchTab('wifi')">📶<br>الشبكة الحرّة</div>
+    </nav>
+
+    <!-- Global Notification Banner -->
+    <div class="notif-banner" onclick="alert('لديك 3 طلبات جديدة قيد الانتظار!')">
+        🔔 مركز الإشعارات والطلبات 3
+    </div>
+
+    <!-- PROFILE TAB VIEW -->
+    <div id="view-profile" class="tab-view">
+        <div class="profile-card">
+            <div class="avatar" id="avatar-circle">ن</div>
+            <h2 id="user-fullname">نصر الدين</h2>
+            <p style="color:#aaa;" id="user-phone">01030064023</p>
+        </div>
+        <div class="menu-list">
+            <button class="menu-btn" onclick="loginAction()">🔑 تسجيل الدخول <span>&lt;</span></button>
+            <button class="menu-btn" onclick="registerAction()">👤+ إنشاء حساب جديد <span>&lt;</span></button>
+            <button class="menu-btn" onclick="verifyAction()">🛡️ توثيق الحساب بشارة موثوق به <span>&lt;</span></button>
+            <button class="menu-btn" onclick="alert('فتح صفحة الضبط والإعدادات')">⚙️ الضبط <span>&lt;</span></button>
+            <button class="menu-btn" onclick="alert('فتح صفحة الخصوصية والأمان')">🔒 الخصوصية <span>&lt;</span></button>
+        </div>
+    </div>
+
+    <!-- REELS / CONTENT TAB VIEW -->
+    <div id="view-content" class="tab-view active">
+        <div class="reel-box">
+            <div style="font-size: 50px; opacity: 0.5; cursor: pointer;" onclick="togglePlay()">▶</div>
+            
+            <!-- Side Interaction Toolbar -->
+            <div class="reel-actions">
+                <div>
+                    <button class="action-icon-btn" onclick="likeReel()">❤️</button>
+                    <div class="action-text" id="like-count">3.1k</div>
+                </div>
+                <div>
+                    <button class="action-icon-btn" onclick="commentReel()">💬</button>
+                    <div class="action-text" id="comment-count">150</div>
+                </div>
+                <div>
+                    <button class="action-icon-btn" onclick="shareReel()">🔗</button>
+                    <div class="action-text">مشاركة</div>
+                </div>
+                <div>
+                    <button class="action-icon-btn" onclick="produceReel()">📷</button>
+                    <div class="action-text">إنتاج</div>
+                </div>
+            </div>
+
+            <!-- Video Info & Badges -->
+            <div class="reel-overlay">
+                <span class="badge-live">🪄 المعالجة المباشرة</span>
+                <p style="font-weight: bold;">@alwaha_pro_digital</p>
+                <p style="font-size: 12px; color: #ddd;">صناعة المحتوى البصري المباشر وفلاتر الأنمي المتقدمة ⭐</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MARKET TAB VIEW -->
+    <div id="view-market" class="tab-view">
+        <div class="market-actions">
+            <button class="btn-green" onclick="addProduct()">➕ إضافة منتج جديد</button>
+            <button class="btn-dark-bordered" onclick="alert('فتح قائمة معروضاتك الحالية')">🏪 المعروضات</button>
+        </div>
+        <input type="text" class="search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع...">
+        <div id="market-items-list" style="text-align: center; color: #888; margin-top: 40px;">
+            لا توجد سلع حالياً. كن أول من يضيف!
+        </div>
+    </div>
+
+    <!-- CHAT TAB VIEW -->
+    <div id="view-chat" class="tab-view">
+        <div class="chat-header">
+            <span>🔒 محادثة مباشرة مع: المهندس نصر الدين</span>
+            <button style="background: #ef4444; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer;" onclick="switchTab('main')">إغلاق ➔</button>
+        </div>
+
+        <div class="call-options">
+            <div class="call-btn call-btn-green" onclick="startCall('شبكة حرة')">📶 اتصال دون إنترنت<br>(شبكة حرة)</div>
+            <div class="call-btn call-btn-cyan" onclick="startCall('أساسي')">📞 اتصال أساسي</div>
+        </div>
+
+        <div class="chat-body" id="chat-messages">
+            <p style="text-align: center; color: #888; font-size: 12px;">🔒 بداية التواصل آمن ومحمي</p>
+        </div>
+
+        <div class="chat-input-row">
+            <input type="text" id="msg-input" class="chat-input" placeholder="اكتب رسالتك...">
+            <button class="send-btn" onclick="sendMessage()">✈️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Tab Switcher
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+        const targetView = document.getElementById('view-' + tabId);
+        if (targetView) targetView.classList.add('active');
+
+        // Highlight Active Tab Button
+        const btnMap = {
+            'profile': 0, 'main': 1, 'content': 2, 'market': 3, 'games': 4, 'chat': 5, 'wifi': 6
+        };
+        const navItems = document.querySelectorAll('.nav-item');
+        if (navItems[btnMap[tabId]]) {
+            navItems[btnMap[tabId]].classList.add('active');
+        }
+    }
+
+    // Interactive Reel Handlers
+    let likes = 3100;
+    function likeReel() {
+        likes++;
+        document.getElementById('like-count').innerText = (likes / 1000).toFixed(1) + 'k';
+    }
+
+    function commentReel() {
+        const comment = prompt("أدخل تعليقك:");
+        if (comment) {
+            let countEl = document.getElementById('comment-count');
+            countEl.innerText = parseInt(countEl.innerText) + 1;
+            alert("تم إرسال تعليقك بنجاح!");
+        }
+    }
+
+    function shareReel() {
+        if (navigator.share) {
+            navigator.share({ title: 'Alwaha Pro', url: window.location.href });
+        } else {
+            alert("تم نسخ رابط المحتوى!");
+        }
+    }
+
+    function produceReel() {
+        alert("فتح استوديو المعالجة المباشرة وإنتاج الفلاتر...");
+    }
+
+    function togglePlay() {
+        alert("تشغيل / إيقاف فيديو المحتوى المباشر");
+    }
+
+    // Market Handlers
+    function addProduct() {
+        const title = prompt("أدخل اسم المنتج أو السلعة:");
+        if (title) {
+            const list = document.getElementById('market-items-list');
+            if (list.innerHTML.includes("لا توجد سلع")) list.innerHTML = "";
+            list.innerHTML += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:8px; text-align:right;">📦 ${title} - <span style="color:#00ffcc;">معروض للبيع</span></div>`;
+        }
+    }
+
+    // Chat Handlers
+    function sendMessage() {
+        const input = document.getElementById('msg-input');
+        if (input.value.trim() !== "") {
+            const chatBox = document.getElementById('chat-messages');
+            chatBox.innerHTML += `<div style="text-align:left; background:#2563eb; color:#fff; padding:6px 10px; border-radius:8px; margin:5px 0; max-width:80%; margin-left:auto;">${input.value}</div>`;
+            input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+
+    function startCall(type) {
+        alert("جاري بدء " + type + " مع المهندس نصر الدين...");
+    }
+
+    // Profile Actions
+    function loginAction() {
+        const phone = prompt("أدخل رقم الهاتف لتسجيل الدخول:");
+        if (phone) {
+            document.getElementById('user-phone').innerText = phone;
+            alert("تم تسجيل الدخول بنجاح!");
+        }
+    }
+
+    function registerAction() {
+        const name = prompt("أدخل الاسم الكامل:");
+        if (name) {
+            document.getElementById('user-fullname').innerText = name;
+            document.getElementById('avatar-circle').innerText = name.charAt(0);
+            alert("تم إنشاء الحساب بنجاح!");
+        }
+    }
+
+    function verifyAction() {
+        alert("تم إرسال طلب توثيق الحساب بالبشارة الموثوقة 🛡️");
+    }
+</script>
+
+</body>
+</html>

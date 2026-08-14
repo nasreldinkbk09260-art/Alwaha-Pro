@@ -1,0 +1,84 @@
+name: Build Alwaha Pro (Android & iOS)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android (APK & AAB)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Dependencies
+        run: |
+          npm init -y
+          npm install @capacitor/cli @capacitor/core
+          npm install @capacitor/android
+          npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir .
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Android APK (Debug)
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Build Android AAB (Release Bundle)
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Alwaha-Pro-APK
+          path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload AAB Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Alwaha-Pro-AAB
+          path: android/app/build/outputs/bundle/release/*.aab
+
+  build-ios:
+    name: Build iOS Environment
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: |
+          npm init -y
+          npm install @capacitor/cli @capacitor/core
+          npm install @capacitor/ios
+          npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir .
+          npx cap add ios
+          npx cap sync ios
+          
+      # ملاحظة: استخراج ملف .ipa نهائي يتطلب إعداد شهادات آبل (Apple Certificates)
+      # هذا الكود يقوم بتجهيز مشروع Xcode الخاص بالتطبيق لتكون جاهزاً لرفعه لاحقاً
+      - name: Build iOS App (Xcode)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' build
