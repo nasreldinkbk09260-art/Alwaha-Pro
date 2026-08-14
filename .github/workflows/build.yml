@@ -1,84 +1,116 @@
-name: Build Alwaha Pro (Android & iOS)
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سياسة الخصوصية | Alwaha Pro</title>
+    <style>
+        :root {
+            --bg-dark: #0f0720;
+            --card-bg: #1a0b36;
+            --text-light: #ffffff;
+            --text-sub: #a1a1aa;
+            --neon-green: #00ffcc;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
 
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            padding: 20px;
+        }
 
-jobs:
-  build-android:
-    name: Build Android (APK & AAB)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+        h1 {
+            color: var(--neon-green);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
+        h2 {
+            color: #facc15;
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
 
-      - name: Install Dependencies
-        run: |
-          npm init -y
-          npm install @capacitor/cli @capacitor/core
-          npm install @capacitor/android
-          npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir .
-          npx cap add android
-          npx cap sync android
+        p, li {
+            color: var(--text-sub);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
 
-      - name: Build Android APK (Debug)
-        run: |
-          cd android
-          ./gradlew assembleDebug
+        ul {
+            padding-right: 20px;
+        }
 
-      - name: Build Android AAB (Release Bundle)
-        run: |
-          cd android
-          ./gradlew bundleRelease
+        .back-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Alwaha-Pro-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+    <div class="container">
+        <h1>سياسة الخصوصية والاستخدام</h1>
+        <p>مرحباً بك في منصة Alwaha Pro. خصوصيتك تهمنا، ونحن ملتزمون بحماية بياناتك الشخصية وتوضيح كيفية استخدامها داخل المنصة.</p>
 
-      - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Alwaha-Pro-AAB
-          path: android/app/build/outputs/bundle/release/*.aab
+        <h2>1. جمع البيانات</h2>
+        <p>نقوم بجمع المعلومات التالية لتحسين تجربتك:</p>
+        <ul>
+            <li><strong>بيانات الحساب:</strong> الاسم ورقم الهاتف عند التسجيل أو توثيق الحساب.</li>
+            <li><strong>محتوى المستخدم:</strong> الفيديوهات القصيرة (الريلز)، التعليقات، ورسائل المحادثات المباشرة.</li>
+            <li><strong>بيانات المتجر:</strong> معلومات المنتجات والسلع التي تقوم بعرضها في قسم "الماركت".</li>
+        </ul>
 
-  build-ios:
-    name: Build iOS Environment
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+        <h2>2. استخدام البيانات</h2>
+        <p>نستخدم بياناتك للأغراض التالية:</p>
+        <ul>
+            <li>تسهيل التواصل اللامركزي بينك وبين المستخدمين الآخرين في بيئة آمنة.</li>
+            <li>معالجة ونشر المحتوى المرئي وتطبيق الفلاتر المتقدمة.</li>
+            <li>إدارة عروض التجارة الإلكترونية الخاصة بك وتوصيلك بالمشترين.</li>
+            <li>توفير بيئة ألعاب تفاعلية عبر الإنترنت.</li>
+        </ul>
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+        <h2>3. وضع الشبكة الحرة (العمل دون إنترنت)</h2>
+        <p>يتطلب وضع "الشبكة الحرة" تخزين بعض البيانات مؤقتاً على جهازك المحلي (الكاش) لضمان استمرار عمل التطبيق وتصفح المحتوى والمراسلة في حالة انقطاع الاتصال بالإنترنت. لا يتم مشاركة هذه البيانات مع أطراف خارجية.</p>
 
-      - name: Install Dependencies
-        run: |
-          npm init -y
-          npm install @capacitor/cli @capacitor/core
-          npm install @capacitor/ios
-          npx cap init "Alwaha Pro" "com.alwaha.pro" --web-dir .
-          npx cap add ios
-          npx cap sync ios
-          
-      # ملاحظة: استخراج ملف .ipa نهائي يتطلب إعداد شهادات آبل (Apple Certificates)
-      # هذا الكود يقوم بتجهيز مشروع Xcode الخاص بالتطبيق لتكون جاهزاً لرفعه لاحقاً
-      - name: Build iOS App (Xcode)
-        run: |
-          cd ios/App
-          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' build
+        <h2>4. الأمان والخصوصية</h2>
+        <p>نحن نستخدم تقنيات تشفير متقدمة لحماية بياناتك ومحادثاتك. أنت تتحكم في من يمكنه رؤية ملفك الشخصي والتفاعل مع محتواك.</p>
+
+        <h2>5. التحديثات</h2>
+        <p>قد نقوم بتحديث سياسة الخصوصية من وقت لآخر. استمرارك في استخدام التطبيق يعني موافقتك على هذه التغييرات.</p>
+
+        <a href="index.html" class="back-btn">العودة إلى التطبيق ➔</a>
+    </div>
+
+</body>
+</html>
