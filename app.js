@@ -1,10 +1,55 @@
 // =========================================================================
 // Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل
-// الإصدار المستقر: 2.2.0 | الفحص الميداني الكامل وتفعيل كافة الأزرار و Supabase
+// الإصدار المستقر: 2.5.0 | تفعيل مكتبات Supabase وإصلاح النوافذ المنبثقة
 // =========================================================================
 
-const DEFAULT_SUPABASE_URL = "https://fylbbybclbeunmrcscqy.supabase.co";
-const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bGJieWJjbGJldW5tcmNzY3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Mzg3NzMsImV4cCI6MjA5NTUxNDc3M30.E-f7VstD2g-uGjE6_z8-VvL6R7Fz3f7eF6K9W2vL8Z4";
+// حقن مكتبة Supabase الرسمية والتنسيقات الديناميكية لحل مشكلة الشاشات الكاملة
+(function initializeSystemCore() {
+    // 1. تحميل مكتبة Supabase
+    const supabaseScript = document.createElement('script');
+    supabaseScript.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+    document.head.appendChild(supabaseScript);
+
+    // 2. إصلاح مشكلة ظهور الصفحات أسفل الأزرار وجعلها ملء الشاشة (Full Screen)
+    const coreStyles = document.createElement('style');
+    coreStyles.innerHTML = `
+        .sub-profile-view-box, .pro-camera-modal, #voice-call-modal, #active-chat-box {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: #121212 !important; /* لون الخلفية الداكن */
+            z-index: 999999 !important; /* ضمان ظهورها فوق كل الأزرار */
+            overflow-y: auto !important;
+            padding: 20px !important;
+            box-sizing: border-box !important;
+            display: none; /* مخفية افتراضياً */
+            animation: slideUpFade 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideUpFade {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* منع التمرير في الشاشة الخلفية عند فتح نافذة منبثقة */
+        body.modal-active {
+            overflow: hidden !important;
+        }
+
+        /* تحسينات الكيبورد */
+        .keyboard-adjusted-body {
+            padding-bottom: 50vh !important;
+        }
+    `;
+    document.head.appendChild(coreStyles);
+})();
+
+// إعدادات Supabase الخاصة بمشروعك
+const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co"; // تم التحديث من لوحة التحكم
+// تم وضع المفتاح الخاص بك في مكانه المخصص
+const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0"; 
 
 const SUPABASE_URL = localStorage.getItem('EXTERNAL_API_URL') || DEFAULT_SUPABASE_URL;
 const SUPABASE_KEY = localStorage.getItem('EXTERNAL_API_KEY') || DEFAULT_SUPABASE_KEY;
@@ -67,7 +112,7 @@ function initializeRippleEffectForNavButtons() {
 }
 
 // ==========================================
-// 3. نظام الإشعارات الفاخر ونظام التنبيه بدون Alert
+// 3. نظام الإشعارات الفاخر
 // ==========================================
 function triggerToastNotification(msg, type = "info") {
     const toast = document.getElementById('custom-toast-notification');
@@ -117,7 +162,7 @@ function acceptFriendSimulated(btn) {
         btn.style.background = "#00ffff";
         btn.disabled = true;
     }
-    triggerToastNotification("تم قبول طلب الصداقة وإضافته لدليلك", "success");
+    triggerToastNotification("تم قبول طلب الصداقة", "success");
 }
 
 function initializeKeyboardInputGuard() {
@@ -172,7 +217,10 @@ function showSection(id, element) {
     }
     
     if(id !== 'profile-section') {
-        document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
+        document.querySelectorAll('.sub-profile-view-box').forEach(box => {
+            box.style.display = 'none';
+        });
+        document.body.classList.remove('modal-active');
         const header = document.querySelector('.profile-card-header-view');
         const menuList = document.querySelector('.profile-options-menu-list');
         if(header) header.style.display = 'block';
@@ -184,11 +232,11 @@ function showSection(id, element) {
 
     if(id === 'home-section') renderHomePostsFeed();
     if(id === 'market-section') { renderProductsList(); renderMyPersonalMarketItems(); }
-    if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); }
+    if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); renderConversationsList(); }
 }
 
 // ==========================================
-// 5. نظام التحقق المباشر بالـ OTP والتسجيل في Supabase
+// 5. نظام التحقق المباشر والتسجيل
 // ==========================================
 async function sendRealOTPCode() {
     const identifier = document.getElementById('reg-identifier')?.value.trim();
@@ -199,27 +247,14 @@ async function sendRealOTPCode() {
 
     const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}`);
     if (existingUsers && existingUsers.length > 0) {
-        return triggerToastNotification("⚠ هذا البريد/الرقم مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
+        return triggerToastNotification("⚠ هذا الحساب مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
     }
 
-    const payload = {
-        identifier: identifier,
-        code: generatedCode,
-        expires_at: expiresAt
-    };
-
-    const result = await supabaseFetch("pending_otps", {
-        method: "POST",
-        body: JSON.stringify(payload)
-    });
+    const payload = { identifier: identifier, code: generatedCode, expires_at: expiresAt };
+    const result = await supabaseFetch("pending_otps", { method: "POST", body: JSON.stringify(payload) });
 
     if (result) {
-        const otpStatusEl = document.getElementById('reg-otp-status-msg');
-        if (otpStatusEl) {
-            otpStatusEl.style.color = "#00ff88";
-            otpStatusEl.innerText = `✅ كود التأكيد الخاص بك هو: [ ${generatedCode} ] (تم إرساله للتحقق التجريبي)`;
-        }
-        triggerToastNotification("تم توليد وإرسال كود التأكيد بنجاح", "success");
+        triggerToastNotification("تم إرسال كود التأكيد بنجاح", "success");
     } else {
         triggerToastNotification("تعذر إرسال الرمز، تحقق من الاتصال بالشبكة.", "error");
     }
@@ -232,8 +267,6 @@ async function handleNewUserRegistrationSubmit() {
     const otpCode = document.getElementById('reg-otp-code')?.value.trim();
     const gender = document.getElementById('reg-gender')?.value || "ذكر";
     const age = document.getElementById('reg-age')?.value.trim();
-    const country = document.getElementById('reg-country')?.value.trim();
-    const governorate = document.getElementById('reg-governorate')?.value.trim();
 
     if (!firstName || !lastName || !identifier || !otpCode || !age) {
         return triggerToastNotification("يرجى استكمال البيانات وإدخال رمز التأكيد.", "error");
@@ -247,7 +280,7 @@ async function handleNewUserRegistrationSubmit() {
 
     const record = otpRecords[0];
     if (new Date(record.expires_at) < new Date()) {
-        return triggerToastNotification("⌛ انتهت صلاحية الكود. اطلب كوداً جديداً.", "error");
+        return triggerToastNotification("⌛ انتهت صلاحية الكود.", "error");
     }
 
     const userPayload = {
@@ -256,31 +289,23 @@ async function handleNewUserRegistrationSubmit() {
         identifier: identifier,
         gender: gender,
         age: parseInt(age) || 0,
-        country: country || "مصر",
-        governorate: governorate || "القاهرة",
         avatar_url: localUploadedAvatarBase64 || null,
         is_verified: true,
         created_at: new Date().toISOString()
     };
 
-    const newUserResult = await supabaseFetch("users", {
-        method: "POST",
-        body: JSON.stringify(userPayload)
-    });
+    const newUserResult = await supabaseFetch("users", { method: "POST", body: JSON.stringify(userPayload) });
 
     if (newUserResult) {
         await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}`, { method: "DELETE" });
-
         localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
         localStorage.setItem('alwaha_profile_phone', identifier);
         localStorage.setItem('alwaha_profile_verified', 'true');
         if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
 
-        triggerToastNotification("🎉 تم التأكد من الرمز وإنشاء حسابك رسمياً!", "success");
+        triggerToastNotification("🎉 تم إنشاء حسابك رسمياً!", "success");
         closeSubProfileView('sub-prof-register');
         syncUiWithLoadedProfileData();
-    } else {
-        triggerToastNotification("حدث خطأ أثناء الإنشاء في قاعدة البيانات.", "error");
     }
 }
 
@@ -288,7 +313,7 @@ async function executeUserLoginAuth() {
     const loginId = document.getElementById('login-id')?.value.trim();
     const loginPass = document.getElementById('login-pass')?.value.trim();
 
-    if (!loginId) return triggerToastNotification("يرجى إدخال الهاتف أو البريد الإلكتروني.", "error");
+    if (!loginId) return triggerToastNotification("يرجى إدخال بيانات الدخول.", "error");
 
     const users = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(loginId)}`);
     if (users && users.length > 0) {
@@ -298,45 +323,39 @@ async function executeUserLoginAuth() {
         localStorage.setItem('alwaha_profile_verified', 'true');
         if (u.avatar_url) localStorage.setItem('alwaha_profile_avatar', u.avatar_url);
 
-        triggerToastNotification(`مرحباً بك مجدداً ${u.first_name}!`, "success");
+        triggerToastNotification(`مرحباً بك مجدداً!`, "success");
         closeSubProfileView('sub-prof-login');
         syncUiWithLoadedProfileData();
     } else {
-        localStorage.setItem('alwaha_profile_name', loginId);
-        localStorage.setItem('alwaha_profile_phone', loginId);
-        triggerToastNotification("تم تسجيل الدخول بنجاح", "success");
-        closeSubProfileView('sub-prof-login');
-        syncUiWithLoadedProfileData();
+        triggerToastNotification("بيانات الدخول غير صحيحة", "error");
     }
 }
 
 function sendPasswordResetCodeAction() {
     const resetId = document.getElementById('reset-id')?.value.trim();
-    if (!resetId) return triggerToastNotification("يرجى إدخال الرقم أو البريد لاستعادة كلمة السر", "error");
-    triggerToastNotification("تم إرسال كود تعيين كلمة السر إلى وسيلة الاتصال الخاص بك", "success");
+    if (!resetId) return triggerToastNotification("يرجى إدخال البيانات المطلوبة", "error");
+    triggerToastNotification("تم إرسال الرابط بنجاح", "success");
 }
 
 function sendPhoneVerifyCodeAction() {
     const phone = document.getElementById('verify-phone-input')?.value.trim();
     if (!phone) return triggerToastNotification("أدخل رقم الموبايل أولاً", "error");
-    triggerToastNotification("تم إرسال كود الواتساب/SMS بنجاح", "success");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
 }
 
 function sendEmailVerifyCodeAction() {
     const email = document.getElementById('verify-email-input')?.value.trim();
     if (!email) return triggerToastNotification("أدخل الجيميل أولاً", "error");
-    triggerToastNotification("تم إرسال كود الجيميل بنجاح", "success");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
 }
 
 function submitAccountVerificationRequest() {
-    localStorage.setItem('alwaha_profile_verified', 'true');
-    syncUiWithLoadedProfileData();
-    triggerToastNotification("تم تقديم طلب التوثيق واعتماده فوراً بنجاح!", "success");
+    triggerToastNotification("تم إرسال طلب التوثيق للمراجعة", "success");
     closeSubProfileView('sub-prof-verify');
 }
 
 // ==========================================
-// 6. تدوين وبث المشاركات (Home Feed)
+// 6. الخلاصة والمنشورات (Home Feed)
 // ==========================================
 function previewHomePostImage(input) {
     if (input.files && input.files[0]) {
@@ -357,7 +376,7 @@ async function publishNewHomePost() {
     const previewEl = document.getElementById('home-post-image-preview');
     if(!textEl || !textEl.value.trim()) return triggerToastNotification("يرجى كتابة نص التغريدة أولاً.", "error");
 
-    const author = localStorage.getItem('alwaha_profile_name') || "نصر الدين";
+    const author = localStorage.getItem('alwaha_profile_name') || "مستخدم";
     const payload = {
         author_name: author,
         content: textEl.value,
@@ -366,14 +385,11 @@ async function publishNewHomePost() {
         created_at: new Date().toISOString()
     };
 
-    await supabaseFetch("posts", {
-        method: "POST",
-        body: JSON.stringify(payload)
-    });
+    await supabaseFetch("posts", { method: "POST", body: JSON.stringify(payload) });
 
     textEl.value = "";
     if (previewEl) previewEl.style.display = 'none';
-    triggerToastNotification("🚀 تم نشر التغريدة بنجاح في الخلاصة السحابية", "success");
+    triggerToastNotification("تم النشر بنجاح", "success");
     renderHomePostsFeed();
 }
 
@@ -381,14 +397,12 @@ async function renderHomePostsFeed() {
     const container = document.getElementById('home-posts-feed-container');
     if (!container) return;
     
-    container.innerHTML = `<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري جلب المنشورات من Supabase...</div>`;
+    container.innerHTML = `<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري جلب المنشورات...</div>`;
     let posts = await supabaseFetch("posts?select=*&order=created_at.desc");
     
     if (!posts || posts.length === 0) {
-        posts = [
-            { author_name: "المهندس نصر الدين", post_type: "تقني", content: "تم تحديث منصة الواحة برو بالكامل وربط المحرك بـ Supabase بنجاح!" },
-            { author_name: "المطور صابر", post_type: "عام", content: "التطبيق يعمل الآن بأعلى كفاءة وسرعة على كافة الهواتف." }
-        ];
+        container.innerHTML = `<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>`;
+        return;
     }
 
     container.innerHTML = "";
@@ -403,8 +417,8 @@ async function renderHomePostsFeed() {
                 <p style="font-size:13px; line-height:1.4; color:#fff;">${post.content}</p>
                 ${imageMarkup}
                 <div class="post-actions-row" style="display:flex; gap:15px; margin-top:10px;">
-                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;" id="like-btn-${index}" onclick="togglePostLikeSimulated(${index})"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> <span id="like-count-${index}">12</span></button>
-                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;" onclick="triggerToastNotification('التعليقات مفعلة ومربوطة بالسيرفر الموحد.', 'info')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;" id="like-btn-${index}" onclick="togglePostLikeSimulated(${index})"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> <span id="like-count-${index}">0</span></button>
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
                 </div>
             </div>`;
     });
@@ -443,20 +457,19 @@ function collapseChatSubWindows() {
     document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
     document.getElementById('active-chat-box').style.display = 'none';
     document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
+    document.body.classList.remove('modal-active');
 }
 
 async function loadAllRegisteredUsersList() {
     const container = document.getElementById('all-users-list');
     if (!container) return;
     
-    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري تحميل الدليل الموحد...</div>`;
+    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري تحميل الدليل...</div>`;
     let users = await supabaseFetch("users?select=*&limit=20");
     
     if (!users || users.length === 0) {
-        users = [
-            { first_name: "المهندس أحمد", last_name: "علي", identifier: "01012345678" },
-            { first_name: "سارة", last_name: "محمود", identifier: "01198765432" }
-        ];
+        container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا يوجد مستخدمين مسجلين حتى الآن.</div>`;
+        return;
     }
 
     container.innerHTML = "";
@@ -465,7 +478,7 @@ async function loadAllRegisteredUsersList() {
             <div class="profile-menu-btn" style="margin-bottom:8px;">
                 <div>
                     <div style="font-weight:bold; color:#00ff88;">👤 ${u.first_name} ${u.last_name}</div>
-                    <div style="font-size:10px; color:#aaa;">📱 ${u.identifier}</div>
+                    <div style="font-size:10px; color:#aaa;">مستخدم موثق</div>
                 </div>
                 <button class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="openTargetUserDirectChat('${u.first_name} ${u.last_name}')">محادثة</button>
             </div>`;
@@ -487,16 +500,19 @@ function openTargetUserDirectChat(name) {
     
     const chatBox = document.getElementById('active-chat-box');
     chatBox.style.display = 'block';
-    document.getElementById('current-chat-name').innerText = `🔒 محادثة مباشرة مع: ${name}`;
+    document.body.classList.add('modal-active'); // تثبيت الخلفية
+    
+    document.getElementById('current-chat-name').innerText = name;
     
     const msgContainer = document.getElementById('chat-messages-container');
-    msgContainer.innerHTML = `<div style="text-align:center; color:#aaa; font-size:11px; padding-top:10px;">🔒 بداية التراسل آمن ومحمي</div>`;
+    msgContainer.innerHTML = `<div style="text-align:center; color:#aaa; font-size:11px; padding-top:10px;">بدء المحادثة بشكل آمن ومحمي</div>`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function closeActiveChatWindow() {
     document.getElementById('active-chat-box').style.display = 'none';
     document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
+    document.body.classList.remove('modal-active'); // إعادة تفعيل التمرير
 }
 
 function sendLiveChatMessageFromUI() {
@@ -519,16 +535,6 @@ function sendLiveChatMessageFromUI() {
     cancelReplyMode();
     container.scrollTop = container.scrollHeight;
     playLuxuriousNotificationSound();
-
-    setTimeout(() => {
-        container.innerHTML += `
-            <div style="text-align:right; margin:8px 0;">
-                <div style="display:inline-block; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#00ffff; padding:8px 12px; border-radius:12px 12px 12px 0; font-size:12.5px; max-width:85%;">
-                    🔄 تم استلام رسالتك وتوثيقها ببيانات السيرفر السحابي.
-                </div>
-            </div>`;
-        container.scrollTop = container.scrollHeight;
-    }, 1000);
 }
 
 function cancelReplyMode() {
@@ -540,9 +546,7 @@ function cancelReplyMode() {
 function renderConversationsList() {
     const holder = document.getElementById('conversations-list');
     if(!holder) return;
-    holder.innerHTML = `
-        <div class="profile-menu-btn" style="margin-bottom:6px;" onclick="openTargetUserDirectChat('المهندس نصر الدين')"><span>💬 المهندس نصر الدين (مسؤول النظام)</span><i class="fa-solid fa-chevron-left"></i></div>
-        <div class="profile-menu-btn" style="margin-bottom:6px;" onclick="openTargetUserDirectChat('المطور صابر')"><span>💬 المطور صابر (مطوّر الأندرويد)</span><i class="fa-solid fa-chevron-left"></i></div>`;
+    holder.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا توجد محادثات جارية حالياً.</div>`;
 }
 
 function initiateVoiceCall(type) {
@@ -552,6 +556,7 @@ function initiateVoiceCall(type) {
 
     if(modal) {
         modal.style.display = 'flex';
+        document.body.classList.add('modal-active');
         if(targetUser) targetUser.innerText = currentChatUser || "الطرف المستلم";
         if(indicator) {
             indicator.innerHTML = type === 'offline' ? 
@@ -563,8 +568,10 @@ function initiateVoiceCall(type) {
 
 function terminateVoiceCall() {
     const modal = document.getElementById('voice-call-modal');
-    if(modal) modal.style.display = 'none';
-    triggerToastNotification("تم إنهاء المكالمة بنجاح", "info");
+    if(modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-active');
+    }
 }
 
 // ==========================================
@@ -599,25 +606,21 @@ async function submitNewProductToMarket() {
     const price = document.getElementById('prod-price')?.value.trim();
     const category = document.getElementById('prod-category')?.value;
     const desc = document.getElementById('prod-desc-location')?.value.trim();
-    const phone = document.getElementById('prod-phone-opt')?.value.trim();
 
-    if(!name || !price || !desc) return triggerToastNotification("يرجى إدخال اسم المنتج، السعر، والوصف.", "error");
+    if(!name || !price || !desc) return triggerToastNotification("يرجى إدخال البيانات الأساسية.", "error");
 
     const payload = {
         title: name,
         price: price,
         category: category || "عام",
-        description: `${desc} ${phone ? '| رقم التواصل: ' + phone : ''}`,
+        description: desc,
         image_url: marketMultiImagesArray[0] || null,
         created_at: new Date().toISOString()
     };
 
-    await supabaseFetch("products", {
-        method: "POST",
-        body: JSON.stringify(payload)
-    });
+    await supabaseFetch("products", { method: "POST", body: JSON.stringify(payload) });
 
-    triggerToastNotification("🚀 تم نشر المنتج في الماركت السحابية بنجاح!", "success");
+    triggerToastNotification("تم نشر المنتج بنجاح!", "success");
     document.getElementById('prod-name').value = "";
     document.getElementById('prod-price').value = "";
     document.getElementById('prod-desc-location').value = "";
@@ -625,7 +628,6 @@ async function submitNewProductToMarket() {
     
     switchMarketSubView('buy');
     renderProductsList();
-    renderMyPersonalMarketItems();
 }
 
 async function renderProductsList() {
@@ -636,14 +638,14 @@ async function renderProductsList() {
     const products = await supabaseFetch("products?select=*&order=created_at.desc");
     
     if (!products || products.length === 0) {
-        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع حالياً. كن أول من يضيف!</div>`;
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع معروضة حالياً.</div>`;
         return;
     }
 
     container.innerHTML = "";
     products.forEach((prod) => {
         const hasImg = prod.image_url && prod.image_url.startsWith('data:image');
-        const fallbackImg = "https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=300&q=80";
+        const fallbackImg = "icon.png";
         
         container.innerHTML += `
             <div class="product-card-node">
@@ -651,7 +653,7 @@ async function renderProductsList() {
                 <div style="font-weight:bold; color:#00ffff; margin-bottom:3px; font-size:12px;">${prod.title}</div>
                 <div style="color:#ffd700; font-weight:bold; margin-bottom:4px; font-size:11px;">💰 ${prod.price}</div>
                 <button class="btn-action" style="width:100%; justify-content:center; font-size:10px; padding:4px;" onclick="openTargetUserDirectChat('بائع المنتج')">
-                    <i class="fa-solid fa-comments"></i> مراسلة البائع
+                    <i class="fa-solid fa-comments"></i> مراسلة
                 </button>
             </div>`;
     });
@@ -660,16 +662,7 @@ async function renderProductsList() {
 function renderMyPersonalMarketItems() {
     const container = document.getElementById('my-market-items-container');
     if (!container) return;
-    container.innerHTML = `
-        <div class="news-box" style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <h5 style="color:#00ffff;">منتج تجريبي خاص بك</h5>
-                <p style="font-size:11px; color:#aaa;">السعر: 250 ج.م</p>
-            </div>
-            <div>
-                <button class="btn-action" style="background:#ff0055; color:#fff; padding:4px 8px; font-size:10px;" onclick="this.parentElement.parentElement.remove(); triggerToastNotification('تم حذف المنتج نهائياً', 'info');">حذف</button>
-            </div>
-        </div>`;
+    container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لا يوجد لديك سلع معروضة حالياً.</div>`;
 }
 
 function searchProducts() {
@@ -685,20 +678,26 @@ function searchProducts() {
 // ==========================================
 function openProfessionalCameraView() {
     const modal = document.getElementById('pro-camera-modal');
-    if(modal) modal.style.display = 'flex';
+    if(modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-active');
+    }
 }
 
 function closeProfessionalCameraView() {
     const modal = document.getElementById('pro-camera-modal');
-    if(modal) modal.style.display = 'none';
+    if(modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-active');
+    }
 }
 
 function triggerFaceBeautyEnhancement() {
-    triggerToastNotification("تم تطبيق فلتر التنقية والتجميل الفوري ✨", "success");
+    triggerToastNotification("تم التفعيل بنجاح ✨", "success");
 }
 
 function triggerAnimeAiConverterFilter() {
-    triggerToastNotification("تم تطبيق فلتر الأنمي الفوري 🎨", "success");
+    triggerToastNotification("تم التفعيل بنجاح 🎨", "success");
 }
 
 function toggleFreeMeshShareSystem() {
@@ -714,27 +713,30 @@ function toggleFreeMeshShareSystem() {
     if (results) {
         results.style.display = meshShareActive ? 'block' : 'none';
     }
-    triggerToastNotification(meshShareActive ? "تم تفعيل الشبكة اللاسلكية الحرة" : "تم إيقاف الشبكة الحرة", "info");
 }
 
 function simulateLudoMatchLaunch() {
-    triggerToastNotification("جاري بدء ساحة الليدو الملكية اللاسلكية...", "success");
+    triggerToastNotification("جاري تهيئة ساحة اللعب...", "success");
 }
 
 // ==========================================
 // 10. إدارة الملف الشخصي والضبط
 // ==========================================
 function openSubProfileView(id) {
+    // إخفاء القوائم العلوية
     const header = document.querySelector('.profile-card-header-view');
     const menuList = document.querySelector('.profile-options-menu-list');
     if(header) header.style.display = 'none';
     if(menuList) menuList.style.display = 'none';
     
+    // إخفاء كافة الشاشات الفرعية الأخرى
     document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
     
+    // إظهار الشاشة المطلوبة وتفعيل وضع الشاشة الكاملة
     const target = document.getElementById(id);
     if(target) {
         target.style.display = 'block';
+        document.body.classList.add('modal-active'); // تمنع المستخدم من التمرير لأسفل الصفحة القديمة
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 }
@@ -742,6 +744,8 @@ function openSubProfileView(id) {
 function closeSubProfileView(id) {
     const target = document.getElementById(id);
     if(target) target.style.display = 'none';
+    
+    document.body.classList.remove('modal-active'); // إرجاع التمرير للصفحة الرئيسية
     
     const header = document.querySelector('.profile-card-header-view');
     const menuList = document.querySelector('.profile-options-menu-list');
@@ -769,7 +773,7 @@ function updateProfileAvatarDirectly(input) {
         reader.onload = function(e) {
             localStorage.setItem('alwaha_profile_avatar', e.target.result);
             syncUiWithLoadedProfileData();
-            triggerToastNotification("تم تحديث صورة الملف الشخصي بنجاح", "success");
+            triggerToastNotification("تم التحديث بنجاح", "success");
         };
         reader.readAsDataURL(input.files[0]);
     }
@@ -777,8 +781,8 @@ function updateProfileAvatarDirectly(input) {
 
 function sendPrivacyUpdateCodeAction() {
     const contact = document.getElementById('privacy-new-contact')?.value.trim();
-    if (!contact) return triggerToastNotification("أدخل الرقم أو البريد الجديد أولاً", "error");
-    triggerToastNotification("تم إرسال كود التأكيد إلى بياناتك الجديدة", "success");
+    if (!contact) return triggerToastNotification("أدخل البيانات المطلوبة", "error");
+    triggerToastNotification("تم الإرسال للتأكيد", "success");
 }
 
 function savePrivacyProfileUpdates() {
@@ -787,24 +791,23 @@ function savePrivacyProfileUpdates() {
         localStorage.setItem('alwaha_profile_name', newName);
     }
     syncUiWithLoadedProfileData();
-    triggerToastNotification("تم حفظ وتحديث كافة بيانات الخصوصية", "success");
+    triggerToastNotification("تم حفظ التعديلات", "success");
     closeSubProfileView('sub-prof-privacy');
 }
 
 function changeAppDynamicThemeBackground(val) {
     if (val) {
-        triggerToastNotification(`تم تطبيق الخلفية [${val}] وضبط الألوان تلقائياً`, "success");
+        triggerToastNotification(`تم تطبيق النمط المختار`, "success");
     }
 }
 
 function toggleAppAudioState(isMuted) {
     audioMuted = isMuted;
-    triggerToastNotification(audioMuted ? "تم كتم الصوت" : "تم تشغيل الصوت", "info");
 }
 
 function syncUiWithLoadedProfileData() {
-    const savedName = localStorage.getItem('alwaha_profile_name') || "نصر الدين";
-    const savedPhone = localStorage.getItem('alwaha_profile_phone') || "01030064023";
+    const savedName = localStorage.getItem('alwaha_profile_name') || "مستخدم جديد";
+    const savedPhone = localStorage.getItem('alwaha_profile_phone') || "البيانات غير مسجلة";
     const savedAvatar = localStorage.getItem('alwaha_profile_avatar');
 
     const nameTag = document.getElementById('my-profile-name-tag');
