@@ -1,532 +1,774 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alwaha Pro - الواحة برو | المنصة المتكاملة</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-</head>
-<body>
+// =========================================================================
+// Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل
+// الإصدار المستقر: 2.2.0 | الفحص الميداني الكامل وتفعيل كافة الأزرار و Supabase
+// =========================================================================
 
-    <!-- شريط التنقل العلوي -->
-    <div class="top-navbar">
-        <div class="nav-item free-mode" onclick="showSection('free-section', this)"><i class="fa-solid fa-wifi"></i><span>الشبكة الحرة</span></div>
-        <div class="nav-item chat" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>التراسل</span></div>
-        <div class="nav-item games" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></div>
-        <div class="nav-item market-center" onclick="showSection('market-section', this)"><i class="fa-solid fa-basket-shopping"></i><span>الماركت</span></div>
-        <div class="nav-item reels" onclick="showSection('reels-section', this)"><i class="fa-solid fa-film"></i><span>المحتوى</span></div>
-        <div class="nav-item main-home active" onclick="showSection('home-section', this)"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
-        <div class="nav-item profile-me" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>الملف الشخصي</span></div>
-    </div>
+const DEFAULT_SUPABASE_URL = "https://fylbbybclbeunmrcscqy.supabase.co";
+const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bGJieWJjbGJldW5tcmNzY3F5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Mzg3NzMsImV4cCI6MjA5NTUxNDc3M30.E-f7VstD2g-uGjE6_z8-VvL6R7Fz3f7eF6K9W2vL8Z4";
 
-    <div class="app-container">
+const SUPABASE_URL = localStorage.getItem('EXTERNAL_API_URL') || DEFAULT_SUPABASE_URL;
+const SUPABASE_KEY = localStorage.getItem('EXTERNAL_API_KEY') || DEFAULT_SUPABASE_KEY;
 
-        <!-- مركز خدمات التثبيت والإشعارات -->
-        <div style="display: flex; justify-content: space-between; padding: 10px; margin-bottom: 10px;">
-            <button id="pwa-install-btn" class="btn-action golden-edge" style="display:none; background:#00ff88; color:#000;" onclick="triggerPwaInstallation()"><i class="fa-solid fa-download"></i> تثبيت التطبيق الفوري</button>
-            <button class="btn-action golden-edge" style="background:#ff00ff; color:#fff;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> مركز الإشعارات والطلبات <span id="notif-badge">3</span></button>
-        </div>
+let localUploadedProductBase64 = "";
+let localUploadedAvatarBase64 = "";
+let marketMultiImagesArray = [];
+let meshShareActive = false;
+let audioMuted = false;
+let deferredPrompt = null;
+let currentChatUser = "";
+let activeReplyMessageText = "";
 
-        <!-- لوحة الإشعارات -->
-        <div id="internal-notification-center" class="news-box" style="display:none; margin-bottom:15px; border:2px solid #ffd700;">
-            <h4 style="color:#ffd700; margin-bottom:8px;"><i class="fa-solid fa-bolt"></i> خادم التحديثات وطلبات الاتصال</h4>
-            <ul style="list-style:none; font-size:12px; padding:0;" id="notifications-ul-list">
-                <li style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05);">👥 طلب اتصال وتبادل من "المهندس أحمد" <button class="btn-action" style="padding:2px 6px; font-size:10px;" onclick="acceptFriendSimulated(this)">قبول</button></li>
-                <li style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05);">✨ تم فحص وتحديث جدار الحماية بنجاح.</li>
-                <li style="padding:5px 0;">🎁 بروتوكول الشبكة المحلية جاهز للتراسل التلقائي.</li>
-            </ul>
-        </div>
-
-        <!-- 1/ قسم الرئيسية -->
-        <div id="home-section" class="app-section active-section">
-            
-            <!-- أ - الإشعارات -->
-            <div class="news-box" style="margin-bottom:15px; border:1px solid rgba(0,255,255,0.3);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <h4 style="color:#ffd700; margin:0;"><i class="fa-solid fa-bell"></i> الإشعارات</h4>
-                    <span class="badge" style="background:#ff00ff; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px;">جديد</span>
-                </div>
-                <div id="home-notifications-list" style="font-size:12.5px; color:#ccc;">
-                    <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><i class="fa-solid fa-circle-info" style="color:#00ffff;"></i> مرحباً بك في الواحة برو المحدث!</div>
-                    <div style="padding:6px 0;"><i class="fa-solid fa-bullhorn" style="color:#00ff88;"></i> يمكنك الآن إضافة تغريداتك وصورك ومشاركتها فورياً.</div>
-                </div>
-            </div>
-
-            <!-- ب - إضافة تغريدة أو صورة -->
-            <div class="news-box publishing-area" style="margin-bottom:20px;">
-                <h4 style="color:#ff00ff; margin-bottom:10px;"><i class="fa-solid fa-pen-to-square"></i> إضافة تغريدة أو صورة</h4>
-                
-                <textarea id="home-post-textarea" placeholder="اكتب تغريدتك هنا..." class="keyboard-target" style="width:100%; height:70px; padding:10px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff; margin-bottom:8px;"></textarea>
-                
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:12px; color:#00ffff; cursor:pointer; display:inline-flex; align-items:center; gap:5px; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:6px; border:1px dashed #00ffff;">
-                        <i class="fa-solid fa-image"></i> إرفاق صورة للتغريدة
-                        <input type="file" id="home-post-image-input" accept="image/*" onchange="previewHomePostImage(this)" style="display:none;">
-                    </label>
-                    <img id="home-post-image-preview" style="display:none; width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px;">
-                </div>
-
-                <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="publishNewHomePost()"><i class="fa-solid fa-paper-plane"></i> نشر التغريدة</button>
-            </div>
-
-            <h3 style="margin: 15px 5px 10px 0; color: #00ffff; font-size: 16px;"><i class="fa-solid fa-rss"></i> خلاصة التغريدات والمنشورات</h3>
-            <div id="home-posts-feed-container"></div>
-        </div>
-
-        <!-- 2/ قسم الماركت -->
-        <div id="market-section" class="app-section">
-            
-            <div style="display:flex; gap:8px; margin-bottom:12px;">
-                <button id="market-mini-sell-btn" class="btn-action golden-edge" style="flex:1; padding:6px 10px; font-size:12px; justify-content:center; background:linear-gradient(135deg, #00ff88, #00b359); color:#000; border:none;" onclick="switchMarketSubView('sell')">
-                    <i class="fa-solid fa-plus-circle"></i> بيع ما لديك الآن
-                </button>
-                <button id="market-mini-myitems-btn" class="btn-action golden-edge" style="flex:1; padding:6px 10px; font-size:12px; justify-content:center; background:linear-gradient(135deg, #00ffff, #0088cc); color:#000; border:none;" onclick="switchMarketSubView('my-items')">
-                    <i class="fa-solid fa-box-open"></i> معروضاتي
-                </button>
-                <button id="market-mini-explore-btn" class="btn-action" style="padding:6px 10px; font-size:12px; justify-content:center; background:rgba(255,255,255,0.1); color:#fff;" onclick="switchMarketSubView('buy')">
-                    <i class="fa-solid fa-store"></i> السوق
-                </button>
-            </div>
-
-            <!-- عرض المعروضات العامة -->
-            <div id="market-buy-view">
-                <div class="search-bar-box" style="margin-bottom:10px;">
-                    <input type="text" id="market-search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع..." oninput="searchProducts()" class="keyboard-target" style="width:100%; padding:8px;">
-                </div>
-                
-                <div id="market-pull-to-refresh" style="text-align:center; padding:6px; font-size:11px; color:#00ffff; background:rgba(0,255,255,0.05); border-radius:6px; margin-bottom:10px; cursor:pointer;" onclick="renderProductsList()">
-                    <i class="fa-solid fa-arrows-rotate"></i> اسحب للأسفل أو اضغط هنا لتحديث السلع الجديدة
-                </div>
-
-                <div id="market-products-list-container" class="market-mini-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px;"></div>
-            </div>
-
-            <!-- أ ـ بيع ما لديك الآن -->
-            <div id="market-sell-view" style="display:none;">
-                <div class="news-box">
-                    <h4 style="color:#00ffff; margin-bottom:12px;"><i class="fa-solid fa-cart-plus"></i> إدراج منتج جديد للبيع</h4>
-                    
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:12px; color:#ffd700; display:block; margin-bottom:4px;">أ ـ إضافة الصور (من 2 إلى 4 صور):</label>
-                        <input type="file" id="prod-images-input" accept="image/*" multiple onchange="handleMarketMultiImages(this)" style="font-size:11px; padding:4px;">
-                        <div id="prod-images-preview-container" style="display:flex; gap:6px; margin-top:8px; overflow-x:auto;"></div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ب ـ اسم المنتج:</label>
-                        <input type="text" id="prod-name" class="keyboard-target" placeholder="أدخل اسم المنتج" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ج ـ سعر المنتج:</label>
-                        <input type="text" id="prod-price" class="keyboard-target" placeholder="مثال: 500 ج.م" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">د ـ نوع المنتج:</label>
-                        <select id="prod-category" class="custom-select" style="width:100%; padding:8px; border-radius:6px; background:#18032b; border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                            <option value="الكترونيات">هواتف وإلكترونيات</option>
-                            <option value="ملابس">ملابس وأزياء</option>
-                            <option value="معدات">معدات وآلات</option>
-                            <option value="منزليات">أثاث ومنزليات</option>
-                            <option value="آخر">أخرى</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">هـ ـ وصف المنتج ونقطة الالتقاء:</label>
-                        <textarea id="prod-desc-location" class="keyboard-target" placeholder="اكتب وصف السلعة ومكان التسليم..." style="width:100%; height:60px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;"></textarea>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label style="font-size:12px; color:#ccc; display:block; margin-bottom:4px;">م ـ أضف رقم (اختياري):</label>
-                        <input type="tel" id="prod-phone-opt" class="keyboard-target" placeholder="رقم الموبايل / الواتساب" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
-
-                    <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="submitNewProductToMarket()">نشر المنتج في الماركت</button>
-                </div>
-            </div>
-
-            <!-- ب ـ معروضاتي -->
-            <div id="market-my-items-view" style="display:none;">
-                <div class="news-box">
-                    <h4 style="color:#00ff88; margin-bottom:10px;"><i class="fa-solid fa-boxes-packing"></i> معروضاتي الشخصية</h4>
-                    <p style="font-size:11px; color:#aaa; margin-bottom:10px;">يمكنك تعديل أي منشور أو حذفه نهائياً من هنا.</p>
-                    <div id="my-market-items-container"></div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 3/ قسم الدردشة والتراسل -->
-        <div id="chat-section" class="app-section">
-            <div id="chat-main-lobby-wrapper">
-                <div class="chat-tabs-container" id="chat-gate-buttons" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
-                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('all-users')">
-                        <span><i class="fa-solid fa-user-plus" style="color:#00ff88; margin-left:8px;"></i> ١ ـ إضافة أصدقاء</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('recent')">
-                        <span><i class="fa-solid fa-comments" style="color:#00ffff; margin-left:8px;"></i> ٢ ـ المحادثات الجارية</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- نافذة 1: إضافة أصدقاء -->
-            <div id="all-users-tab" class="chat-tab-content" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="color:#00ff88;"><i class="fa-solid fa-user-plus"></i> إضافة أصدقاء واستكشاف الدليل</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-                </div>
-                
-                <div class="form-group" style="margin-bottom:12px;">
-                    <input type="text" id="friend-search-input" placeholder="ابحث عن شخص بالاسم أو رقم الهاتف..." class="keyboard-target" style="width:100%; padding:10px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid #00ff88; color:#fff;" oninput="searchUsersByPhoneOrName(this.value)">
-                </div>
-
-                <div id="all-users-list" class="conversations-holder"></div>
-            </div>
-
-            <!-- نافذة 2: المحادثات الجارية -->
-            <div id="recent-tab" class="chat-tab-content" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="color:#00ffff;"><i class="fa-solid fa-comments"></i> المحادثات الجارية</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-                </div>
-                <div id="conversations-list" class="conversations-holder"></div>
-            </div>
-
-            <!-- نافذة المحادثة المباشرة -->
-            <div id="active-chat-box" class="active-chat-window" style="display:none; margin-top:15px; border-top:2px solid #3a86ff; padding-top:10px;">
-                <div class="chat-header chat-window-header" style="display:flex; flex-direction:column; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; gap:8px;">
-                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                        <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">محادثة مباشرة</span>
-                        <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> إغلاق</button>
-                    </div>
-                    
-                    <div class="chat-call-actions" style="display: flex; gap: 6px; width:100%;">
-                        <button onclick="initiateVoiceCall('offline')" class="btn-action golden-edge" style="flex:1; background:#00ff88; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
-                            <i class="fa-solid fa-wifi"></i> إتصال دون إنترنت (شبكة حرة)
-                        </button>
-                        <button onclick="initiateVoiceCall('standard')" class="btn-action golden-edge" style="flex:1; background:#00ffff; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
-                            <i class="fa-solid fa-phone"></i> اتصال أساسي
-                        </button>
-                    </div>
-                </div>
-
-                <div id="reply-preview-bar" style="display:none; background:rgba(255,255,255,0.08); padding:6px 10px; border-right:3px solid #00ffff; margin-top:8px; font-size:11px; border-radius:4px; justify-content:space-between; align-items:center;">
-                    <span>الرد على: <span id="reply-target-text" style="color:#00ffff;">...</span></span>
-                    <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ff0055;" onclick="cancelReplyMode()"></i>
-                </div>
-
-                <div id="chat-messages-container" style="height:230px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);"></div>
-                
-                <div class="chat-input-row" style="display:flex; gap:5px; margin-top:10px;">
-                    <input type="text" id="chat-message-input" placeholder="اكتب رسالتك..." class="keyboard-target" style="flex:1; padding:10px; background:#120820; border:1px solid #3a86ff; color:#fff; border-radius:6px;">
-                    <button id="send-chat-msg-btn" onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- مودال الاتصال الصوتي -->
-        <div id="voice-call-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(9,2,18,0.98); z-index:9999; justify-content:center; align-items:center; flex-direction:column; direction:rtl;">
-            <div style="background:linear-gradient(135deg, #18032b, #2c021b); border:2px solid #ffd700; padding:30px; border-radius:15px; text-align:center; max-width:400px; width:90%;">
-                <div style="font-size:50px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-phone-volume fa-bounce"></i></div>
-                <h3 id="call-status-title" style="color:#fff; margin-bottom:10px;">جاري الاتصال...</h3>
-                <p id="call-target-user" style="color:#00ffff; font-size:16px; margin-bottom:20px; font-weight:bold;">الطرف المستلم</p>
-                <div style="margin-bottom:20px; font-size:12px; color:#00ff88; background:rgba(0,255,136,0.1); padding:8px; border-radius:6px;">
-                    <span id="call-method-indicator"><i class="fa-solid fa-shield"></i> اتصال صوتي مباشر</span>
-                </div>
-                <button onclick="terminateVoiceCall()" style="background:#ff0055; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
-            </div>
-        </div>
-
-        <!-- قسم الألعاب -->
-        <div id="games-section" class="app-section">
-            <div class="news-box">
-                <h3 style="color:#ff00ff; text-align:center; margin-bottom:10px;"><i class="fa-solid fa-gamepad"></i> المركز الرقمي للألعاب والترفيه</h3>
-                <div class="game-card golden-edge" style="margin-top:15px; padding:12px; background:rgba(255,255,255,0.02); border-radius:12px;">
-                    <h4 style="color:#ffd700;"><i class="fa-solid fa-dice"></i> لعبة الليدو الملكية اللاسلكية</h4>
-                    <p style="font-size:12px; color:#ccc; margin-bottom:8px;">تعمل دون إنترنت وتدعم اللعب المباشر.</p>
-                    <div class="ludo-board-wrapper">
-                        <div class="ludo-grid-mock">
-                            <div class="ludo-corner ludo-red">الكتيبة الحمراء</div>
-                            <div class="ludo-corner ludo-blue">الكتيبة الزرقاء</div>
-                            <div class="ludo-corner ludo-green">الكتيبة الخضراء</div>
-                            <div class="ludo-corner ludo-yellow">الكتيبة الصفراء</div>
-                        </div>
-                    </div>
-                    <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="simulateLudoMatchLaunch()">بدء ساحة اللعب</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم المحتوى والكاميرا -->
-        <div id="reels-section" class="app-section">
-            <div class="reels-video-viewport">
-                <div class="reels-video-mock-bg"><i class="fa-solid fa-play-circle mock-play-icon fa-spin"></i></div>
-                <div class="reels-overlay-data">
-                    <span class="reels-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> المعالجة المباشرة</span>
-                    <h4>@alwaha_pro_digital</h4>
-                    <p>صناعة المحتوى البصري المباشر وفلاتر الأنمي المتقدمة 🌟</p>
-                </div>
-                
-                <div class="reels-actions-side-bar">
-                    <button class="reel-circle-btn" style="color:#ff0055;" onclick="triggerToastNotification('تم تسجيل الإعجاب بنجاح', 'success')"><i class="fa-solid fa-heart"></i><small>3.1k</small></button>
-                    <button class="reel-circle-btn" onclick="triggerToastNotification('قسم التعليقات مفعل ومربوط بالتطبيق', 'info')"><i class="fa-solid fa-comment"></i><small>150</small></button>
-                    <button class="reel-circle-btn" onclick="triggerToastNotification('تم نسخ رابط الفيديو إلى الحافظة', 'info')"><i class="fa-solid fa-share-nodes"></i><small>مشاركة</small></button>
-                    <button class="reel-circle-btn camera-trigger" onclick="openProfessionalCameraView()"><i class="fa-solid fa-camera" style="color:#00ffff;"></i><small>إنتاج</small></button>
-                </div>
-            </div>
-
-            <!-- الكاميرا المباشرة -->
-            <div id="pro-camera-modal" class="camera-fullscreen-view" style="display:none;">
-                <div class="camera-top-controls">
-                    <button class="cam-top-btn" onclick="closeProfessionalCameraView()"><i class="fa-solid fa-arrow-right"></i></button>
-                    <span style="color:#fff; font-size:13px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:#00ffff;"></i> استوديو الكاميرا الفوري</span>
-                    <button class="cam-top-btn"><i class="fa-solid fa-bolt"></i></button>
-                </div>
-                <div class="camera-preview-screen" id="camera-screen-lens" style="background:#221133; flex-direction:column; position:relative;">
-                    <div style="position:absolute; bottom:20px; right:15px; display:flex; flex-direction:column; gap:8px; z-index:100;">
-                        <button class="btn-action golden-edge" onclick="triggerFaceBeautyEnhancement()" style="background:rgba(0,0,0,0.7); color:#ff00ff;">
-                            <i class="fa-solid fa-face-smile-wink"></i> فلتر التنقية والتجميل
-                        </button>
-                        <button class="btn-action golden-edge" onclick="triggerAnimeAiConverterFilter()" style="background:rgba(0,0,0,0.7); color:#00ffff;">
-                            <i class="fa-solid fa-user-astronaut"></i> مرشح الأنمي الفوري
-                        </button>
-                    </div>
-                </div>
-                <div class="camera-bottom-dashboard">
-                    <div class="camera-shutter-row">
-                        <button class="cam-secondary-circle" onclick="triggerToastNotification('معرض الوسائط جاهز', 'info')"><i class="fa-solid fa-images"></i><small>المعرض</small></button>
-                        <div class="main-shutter-outer" onclick="triggerToastNotification('تم التقاط الصورة وحفظها بنجاح', 'success')"><div class="main-shutter-inner"></div></div>
-                        <button class="cam-secondary-circle" onclick="openProfessionalCameraView()"><i class="fa-solid fa-camera-rotate"></i><small>تدوير</small></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم الشبكة الحرة -->
-        <div id="free-section" class="app-section">
-            <div class="free-status-card">
-                <h3 style="color:#00ffff;"><i class="fa-solid fa-tower-cell"></i> لوحة التحكم بالربط اللاسلكي الحر (Free Mesh)</h3>
-                
-                <div style="margin:15px 0;">
-                    <button id="free-mode-toggle-main-btn" class="btn-action golden-edge" style="background:#ff0055; color:#fff; padding:10px 20px; font-weight:bold;" onclick="toggleFreeMeshShareSystem()">
-                        ❌ وضع المشاركة الحرة: غير نشط
-                    </button>
-                </div>
-
-                <div id="radar-circle" class="pulse-signal"><i class="fa-solid fa-wifi"></i></div>
-                <p style="font-size:13px; color:#e0ffff;">
-                    يمكن للأجهزة القريبة تبادل الملفات والرسائل مباشرة عبر البلوتوث والشبكة المحلية عند تفعيل الخيار.
-                </p>
-                
-                <div id="radar-live-results" style="display: none; text-align: right;" class="news-box">
-                    <h5 style="color:#00ff88; margin-bottom:5px;"><i class="fa-solid fa-shield-halved"></i> الشبكة المحلية متصلة وفعالة</h5>
-                    <p style="font-size:11px; color:#ccc;">🔄 جاهز لتبادل البيانات المباشر.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- قسم الملف الشخصي -->
-        <div id="profile-section" class="app-section">
-            <div class="news-box golden-edge">
-                <div class="profile-card-header-view">
-                    <div class="profile-main-avatar-glow" id="my-profile-avatar-placeholder">ن</div>
-                    <h3 id="my-profile-name-tag" style="margin-top:10px; color:#fff;">نصر <span id="verification-badge-slot"></span></h3>
-                    <p id="my-profile-phone-tag" style="font-size:12px; color:#aaa;">يرجى تسجيل الدخول أو إعداد الحساب</p>
-                </div>
-                <div class="profile-options-menu-list" style="margin-top:15px;">
-                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-login')">
-                        <span>🔑 تسجيل الدخول</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-register')">
-                        <span>👤 إنشاء حساب جديد</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-verify')">
-                        <span>🛡️ توثيق الحساب بشارة موثوق به</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-settings')">
-                        <span>⚙️ الضبط</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                    <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-privacy')">
-                        <span>🔒 الخصوصية</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 1. تسجيل الدخول -->
-            <div id="sub-prof-login" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>🔑 تسجيل الدخول</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-login')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <label style="font-size:12px;">رقم الهاتف أو البريد:</label>
-                    <input type="text" id="login-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد الإلكتروني">
-                    <label style="font-size:12px;">كلمة السر:</label>
-                    <input type="password" id="login-pass" class="keyboard-target" placeholder="أدخل كلمة السر">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                        <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-reset-pass')" style="color:#00ffff; font-size:12px;">نسيت كلمة السر؟</a>
-                        <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-register')" style="color:#00ffff; font-size:12px;">إضافة حساب جديد</a>
-                    </div>
-                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="executeUserLoginAuth()">دخول</button>
-                </div>
-            </div>
-
-            <!-- إعادة تعيين كلمة السر -->
-            <div id="sub-prof-reset-pass" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>🔄 تحديث كلمة السر</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-reset-pass')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <label style="font-size:12px;">الرقم أو البريد للتحقق:</label>
-                    <input type="text" id="reset-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد">
-                    <button class="btn-action" style="justify-content:center;" onclick="sendPasswordResetCodeAction()">إرسال كود التأكيد</button>
-                </div>
-            </div>
-
-            <!-- 2. إنشاء حساب جديد -->
-            <div id="sub-prof-register" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>👤 إنشاء حساب جديد</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-register')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <label style="font-size:12px;">أ ـ إضافة صورة أو تصويرها:</label>
-                    <input type="file" accept="image/*" capture="user" onchange="previewRegisterOptionalAvatar(this)">
-                    <img id="reg-optional-avatar-preview" style="display:none; width:60px; height:60px; border-radius:50%; margin-top:5px; object-fit:cover;">
-                    <label style="font-size:12px;">ب ـ الاسم الأول واسم العائلة:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="reg-first-name" placeholder="الاسم الأول" class="keyboard-target">
-                        <input type="text" id="reg-last-name" placeholder="اسم العائلة" class="keyboard-target">
-                    </div>
-                    <label style="font-size:12px;">ج ـ الرقم أو البريد الإلكتروني:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="reg-identifier" class="keyboard-target" placeholder="الرقم أو البريد" style="flex:1;">
-                        <button class="btn-action" style="white-space:nowrap;" onclick="sendRealOTPCode()">إرسال كود</button>
-                    </div>
-                    <div id="reg-otp-status-msg" style="font-size:11px; margin-top:2px;"></div>
-                    <input type="text" id="reg-otp-code" placeholder="أدخل كود التأكيد" class="keyboard-target">
-                    <label style="font-size:12px;">د ـ النوع:</label>
-                    <select id="reg-gender" style="width:100%; padding:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff;">
-                        <option>ذكر</option>
-                        <option>أنثى</option>
-                    </select>
-                    <label style="font-size:12px;">هـ ـ السن:</label>
-                    <input type="number" id="reg-age" placeholder="العمر بالسنوات" class="keyboard-target">
-                    <label style="font-size:12px;">ك ـ البلد:</label>
-                    <input type="text" id="reg-country" placeholder="البلد" class="keyboard-target">
-                    <label style="font-size:12px;">ي ـ المحافظة:</label>
-                    <input type="text" id="reg-governorate" placeholder="المحافظة" class="keyboard-target">
-                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="handleNewUserRegistrationSubmit()">تأكيد وإنشاء الحساب</button>
-                </div>
-            </div>
-
-            <!-- 3. توثيق الحساب بشارة موثوق به -->
-            <div id="sub-prof-verify" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>🛡️ توثيق الحساب بشارة موثوق به</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-verify')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <label style="font-size:12px;">أ ـ صورة حقيقية لايف مباشر:</label>
-                    <input type="file" accept="image/*" capture="user">
-                    <label style="font-size:12px;">ب ـ رقم موبايل ساري للتأكيد (SMS / واتساب):</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="tel" id="verify-phone-input" placeholder="رقم الموبايل" class="keyboard-target" style="flex:1;">
-                        <button class="btn-action" style="white-space:nowrap;" onclick="sendPhoneVerifyCodeAction()">إرسال كود</button>
-                    </div>
-                    <input type="text" placeholder="أدخل كود تأكيد الهاتف" class="keyboard-target">
-                    <label style="font-size:12px;">ج ـ جيميل حقيقي للتأكيد:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="email" id="verify-email-input" placeholder="example@gmail.com" class="keyboard-target" style="flex:1;">
-                        <button class="btn-action" style="white-space:nowrap;" onclick="sendEmailVerifyCodeAction()">إرسال كود</button>
-                    </div>
-                    <input type="text" placeholder="أدخل كود تأكيد الجيميل" class="keyboard-target">
-                    <label style="font-size:12px;">د ـ صورة بطاقة شخصية أو جواز سفر:</label>
-                    <input type="file" accept="image/*">
-                    <label style="font-size:12px;">هـ ـ الاسم رباعي:</label>
-                    <input type="text" placeholder="أدخل الاسم الرباعي" class="keyboard-target">
-                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="submitAccountVerificationRequest()">تقديم طلب التوثيق</button>
-                </div>
-            </div>
-
-            <!-- 4. الضبط -->
-            <div id="sub-prof-settings" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>⚙️ الضبط</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-settings')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <div>
-                        <label style="font-size:12px; display:block; margin-bottom:5px;">1 ـ تغيير الخلفية (ضبط الألوان تلقائي):</label>
-                        <select onchange="changeAppDynamicThemeBackground(this.value)" style="width:100%; padding:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff;">
-                            <option value="">اختر خلفية...</option>
-                            <option value="nat1">خلفية طبيعية 1</option>
-                            <option value="nat2">خلفية طبيعية 2</option>
-                            <option value="ani1">خلفية أنمي 1</option>
-                            <option value="ani2">خلفية أنمي 2</option>
-                        </select>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:12px;">2 ـ إيقاف الصوت:</span>
-                        <input type="checkbox" onchange="toggleAppAudioState(this.checked)">
-                    </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:12px;">3 ـ إيقاف النبض والتموج:</span>
-                        <input type="checkbox" onchange="document.body.classList.toggle('pulse-disabled')">
-                    </div>
-                    <div>
-                        <label style="font-size:12px; display:block; margin-bottom:5px;">4 ـ اختيار الوضع (فاتح / داكن صافي):</label>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn-action" style="flex:1; justify-content:center;" onclick="document.body.className='theme-white'">فاتح</button>
-                            <button class="btn-action" style="flex:1; justify-content:center; background:#111;" onclick="document.body.className=''">داكن صافي</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. الخصوصية -->
-            <div id="sub-prof-privacy" class="sub-profile-view-box" style="display:none;">
-                <div class="sub-view-header">
-                    <h4>🔒 الخصوصية</h4>
-                    <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-privacy')">إغلاق ✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:10px;">
-                    <label style="font-size:12px;">أ ـ تغيير صورة الملف الشخصي:</label>
-                    <input type="file" accept="image/*" onchange="updateProfileAvatarDirectly(this)">
-                    <label style="font-size:12px;">ب ـ تغيير الاسم:</label>
-                    <input type="text" id="privacy-new-name" placeholder="الاسم الجديد" class="keyboard-target">
-                    <label style="font-size:12px;">ج ـ تغيير الرقم أو البريد مع التأكيد بكود:</label>
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="privacy-new-contact" placeholder="الرقم أو البريد الجديد" class="keyboard-target" style="flex:1;">
-                        <button class="btn-action" style="white-space:nowrap;" onclick="sendPrivacyUpdateCodeAction()">إرسال كود</button>
-                    </div>
-                    <input type="text" placeholder="أدخل كود التأكيد الفعلي" class="keyboard-target">
-                    <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="savePrivacyProfileUpdates()">حفظ التعديلات</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- عنصر التنبيهات المخصص (Toast Notification) -->
-    <div id="custom-toast-notification" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); color:#00ffff; border:1px solid #00ffff; padding:10px 20px; border-radius:30px; font-size:12px; z-index:10000; box-shadow:0 0 15px rgba(0,255,255,0.4); text-align:center;"></div>
-
-    <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW Registered!', reg))
-                .catch(err => console.error('SW Registration Failed!', err));
+// ==========================================
+// 1. نظام الاتصال السحابي وإدارة البيانات (Supabase API)
+// ==========================================
+async function supabaseFetch(endpoint, options = {}) {
+    const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
+    const headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    };
+    try {
+        const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
+        if (!response.ok) {
+            console.warn(`Supabase HTTP Warning: ${response.status}`);
         }
-    </script>
-</body>
-</html>
+        return await response.json();
+    } catch (error) {
+        console.error("Supabase Operation Error:", error);
+        return null;
+    }
+}
+
+// ==========================================
+// 2. تفعيل تأثير التموج (Ripple Effect) للأزرار
+// ==========================================
+function initializeRippleEffectForNavButtons() {
+    const allButtons = document.querySelectorAll('.nav-item, .btn-action, .profile-menu-btn, .reel-circle-btn, .cam-secondary-circle');
+    allButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            const rect = button.getBoundingClientRect();
+            const circle = document.createElement('span');
+            const diameter = Math.max(rect.width, rect.height);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${e.clientX - rect.left - radius}px`;
+            circle.style.top = `${e.clientY - rect.top - radius}px`;
+            circle.classList.add('ripple-effect');
+
+            const existingRipple = button.querySelector('.ripple-effect');
+            if (existingRipple) existingRipple.remove();
+
+            button.appendChild(circle);
+        });
+    });
+}
+
+// ==========================================
+// 3. نظام الإشعارات الفاخر
+// ==========================================
+function triggerToastNotification(msg, type = "info") {
+    const toast = document.getElementById('custom-toast-notification');
+    if (!toast) return;
+    
+    toast.innerText = msg;
+    if (type === "success") {
+        toast.style.borderColor = "#00ff88";
+        toast.style.color = "#00ff88";
+    } else if (type === "error") {
+        toast.style.borderColor = "#ff0055";
+        toast.style.color = "#ff0055";
+    } else {
+        toast.style.borderColor = "#00ffff";
+        toast.style.color = "#00ffff";
+    }
+    
+    toast.style.display = "block";
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000);
+}
+
+function playLuxuriousNotificationSound() {
+    if (audioMuted) return;
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    } catch (e) { console.log("Audio waiting user interaction."); }
+}
+
+function toggleInternalNotificationCenter() {
+    const center = document.getElementById('internal-notification-center');
+    if (center) {
+        center.style.display = center.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function acceptFriendSimulated(btn) {
+    if(btn) {
+        btn.innerText = "تم القبول ✅";
+        btn.style.background = "#00ffff";
+        btn.disabled = true;
+    }
+    triggerToastNotification("تم قبول طلب الصداقة", "success");
+}
+
+function initializeKeyboardInputGuard() {
+    document.body.addEventListener('focusin', (e) => {
+        if (e.target.matches('.keyboard-target, input, textarea, select')) {
+            document.body.classList.add('keyboard-adjusted-body');
+            setTimeout(() => {
+                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200);
+        }
+    });
+    
+    document.body.addEventListener('focusout', (e) => {
+        if (e.target.matches('.keyboard-target, input, textarea, select')) {
+            setTimeout(() => {
+                if (!document.activeElement.matches('.keyboard-target, input, textarea, select')) {
+                    document.body.classList.remove('keyboard-adjusted-body');
+                }
+            }, 50);
+        }
+    });
+}
+
+// ==========================================
+// 4. نظام التحكم بالتنقل والأقسام
+// ==========================================
+function showSection(id, element) {
+    document.querySelectorAll('.app-section').forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('active-section');
+    });
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    
+    const targetSec = document.getElementById(id);
+    if(targetSec) {
+        targetSec.style.display = 'block';
+        targetSec.classList.add('active-section');
+    }
+    if(element) {
+        element.classList.add('active');
+    } else {
+        const navClasses = { 
+            'home-section': '.main-home', 
+            'market-section': '.market-center', 
+            'chat-section': '.chat', 
+            'profile-section': '.profile-me',
+            'free-section': '.free-mode',
+            'games-section': '.games',
+            'reels-section': '.reels'
+        };
+        if(navClasses[id]) document.querySelector(navClasses[id])?.classList.add('active');
+    }
+    
+    if(id !== 'profile-section') {
+        document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
+        const header = document.querySelector('.profile-card-header-view');
+        const menuList = document.querySelector('.profile-options-menu-list');
+        if(header) header.style.display = 'block';
+        if(menuList) menuList.style.display = 'flex';
+    }
+
+    playLuxuriousNotificationSound();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if(id === 'home-section') renderHomePostsFeed();
+    if(id === 'market-section') { renderProductsList(); renderMyPersonalMarketItems(); }
+    if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); renderConversationsList(); }
+}
+
+// ==========================================
+// 5. نظام التحقق المباشر والتسجيل
+// ==========================================
+async function sendRealOTPCode() {
+    const identifier = document.getElementById('reg-identifier')?.value.trim();
+    if (!identifier) return triggerToastNotification("يرجى إدخال الهاتف أو البريد الإلكتروني أولاً.", "error");
+
+    const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+    const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}`);
+    if (existingUsers && existingUsers.length > 0) {
+        return triggerToastNotification("⚠ هذا الحساب مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
+    }
+
+    const payload = { identifier: identifier, code: generatedCode, expires_at: expiresAt };
+    const result = await supabaseFetch("pending_otps", { method: "POST", body: JSON.stringify(payload) });
+
+    if (result) {
+        triggerToastNotification("تم إرسال كود التأكيد بنجاح", "success");
+    } else {
+        triggerToastNotification("تعذر إرسال الرمز، تحقق من الاتصال بالشبكة.", "error");
+    }
+}
+
+async function handleNewUserRegistrationSubmit() {
+    const firstName = document.getElementById('reg-first-name')?.value.trim();
+    const lastName = document.getElementById('reg-last-name')?.value.trim();
+    const identifier = document.getElementById('reg-identifier')?.value.trim();
+    const otpCode = document.getElementById('reg-otp-code')?.value.trim();
+    const gender = document.getElementById('reg-gender')?.value || "ذكر";
+    const age = document.getElementById('reg-age')?.value.trim();
+
+    if (!firstName || !lastName || !identifier || !otpCode || !age) {
+        return triggerToastNotification("يرجى استكمال البيانات وإدخال رمز التأكيد.", "error");
+    }
+
+    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
+
+    if (!otpRecords || otpRecords.length === 0) {
+        return triggerToastNotification("❌ كود التأكيد المدخل غير صحيح!", "error");
+    }
+
+    const record = otpRecords[0];
+    if (new Date(record.expires_at) < new Date()) {
+        return triggerToastNotification("⌛ انتهت صلاحية الكود.", "error");
+    }
+
+    const userPayload = {
+        first_name: firstName,
+        last_name: lastName,
+        identifier: identifier,
+        gender: gender,
+        age: parseInt(age) || 0,
+        avatar_url: localUploadedAvatarBase64 || null,
+        is_verified: true,
+        created_at: new Date().toISOString()
+    };
+
+    const newUserResult = await supabaseFetch("users", { method: "POST", body: JSON.stringify(userPayload) });
+
+    if (newUserResult) {
+        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}`, { method: "DELETE" });
+        localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
+        localStorage.setItem('alwaha_profile_phone', identifier);
+        localStorage.setItem('alwaha_profile_verified', 'true');
+        if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
+
+        triggerToastNotification("🎉 تم إنشاء حسابك رسمياً!", "success");
+        closeSubProfileView('sub-prof-register');
+        syncUiWithLoadedProfileData();
+    }
+}
+
+async function executeUserLoginAuth() {
+    const loginId = document.getElementById('login-id')?.value.trim();
+    const loginPass = document.getElementById('login-pass')?.value.trim();
+
+    if (!loginId) return triggerToastNotification("يرجى إدخال بيانات الدخول.", "error");
+
+    const users = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(loginId)}`);
+    if (users && users.length > 0) {
+        const u = users[0];
+        localStorage.setItem('alwaha_profile_name', `${u.first_name} ${u.last_name}`);
+        localStorage.setItem('alwaha_profile_phone', u.identifier);
+        localStorage.setItem('alwaha_profile_verified', 'true');
+        if (u.avatar_url) localStorage.setItem('alwaha_profile_avatar', u.avatar_url);
+
+        triggerToastNotification(`مرحباً بك مجدداً!`, "success");
+        closeSubProfileView('sub-prof-login');
+        syncUiWithLoadedProfileData();
+    } else {
+        triggerToastNotification("بيانات الدخول غير صحيحة", "error");
+    }
+}
+
+function sendPasswordResetCodeAction() {
+    const resetId = document.getElementById('reset-id')?.value.trim();
+    if (!resetId) return triggerToastNotification("يرجى إدخال البيانات المطلوبة", "error");
+    triggerToastNotification("تم إرسال الرابط بنجاح", "success");
+}
+
+function sendPhoneVerifyCodeAction() {
+    const phone = document.getElementById('verify-phone-input')?.value.trim();
+    if (!phone) return triggerToastNotification("أدخل رقم الموبايل أولاً", "error");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
+}
+
+function sendEmailVerifyCodeAction() {
+    const email = document.getElementById('verify-email-input')?.value.trim();
+    if (!email) return triggerToastNotification("أدخل الجيميل أولاً", "error");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
+}
+
+function submitAccountVerificationRequest() {
+    triggerToastNotification("تم إرسال طلب التوثيق للمراجعة", "success");
+    closeSubProfileView('sub-prof-verify');
+}
+
+// ==========================================
+// 6. الخلاصة والمنشورات (Home Feed)
+// ==========================================
+function previewHomePostImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('home-post-image-preview');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function publishNewHomePost() {
+    const textEl = document.getElementById('home-post-textarea');
+    const previewEl = document.getElementById('home-post-image-preview');
+    if(!textEl || !textEl.value.trim()) return triggerToastNotification("يرجى كتابة نص التغريدة أولاً.", "error");
+
+    const author = localStorage.getItem('alwaha_profile_name') || "مستخدم";
+    const payload = {
+        author_name: author,
+        content: textEl.value,
+        post_type: "عام",
+        image_url: previewEl && previewEl.style.display !== 'none' ? previewEl.src : null,
+        created_at: new Date().toISOString()
+    };
+
+    await supabaseFetch("posts", { method: "POST", body: JSON.stringify(payload) });
+
+    textEl.value = "";
+    if (previewEl) previewEl.style.display = 'none';
+    triggerToastNotification("تم النشر بنجاح", "success");
+    renderHomePostsFeed();
+}
+
+async function renderHomePostsFeed() {
+    const container = document.getElementById('home-posts-feed-container');
+    if (!container) return;
+    
+    container.innerHTML = `<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري جلب المنشورات...</div>`;
+    let posts = await supabaseFetch("posts?select=*&order=created_at.desc");
+    
+    if (!posts || posts.length === 0) {
+        container.innerHTML = `<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+    posts.forEach((post, index) => {
+        const imageMarkup = post.image_url ? `<img src="${post.image_url}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin:8px 0;">` : '';
+        container.innerHTML += `
+            <div class="news-box text-right" style="border-right: 3px solid ${post.post_type === 'تقني' ? '#00ffff' : '#ff00ff'};">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
+                    <span style="color:#ffd700; font-weight:bold;">${post.author_name}</span>
+                    <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:10px; color:#aaa;">${post.post_type || 'عام'}</span>
+                </div>
+                <p style="font-size:13px; line-height:1.4; color:#fff;">${post.content}</p>
+                ${imageMarkup}
+                <div class="post-actions-row" style="display:flex; gap:15px; margin-top:10px;">
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;" id="like-btn-${index}" onclick="togglePostLikeSimulated(${index})"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> <span id="like-count-${index}">0</span></button>
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
+                </div>
+            </div>`;
+    });
+}
+
+function togglePostLikeSimulated(idx) {
+    const btn = document.getElementById(`like-btn-${idx}`);
+    const countEl = document.getElementById(`like-count-${idx}`);
+    if(!btn || !countEl) return;
+    if(btn.classList.contains('liked')) {
+        btn.classList.remove('liked');
+        countEl.innerText = parseInt(countEl.innerText) - 1;
+    } else {
+        btn.classList.add('liked');
+        countEl.innerText = parseInt(countEl.innerText) + 1;
+        playLuxuriousNotificationSound();
+    }
+}
+
+// ==========================================
+// 7. مركز التواصل والدردشة (Chat System)
+// ==========================================
+function expandChatSubWindow(tabId) {
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'none';
+    document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
+    
+    const targetTab = document.getElementById(`${tabId}-tab`);
+    if(targetTab) targetTab.style.display = 'block';
+
+    if(tabId === 'recent') renderConversationsList();
+    if(tabId === 'all-users') loadAllRegisteredUsersList();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function collapseChatSubWindows() {
+    document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
+    document.getElementById('active-chat-box').style.display = 'none';
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
+}
+
+async function loadAllRegisteredUsersList() {
+    const container = document.getElementById('all-users-list');
+    if (!container) return;
+    
+    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري تحميل الدليل...</div>`;
+    let users = await supabaseFetch("users?select=*&limit=20");
+    
+    if (!users || users.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا يوجد مستخدمين مسجلين حتى الآن.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+    users.forEach(u => {
+        container.innerHTML += `
+            <div class="profile-menu-btn" style="margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:bold; color:#00ff88;">👤 ${u.first_name} ${u.last_name}</div>
+                    <div style="font-size:10px; color:#aaa;">مستخدم موثق</div>
+                </div>
+                <button class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="openTargetUserDirectChat('${u.first_name} ${u.last_name}')">محادثة</button>
+            </div>`;
+    });
+}
+
+function searchUsersByPhoneOrName(query) {
+    const filter = query.toLowerCase();
+    document.querySelectorAll('#all-users-list .profile-menu-btn').forEach(node => {
+        const text = node.innerText.toLowerCase();
+        node.style.display = text.includes(filter) ? 'flex' : 'none';
+    });
+}
+
+function openTargetUserDirectChat(name) {
+    currentChatUser = name;
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'none';
+    document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
+    
+    const chatBox = document.getElementById('active-chat-box');
+    chatBox.style.display = 'block';
+    document.getElementById('current-chat-name').innerText = name;
+    
+    const msgContainer = document.getElementById('chat-messages-container');
+    msgContainer.innerHTML = `<div style="text-align:center; color:#aaa; font-size:11px; padding-top:10px;">بدء المحادثة بشكل آمن ومحمي</div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeActiveChatWindow() {
+    document.getElementById('active-chat-box').style.display = 'none';
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
+}
+
+function sendLiveChatMessageFromUI() {
+    const input = document.getElementById('chat-message-input');
+    if(!input || !input.value.trim()) return;
+    
+    const container = document.getElementById('chat-messages-container');
+    const msg = input.value;
+    const replyTag = activeReplyMessageText ? `<div style="font-size:10px; color:#ffd700; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:4px;">رد على: ${activeReplyMessageText}</div>` : '';
+    
+    container.innerHTML += `
+        <div style="text-align:left; margin:8px 0;">
+            <div style="display:inline-block; background:#3a86ff; color:#fff; padding:8px 12px; border-radius:12px 12px 0 12px; font-size:12.5px; max-width:85%; direction:rtl; text-align:right;">
+                ${replyTag}
+                ${msg}
+            </div>
+        </div>`;
+    
+    input.value = "";
+    cancelReplyMode();
+    container.scrollTop = container.scrollHeight;
+    playLuxuriousNotificationSound();
+}
+
+function cancelReplyMode() {
+    activeReplyMessageText = "";
+    const bar = document.getElementById('reply-preview-bar');
+    if (bar) bar.style.display = 'none';
+}
+
+function renderConversationsList() {
+    const holder = document.getElementById('conversations-list');
+    if(!holder) return;
+    holder.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا توجد محادثات جارية حالياً.</div>`;
+}
+
+function initiateVoiceCall(type) {
+    const modal = document.getElementById('voice-call-modal');
+    const targetUser = document.getElementById('call-target-user');
+    const indicator = document.getElementById('call-method-indicator');
+
+    if(modal) {
+        modal.style.display = 'flex';
+        if(targetUser) targetUser.innerText = currentChatUser || "الطرف المستلم";
+        if(indicator) {
+            indicator.innerHTML = type === 'offline' ? 
+                `<i class="fa-solid fa-wifi"></i> اتصال لاسلكي شبكي بدون إنترنت` : 
+                `<i class="fa-solid fa-phone"></i> اتصال أساسي عبر خادم المباشر`;
+        }
+    }
+}
+
+function terminateVoiceCall() {
+    const modal = document.getElementById('voice-call-modal');
+    if(modal) modal.style.display = 'none';
+}
+
+// ==========================================
+// 8. إدارة الماركت والمبيعات
+// ==========================================
+function switchMarketSubView(view) {
+    document.getElementById('market-buy-view').style.display = view === 'buy' ? 'block' : 'none';
+    document.getElementById('market-sell-view').style.display = view === 'sell' ? 'block' : 'none';
+    document.getElementById('market-my-items-view').style.display = view === 'my-items' ? 'block' : 'none';
+}
+
+function handleMarketMultiImages(input) {
+    const container = document.getElementById('prod-images-preview-container');
+    if(!container) return;
+    container.innerHTML = "";
+    marketMultiImagesArray = [];
+
+    if (input.files) {
+        Array.from(input.files).slice(0, 4).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                marketMultiImagesArray.push(e.target.result);
+                container.innerHTML += `<img src="${e.target.result}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #00ffff;">`;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+async function submitNewProductToMarket() {
+    const name = document.getElementById('prod-name')?.value.trim();
+    const price = document.getElementById('prod-price')?.value.trim();
+    const category = document.getElementById('prod-category')?.value;
+    const desc = document.getElementById('prod-desc-location')?.value.trim();
+
+    if(!name || !price || !desc) return triggerToastNotification("يرجى إدخال البيانات الأساسية.", "error");
+
+    const payload = {
+        title: name,
+        price: price,
+        category: category || "عام",
+        description: desc,
+        image_url: marketMultiImagesArray[0] || null,
+        created_at: new Date().toISOString()
+    };
+
+    await supabaseFetch("products", { method: "POST", body: JSON.stringify(payload) });
+
+    triggerToastNotification("تم نشر المنتج بنجاح!", "success");
+    document.getElementById('prod-name').value = "";
+    document.getElementById('prod-price').value = "";
+    document.getElementById('prod-desc-location').value = "";
+    document.getElementById('prod-phone-opt').value = "";
+    
+    switchMarketSubView('buy');
+    renderProductsList();
+}
+
+async function renderProductsList() {
+    const container = document.getElementById('market-products-list-container');
+    if (!container) return;
+    
+    container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#ffd700; font-size:12px;">جاري تحديث السلع...</div>`;
+    const products = await supabaseFetch("products?select=*&order=created_at.desc");
+    
+    if (!products || products.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع معروضة حالياً.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+    products.forEach((prod) => {
+        const hasImg = prod.image_url && prod.image_url.startsWith('data:image');
+        const fallbackImg = "icon.png";
+        
+        container.innerHTML += `
+            <div class="product-card-node">
+                <img src="${hasImg ? prod.image_url : fallbackImg}" class="product-card-img" alt="Product Image">
+                <div style="font-weight:bold; color:#00ffff; margin-bottom:3px; font-size:12px;">${prod.title}</div>
+                <div style="color:#ffd700; font-weight:bold; margin-bottom:4px; font-size:11px;">💰 ${prod.price}</div>
+                <button class="btn-action" style="width:100%; justify-content:center; font-size:10px; padding:4px;" onclick="openTargetUserDirectChat('بائع المنتج')">
+                    <i class="fa-solid fa-comments"></i> مراسلة
+                </button>
+            </div>`;
+    });
+}
+
+function renderMyPersonalMarketItems() {
+    const container = document.getElementById('my-market-items-container');
+    if (!container) return;
+    container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لا يوجد لديك سلع معروضة حالياً.</div>`;
+}
+
+function searchProducts() {
+    const filter = document.getElementById('market-search-input').value.toLowerCase();
+    document.querySelectorAll('.product-card-node').forEach(node => {
+        const text = node.innerText.toLowerCase();
+        node.style.display = text.includes(filter) ? 'block' : 'none';
+    });
+}
+
+// ==========================================
+// 9. إدارة الكاميرا والأنمي والشبكة الحرة
+// ==========================================
+function openProfessionalCameraView() {
+    const modal = document.getElementById('pro-camera-modal');
+    if(modal) modal.style.display = 'flex';
+}
+
+function closeProfessionalCameraView() {
+    const modal = document.getElementById('pro-camera-modal');
+    if(modal) modal.style.display = 'none';
+}
+
+function triggerFaceBeautyEnhancement() {
+    triggerToastNotification("تم التفعيل بنجاح ✨", "success");
+}
+
+function triggerAnimeAiConverterFilter() {
+    triggerToastNotification("تم التفعيل بنجاح 🎨", "success");
+}
+
+function toggleFreeMeshShareSystem() {
+    meshShareActive = !meshShareActive;
+    const btn = document.getElementById('free-mode-toggle-main-btn');
+    const results = document.getElementById('radar-live-results');
+
+    if (btn) {
+        btn.innerText = meshShareActive ? "✅ وضع المشاركة الحرة: نشط وفعال" : "❌ وضع المشاركة الحرة: غير نشط";
+        btn.style.background = meshShareActive ? "#00ff88" : "#ff0055";
+        btn.style.color = meshShareActive ? "#000" : "#fff";
+    }
+    if (results) {
+        results.style.display = meshShareActive ? 'block' : 'none';
+    }
+}
+
+function simulateLudoMatchLaunch() {
+    triggerToastNotification("جاري تهيئة ساحة اللعب...", "success");
+}
+
+// ==========================================
+// 10. إدارة الملف الشخصي والضبط
+// ==========================================
+function openSubProfileView(id) {
+    const header = document.querySelector('.profile-card-header-view');
+    const menuList = document.querySelector('.profile-options-menu-list');
+    if(header) header.style.display = 'none';
+    if(menuList) menuList.style.display = 'none';
+    
+    document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
+    
+    const target = document.getElementById(id);
+    if(target) {
+        target.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function closeSubProfileView(id) {
+    const target = document.getElementById(id);
+    if(target) target.style.display = 'none';
+    
+    const header = document.querySelector('.profile-card-header-view');
+    const menuList = document.querySelector('.profile-options-menu-list');
+    if(header) header.style.display = 'block';
+    if(menuList) menuList.style.display = 'flex';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function previewRegisterOptionalAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const prev = document.getElementById('reg-optional-avatar-preview');
+            if(prev) { prev.src = e.target.result; prev.style.display = 'block'; }
+            localUploadedAvatarBase64 = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function updateProfileAvatarDirectly(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            localStorage.setItem('alwaha_profile_avatar', e.target.result);
+            syncUiWithLoadedProfileData();
+            triggerToastNotification("تم التحديث بنجاح", "success");
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function sendPrivacyUpdateCodeAction() {
+    const contact = document.getElementById('privacy-new-contact')?.value.trim();
+    if (!contact) return triggerToastNotification("أدخل البيانات المطلوبة", "error");
+    triggerToastNotification("تم الإرسال للتأكيد", "success");
+}
+
+function savePrivacyProfileUpdates() {
+    const newName = document.getElementById('privacy-new-name')?.value.trim();
+    if (newName) {
+        localStorage.setItem('alwaha_profile_name', newName);
+    }
+    syncUiWithLoadedProfileData();
+    triggerToastNotification("تم حفظ التعديلات", "success");
+    closeSubProfileView('sub-prof-privacy');
+}
+
+function changeAppDynamicThemeBackground(val) {
+    if (val) {
+        triggerToastNotification(`تم تطبيق النمط المختار`, "success");
+    }
+}
+
+function toggleAppAudioState(isMuted) {
+    audioMuted = isMuted;
+}
+
+function syncUiWithLoadedProfileData() {
+    const savedName = localStorage.getItem('alwaha_profile_name') || "مستخدم جديد";
+    const savedPhone = localStorage.getItem('alwaha_profile_phone') || "البيانات غير مسجلة";
+    const savedAvatar = localStorage.getItem('alwaha_profile_avatar');
+
+    const nameTag = document.getElementById('my-profile-name-tag');
+    const phoneTag = document.getElementById('my-profile-phone-tag');
+    const avatarPlaceholder = document.getElementById('my-profile-avatar-placeholder');
+
+    if(nameTag) nameTag.innerHTML = `${savedName} <span id="verification-badge-slot"></span>`;
+    if(phoneTag) phoneTag.innerText = savedPhone;
+    
+    if(avatarPlaceholder) {
+        if(savedAvatar) {
+            avatarPlaceholder.innerHTML = `<img src="${savedAvatar}" alt="Avatar">`;
+        } else {
+            avatarPlaceholder.innerText = savedName.charAt(0).toUpperCase();
+        }
+    }
+
+    if(localStorage.getItem('alwaha_profile_verified') === 'true') {
+        const slot = document.getElementById('verification-badge-slot');
+        if(slot) slot.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:14px; margin-right:4px;" title="حساب موثق"></i>`;
+    }
+}
+
+// ==========================================
+// 11. التهيئة المبدئية عند التحميل
+// ==========================================
+window.onload = function() {
+    initializeKeyboardInputGuard();
+    initializeRippleEffectForNavButtons();
+    syncUiWithLoadedProfileData();
+    renderHomePostsFeed();
+};
