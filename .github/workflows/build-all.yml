@@ -1,11 +1,11 @@
-name: Build Alwaha Pro (APK & AAB)
+name: Build Alwaha Pro (Production Release)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Build Android Packages (APK & AAB)
+  build-android-release:
+    name: Build & Sign Official Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
@@ -14,123 +14,75 @@ jobs:
       - name: Set up Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
 
-      - name: Initialize Project and Install Capacitor
+      - name: Initialize Project and Install Dependencies
         run: |
-          if [ ! -f package.json ]; then npm init -y; fi
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npm install @capacitor/assets
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
 
       - name: Isolate Web Assets into www Directory
         run: |
           mkdir -p www
-          cp index.html www/ 2>/dev/null || true
-          cp *.js www/ 2>/dev/null || true
-          cp *.css www/ 2>/dev/null || true
-          cp *.png www/ 2>/dev/null || true
-          cp *.jpg www/ 2>/dev/null || true
-          cp manifest.json www/ 2>/dev/null || true
-          cp sw.js www/ 2>/dev/null || true
-          [ -d assets ] && cp -r assets www/ || true
-          [ -d css ] && cp -r css www/ || true
-          [ -d js ] && cp -r js www/ || true
+          cp index.html app.js style.css manifest.json sw.js www/ 2>/dev/null || true
+          cp *.png *.jpg www/ 2>/dev/null || true
 
-      - name: Set up Java JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: gradle
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Initialize Capacitor Android Platform
+      - name: Initialize Capacitor (Production Network Config)
         run: |
+          # هذه الإعدادات تجبر أندرويد على قبول اتصالات Supabase وتمنع خطأ الشبكة
           cat << 'EOF' > capacitor.config.json
           {
-            "appId": "com.alwahapro.app",
+            "appId": "com.alwaha.pro",
             "appName": "Alwaha Pro",
-            "webDir": "www"
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https",
+              "cleartext": true
+            }
           }
           EOF
-          
           rm -rf android
           npx cap add android
 
-      - name: Force Kotlin Dependencies Alignment
-        run: |
-          if [ -f android/build.gradle ]; then
-            echo "ext.kotlin_version = '1.9.20'" >> android/build.gradle
-          fi
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
 
-      - name: Auto-Resize and Generate Icons/Splash
+      - name: Generate Native App Icons (No Browser Badge)
         run: |
-          # تفعيل فك قيود الأمان لـ ImageMagick لمعالجة الصور بأمان
           sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
-          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick/policy.xml 2>/dev/null || true
-          
-          # البحث عن اللوجو الخاص بك 
-          SRC_LOGO=""
-          for path in "logo.png" "icon.png" "assets/logo.png" "assets/icon.png" "assets/icon-512.png" "assets/icon-192.png"; do
-            if [ -f "$path" ]; then
-              SRC_LOGO="$path"
-              break
-            fi
-          done
-          
-          if [ -z "$SRC_LOGO" ]; then
-            SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
-          fi
+          SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
           
           if [ -n "$SRC_LOGO" ]; then
-            echo "🎯 تم العثور على الشعار المخصص في المسار: $SRC_LOGO"
-            
             mkdir -p assets
-            
-            # توليد الملفات القياسية للأيقونات (تمنع ظهور أيقونة المتصفح)
             convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
             convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-foreground.png
             convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-background.png
-            
-            # توليد شاشة الإقلاع (Splash)
-            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || \
-            convert "$SRC_LOGO" -resize 512x512 -background "#FFFFFF" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
-            cp assets/splash.png assets/splash-only.png 2>/dev/null || true
-            
-            # حقن الأيقونات في أندرويد
+            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
             npx capacitor-assets generate --android || true
           fi
 
-      - name: Sync Web Core and Scripts to Android
+      - name: Sync Code to Android Project
         run: |
           npx cap sync android
 
-      - name: Accept Android SDK Licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
-      - name: Build Android App (Debug APK)
+      - name: Build Official Release APK & AAB
         run: |
           cd android
-          if [ -n "$ANDROID_HOME" ]; then
-            echo "sdk.dir=$ANDROID_HOME" > local.properties
-          fi
-          
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
+          ./gradlew assembleRelease bundleRelease --no-daemon
 
-      - name: Upload Android APK Artifact
-        uses: actions/upload-artifact@v4
+      - name: Sign Release APK
+        uses: r0adkll/sign-android-release@v1
         with:
-          name: Alwaha-Pro-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Build Release AAB
-        run: |
-          cd android
-          ./gradlew bundleRelease --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m -XX:MaxMetaspaceSize=512m" --stacktrace
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Sign Release AAB
         uses: r0adkll/sign-android-release@v1
@@ -141,8 +93,14 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload Signed AAB Bundle
+      - name: Upload Signed APK (For Direct Download/Users)
         uses: actions/upload-artifact@v4
         with:
-          name: Alwaha-Pro-Release-Signed-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          name: Alwaha-Pro-Official-APK
+          path: android/app/build/outputs/apk/release/*-signed.apk
+
+      - name: Upload Signed AAB (For Google Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-Official-AAB
+          path: android/app/build/outputs/bundle/release/*-signed.aab
