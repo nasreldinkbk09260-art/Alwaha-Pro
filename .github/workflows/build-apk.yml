@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK Clean
 
 on:
   push:
@@ -16,11 +16,13 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Install & Initialize Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init AlwahaPro com.alwaha.pro --web-dir .
+          npx cap add android
+          npx cap sync android
 
       - name: Setup Java JDK 17
         uses: actions/setup-java@v4
