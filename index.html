@@ -510,6 +510,23 @@
                         <button class="btn-action" style="white-space:nowrap;" onclick="sendPrivacyUpdateCodeAction()">إرسال كود</button>
                     </div>
                     <input type="text" placeholder="أدخل كود التأكيد الفعلي" class="keyboard-target">
+                    
+                    <!-- الإضافات الجديدة المطلوبة للخصوصية واستعادة الحساب -->
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-top:5px; background:rgba(255,255,255,0.03); padding:8px; border-radius:6px;">
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#00ffff; cursor:pointer;">
+                            <input type="checkbox" id="privacy-hide-email-chk"> إخفاء البريد الإلكتروني عن الآخرين
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#00ffff; cursor:pointer;">
+                            <input type="checkbox" id="privacy-hide-phone-chk"> إخفاء رقم الهاتف عن الآخرين
+                        </label>
+                    </div>
+
+                    <label style="font-size:12px; margin-top:5px;">د ـ ربط رقم الهاتف للاستعادة:</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="tel" id="recovery-phone-input" placeholder="رقم الهاتف للاستعادة" class="keyboard-target" style="flex:1;">
+                        <button class="btn-action" style="white-space:nowrap;" onclick="linkPhoneForAccountRecovery()">ربط الهاتف</button>
+                    </div>
+
                     <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="savePrivacyProfileUpdates()">حفظ التعديلات</button>
                 </div>
             </div>
@@ -529,4 +546,4 @@
         }
     </script>
 </body>
-                                                    </html>
+</html>
