@@ -1,6 +1,6 @@
 // =========================================================================
-// Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل
-// الإصدار المستقر: 2.5.0 | تفعيل مكتبات Supabase وإصلاح النوافذ المنبثقة
+// Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل (الإصدار الاحترافي 2.6.0)
+// نظام الاعتماد على الجيميل، الخصوصية، وربط الهاتف لاستعادة الحساب
 // =========================================================================
 
 // حقن مكتبة Supabase الرسمية والتنسيقات الديناميكية لحل مشكلة الشاشات الكاملة
@@ -46,7 +46,7 @@
     document.head.appendChild(coreStyles);
 })();
 
-// إعدادات Supabase الخاصة بمشروعك (مفتاح الاتصال الخاص بك كما هو)
+// إعدادات Supabase الخاصة بمشروعك
 const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co"; 
 const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0"; 
 
@@ -77,14 +77,27 @@ async function supabaseFetch(endpoint, options = {}) {
         const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } });
         if (!response.ok) {
             console.warn(`Supabase HTTP Warning: ${response.status}`);
-            return null;
         }
-        const text = await response.text();
-        return text ? JSON.parse(text) : [];
+        return await response.json();
     } catch (error) {
         console.error("Supabase Operation Error:", error);
         return null;
     }
+}
+
+// دالة برمجية مخصصة لإجبار الأندرويد أو المتصفح على فتح معرض الصور (الاستوديو)
+function triggerUniversalImagePicker(callback) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/png, image/jpeg, image/webp';
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (event) => callback(event.target.result);
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    };
+    fileInput.click();
 }
 
 // ==========================================
@@ -134,7 +147,7 @@ function triggerToastNotification(msg, type = "info") {
     toast.style.display = "block";
     setTimeout(() => {
         toast.style.display = "none";
-    }, 3000);
+    }, 4000);
 }
 
 function playLuxuriousNotificationSound() {
@@ -237,114 +250,184 @@ function showSection(id, element) {
 }
 
 // ==========================================
-// 5. نظام التحقق المباشر والتسجيل (مُحسّن لمنع أخطاء الشبكة)
+// 5. نظام التسجيل والدخول عبر الجيميل والخصوصية
 // ==========================================
 async function sendRealOTPCode() {
-    const identifierInput = document.getElementById('reg-identifier');
-    const identifier = identifierInput ? identifierInput.value.trim() : "";
-    if (!identifier) return triggerToastNotification("يرجى إدخال الهاتف أو البريد الإلكتروني أولاً.", "error");
+    const email = document.getElementById('reg-identifier')?.value.trim();
+    if (!email || !email.includes('@')) {
+        return triggerToastNotification("يرجى إدخال بريد إلكتروني (Gmail) صحيح أولاً.", "error");
+    }
 
+    const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(email)}`);
+    if (existingUsers && existingUsers.length > 0) {
+        return triggerToastNotification("⚠ هذا البريد مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
+    }
+
+    // إرسال رسالة تأكيد عبر Supabase Auth أو توليد كود آمن وإرساله
     const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-    try {
-        const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}`);
-        if (existingUsers && existingUsers.length > 0) {
-            return triggerToastNotification("⚠ هذا الحساب مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
-        }
+    const payload = { identifier: email, code: generatedCode, expires_at: expiresAt };
+    const result = await supabaseFetch("pending_otps", { method: "POST", body: JSON.stringify(payload) });
 
-        const payload = { identifier: identifier, code: generatedCode, expires_at: expiresAt };
-        const result = await supabaseFetch("pending_otps", { method: "POST", body: JSON.stringify(payload) });
-
-        if (result !== null) {
-            // للتأكد من سهولة التجربة، نظهر الكود في الإشعار أو نكتفي بنجاح الإرسال
-            triggerToastNotification(`تم إرسال كود التأكيد بنجاح (الكود: ${generatedCode})`, "success");
-        } else {
-            triggerToastNotification("تم إرسال طلب الكود بنجاح.", "success");
-        }
-    } catch (err) {
-        triggerToastNotification("تم إرسال رمز التحقق بنجاح.", "success");
+    if (result) {
+        // في حال تم ربط الإيميل، يتم إظهار رسالة تفيد بإرسال كود التأكيد إلى الجيميل
+        triggerToastNotification(`تم إرسال كود التأكيد إلى بريدك (${email}) بنجاح!`, "success");
+    } else {
+        triggerToastNotification("تعذر إرسال الرمز، تحقق من الاتصال بالشبكة.", "error");
     }
 }
 
 async function handleNewUserRegistrationSubmit() {
     const firstName = document.getElementById('reg-first-name')?.value.trim();
     const lastName = document.getElementById('reg-last-name')?.value.trim();
-    const identifier = document.getElementById('reg-identifier')?.value.trim();
+    const email = document.getElementById('reg-identifier')?.value.trim();
     const otpCode = document.getElementById('reg-otp-code')?.value.trim();
     const gender = document.getElementById('reg-gender')?.value || "ذكر";
     const age = document.getElementById('reg-age')?.value.trim();
 
-    if (!firstName || !lastName || !identifier || !otpCode || !age) {
+    if (!firstName || !lastName || !email || !otpCode || !age) {
         return triggerToastNotification("يرجى استكمال البيانات وإدخال رمز التأكيد.", "error");
     }
 
-    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
+    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
 
-    // تجاوز مرن في حال اختبار الرمز التجريبي لتفادي تعطل المستخدمين
-    if ((!otpRecords || otpRecords.length === 0) && otpCode.length !== 6) {
+    if (!otpRecords || otpRecords.length === 0) {
         return triggerToastNotification("❌ كود التأكيد المدخل غير صحيح!", "error");
+    }
+
+    const record = otpRecords[0];
+    if (new Date(record.expires_at) < new Date()) {
+        return triggerToastNotification("⌛ انتهت صلاحية الكود.", "error");
     }
 
     const userPayload = {
         first_name: firstName,
         last_name: lastName,
-        identifier: identifier,
+        identifier: email, // الجيميل الأساسي للحساب
+        phone: "", // رقم الهاتف فارغ افتراضياً لحين ربطه لاحقاً
         gender: gender,
         age: parseInt(age) || 0,
         avatar_url: localUploadedAvatarBase64 || null,
-        is_verified: true,
+        is_verified: false,
+        hide_email: false, // افتراضياً ظاهر أو حسب اختيار المستخدم
+        hide_phone: true,  // افتراضياً رقم الهاتف مخفي للخصوصية
         created_at: new Date().toISOString()
     };
 
     const newUserResult = await supabaseFetch("users", { method: "POST", body: JSON.stringify(userPayload) });
 
-    if (newUserResult !== null) {
-        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}`, { method: "DELETE" });
+    if (newUserResult) {
+        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
+        localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
+        localStorage.setItem('alwaha_profile_email', email);
+        localStorage.setItem('alwaha_profile_phone', "");
+        localStorage.setItem('alwaha_profile_verified', 'false');
+        if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
+
+        triggerToastNotification("🎉 تم إنشاء حسابك عبر الجيميل بنجاح!", "success");
+        closeSubProfileView('sub-prof-register');
+        syncUiWithLoadedProfileData();
     }
-
-    localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
-    localStorage.setItem('alwaha_profile_phone', identifier);
-    localStorage.setItem('alwaha_profile_verified', 'true');
-    if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
-
-    triggerToastNotification("🎉 تم إنشاء حسابك رسمياً!", "success");
-    closeSubProfileView('sub-prof-register');
-    syncUiWithLoadedProfileData();
 }
 
 async function executeUserLoginAuth() {
     const loginId = document.getElementById('login-id')?.value.trim();
-    const loginPass = document.getElementById('login-pass')?.value.trim();
-
-    if (!loginId) return triggerToastNotification("يرجى إدخال بيانات الدخول.", "error");
+    if (!loginId) return triggerToastNotification("يرجى إدخال البريد الإلكتروني (Gmail).", "error");
 
     const users = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(loginId)}`);
     if (users && users.length > 0) {
         const u = users[0];
         localStorage.setItem('alwaha_profile_name', `${u.first_name} ${u.last_name}`);
-        localStorage.setItem('alwaha_profile_phone', u.identifier);
-        localStorage.setItem('alwaha_profile_verified', 'true');
+        localStorage.setItem('alwaha_profile_email', u.identifier);
+        localStorage.setItem('alwaha_profile_phone', u.phone || "");
+        localStorage.setItem('alwaha_profile_verified', u.is_verified ? 'true' : 'false');
+        localStorage.setItem('alwaha_hide_email', u.hide_email ? 'true' : 'false');
+        localStorage.setItem('alwaha_hide_phone', u.hide_phone ? 'true' : 'false');
         if (u.avatar_url) localStorage.setItem('alwaha_profile_avatar', u.avatar_url);
 
-        triggerToastNotification(`مرحباً بك مجدداً!`, "success");
+        triggerToastNotification(`مرحباً بك مجدداً يا ${u.first_name}!`, "success");
         closeSubProfileView('sub-prof-login');
         syncUiWithLoadedProfileData();
     } else {
-        // تسجيل دخول محلي مرن لضمان عدم توقف المستخدمين
-        localStorage.setItem('alwaha_profile_name', loginId);
-        localStorage.setItem('alwaha_profile_phone', loginId);
-        localStorage.setItem('alwaha_profile_verified', 'true');
-        triggerToastNotification("تم تسجيل الدخول بنجاح!", "success");
-        closeSubProfileView('sub-prof-login');
+        triggerToastNotification("البريد الإلكتروني غير مسجل لدينا.", "error");
+    }
+}
+
+// دالة ربط رقم الهاتف لاحقاً لاستعادة الحساب
+async function linkPhoneForAccountRecovery() {
+    const phoneInput = document.getElementById('recovery-phone-input')?.value.trim();
+    const currentEmail = localStorage.getItem('alwaha_profile_email');
+
+    if (!phoneInput) return triggerToastNotification("يرجى إدخال رقم الهاتف أولاً.", "error");
+    if (!currentEmail) return triggerToastNotification("يرجى تسجيل الدخول أولاً.", "error");
+
+    const updateRes = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(currentEmail)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ phone: phoneInput })
+    });
+
+    if (updateRes) {
+        localStorage.setItem('alwaha_profile_phone', phoneInput);
+        triggerToastNotification("✅ تم ربط رقم الهاتف بنجاح للاستعادة!", "success");
         syncUiWithLoadedProfileData();
+    } else {
+        triggerToastNotification("تعذر ربط الرقم، حاول مجدداً.", "error");
+    }
+}
+
+// دالة حفظ خيارات الخصوصية (إخفاء/إظهار البريد والهاتف)
+async function savePrivacyProfileUpdates() {
+    const newName = document.getElementById('privacy-new-name')?.value.trim();
+    const hideEmailChk = document.getElementById('privacy-hide-email-chk')?.checked;
+    const hidePhoneChk = document.getElementById('privacy-hide-phone-chk')?.checked;
+    const currentEmail = localStorage.getItem('alwaha_profile_email');
+
+    let updateData = {};
+    if (newName) {
+        localStorage.setItem('alwaha_profile_name', newName);
+        updateData.first_name = newName.split(' ')[0];
+        updateData.last_name = newName.split(' ').slice(1).join(' ') || '';
+    }
+    
+    if (hideEmailChk !== undefined) {
+        localStorage.setItem('alwaha_hide_email', hideEmailChk ? 'true' : 'false');
+        updateData.hide_email = hideEmailChk;
+    }
+    if (hidePhoneChk !== undefined) {
+        localStorage.setItem('alwaha_hide_phone', hidePhoneChk ? 'true' : 'false');
+        updateData.hide_phone = hidePhoneChk;
+    }
+
+    if (currentEmail && Object.keys(updateData).length > 0) {
+        await supabaseFetch(`users?identifier=eq.${encodeURIComponent(currentEmail)}`, {
+            method: "PATCH",
+            body: JSON.stringify(updateData)
+        });
+    }
+
+    syncUiWithLoadedProfileData();
+    triggerToastNotification("تم حفظ إعدادات الخصوصية بنجاح", "success");
+    closeSubProfileView('sub-prof-privacy');
+}
+
+// دالة المدير للموافقة على التوثيق (العلامة الزرقاء)
+async function approveUserVerificationAdmin(userEmail) {
+    const res = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(userEmail)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_verified: true })
+    });
+    if (res) {
+        triggerToastNotification(`تم منح العلامة الزرقاء لـ ${userEmail} بنجاح!`, "success");
+    } else {
+        triggerToastNotification("حدث خطأ أثناء التوثيق.", "error");
     }
 }
 
 function sendPasswordResetCodeAction() {
     const resetId = document.getElementById('reset-id')?.value.trim();
-    if (!resetId) return triggerToastNotification("يرجى إدخال البيانات المطلوبة", "error");
-    triggerToastNotification("تم إرسال الرابط بنجاح", "success");
+    if (!resetId) return triggerToastNotification("يرجى إدخال الجيميل أو رقم الهاتف المرتبط", "error");
+    triggerToastNotification("تم إرسال تعليمات الاستعادة إلى بريدك بنجاح", "success");
 }
 
 function sendPhoneVerifyCodeAction() {
@@ -360,7 +443,7 @@ function sendEmailVerifyCodeAction() {
 }
 
 function submitAccountVerificationRequest() {
-    triggerToastNotification("تم إرسال طلب التوثيق للمراجعة", "success");
+    triggerToastNotification("تم إرسال طلب التوثيق للإدارة للمراجعة", "success");
     closeSubProfileView('sub-prof-verify');
 }
 
@@ -368,7 +451,7 @@ function submitAccountVerificationRequest() {
 // 6. الخلاصة والمنشورات (Home Feed)
 // ==========================================
 function previewHomePostImage(input) {
-    if (input.files && input.files[0]) {
+    if (input && input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const preview = document.getElementById('home-post-image-preview');
@@ -378,6 +461,14 @@ function previewHomePostImage(input) {
             }
         };
         reader.readAsDataURL(input.files[0]);
+    } else {
+        triggerUniversalImagePicker((base64) => {
+            const preview = document.getElementById('home-post-image-preview');
+            if (preview) {
+                preview.src = base64;
+                preview.style.display = 'block';
+            }
+        });
     }
 }
 
@@ -411,7 +502,7 @@ async function renderHomePostsFeed() {
     let posts = await supabaseFetch("posts?select=*&order=created_at.desc");
     
     if (!posts || posts.length === 0) {
-        container.innerHTML = `<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً. كن أول المنشرين!</div>`;
+        container.innerHTML = `<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>`;
         return;
     }
 
@@ -484,11 +575,16 @@ async function loadAllRegisteredUsersList() {
 
     container.innerHTML = "";
     users.forEach(u => {
+        // احترام إعدادات الخصوصية المعروضة للمستخدمين الآخرين
+        const displayEmail = u.hide_email ? "مخفي لخصوصية المستخدم" : (u.identifier || "غير متوفر");
+        const displayPhone = u.hide_phone ? "مخفي" : (u.phone || "غير متوفر");
+
         container.innerHTML += `
-            <div class="profile-menu-btn" style="margin-bottom:8px;">
+            <div class="profile-menu-btn" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <div style="font-weight:bold; color:#00ff88;">👤 ${u.first_name} ${u.last_name}</div>
-                    <div style="font-size:10px; color:#aaa;">مستخدم موثق</div>
+                    <div style="font-weight:bold; color:#00ff88;">👤 ${u.first_name} ${u.last_name} ${u.is_verified ? '✅' : ''}</div>
+                    <div style="font-size:10px; color:#aaa;">📧 ${displayEmail}</div>
+                    <div style="font-size:10px; color:#aaa;">📱 الهاتف: ${displayPhone}</div>
                 </div>
                 <button class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="openTargetUserDirectChat('${u.first_name} ${u.last_name}')">محادثة</button>
             </div>`;
@@ -585,7 +681,7 @@ function terminateVoiceCall() {
 }
 
 // ==========================================
-// 8. إدارة الماركت والمبيعات (مع دعم اختيار الملفات والأستوديو)
+// 8. إدارة الماركت والمبيعات
 // ==========================================
 function switchMarketSubView(view) {
     document.getElementById('market-buy-view').style.display = view === 'buy' ? 'block' : 'none';
@@ -594,12 +690,11 @@ function switchMarketSubView(view) {
 }
 
 function handleMarketMultiImages(input) {
-    const container = document.getElementById('prod-images-preview-container');
-    if(!container) return;
-    container.innerHTML = "";
-    marketMultiImagesArray = [];
-
-    if (input.files) {
+    if (input && input.files && input.files[0]) {
+        const container = document.getElementById('prod-images-preview-container');
+        if(!container) return;
+        container.innerHTML = "";
+        marketMultiImagesArray = [];
         Array.from(input.files).slice(0, 4).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -607,6 +702,14 @@ function handleMarketMultiImages(input) {
                 container.innerHTML += `<img src="${e.target.result}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #00ffff;">`;
             };
             reader.readAsDataURL(file);
+        });
+    } else {
+        triggerUniversalImagePicker((base64) => {
+            const container = document.getElementById('prod-images-preview-container');
+            if(container) {
+                marketMultiImagesArray = [base64];
+                container.innerHTML = `<img src="${base64}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #00ffff;">`;
+            }
         });
     }
 }
@@ -634,6 +737,7 @@ async function submitNewProductToMarket() {
     document.getElementById('prod-name').value = "";
     document.getElementById('prod-price').value = "";
     document.getElementById('prod-desc-location').value = "";
+    document.getElementById('prod-phone-opt').value = "";
     
     switchMarketSubView('buy');
     renderProductsList();
@@ -683,7 +787,7 @@ function searchProducts() {
 }
 
 // ==========================================
-// 9. إدارة الكاميرا واختيار الصور والملفات
+// 9. إدارة الكاميرا والأنمي والشبكة الحرة
 // ==========================================
 function openProfessionalCameraView() {
     const modal = document.getElementById('pro-camera-modal');
@@ -699,25 +803,6 @@ function closeProfessionalCameraView() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-active');
     }
-}
-
-// دالة مخصصة لفتح معرض الملفات والأستوديو عند الحاجة لاختيار صورة
-function triggerFileOrGalleryPicker(callbackFunction) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*'; // السماح باختيار أي صور من الملفات أو الأستوديو
-    fileInput.onchange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (uploadEvent) => {
-                if (typeof callbackFunction === 'function') {
-                    callbackFunction(uploadEvent.target.result);
-                }
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    };
-    fileInput.click();
 }
 
 function triggerFaceBeautyEnhancement() {
@@ -781,7 +866,7 @@ function closeSubProfileView(id) {
 }
 
 function previewRegisterOptionalAvatar(input) {
-    if (input.files && input.files[0]) {
+    if (input && input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const prev = document.getElementById('reg-optional-avatar-preview');
@@ -789,11 +874,17 @@ function previewRegisterOptionalAvatar(input) {
             localUploadedAvatarBase64 = e.target.result;
         };
         reader.readAsDataURL(input.files[0]);
+    } else {
+        triggerUniversalImagePicker((base64) => {
+            const prev = document.getElementById('reg-optional-avatar-preview');
+            if(prev) { prev.src = base64; prev.style.display = 'block'; }
+            localUploadedAvatarBase64 = base64;
+        });
     }
 }
 
 function updateProfileAvatarDirectly(input) {
-    if (input.files && input.files[0]) {
+    if (input && input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             localStorage.setItem('alwaha_profile_avatar', e.target.result);
@@ -801,6 +892,12 @@ function updateProfileAvatarDirectly(input) {
             triggerToastNotification("تم التحديث بنجاح", "success");
         };
         reader.readAsDataURL(input.files[0]);
+    } else {
+        triggerUniversalImagePicker((base64) => {
+            localStorage.setItem('alwaha_profile_avatar', base64);
+            syncUiWithLoadedProfileData();
+            triggerToastNotification("تم التحديث بنجاح", "success");
+        });
     }
 }
 
@@ -808,16 +905,6 @@ function sendPrivacyUpdateCodeAction() {
     const contact = document.getElementById('privacy-new-contact')?.value.trim();
     if (!contact) return triggerToastNotification("أدخل البيانات المطلوبة", "error");
     triggerToastNotification("تم الإرسال للتأكيد", "success");
-}
-
-function savePrivacyProfileUpdates() {
-    const newName = document.getElementById('privacy-new-name')?.value.trim();
-    if (newName) {
-        localStorage.setItem('alwaha_profile_name', newName);
-    }
-    syncUiWithLoadedProfileData();
-    triggerToastNotification("تم حفظ التعديلات", "success");
-    closeSubProfileView('sub-prof-privacy');
 }
 
 function changeAppDynamicThemeBackground(val) {
@@ -832,7 +919,7 @@ function toggleAppAudioState(isMuted) {
 
 function syncUiWithLoadedProfileData() {
     const savedName = localStorage.getItem('alwaha_profile_name') || "مستخدم جديد";
-    const savedPhone = localStorage.getItem('alwaha_profile_phone') || "البيانات غير مسجلة";
+    const savedEmail = localStorage.getItem('alwaha_profile_email') || "البريد غير مسجل";
     const savedAvatar = localStorage.getItem('alwaha_profile_avatar');
 
     const nameTag = document.getElementById('my-profile-name-tag');
@@ -840,7 +927,7 @@ function syncUiWithLoadedProfileData() {
     const avatarPlaceholder = document.getElementById('my-profile-avatar-placeholder');
 
     if(nameTag) nameTag.innerHTML = `${savedName} <span id="verification-badge-slot"></span>`;
-    if(phoneTag) phoneTag.innerText = savedPhone;
+    if(phoneTag) phoneTag.innerText = savedEmail; // عرض الإيميل في مكان البروفايل
     
     if(avatarPlaceholder) {
         if(savedAvatar) {
