@@ -1,4 +1,4 @@
-name: Build Signed AAB Release
+name: Build Signed AAB Release Clean
 
 on:
   workflow_dispatch:
@@ -8,20 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install Dependencies & Sync
+      - name: Install & Initialize Capacitor
         run: |
-          npm install
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init AlwahaPro com.alwaha.pro --web-dir .
+          npx cap add android
           npx cap sync android
 
       - name: Setup Java JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
@@ -41,7 +44,7 @@ jobs:
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Upload Signed AAB Bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-signed.aab
           path: android/app/build/outputs/bundle/release/app-release.aab
