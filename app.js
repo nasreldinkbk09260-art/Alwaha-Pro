@@ -1,7 +1,6 @@
 // =========================================================================
-// Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل (الإصدار الاحترافي 2.7.0)
-// نظام الاعتماد على الجيميل، الخصوصية، وربط الهاتف لاستعادة الحساب
-// تم إضافة كافة التبويبات الناقصة وتفعيل جميع الأزرار والوظائف الإضافية
+// Alwaha Pro Engine - المحرك الرئيسي الموحد الشامل
+// الإصدار المستقر: 2.5.0 | تفعيل مكتبات Supabase وإصلاح النوافذ المنبثقة
 // =========================================================================
 
 // حقن مكتبة Supabase الرسمية والتنسيقات الديناميكية لحل مشكلة الشاشات الكاملة
@@ -14,7 +13,7 @@
     // 2. إصلاح مشكلة ظهور الصفحات أسفل الأزرار وجعلها ملء الشاشة (Full Screen)
     const coreStyles = document.createElement('style');
     coreStyles.innerHTML = `
-        .sub-profile-view-box, .pro-camera-modal, #voice-call-modal, #active-chat-box, .comments-modal-box {
+        .sub-profile-view-box, .pro-camera-modal, #voice-call-modal, #active-chat-box {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -43,26 +42,12 @@
         .keyboard-adjusted-body {
             padding-bottom: 50vh !important;
         }
-        
-        /* تأثيرات إضافية للأقسام الجديدة */
-        .game-card, .reel-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-        .game-card:hover, .reel-card:hover {
-            border-color: #00ffff;
-            transform: translateY(-2px);
-        }
     `;
     document.head.appendChild(coreStyles);
 })();
 
-// إعدادات Supabase الخاصة بمشروعك
-const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co"; 
+// إعدادات Supabase الخاصة بالمشروع
+const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co";
 const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0"; 
 
 const SUPABASE_URL = localStorage.getItem('EXTERNAL_API_URL') || DEFAULT_SUPABASE_URL;
@@ -72,7 +57,7 @@ let localUploadedProductBase64 = "";
 let localUploadedAvatarBase64 = "";
 let marketMultiImagesArray = [];
 let meshShareActive = false;
-let audioMuted = localStorage.getItem('alwaha_audio_muted') === 'true' || false;
+let audioMuted = false;
 let deferredPrompt = null;
 let currentChatUser = "";
 let activeReplyMessageText = "";
@@ -98,21 +83,6 @@ async function supabaseFetch(endpoint, options = {}) {
         console.error("Supabase Operation Error:", error);
         return null;
     }
-}
-
-// دالة برمجية مخصصة لإجبار الأندرويد أو المتصفح على فتح معرض الصور (الاستوديو)
-function triggerUniversalImagePicker(callback) {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/png, image/jpeg, image/webp';
-    fileInput.onchange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (event) => callback(event.target.result);
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    };
-    fileInput.click();
 }
 
 // ==========================================
@@ -162,7 +132,7 @@ function triggerToastNotification(msg, type = "info") {
     toast.style.display = "block";
     setTimeout(() => {
         toast.style.display = "none";
-    }, 4000);
+    }, 3000);
 }
 
 function playLuxuriousNotificationSound() {
@@ -182,12 +152,6 @@ function toggleInternalNotificationCenter() {
     const center = document.getElementById('internal-notification-center');
     if (center) {
         center.style.display = center.style.display === 'none' ? 'block' : 'none';
-        if(center.style.display === 'block') {
-            center.innerHTML = `
-                <div style="padding:10px; border-bottom:1px solid #333; color:#00ffff; font-size:12px;">🔔 أحدث الإشعارات</div>
-                <div style="padding:15px; text-align:center; color:#aaa; font-size:11px;">لا توجد إشعارات جديدة.</div>
-            `;
-        }
     }
 }
 
@@ -265,37 +229,31 @@ function showSection(id, element) {
     playLuxuriousNotificationSound();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // تفعيل وتحديث الأقسام فور فتحها
     if(id === 'home-section') renderHomePostsFeed();
     if(id === 'market-section') { renderProductsList(); renderMyPersonalMarketItems(); }
     if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); renderConversationsList(); }
-    if(id === 'reels-section') renderReelsFeed();
-    if(id === 'games-section') renderGamesList();
 }
 
 // ==========================================
-// 5. نظام التسجيل والدخول عبر الجيميل والخصوصية
+// 5. نظام التحقق المباشر والتسجيل
 // ==========================================
 async function sendRealOTPCode() {
-    const email = document.getElementById('reg-identifier')?.value.trim();
-    if (!email || !email.includes('@')) {
-        return triggerToastNotification("يرجى إدخال بريد إلكتروني (Gmail) صحيح أولاً.", "error");
-    }
+    const identifier = document.getElementById('reg-identifier')?.value.trim();
+    if (!identifier) return triggerToastNotification("يرجى إدخال الهاتف أو البريد الإلكتروني أولاً.", "error");
 
-    const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(email)}`);
-    if (existingUsers && existingUsers.length > 0) {
-        return triggerToastNotification("⚠ هذا البريد مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
-    }
-
-    // إرسال رسالة تأكيد عبر Supabase Auth أو توليد كود آمن وإرساله
     const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-    const payload = { identifier: email, code: generatedCode, expires_at: expiresAt };
+    const existingUsers = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}`);
+    if (existingUsers && existingUsers.length > 0) {
+        return triggerToastNotification("⚠ هذا الحساب مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
+    }
+
+    const payload = { identifier: identifier, code: generatedCode, expires_at: expiresAt };
     const result = await supabaseFetch("pending_otps", { method: "POST", body: JSON.stringify(payload) });
 
     if (result) {
-        triggerToastNotification(`تم إرسال كود التأكيد إلى بريدك (${email}) بنجاح!`, "success");
+        triggerToastNotification("تم إرسال كود التأكيد بنجاح", "success");
     } else {
         triggerToastNotification("تعذر إرسال الرمز، تحقق من الاتصال بالشبكة.", "error");
     }
@@ -304,16 +262,16 @@ async function sendRealOTPCode() {
 async function handleNewUserRegistrationSubmit() {
     const firstName = document.getElementById('reg-first-name')?.value.trim();
     const lastName = document.getElementById('reg-last-name')?.value.trim();
-    const email = document.getElementById('reg-identifier')?.value.trim();
+    const identifier = document.getElementById('reg-identifier')?.value.trim();
     const otpCode = document.getElementById('reg-otp-code')?.value.trim();
     const gender = document.getElementById('reg-gender')?.value || "ذكر";
     const age = document.getElementById('reg-age')?.value.trim();
 
-    if (!firstName || !lastName || !email || !otpCode || !age) {
+    if (!firstName || !lastName || !identifier || !otpCode || !age) {
         return triggerToastNotification("يرجى استكمال البيانات وإدخال رمز التأكيد.", "error");
     }
 
-    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
+    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
 
     if (!otpRecords || otpRecords.length === 0) {
         return triggerToastNotification("❌ كود التأكيد المدخل غير صحيح!", "error");
@@ -327,28 +285,24 @@ async function handleNewUserRegistrationSubmit() {
     const userPayload = {
         first_name: firstName,
         last_name: lastName,
-        identifier: email, 
-        phone: "", 
+        identifier: identifier,
         gender: gender,
         age: parseInt(age) || 0,
         avatar_url: localUploadedAvatarBase64 || null,
-        is_verified: false,
-        hide_email: false, 
-        hide_phone: true,  
+        is_verified: true,
         created_at: new Date().toISOString()
     };
 
     const newUserResult = await supabaseFetch("users", { method: "POST", body: JSON.stringify(userPayload) });
 
     if (newUserResult) {
-        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
+        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(identifier)}`, { method: "DELETE" });
         localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
-        localStorage.setItem('alwaha_profile_email', email);
-        localStorage.setItem('alwaha_profile_phone', "");
-        localStorage.setItem('alwaha_profile_verified', 'false');
+        localStorage.setItem('alwaha_profile_phone', identifier);
+        localStorage.setItem('alwaha_profile_verified', 'true');
         if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
 
-        triggerToastNotification("🎉 تم إنشاء حسابك عبر الجيميل بنجاح!", "success");
+        triggerToastNotification("🎉 تم إنشاء حسابك رسمياً!", "success");
         closeSubProfileView('sub-prof-register');
         syncUiWithLoadedProfileData();
     }
@@ -356,122 +310,46 @@ async function handleNewUserRegistrationSubmit() {
 
 async function executeUserLoginAuth() {
     const loginId = document.getElementById('login-id')?.value.trim();
-    if (!loginId) return triggerToastNotification("يرجى إدخال البريد الإلكتروني (Gmail).", "error");
+    const loginPass = document.getElementById('login-pass')?.value.trim();
+
+    if (!loginId) return triggerToastNotification("يرجى إدخال بيانات الدخول.", "error");
 
     const users = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(loginId)}`);
     if (users && users.length > 0) {
         const u = users[0];
         localStorage.setItem('alwaha_profile_name', `${u.first_name} ${u.last_name}`);
-        localStorage.setItem('alwaha_profile_email', u.identifier);
-        localStorage.setItem('alwaha_profile_phone', u.phone || "");
-        localStorage.setItem('alwaha_profile_verified', u.is_verified ? 'true' : 'false');
-        localStorage.setItem('alwaha_hide_email', u.hide_email ? 'true' : 'false');
-        localStorage.setItem('alwaha_hide_phone', u.hide_phone ? 'true' : 'false');
+        localStorage.setItem('alwaha_profile_phone', u.identifier);
+        localStorage.setItem('alwaha_profile_verified', 'true');
         if (u.avatar_url) localStorage.setItem('alwaha_profile_avatar', u.avatar_url);
 
-        triggerToastNotification(`مرحباً بك مجدداً يا ${u.first_name}!`, "success");
+        triggerToastNotification(`مرحباً بك مجدداً!`, "success");
         closeSubProfileView('sub-prof-login');
         syncUiWithLoadedProfileData();
     } else {
-        triggerToastNotification("البريد الإلكتروني غير مسجل لدينا.", "error");
-    }
-}
-
-async function linkPhoneForAccountRecovery() {
-    const phoneInput = document.getElementById('recovery-phone-input')?.value.trim();
-    const currentEmail = localStorage.getItem('alwaha_profile_email');
-
-    if (!phoneInput) return triggerToastNotification("يرجى إدخال رقم الهاتف أولاً.", "error");
-    if (!currentEmail) return triggerToastNotification("يرجى تسجيل الدخول أولاً.", "error");
-
-    const updateRes = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(currentEmail)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ phone: phoneInput })
-    });
-
-    if (updateRes) {
-        localStorage.setItem('alwaha_profile_phone', phoneInput);
-        triggerToastNotification("✅ تم ربط رقم الهاتف بنجاح للاستعادة!", "success");
-        syncUiWithLoadedProfileData();
-    } else {
-        triggerToastNotification("تعذر ربط الرقم، حاول مجدداً.", "error");
-    }
-}
-
-async function savePrivacyProfileUpdates() {
-    const newName = document.getElementById('privacy-new-name')?.value.trim();
-    const hideEmailChk = document.getElementById('privacy-hide-email-chk')?.checked;
-    const hidePhoneChk = document.getElementById('privacy-hide-phone-chk')?.checked;
-    const currentEmail = localStorage.getItem('alwaha_profile_email');
-
-    let updateData = {};
-    if (newName) {
-        localStorage.setItem('alwaha_profile_name', newName);
-        updateData.first_name = newName.split(' ')[0];
-        updateData.last_name = newName.split(' ').slice(1).join(' ') || '';
-    }
-    
-    if (hideEmailChk !== undefined) {
-        localStorage.setItem('alwaha_hide_email', hideEmailChk ? 'true' : 'false');
-        updateData.hide_email = hideEmailChk;
-    }
-    if (hidePhoneChk !== undefined) {
-        localStorage.setItem('alwaha_hide_phone', hidePhoneChk ? 'true' : 'false');
-        updateData.hide_phone = hidePhoneChk;
-    }
-
-    if (currentEmail && Object.keys(updateData).length > 0) {
-        await supabaseFetch(`users?identifier=eq.${encodeURIComponent(currentEmail)}`, {
-            method: "PATCH",
-            body: JSON.stringify(updateData)
-        });
-    }
-
-    syncUiWithLoadedProfileData();
-    triggerToastNotification("تم حفظ إعدادات الخصوصية بنجاح", "success");
-    closeSubProfileView('sub-prof-privacy');
-}
-
-async function approveUserVerificationAdmin(userEmail) {
-    const res = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(userEmail)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ is_verified: true })
-    });
-    if (res) {
-        triggerToastNotification(`تم منح العلامة الزرقاء لـ ${userEmail} بنجاح!`, "success");
-    } else {
-        triggerToastNotification("حدث خطأ أثناء التوثيق.", "error");
+        triggerToastNotification("بيانات الدخول غير صحيحة", "error");
     }
 }
 
 function sendPasswordResetCodeAction() {
     const resetId = document.getElementById('reset-id')?.value.trim();
-    if (!resetId) return triggerToastNotification("يرجى إدخال الجيميل أو رقم الهاتف المرتبط", "error");
-    
-    // محاكاة إرسال كود الاستعادة
-    setTimeout(() => {
-        triggerToastNotification("تم إرسال تعليمات الاستعادة إلى بريدك بنجاح", "success");
-        document.getElementById('reset-id').value = '';
-    }, 1000);
+    if (!resetId) return triggerToastNotification("يرجى إدخال البيانات المطلوبة", "error");
+    triggerToastNotification("تم إرسال الرابط بنجاح", "success");
 }
 
 function sendPhoneVerifyCodeAction() {
     const phone = document.getElementById('verify-phone-input')?.value.trim();
     if (!phone) return triggerToastNotification("أدخل رقم الموبايل أولاً", "error");
-    triggerToastNotification(`تم إرسال كود التحقق إلى ${phone}`, "success");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
 }
 
 function sendEmailVerifyCodeAction() {
     const email = document.getElementById('verify-email-input')?.value.trim();
     if (!email) return triggerToastNotification("أدخل الجيميل أولاً", "error");
-    triggerToastNotification(`تم إرسال الرابط إلى ${email}`, "success");
+    triggerToastNotification("تم الإرسال بنجاح", "success");
 }
 
 function submitAccountVerificationRequest() {
-    const reqReason = document.getElementById('verification-reason-input')?.value;
-    if(!reqReason) return triggerToastNotification("يرجى كتابة سبب طلب التوثيق.", "error");
-    
-    triggerToastNotification("تم إرسال طلب التوثيق للإدارة للمراجعة", "success");
+    triggerToastNotification("تم إرسال طلب التوثيق للمراجعة", "success");
     closeSubProfileView('sub-prof-verify');
 }
 
@@ -479,7 +357,7 @@ function submitAccountVerificationRequest() {
 // 6. الخلاصة والمنشورات (Home Feed)
 // ==========================================
 function previewHomePostImage(input) {
-    if (input && input.files && input.files[0]) {
+    if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const preview = document.getElementById('home-post-image-preview');
@@ -489,14 +367,6 @@ function previewHomePostImage(input) {
             }
         };
         reader.readAsDataURL(input.files[0]);
-    } else {
-        triggerUniversalImagePicker((base64) => {
-            const preview = document.getElementById('home-post-image-preview');
-            if (preview) {
-                preview.src = base64;
-                preview.style.display = 'block';
-            }
-        });
     }
 }
 
@@ -536,44 +406,33 @@ async function renderHomePostsFeed() {
 
     container.innerHTML = "";
     posts.forEach((post, index) => {
-        const imageMarkup = post.image_url ? `<img src="${post.image_url}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin:8px 0;" loading="lazy">` : '';
-        const postId = post.id || index; // احتياطي في حال عدم وجود id
-
+        const imageMarkup = post.image_url ? `<img src="${post.image_url}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin:8px 0;">` : '';
         container.innerHTML += `
-            <div class="news-box text-right" style="border-right: 3px solid ${post.post_type === 'تقني' ? '#00ffff' : '#ff00ff'}; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-bottom:15px;">
+            <div class="news-box text-right" style="border-right: 3px solid ${post.post_type === 'تقني' ? '#00ffff' : '#ff00ff'};">
                 <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
-                    <span style="color:#ffd700; font-weight:bold;"><i class="fa-solid fa-user-circle"></i> ${post.author_name}</span>
+                    <span style="color:#ffd700; font-weight:bold;">${post.author_name}</span>
                     <span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:10px; color:#aaa;">${post.post_type || 'عام'}</span>
                 </div>
                 <p style="font-size:13px; line-height:1.4; color:#fff;">${post.content}</p>
                 ${imageMarkup}
-                <div class="post-actions-row" style="display:flex; gap:15px; margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
-                    <button class="btn-action" style="background:transparent; color:#fff; padding:4px 10px; font-size:12px; flex:1;" id="like-btn-${postId}" onclick="togglePostLikeSimulated('${postId}')">
-                        <i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${postId}">0</span>)
-                    </button>
-                    <button class="btn-action" style="background:transparent; color:#fff; padding:4px 10px; font-size:12px; flex:1;" onclick="openCommentsModal('${postId}')">
-                        <i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق
-                    </button>
-                    <button class="btn-action" style="background:transparent; color:#fff; padding:4px 10px; font-size:12px; flex:1;" onclick="triggerToastNotification('تم نسخ الرابط للمشاركة', 'success')">
-                        <i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة
-                    </button>
+                <div class="post-actions-row" style="display:flex; gap:15px; margin-top:10px;">
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;" id="like-btn-${index}" onclick="togglePostLikeSimulated(${index})"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> <span id="like-count-${index}">0</span></button>
+                    <button class="btn-action" style="background:rgba(255,255,255,0.08); color:#fff; padding:4px 10px; font-size:11px;"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
                 </div>
             </div>`;
     });
 }
 
-function togglePostLikeSimulated(id) {
-    const btn = document.getElementById(`like-btn-${id}`);
-    const countEl = document.getElementById(`like-count-${id}`);
+function togglePostLikeSimulated(idx) {
+    const btn = document.getElementById(`like-btn-${idx}`);
+    const countEl = document.getElementById(`like-count-${idx}`);
     if(!btn || !countEl) return;
     if(btn.classList.contains('liked')) {
         btn.classList.remove('liked');
         countEl.innerText = parseInt(countEl.innerText) - 1;
-        btn.style.color = "#fff";
     } else {
         btn.classList.add('liked');
         countEl.innerText = parseInt(countEl.innerText) + 1;
-        btn.style.color = "#ff0055";
         playLuxuriousNotificationSound();
     }
 }
@@ -595,10 +454,8 @@ function expandChatSubWindow(tabId) {
 
 function collapseChatSubWindows() {
     document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
-    const chatBox = document.getElementById('active-chat-box');
-    if(chatBox) chatBox.style.display = 'none';
-    const wrapper = document.getElementById('chat-main-lobby-wrapper');
-    if(wrapper) wrapper.style.display = 'block';
+    document.getElementById('active-chat-box').style.display = 'none';
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
     document.body.classList.remove('modal-active');
 }
 
@@ -606,8 +463,8 @@ async function loadAllRegisteredUsersList() {
     const container = document.getElementById('all-users-list');
     if (!container) return;
     
-    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري تحميل الدليل السحابي...</div>`;
-    let users = await supabaseFetch("users?select=*&limit=50");
+    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري تحميل الدليل...</div>`;
+    let users = await supabaseFetch("users?select=*&limit=20");
     
     if (!users || users.length === 0) {
         container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا يوجد مستخدمين مسجلين حتى الآن.</div>`;
@@ -616,24 +473,13 @@ async function loadAllRegisteredUsersList() {
 
     container.innerHTML = "";
     users.forEach(u => {
-        // احترام إعدادات الخصوصية المعروضة للمستخدمين الآخرين
-        const displayEmail = u.hide_email ? "مخفي لخصوصية المستخدم" : (u.identifier || "غير متوفر");
-        const displayPhone = u.hide_phone ? "مخفي" : (u.phone || "غير متوفر");
-        const avatar = u.avatar_url || 'icon.png'; // الصورة الافتراضية
-
         container.innerHTML += `
-            <div class="profile-menu-btn" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1px solid #00ffff;">
-                    <div>
-                        <div style="font-weight:bold; color:#00ff88;">${u.first_name} ${u.last_name} ${u.is_verified ? '<i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:12px;"></i>' : ''}</div>
-                        <div style="font-size:10px; color:#aaa;"><i class="fa-solid fa-envelope"></i> ${displayEmail}</div>
-                        <div style="font-size:10px; color:#aaa;"><i class="fa-solid fa-phone"></i> ${displayPhone}</div>
-                    </div>
+            <div class="profile-menu-btn" style="margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:bold; color:#00ff88;">👤 ${u.first_name} ${u.last_name}</div>
+                    <div style="font-size:10px; color:#aaa;">مستخدم موثق</div>
                 </div>
-                <button class="btn-action" style="padding:6px 12px; font-size:11px; background:#00ffff; color:#000; border-radius:20px;" onclick="openTargetUserDirectChat('${u.first_name} ${u.last_name}')">
-                    <i class="fa-solid fa-paper-plane"></i> مراسلة
-                </button>
+                <button class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="openTargetUserDirectChat('${u.first_name} ${u.last_name}')">محادثة</button>
             </div>`;
     });
 }
@@ -648,34 +494,23 @@ function searchUsersByPhoneOrName(query) {
 
 function openTargetUserDirectChat(name) {
     currentChatUser = name;
-    const lobbyWrapper = document.getElementById('chat-main-lobby-wrapper');
-    if(lobbyWrapper) lobbyWrapper.style.display = 'none';
-    
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'none';
     document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
     
     const chatBox = document.getElementById('active-chat-box');
-    if(chatBox) {
-        chatBox.style.display = 'block';
-        document.body.classList.add('modal-active');
-        
-        const nameEl = document.getElementById('current-chat-name');
-        if(nameEl) nameEl.innerText = name;
-        
-        const msgContainer = document.getElementById('chat-messages-container');
-        if(msgContainer) {
-            msgContainer.innerHTML = `<div style="text-align:center; color:#aaa; font-size:11px; padding-top:10px; margin-bottom:20px;">تم تأمين المحادثة بالتشفير التام 🔒<br>أنت الآن تتحدث مع ${name}</div>`;
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    chatBox.style.display = 'block';
+    document.body.classList.add('modal-active');
+    
+    document.getElementById('current-chat-name').innerText = name;
+    
+    const msgContainer = document.getElementById('chat-messages-container');
+    msgContainer.innerHTML = `<div style="text-align:center; color:#aaa; font-size:11px; padding-top:10px;">بدء المحادثة بشكل آمن ومحمي</div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function closeActiveChatWindow() {
-    const chatBox = document.getElementById('active-chat-box');
-    if(chatBox) chatBox.style.display = 'none';
-    
-    const wrapper = document.getElementById('chat-main-lobby-wrapper');
-    if(wrapper) wrapper.style.display = 'block';
-    
+    document.getElementById('active-chat-box').style.display = 'none';
+    document.getElementById('chat-main-lobby-wrapper').style.display = 'block';
     document.body.classList.remove('modal-active');
 }
 
@@ -685,35 +520,20 @@ function sendLiveChatMessageFromUI() {
     
     const container = document.getElementById('chat-messages-container');
     const msg = input.value;
-    const replyTag = activeReplyMessageText ? `<div style="font-size:10px; color:#ffd700; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:4px; padding-bottom:2px;">رد على: ${activeReplyMessageText}</div>` : '';
-    const timeNow = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const replyTag = activeReplyMessageText ? `<div style="font-size:10px; color:#ffd700; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:4px;">رد على: ${activeReplyMessageText}</div>` : '';
     
     container.innerHTML += `
-        <div style="text-align:left; margin:10px 0; display:flex; flex-direction:column; align-items:flex-end;">
-            <div style="display:inline-block; background:linear-gradient(135deg, #3a86ff, #00ffff); color:#000; padding:10px 15px; border-radius:15px 15px 0 15px; font-size:13px; max-width:80%; direction:rtl; text-align:right; box-shadow: 0 4px 10px rgba(0,255,255,0.2);">
+        <div style="text-align:left; margin:8px 0;">
+            <div style="display:inline-block; background:#3a86ff; color:#fff; padding:8px 12px; border-radius:12px 12px 0 12px; font-size:12.5px; max-width:85%; direction:rtl; text-align:right;">
                 ${replyTag}
                 ${msg}
             </div>
-            <span style="font-size:9px; color:#aaa; margin-top:3px;">${timeNow} <i class="fa-solid fa-check-double" style="color:#00ffff;"></i></span>
         </div>`;
     
     input.value = "";
     cancelReplyMode();
     container.scrollTop = container.scrollHeight;
     playLuxuriousNotificationSound();
-
-    // محاكاة رد الطرف الآخر
-    setTimeout(() => {
-        container.innerHTML += `
-            <div style="text-align:right; margin:10px 0; display:flex; flex-direction:column; align-items:flex-start;">
-                <div style="display:inline-block; background:#333; color:#fff; padding:10px 15px; border-radius:15px 15px 15px 0; font-size:13px; max-width:80%; direction:rtl; text-align:right; border:1px solid rgba(255,255,255,0.1);">
-                    شكراً على تواصلك. هذا رد آلي تجريبي حالياً.
-                </div>
-                <span style="font-size:9px; color:#aaa; margin-top:3px;">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-            </div>`;
-        container.scrollTop = container.scrollHeight;
-        if(!audioMuted) playLuxuriousNotificationSound();
-    }, 2000);
 }
 
 function cancelReplyMode() {
@@ -725,19 +545,7 @@ function cancelReplyMode() {
 function renderConversationsList() {
     const holder = document.getElementById('conversations-list');
     if(!holder) return;
-    // محاكاة وجود محادثات سابقة
-    holder.innerHTML = `
-        <div class="profile-menu-btn" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openTargetUserDirectChat('فريق الدعم الفني')">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <div style="width:40px; height:40px; border-radius:50%; background:#00ffff; display:flex; justify-content:center; align-items:center; color:#000;"><i class="fa-solid fa-headset"></i></div>
-                <div>
-                    <div style="font-weight:bold; color:#fff;">فريق الدعم الفني <i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:12px;"></i></div>
-                    <div style="font-size:11px; color:#aaa;">أهلاً بك في واحة المحترفين...</div>
-                </div>
-            </div>
-            <span style="font-size:10px; color:#00ff88;">الآن</span>
-        </div>
-    `;
+    holder.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:10px;">لا توجد محادثات جارية حالياً.</div>`;
 }
 
 function initiateVoiceCall(type) {
@@ -751,17 +559,8 @@ function initiateVoiceCall(type) {
         if(targetUser) targetUser.innerText = currentChatUser || "الطرف المستلم";
         if(indicator) {
             indicator.innerHTML = type === 'offline' ? 
-                `<i class="fa-solid fa-wifi"></i> اتصال لاسلكي شبكي (Bluetooth/Wi-Fi Direct)` : 
-                `<i class="fa-solid fa-phone"></i> اتصال أساسي مشفر عبر الخادم`;
-        }
-        
-        // محاكاة عداد الاتصال
-        const timerEl = document.getElementById('call-timer');
-        if(timerEl) {
-            timerEl.innerText = "جاري الاتصال...";
-            setTimeout(() => {
-                timerEl.innerText = "00:01";
-            }, 3000);
+                `<i class="fa-solid fa-wifi"></i> اتصال لاسلكي شبكي بدون إنترنت` : 
+                `<i class="fa-solid fa-phone"></i> اتصال أساسي عبر خادم المباشر`;
         }
     }
 }
@@ -771,7 +570,6 @@ function terminateVoiceCall() {
     if(modal) {
         modal.style.display = 'none';
         document.body.classList.remove('modal-active');
-        triggerToastNotification("تم إنهاء المكالمة", "info");
     }
 }
 
@@ -779,24 +577,18 @@ function terminateVoiceCall() {
 // 8. إدارة الماركت والمبيعات
 // ==========================================
 function switchMarketSubView(view) {
-    const buyView = document.getElementById('market-buy-view');
-    const sellView = document.getElementById('market-sell-view');
-    const myItemsView = document.getElementById('market-my-items-view');
-    
-    if(buyView) buyView.style.display = view === 'buy' ? 'block' : 'none';
-    if(sellView) sellView.style.display = view === 'sell' ? 'block' : 'none';
-    if(myItemsView) myItemsView.style.display = view === 'my-items' ? 'block' : 'none';
-
-    if(view === 'buy') renderProductsList();
-    if(view === 'my-items') renderMyPersonalMarketItems();
+    document.getElementById('market-buy-view').style.display = view === 'buy' ? 'block' : 'none';
+    document.getElementById('market-sell-view').style.display = view === 'sell' ? 'block' : 'none';
+    document.getElementById('market-my-items-view').style.display = view === 'my-items' ? 'block' : 'none';
 }
 
 function handleMarketMultiImages(input) {
-    if (input && input.files && input.files[0]) {
-        const container = document.getElementById('prod-images-preview-container');
-        if(!container) return;
-        container.innerHTML = "";
-        marketMultiImagesArray = [];
+    const container = document.getElementById('prod-images-preview-container');
+    if(!container) return;
+    container.innerHTML = "";
+    marketMultiImagesArray = [];
+
+    if (input.files) {
         Array.from(input.files).slice(0, 4).forEach(file => {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -804,14 +596,6 @@ function handleMarketMultiImages(input) {
                 container.innerHTML += `<img src="${e.target.result}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #00ffff;">`;
             };
             reader.readAsDataURL(file);
-        });
-    } else {
-        triggerUniversalImagePicker((base64) => {
-            const container = document.getElementById('prod-images-preview-container');
-            if(container) {
-                marketMultiImagesArray = [base64];
-                container.innerHTML = `<img src="${base64}" style="width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #00ffff;">`;
-            }
         });
     }
 }
@@ -821,9 +605,8 @@ async function submitNewProductToMarket() {
     const price = document.getElementById('prod-price')?.value.trim();
     const category = document.getElementById('prod-category')?.value;
     const desc = document.getElementById('prod-desc-location')?.value.trim();
-    const currentEmail = localStorage.getItem('alwaha_profile_email') || "غير محدد";
 
-    if(!name || !price || !desc) return triggerToastNotification("يرجى إدخال البيانات الأساسية للمنتج.", "error");
+    if(!name || !price || !desc) return triggerToastNotification("يرجى إدخال البيانات الأساسية.", "error");
 
     const payload = {
         title: name,
@@ -831,36 +614,30 @@ async function submitNewProductToMarket() {
         category: category || "عام",
         description: desc,
         image_url: marketMultiImagesArray[0] || null,
-        seller_email: currentEmail, // حفظ الإيميل كمعرف للبائع
         created_at: new Date().toISOString()
     };
 
-    const res = await supabaseFetch("products", { method: "POST", body: JSON.stringify(payload) });
+    await supabaseFetch("products", { method: "POST", body: JSON.stringify(payload) });
+
+    triggerToastNotification("تم نشر المنتج بنجاح!", "success");
+    document.getElementById('prod-name').value = "";
+    document.getElementById('prod-price').value = "";
+    document.getElementById('prod-desc-location').value = "";
+    document.getElementById('prod-phone-opt').value = "";
     
-    if (res) {
-        triggerToastNotification("تم نشر المنتج في السوق بنجاح!", "success");
-        if(document.getElementById('prod-name')) document.getElementById('prod-name').value = "";
-        if(document.getElementById('prod-price')) document.getElementById('prod-price').value = "";
-        if(document.getElementById('prod-desc-location')) document.getElementById('prod-desc-location').value = "";
-        marketMultiImagesArray = [];
-        const preview = document.getElementById('prod-images-preview-container');
-        if(preview) preview.innerHTML = '';
-        
-        switchMarketSubView('buy');
-    } else {
-        triggerToastNotification("حدث خطأ أثناء النشر، حاول مجدداً.", "error");
-    }
+    switchMarketSubView('buy');
+    renderProductsList();
 }
 
 async function renderProductsList() {
     const container = document.getElementById('market-products-list-container');
     if (!container) return;
     
-    container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#ffd700; font-size:12px;">جاري تحديث السلع من السحابة...</div>`;
+    container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#ffd700; font-size:12px;">جاري تحديث السلع...</div>`;
     const products = await supabaseFetch("products?select=*&order=created_at.desc");
     
     if (!products || products.length === 0) {
-        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع معروضة حالياً. كن أول من يعرض منتجاً!</div>`;
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع معروضة حالياً.</div>`;
         return;
     }
 
@@ -870,71 +647,25 @@ async function renderProductsList() {
         const fallbackImg = "icon.png";
         
         container.innerHTML += `
-            <div class="product-card-node" style="background:rgba(255,255,255,0.05); border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.1);">
-                <img src="${hasImg ? prod.image_url : fallbackImg}" class="product-card-img" alt="Product" style="width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
-                <div style="font-weight:bold; color:#00ffff; margin-bottom:3px; font-size:13px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${prod.title}</div>
-                <div style="color:#ffd700; font-weight:bold; margin-bottom:8px; font-size:14px;">💰 ${prod.price}</div>
-                <div style="font-size:10px; color:#aaa; margin-bottom:8px; height:30px; overflow:hidden;">${prod.description || 'لا يوجد وصف'}</div>
-                <button class="btn-action" style="width:100%; justify-content:center; font-size:11px; padding:8px; background:linear-gradient(90deg, #00ffff, #3a86ff); color:#000; border:none; border-radius:5px;" onclick="openTargetUserDirectChat('بائع المنتج: ${prod.title}')">
-                    <i class="fa-solid fa-cart-shopping"></i> تواصل للشراء
+            <div class="product-card-node">
+                <img src="${hasImg ? prod.image_url : fallbackImg}" class="product-card-img" alt="Product Image">
+                <div style="font-weight:bold; color:#00ffff; margin-bottom:3px; font-size:12px;">${prod.title}</div>
+                <div style="color:#ffd700; font-weight:bold; margin-bottom:4px; font-size:11px;">💰 ${prod.price}</div>
+                <button class="btn-action" style="width:100%; justify-content:center; font-size:10px; padding:4px;" onclick="openTargetUserDirectChat('بائع المنتج')">
+                    <i class="fa-solid fa-comments"></i> مراسلة
                 </button>
             </div>`;
     });
 }
 
-async function renderMyPersonalMarketItems() {
+function renderMyPersonalMarketItems() {
     const container = document.getElementById('my-market-items-container');
-    const currentEmail = localStorage.getItem('alwaha_profile_email');
-    
     if (!container) return;
-    if (!currentEmail) {
-        container.innerHTML = `<div style="text-align:center; color:#ff0055; font-size:12px; padding:20px;">يرجى تسجيل الدخول أولاً لرؤية منتجاتك.</div>`;
-        return;
-    }
-
-    container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:20px;">جاري جلب إعلاناتك...</div>`;
-    
-    // جلب منتجات المستخدم فقط
-    const myProducts = await supabaseFetch(`products?seller_email=eq.${encodeURIComponent(currentEmail)}&order=created_at.desc`);
-
-    if (!myProducts || myProducts.length === 0) {
-        container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لا يوجد لديك سلع معروضة حالياً.</div>`;
-        return;
-    }
-
-    container.innerHTML = "";
-    myProducts.forEach(prod => {
-        const img = prod.image_url || 'icon.png';
-        container.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${img}" style="width:50px; height:50px; border-radius:5px; object-fit:cover;">
-                    <div>
-                        <div style="color:#00ffff; font-weight:bold; font-size:12px;">${prod.title}</div>
-                        <div style="color:#ffd700; font-size:11px;">${prod.price}</div>
-                    </div>
-                </div>
-                <button class="btn-action" style="background:#ff0055; color:#fff; padding:5px 10px; font-size:11px; border-radius:5px;" onclick="deleteMyProduct('${prod.id}')">
-                    <i class="fa-solid fa-trash"></i> حذف
-                </button>
-            </div>
-        `;
-    });
-}
-
-async function deleteMyProduct(productId) {
-    if(confirm("هل أنت متأكد من حذف هذا الإعلان؟")) {
-        await supabaseFetch(`products?id=eq.${productId}`, { method: "DELETE" });
-        triggerToastNotification("تم حذف المنتج بنجاح", "success");
-        renderMyPersonalMarketItems(); // تحديث القائمة
-    }
+    container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لا يوجد لديك سلع معروضة حالياً.</div>`;
 }
 
 function searchProducts() {
-    const filterInput = document.getElementById('market-search-input');
-    if(!filterInput) return;
-    const filter = filterInput.value.toLowerCase();
-    
+    const filter = document.getElementById('market-search-input').value.toLowerCase();
     document.querySelectorAll('.product-card-node').forEach(node => {
         const text = node.innerText.toLowerCase();
         node.style.display = text.includes(filter) ? 'block' : 'none';
@@ -949,12 +680,6 @@ function openProfessionalCameraView() {
     if(modal) {
         modal.style.display = 'flex';
         document.body.classList.add('modal-active');
-        
-        // محاكاة تشغيل الكاميرا
-        const camView = document.getElementById('camera-view-box');
-        if(camView) {
-            camView.innerHTML = `<div style="text-align:center; color:#00ffff; padding-top:40%;"><i class="fa-solid fa-camera fa-3x mb-3"></i><br>الكاميرا نشطة الآن</div>`;
-        }
     }
 }
 
@@ -967,14 +692,11 @@ function closeProfessionalCameraView() {
 }
 
 function triggerFaceBeautyEnhancement() {
-    triggerToastNotification("تم تفعيل فلتر التجميل الذكي ✨", "success");
+    triggerToastNotification("تم التفعيل بنجاح ✨", "success");
 }
 
 function triggerAnimeAiConverterFilter() {
-    triggerToastNotification("جاري تحويل الوجه إلى أنمي باستخدام الذكاء الاصطناعي 🎨...", "success");
-    setTimeout(() => {
-        triggerToastNotification("تم التحويل بنجاح!", "success");
-    }, 1500);
+    triggerToastNotification("تم التفعيل بنجاح 🎨", "success");
 }
 
 function toggleFreeMeshShareSystem() {
@@ -983,82 +705,134 @@ function toggleFreeMeshShareSystem() {
     const results = document.getElementById('radar-live-results');
 
     if (btn) {
-        btn.innerHTML = meshShareActive ? "<i class='fa-solid fa-satellite-dish'></i> وضع المشاركة الحرة (Mesh): نشط ويبحث..." : "<i class='fa-solid fa-power-off'></i> تفعيل وضع المشاركة الحرة (بدون إنترنت)";
-        btn.style.background = meshShareActive ? "linear-gradient(90deg, #00ff88, #00bfff)" : "linear-gradient(90deg, #ff0055, #ff6b6b)";
+        btn.innerText = meshShareActive ? "✅ وضع المشاركة الحرة: نشط وفعال" : "❌ وضع المشاركة الحرة: غير نشط";
+        btn.style.background = meshShareActive ? "#00ff88" : "#ff0055";
         btn.style.color = meshShareActive ? "#000" : "#fff";
     }
     if (results) {
         results.style.display = meshShareActive ? 'block' : 'none';
-        if(meshShareActive) {
-            results.innerHTML = `<div style="text-align:center; padding:20px; color:#00ffff;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>جاري البحث عن أجهزة قريبة...</div>`;
-            
-            // محاكاة العثور على أجهزة بعد ثواني
-            setTimeout(() => {
-                if(meshShareActive) {
-                    results.innerHTML = `
-                        <div style="background:rgba(0, 255, 136, 0.1); border:1px solid #00ff88; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                            <div style="color:#fff; font-size:13px;"><i class="fa-brands fa-bluetooth-b" style="color:#00ff88;"></i> جهاز Infinix (على بُعد 2 متر)</div>
-                            <button class="btn-action" style="background:#00ff88; color:#000; padding:5px 10px; font-size:11px;" onclick="triggerToastNotification('جاري إرسال طلب الاقتران...', 'info')">اتصال</button>
-                        </div>
-                    `;
-                }
-            }, 3000);
+    }
+}
+
+function simulateLudoMatchLaunch() {
+    triggerToastNotification("جاري تهيئة ساحة اللعب...", "success");
+}
+
+// ==========================================
+// 10. إدارة الملف الشخصي والضبط
+// ==========================================
+function openSubProfileView(id) {
+    const header = document.querySelector('.profile-card-header-view');
+    const menuList = document.querySelector('.profile-options-menu-list');
+    if(header) header.style.display = 'none';
+    if(menuList) menuList.style.display = 'none';
+    
+    document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
+    
+    const target = document.getElementById(id);
+    if(target) {
+        target.style.display = 'block';
+        document.body.classList.add('modal-active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function closeSubProfileView(id) {
+    const target = document.getElementById(id);
+    if(target) target.style.display = 'none';
+    
+    document.body.classList.remove('modal-active');
+    
+    const header = document.querySelector('.profile-card-header-view');
+    const menuList = document.querySelector('.profile-options-menu-list');
+    if(header) header.style.display = 'block';
+    if(menuList) menuList.style.display = 'flex';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function previewRegisterOptionalAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const prev = document.getElementById('reg-optional-avatar-preview');
+            if(prev) { prev.src = e.target.result; prev.style.display = 'block'; }
+            localUploadedAvatarBase64 = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function updateProfileAvatarDirectly(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            localStorage.setItem('alwaha_profile_avatar', e.target.result);
+            syncUiWithLoadedProfileData();
+            triggerToastNotification("تم التحديث بنجاح", "success");
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function sendPrivacyUpdateCodeAction() {
+    const contact = document.getElementById('privacy-new-contact')?.value.trim();
+    if (!contact) return triggerToastNotification("أدخل البيانات المطلوبة", "error");
+    triggerToastNotification("تم الإرسال للتأكيد", "success");
+}
+
+function savePrivacyProfileUpdates() {
+    const newName = document.getElementById('privacy-new-name')?.value.trim();
+    if (newName) {
+        localStorage.setItem('alwaha_profile_name', newName);
+    }
+    syncUiWithLoadedProfileData();
+    triggerToastNotification("تم حفظ التعديلات", "success");
+    closeSubProfileView('sub-prof-privacy');
+}
+
+function changeAppDynamicThemeBackground(val) {
+    if (val) {
+        triggerToastNotification(`تم تطبيق النمط المختار`, "success");
+    }
+}
+
+function toggleAppAudioState(isMuted) {
+    audioMuted = isMuted;
+}
+
+function syncUiWithLoadedProfileData() {
+    const savedName = localStorage.getItem('alwaha_profile_name') || "مستخدم جديد";
+    const savedPhone = localStorage.getItem('alwaha_profile_phone') || "البيانات غير مسجلة";
+    const savedAvatar = localStorage.getItem('alwaha_profile_avatar');
+
+    const nameTag = document.getElementById('my-profile-name-tag');
+    const phoneTag = document.getElementById('my-profile-phone-tag');
+    const avatarPlaceholder = document.getElementById('my-profile-avatar-placeholder');
+
+    if(nameTag) nameTag.innerHTML = `${savedName} <span id="verification-badge-slot"></span>`;
+    if(phoneTag) phoneTag.innerText = savedPhone;
+    
+    if(avatarPlaceholder) {
+        if(savedAvatar) {
+            avatarPlaceholder.innerHTML = `<img src="${savedAvatar}" alt="Avatar">`;
+        } else {
+            avatarPlaceholder.innerText = savedName.charAt(0).toUpperCase();
         }
+    }
+
+    if(localStorage.getItem('alwaha_profile_verified') === 'true') {
+        const slot = document.getElementById('verification-badge-slot');
+        if(slot) slot.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:14px; margin-right:4px;" title="حساب موثق"></i>`;
     }
 }
 
 // ==========================================
-// 10. الأقسام الجديدة: الريلز والألعاب
+// 11. التهيئة المبدئية عند التحميل
 // ==========================================
-function renderReelsFeed() {
-    const container = document.getElementById('reels-container');
-    if(!container) return; // تأكد من وجود div بـ id 'reels-container' داخل section الريلز
-    
-    // بيانات تجريبية للريلز
-    const dummyReels = [
-        { user: "فني صيانة محترف", desc: "أفضل طريقة لتغيير شاشة الهاتف.", likes: "1.2K", comments: "34" },
-        { user: "عالم الخياطة", desc: "تعديل ماكينة الخياطة لتعمل بسرعة مضاعفة.", likes: "850", comments: "12" },
-        { user: "يوميات مبرمج", desc: "كيف تبرمج تطبيقك الأول بسهولة.", likes: "3.4K", comments: "105" }
-    ];
-
-    container.innerHTML = "";
-    dummyReels.forEach(reel => {
-        container.innerHTML += `
-            <div class="reel-card" style="position:relative; height:400px; background:#222; border-radius:15px; overflow:hidden; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
-                <div style="color:#aaa;"><i class="fa-solid fa-play fa-3x"></i></div> <!-- مكان الفيديو -->
-                
-                <div style="position:absolute; bottom:0; left:0; right:0; padding:15px; background:linear-gradient(transparent, rgba(0,0,0,0.9));">
-                    <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:5px;">@${reel.user} <i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:11px;"></i></div>
-                    <div style="color:#ccc; font-size:12px; margin-bottom:10px;">${reel.desc}</div>
-                </div>
-                
-                <div style="position:absolute; right:15px; bottom:30px; display:flex; flex-direction:column; gap:15px; align-items:center;">
-                    <button class="reel-circle-btn" style="background:rgba(255,255,255,0.2); border:none; width:40px; height:40px; border-radius:50%; color:#fff; font-size:18px;" onclick="this.style.color='#ff0055'; triggerToastNotification('أعجبك هذا المقطع', 'success')"><i class="fa-solid fa-heart"></i></button>
-                    <span style="color:#fff; font-size:10px; margin-top:-10px;">${reel.likes}</span>
-                    
-                    <button class="reel-circle-btn" style="background:rgba(255,255,255,0.2); border:none; width:40px; height:40px; border-radius:50%; color:#fff; font-size:18px;" onclick="openCommentsModal('reel')"><i class="fa-solid fa-comment-dots"></i></button>
-                    <span style="color:#fff; font-size:10px; margin-top:-10px;">${reel.comments}</span>
-                    
-                    <button class="reel-circle-btn" style="background:rgba(255,255,255,0.2); border:none; width:40px; height:40px; border-radius:50%; color:#fff; font-size:18px;" onclick="triggerToastNotification('تم نسخ الرابط', 'success')"><i class="fa-solid fa-share-nodes"></i></button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function renderGamesList() {
-    const container = document.getElementById('games-list-container');
-    if(!container) return; // تأكد من وجود هذا الحاوي
-    
-    const games = [
-        { name: "لودو الملوك", icon: "fa-dice", color: "#ff0055", desc: "تحدى أصدقاءك في لعبة اللودو الكلاسيكية" },
-        { name: "شطرنج المحترفين", icon: "fa-chess", color: "#ffd700", desc: "اختبر ذكاءك واستراتيجيتك" },
-        { name: "سباق التحدي", icon: "fa-car", color: "#00ffff", desc: "أسرع السيارات وأقوى السباقات" }
-    ];
-
-    container.innerHTML = "";
-    games.forEach(game => {
-        container.innerHTML += `
-            <div class="game-card" style="display:flex; align-items:center; gap:15px; background:rgba(0,0,0,0.4);">
-                <div style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #333, #111); display:flex; justify-content:center; align-items:center; border:1px solid ${game.color};">
-                    <i cla
+window.onload = function() {
+    initializeKeyboardInputGuard();
+    initializeRippleEffectForNavButtons();
+    syncUiWithLoadedProfileData();
+    renderHomePostsFeed();
+};
