@@ -1,46 +1,57 @@
-const CACHE_NAME = 'alwaha-pro-v2'; // تم التحديث لنسخة جديدة لضرب الكاش القديم
-const urlsToCache = [
+// قم بتغيير الرقم (v1.0.1 -> v1.0.2) مع كل تحديث جديد للأكواد
+const CACHE_NAME = 'alwaha-pro-v1.0.2';
+
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './privacy.html', // تمت إضافة صفحة الخصوصية للتوافق
-  './icon.png',
+  './style.css',
+  './app.js',
   './manifest.json'
 ];
 
-self.addEventListener('install', event => {
-  self.skipWaiting(); // إجبار المتصفح على استخدام النسخة الجديدة فوراً
+// التثبيت وجلب الملفات الجديدة
+self.addEventListener('install', (event) => {
+  self.skipWaiting(); // التجاوز الفوري للإصدار القديم
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
 });
 
-// هذا الكود يضمن مسح أي ملفات قديمة من الذاكرة (مثل v1)
-self.addEventListener('activate', event => {
+// تفعيل الإصدار الجديد ومسح الكاش القديم تماماً
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('حذف الكاش القديم:', cache);
+            return caches.delete(cache); // مسح الملفات القديمة
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
+// استراتيجية النتوورك أولاً (Network First) لضمان جلب أحدث كود دائماً
+self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response; // إرجاع النسخة المخبأة إذا لم يتوفر إنترنت
+    fetch(event.request)
+      .then((networkResponse) => {
+        // إذا وجد إنترنت يجلب الأكواد الجديدة ويحدث الكاش
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-        return fetch(event.request);
+        return networkResponse;
+      })
+      .catch(() => {
+        // في حال عدم وجود إنترنت يفتح المخبأ سابقاً
+        return caches.match(event.request);
       })
   );
 });
