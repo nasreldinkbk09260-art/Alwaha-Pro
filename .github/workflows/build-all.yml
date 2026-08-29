@@ -18,14 +18,13 @@ jobs:
       - name: Set up Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Set up Java JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: gradle
 
       - name: Initialize Project & Install Capacitor
         run: |
@@ -56,18 +55,14 @@ jobs:
 
       - name: Generate App Icons & Splash Screen
         run: |
-          # السماح لـ ImageMagick بمعالجة الصور
           sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
           
           if [ -f "icon.png" ]; then
             mkdir -p assets
-            # تجهيز الأيقونات بأعلى دقة بدقة 1024x1024 وبدون إطار متصفح
             convert icon.png -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp icon.png assets/icon-only.png
             convert icon.png -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp icon.png assets/icon-foreground.png
             convert icon.png -resize 1024x1024 -background "#090212" -alpha remove assets/icon-background.png 2>/dev/null || cp icon.png assets/icon-background.png
             convert icon.png -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
-            
-            # توليد جميع أحجام أيقونات الأندرويد والشاشة الافتتاحية رسمياً
             npx capacitor-assets generate --android || true
           fi
 
@@ -101,13 +96,13 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Upload Signed APK Artifact (للتثبيت المباشر)
+      - name: Upload Signed APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Pro-Signed-APK
           path: android/app/build/outputs/apk/release/*-signed.apk
 
-      - name: Upload Signed AAB Artifact (لمتجر جوجل بلاي)
+      - name: Upload Signed AAB Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Pro-Signed-AAB
