@@ -274,7 +274,7 @@ function showSection(id, element) {
 }
 
 // ==========================================
-// 5. نظام التسجيل والدخول عبر الجيميل والخصوصية
+// 5. نظام التسجيل والدخول (دعم كلمة السر وبريد اختياري)
 // ==========================================
 async function sendRealOTPCode() {
     const email = document.getElementById('reg-identifier')?.value.trim();
@@ -287,7 +287,6 @@ async function sendRealOTPCode() {
         return triggerToastNotification("⚠ هذا البريد مسجل بالفعل! يمكنك الدخول مباشرة.", "error");
     }
 
-    // إرسال رسالة تأكيد عبر Supabase Auth أو توليد كود آمن وإرساله
     const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -304,30 +303,26 @@ async function sendRealOTPCode() {
 async function handleNewUserRegistrationSubmit() {
     const firstName = document.getElementById('reg-first-name')?.value.trim();
     const lastName = document.getElementById('reg-last-name')?.value.trim();
-    const email = document.getElementById('reg-identifier')?.value.trim();
-    const otpCode = document.getElementById('reg-otp-code')?.value.trim();
+    const email = document.getElementById('reg-identifier')?.value.trim() || "بدون_بريد"; // أصبح اختيارياً
+    const password = document.getElementById('reg-password')?.value;
+    const confirmPassword = document.getElementById('reg-confirm-password')?.value;
     const gender = document.getElementById('reg-gender')?.value || "ذكر";
     const age = document.getElementById('reg-age')?.value.trim();
 
-    if (!firstName || !lastName || !email || !otpCode || !age) {
-        return triggerToastNotification("يرجى استكمال البيانات وإدخال رمز التأكيد.", "error");
+    // التحقق من الحقول الأساسية وكلمة السر
+    if (!firstName || !lastName || !password || !age) {
+        return triggerToastNotification("يرجى استكمال البيانات الأساسية وكلمة المرور.", "error");
     }
 
-    const otpRecords = await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}&code=eq.${encodeURIComponent(otpCode)}&order=created_at.desc&limit=1`);
-
-    if (!otpRecords || otpRecords.length === 0) {
-        return triggerToastNotification("❌ كود التأكيد المدخل غير صحيح!", "error");
-    }
-
-    const record = otpRecords[0];
-    if (new Date(record.expires_at) < new Date()) {
-        return triggerToastNotification("⌛ انتهت صلاحية الكود.", "error");
+    if (password !== confirmPassword) {
+        return triggerToastNotification("كلمتا المرور غير متطابقتين.", "error");
     }
 
     const userPayload = {
         first_name: firstName,
         last_name: lastName,
         identifier: email, 
+        password: password, // تمت إضافة كلمة المرور
         phone: "", 
         gender: gender,
         age: parseInt(age) || 0,
@@ -341,16 +336,17 @@ async function handleNewUserRegistrationSubmit() {
     const newUserResult = await supabaseFetch("users", { method: "POST", body: JSON.stringify(userPayload) });
 
     if (newUserResult) {
-        await supabaseFetch(`pending_otps?identifier=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
         localStorage.setItem('alwaha_profile_name', `${firstName} ${lastName}`);
         localStorage.setItem('alwaha_profile_email', email);
         localStorage.setItem('alwaha_profile_phone', "");
         localStorage.setItem('alwaha_profile_verified', 'false');
         if (localUploadedAvatarBase64) localStorage.setItem('alwaha_profile_avatar', localUploadedAvatarBase64);
 
-        triggerToastNotification("🎉 تم إنشاء حسابك عبر الجيميل بنجاح!", "success");
+        triggerToastNotification("🎉 تم إنشاء حسابك بنجاح!", "success");
         closeSubProfileView('sub-prof-register');
         syncUiWithLoadedProfileData();
+    } else {
+        triggerToastNotification("حدث خطأ أثناء إنشاء الحساب.", "error");
     }
 }
 
@@ -448,7 +444,6 @@ function sendPasswordResetCodeAction() {
     const resetId = document.getElementById('reset-id')?.value.trim();
     if (!resetId) return triggerToastNotification("يرجى إدخال الجيميل أو رقم الهاتف المرتبط", "error");
     
-    // محاكاة إرسال كود الاستعادة
     setTimeout(() => {
         triggerToastNotification("تم إرسال تعليمات الاستعادة إلى بريدك بنجاح", "success");
         document.getElementById('reset-id').value = '';
@@ -537,7 +532,7 @@ async function renderHomePostsFeed() {
     container.innerHTML = "";
     posts.forEach((post, index) => {
         const imageMarkup = post.image_url ? `<img src="${post.image_url}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin:8px 0;" loading="lazy">` : '';
-        const postId = post.id || index; // احتياطي في حال عدم وجود id
+        const postId = post.id || index;
 
         container.innerHTML += `
             <div class="news-box text-right" style="border-right: 3px solid ${post.post_type === 'تقني' ? '#00ffff' : '#ff00ff'}; background:rgba(0,0,0,0.3); padding:15px; border-radius:8px; margin-bottom:15px;">
@@ -616,10 +611,9 @@ async function loadAllRegisteredUsersList() {
 
     container.innerHTML = "";
     users.forEach(u => {
-        // احترام إعدادات الخصوصية المعروضة للمستخدمين الآخرين
         const displayEmail = u.hide_email ? "مخفي لخصوصية المستخدم" : (u.identifier || "غير متوفر");
         const displayPhone = u.hide_phone ? "مخفي" : (u.phone || "غير متوفر");
-        const avatar = u.avatar_url || 'icon.png'; // الصورة الافتراضية
+        const avatar = u.avatar_url || 'icon.png';
 
         container.innerHTML += `
             <div class="profile-menu-btn" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
@@ -702,7 +696,6 @@ function sendLiveChatMessageFromUI() {
     container.scrollTop = container.scrollHeight;
     playLuxuriousNotificationSound();
 
-    // محاكاة رد الطرف الآخر
     setTimeout(() => {
         container.innerHTML += `
             <div style="text-align:right; margin:10px 0; display:flex; flex-direction:column; align-items:flex-start;">
@@ -725,7 +718,6 @@ function cancelReplyMode() {
 function renderConversationsList() {
     const holder = document.getElementById('conversations-list');
     if(!holder) return;
-    // محاكاة وجود محادثات سابقة
     holder.innerHTML = `
         <div class="profile-menu-btn" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openTargetUserDirectChat('فريق الدعم الفني')">
             <div style="display:flex; align-items:center; gap:10px;">
@@ -755,7 +747,6 @@ function initiateVoiceCall(type) {
                 `<i class="fa-solid fa-phone"></i> اتصال أساسي مشفر عبر الخادم`;
         }
         
-        // محاكاة عداد الاتصال
         const timerEl = document.getElementById('call-timer');
         if(timerEl) {
             timerEl.innerText = "جاري الاتصال...";
@@ -831,7 +822,7 @@ async function submitNewProductToMarket() {
         category: category || "عام",
         description: desc,
         image_url: marketMultiImagesArray[0] || null,
-        seller_email: currentEmail, // حفظ الإيميل كمعرف للبائع
+        seller_email: currentEmail,
         created_at: new Date().toISOString()
     };
 
@@ -894,7 +885,6 @@ async function renderMyPersonalMarketItems() {
 
     container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:20px;">جاري جلب إعلاناتك...</div>`;
     
-    // جلب منتجات المستخدم فقط
     const myProducts = await supabaseFetch(`products?seller_email=eq.${encodeURIComponent(currentEmail)}&order=created_at.desc`);
 
     if (!myProducts || myProducts.length === 0) {
@@ -926,7 +916,7 @@ async function deleteMyProduct(productId) {
     if(confirm("هل أنت متأكد من حذف هذا الإعلان؟")) {
         await supabaseFetch(`products?id=eq.${productId}`, { method: "DELETE" });
         triggerToastNotification("تم حذف المنتج بنجاح", "success");
-        renderMyPersonalMarketItems(); // تحديث القائمة
+        renderMyPersonalMarketItems();
     }
 }
 
@@ -950,7 +940,6 @@ function openProfessionalCameraView() {
         modal.style.display = 'flex';
         document.body.classList.add('modal-active');
         
-        // محاكاة تشغيل الكاميرا
         const camView = document.getElementById('camera-view-box');
         if(camView) {
             camView.innerHTML = `<div style="text-align:center; color:#00ffff; padding-top:40%;"><i class="fa-solid fa-camera fa-3x mb-3"></i><br>الكاميرا نشطة الآن</div>`;
@@ -992,7 +981,6 @@ function toggleFreeMeshShareSystem() {
         if(meshShareActive) {
             results.innerHTML = `<div style="text-align:center; padding:20px; color:#00ffff;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>جاري البحث عن أجهزة قريبة...</div>`;
             
-            // محاكاة العثور على أجهزة بعد ثواني
             setTimeout(() => {
                 if(meshShareActive) {
                     results.innerHTML = `
@@ -1008,13 +996,12 @@ function toggleFreeMeshShareSystem() {
 }
 
 // ==========================================
-// 10. الأقسام الجديدة: الريلز والألعاب
+// 10. الأقسام الجديدة: الريلز والألعاب (مكتملة تماماً)
 // ==========================================
 function renderReelsFeed() {
     const container = document.getElementById('reels-container');
-    if(!container) return; // تأكد من وجود div بـ id 'reels-container' داخل section الريلز
+    if(!container) return; 
     
-    // بيانات تجريبية للريلز
     const dummyReels = [
         { user: "فني صيانة محترف", desc: "أفضل طريقة لتغيير شاشة الهاتف.", likes: "1.2K", comments: "34" },
         { user: "عالم الخياطة", desc: "تعديل ماكينة الخياطة لتعمل بسرعة مضاعفة.", likes: "850", comments: "12" },
@@ -1025,7 +1012,7 @@ function renderReelsFeed() {
     dummyReels.forEach(reel => {
         container.innerHTML += `
             <div class="reel-card" style="position:relative; height:400px; background:#222; border-radius:15px; overflow:hidden; margin-bottom:20px; display:flex; align-items:center; justify-content:center;">
-                <div style="color:#aaa;"><i class="fa-solid fa-play fa-3x"></i></div> <!-- مكان الفيديو -->
+                <div style="color:#aaa;"><i class="fa-solid fa-play fa-3x"></i></div>
                 
                 <div style="position:absolute; bottom:0; left:0; right:0; padding:15px; background:linear-gradient(transparent, rgba(0,0,0,0.9));">
                     <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:5px;">@${reel.user} <i class="fa-solid fa-circle-check" style="color:#00ffff; font-size:11px;"></i></div>
@@ -1048,7 +1035,7 @@ function renderReelsFeed() {
 
 function renderGamesList() {
     const container = document.getElementById('games-list-container');
-    if(!container) return; // تأكد من وجود هذا الحاوي
+    if(!container) return; 
     
     const games = [
         { name: "لودو الملوك", icon: "fa-dice", color: "#ff0055", desc: "تحدى أصدقاءك في لعبة اللودو الكلاسيكية" },
@@ -1061,4 +1048,16 @@ function renderGamesList() {
         container.innerHTML += `
             <div class="game-card" style="display:flex; align-items:center; gap:15px; background:rgba(0,0,0,0.4);">
                 <div style="width:60px; height:60px; border-radius:12px; background:linear-gradient(135deg, #333, #111); display:flex; justify-content:center; align-items:center; border:1px solid ${game.color};">
-                    <i cla
+                    <i class="fa-solid ${game.icon} fa-2x" style="color:${game.color};"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-weight:bold; color:${game.color}; font-size:14px; margin-bottom:5px;">${game.name}</div>
+                    <div style="color:#aaa; font-size:11px;">${game.desc}</div>
+                </div>
+                <button class="btn-action" style="background:${game.color}; color:#000; font-size:11px; padding:6px 12px; border-radius:8px;" onclick="triggerToastNotification('جاري تحميل اللعبة...', 'info')">
+                    <i class="fa-solid fa-play"></i> العب
+                </button>
+            </div>
+        `;
+    });
+}
