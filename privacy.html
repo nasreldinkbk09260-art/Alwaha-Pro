@@ -1,0 +1,54 @@
+<div id="chat-section" class="app-section" style="display:none;">
+    <h3 class="section-title"><i class="fa-solid fa-comments"></i> مركز التواصل الاحترافي</h3>
+    
+    <div class="chat-tabs-container" style="display: flex; gap: 5px; margin-bottom: 15px;">
+        <button class="tab-btn active" onclick="switchChatTab('recent')" style="flex:1; padding:10px; background:#1a0629; color:#fff; border:1px solid #3a86ff; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-message"></i> الأحدث</button>
+        <button class="tab-btn" onclick="switchChatTab('all-users')" style="flex:1; padding:10px; background:#1a0629; color:#fff; border:1px solid #3a86ff; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-users-viewfinder"></i> إضافة أصدقاء</button>
+        <button class="tab-btn" onclick="switchChatTab('my-friends')" style="flex:1; padding:10px; background:#1a0629; color:#fff; border:1px solid #ff00ff; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-user-group"></i> الأصدقاء (<span id="friends-count">0</span>)</button>
+    </div>
+
+    <div id="recent-chats-tab" class="chat-tab-content">
+        <div id="conversations-list" class="conversations-holder">
+            </div>
+    </div>
+
+    <div id="all-users-tab" class="chat-tab-content" style="display:none;">
+        <div id="all-users-list" class="conversations-holder">
+            </div>
+    </div>
+
+    <div id="my-friends-tab" class="chat-tab-content" style="display:none;">
+        <div id="my-friends-list" class="conversations-holder">
+            </div>
+    </div>
+
+    <div id="active-chat-box" class="active-chat-window" style="display:none; margin-top:15px; border-top:2px solid #3a86ff; padding-top:10px;">
+        <div class="chat-window-header" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px;">
+            <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">اسم المستخدم</span>
+            <div class="chat-actions-btns" style="display:flex; gap:10px;">
+                <button onclick="initiateVoiceCall()" style="background:#00ff88; color:#000; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-phone"></i> اتصال</button>
+                <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> إغلاق</button>
+            </div>
+        </div>
+        <div id="chat-messages-container" style="height:250px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
+            </div>
+        <div class="chat-input-row" style="display:flex; gap:5px; margin-top:10px;">
+            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك الاحترافية هنا..." style="flex:1; padding:10px; background:#120820; border:1px solid #3a86ff; color:#fff; border-radius:6px;">
+            <button onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+</div>
+
+<div id="voice-call-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(9,2,18,0.98); z-index:9999; justify-content:center; align-items:center; flex-direction:column; direction:rtl;">
+    <div style="background:linear-gradient(135deg, #18032b, #2c021b); border:2px solid #00ff88; padding:30px; border-radius:15px; text-align:center; max-width:400px; width:90%; box-shadow:0 0 25px rgba(0,255,136,0.2);">
+        <div style="font-size:50px; color:#00ff88; margin-bottom:15px;" class="pulse-glow-high-contrast"><i class="fa-solid fa-phone-volume"></i></div>
+        <h3 id="call-status-title" style="color:#fff; margin-bottom:10px;">جاري الاتصال...</h3>
+        <p id="call-target-user" style="color:#00ffff; font-size:16px; margin-bottom:20px; font-weight:bold;">المستخدم</p>
+        
+        <div id="call-mode-selector" style="margin-bottom:20px; font-size:12px; color:#aaa;">
+            <span id="call-method-indicator"><i class="fa-solid fa-circle-nodes"></i> جاري تحديد أفضل مسار (شبكي / بلوتوث قريب)</span>
+        </div>
+
+        <button onclick="terminateVoiceCall()" style="background:#ff0055; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
+    </div>
+</div>

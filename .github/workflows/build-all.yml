@@ -1,0 +1,106 @@
+name: Build Alwaha Pro (Production Release)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android-release:
+    name: Build & Sign Official Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Initialize Project and Install Dependencies
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
+
+      - name: Isolate Web Assets into www Directory
+        run: |
+          mkdir -p www
+          cp index.html app.js style.css manifest.json sw.js www/ 2>/dev/null || true
+          cp *.png *.jpg www/ 2>/dev/null || true
+
+      - name: Initialize Capacitor (Production Network Config)
+        run: |
+          # هذه الإعدادات تجبر أندرويد على قبول اتصالات Supabase وتمنع خطأ الشبكة
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.alwaha.pro",
+            "appName": "Alwaha Pro",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https",
+              "cleartext": true
+            }
+          }
+          EOF
+          rm -rf android
+          npx cap add android
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: gradle
+
+      - name: Generate Native App Icons (No Browser Badge)
+        run: |
+          sudo sed -i 's/domain="coder" rights="none"/domain="coder" rights="read|write"/g' /etc/ImageMagick-6/policy.xml 2>/dev/null || true
+          SRC_LOGO=$(find . -maxdepth 2 -name "*logo*.png" -o -name "*icon*.png" | head -n 1)
+          
+          if [ -n "$SRC_LOGO" ]; then
+            mkdir -p assets
+            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-only.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-only.png
+            convert "$SRC_LOGO" -resize 1024x1024 assets/icon-foreground.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-foreground.png
+            convert "$SRC_LOGO" -resize 1024x1024 -background "#FFFFFF" -alpha remove assets/icon-background.png 2>/dev/null || cp "$SRC_LOGO" assets/icon-background.png
+            convert "$SRC_LOGO" -resize 512x512 -background "#090212" -gravity center -extent 2732x2732 assets/splash.png 2>/dev/null || true
+            npx capacitor-assets generate --android || true
+          fi
+
+      - name: Sync Code to Android Project
+        run: |
+          npx cap sync android
+
+      - name: Build Official Release APK & AAB
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: Sign Release APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Sign Release AAB
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload Signed APK (For Direct Download/Users)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-Official-APK
+          path: android/app/build/outputs/apk/release/*-signed.apk
+
+      - name: Upload Signed AAB (For Google Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-Official-AAB
+          path: android/app/build/outputs/bundle/release/*-signed.aab
