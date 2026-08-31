@@ -29,7 +29,6 @@
         <div style="display: flex; justify-content: space-between; padding: 10px; margin-bottom: 10px;">
             <button id="pwa-install-btn" class="btn-action golden-edge" style="display:none; background:#00ff88; color:#000;" onclick="triggerPwaInstallation()"><i class="fa-solid fa-download"></i> تثبيت التطبيق الفوري</button>
             <button class="btn-action golden-edge" style="background:#ff00ff; color:#fff;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> مركز الإشعارات والطلبات <span id="notif-badge">3</span></button>
-        </div>
 
         <!-- لوحة الإشعارات -->
         <div id="internal-notification-center" class="news-box" style="display:none; margin-bottom:15px; border:2px solid #ffd700;">
@@ -39,7 +38,6 @@
                 <li style="padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.05);">✨ تم فحص وتحديث جدار الحماية بنجاح.</li>
                 <li style="padding:5px 0;">🎁 بروتوكول الشبكة المحلية جاهز للتراسل التلقائي.</li>
             </ul>
-        </div>
 
         <!-- 1/ قسم الرئيسية -->
         <div id="home-section" class="app-section active-section">
@@ -49,12 +47,9 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <h4 style="color:#ffd700; margin:0;"><i class="fa-solid fa-bell"></i> الإشعارات</h4>
                     <span class="badge" style="background:#ff00ff; color:#fff; padding:2px 8px; border-radius:10px; font-size:11px;">جديد</span>
-                </div>
                 <div id="home-notifications-list" style="font-size:12.5px; color:#ccc;">
                     <div style="padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><i class="fa-solid fa-circle-info" style="color:#00ffff;"></i> مرحباً بك في الواحة برو المحدث!</div>
                     <div style="padding:6px 0;"><i class="fa-solid fa-bullhorn" style="color:#00ff88;"></i> يمكنك الآن إضافة تغريداتك وصورك ومشاركتها فورياً.</div>
-                </div>
-            </div>
 
             <!-- ب - إضافة تغريدة أو صورة -->
             <div class="news-box publishing-area" style="margin-bottom:20px;">
@@ -68,14 +63,11 @@
                         <input type="file" id="home-post-image-input" accept="image/*" onchange="previewHomePostImage(this)" style="display:none;">
                     </label>
                     <img id="home-post-image-preview" style="display:none; width:100%; max-height:180px; object-fit:cover; border-radius:8px; margin-top:8px;">
-                </div>
 
                 <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="publishNewHomePost()"><i class="fa-solid fa-paper-plane"></i> نشر التغريدة</button>
-            </div>
 
             <h3 style="margin: 15px 5px 10px 0; color: #00ffff; font-size: 16px;"><i class="fa-solid fa-rss"></i> خلاصة التغريدات والمنشورات</h3>
             <div id="home-posts-feed-container"></div>
-        </div>
 
         <!-- 2/ قسم الماركت -->
         <div id="market-section" class="app-section">
@@ -86,24 +78,18 @@
                 </button>
                 <button id="market-mini-myitems-btn" class="btn-action golden-edge" style="flex:1; padding:6px 10px; font-size:12px; justify-content:center; background:linear-gradient(135deg, #00ffff, #0088cc); color:#000; border:none;" onclick="switchMarketSubView('my-items')">
                     <i class="fa-solid fa-box-open"></i> معروضاتي
-                </button>
                 <button id="market-mini-explore-btn" class="btn-action" style="padding:6px 10px; font-size:12px; justify-content:center; background:rgba(255,255,255,0.1); color:#fff;" onclick="switchMarketSubView('buy')">
                     <i class="fa-solid fa-store"></i> السوق
-                </button>
-            </div>
 
             <!-- عرض المعروضات العامة -->
             <div id="market-buy-view">
                 <div class="search-bar-box" style="margin-bottom:10px;">
                     <input type="text" id="market-search-input" placeholder="ابحث عن أجهزة، معدات، أو سلع..." oninput="searchProducts()" class="keyboard-target" style="width:100%; padding:8px;">
-                </div>
                 
                 <div id="market-pull-to-refresh" style="text-align:center; padding:6px; font-size:11px; color:#00ffff; background:rgba(0,255,255,0.05); border-radius:6px; margin-bottom:10px; cursor:pointer;" onclick="renderProductsList()">
                     <i class="fa-solid fa-arrows-rotate"></i> اسحب للأسفل أو اضغط هنا لتحديث السلع الجديدة
-                </div>
 
                 <div id="market-products-list-container" class="market-mini-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap:10px;"></div>
-            </div>
 
             <!-- أ ـ بيع ما لديك الآن -->
             <div id="market-sell-view" style="display:none;">
@@ -114,17 +100,14 @@
                         <label style="font-size:12px; color:#ffd700; display:block; margin-bottom:4px;">أ ـ إضافة الصور (من 2 إلى 4 صور):</label>
                         <input type="file" id="prod-images-input" accept="image/*" multiple onchange="handleMarketMultiImages(this)" style="font-size:11px; padding:4px;">
                         <div id="prod-images-preview-container" style="display:flex; gap:6px; margin-top:8px; overflow-x:auto;"></div>
-                    </div>
 
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ب ـ اسم المنتج:</label>
                         <input type="text" id="prod-name" class="keyboard-target" placeholder="أدخل اسم المنتج" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
 
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">ج ـ سعر المنتج:</label>
                         <input type="text" id="prod-price" class="keyboard-target" placeholder="مثال: 500 ج.م" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
 
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">د ـ نوع المنتج:</label>
@@ -135,21 +118,16 @@
                             <option value="منزليات">أثاث ومنزليات</option>
                             <option value="آخر">أخرى</option>
                         </select>
-                    </div>
 
                     <div class="form-group" style="margin-bottom:10px;">
                         <label style="font-size:12px; color:#fff; display:block; margin-bottom:4px;">هـ ـ وصف المنتج ونقطة الالتقاء:</label>
                         <textarea id="prod-desc-location" class="keyboard-target" placeholder="اكتب وصف السلعة ومكان التسليم..." style="width:100%; height:60px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;"></textarea>
-                    </div>
 
                     <div class="form-group" style="margin-bottom:12px;">
                         <label style="font-size:12px; color:#ccc; display:block; margin-bottom:4px;">م ـ أضف رقم (اختياري):</label>
                         <input type="tel" id="prod-phone-opt" class="keyboard-target" placeholder="رقم الموبايل / الواتساب" style="width:100%; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color:#fff;">
-                    </div>
 
                     <button class="btn-action" style="width:100%; justify-content:center; font-weight:bold;" onclick="submitNewProductToMarket()">نشر المنتج في الماركت</button>
-                </div>
-            </div>
 
             <!-- ب ـ معروضاتي -->
             <div id="market-my-items-view" style="display:none;">
@@ -157,10 +135,7 @@
                     <h4 style="color:#00ff88; margin-bottom:10px;"><i class="fa-solid fa-boxes-packing"></i> معروضاتي الشخصية</h4>
                     <p style="font-size:11px; color:#aaa; margin-bottom:10px;">يمكنك تعديل أي منشور أو حذفه نهائياً من هنا.</p>
                     <div id="my-market-items-container"></div>
-                </div>
-            </div>
 
-        </div>
 
         <!-- 3/ قسم الدردشة والتراسل -->
         <div id="chat-section" class="app-section">
@@ -169,36 +144,25 @@
                     <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('all-users')">
                         <span><i class="fa-solid fa-user-plus" style="color:#00ff88; margin-left:8px;"></i> ١ ـ إضافة أصدقاء</span>
                         <i class="fa-solid fa-chevron-left"></i>
-                    </button>
                     <button class="profile-menu-btn golden-edge" onclick="expandChatSubWindow('recent')">
                         <span><i class="fa-solid fa-comments" style="color:#00ffff; margin-left:8px;"></i> ٢ ـ المحادثات الجارية</span>
-                        <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
 
             <!-- نافذة 1: إضافة أصدقاء -->
             <div id="all-users-tab" class="chat-tab-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h4 style="color:#00ff88;"><i class="fa-solid fa-user-plus"></i> إضافة أصدقاء واستكشاف الدليل</h4>
                     <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-                </div>
                 
                 <div class="form-group" style="margin-bottom:12px;">
                     <input type="text" id="friend-search-input" placeholder="ابحث عن شخص بالاسم أو رقم الهاتف..." class="keyboard-target" style="width:100%; padding:10px; border-radius:6px; background:rgba(0,0,0,0.3); border:1px solid #00ff88; color:#fff;" oninput="searchUsersByPhoneOrName(this.value)">
-                </div>
 
                 <div id="all-users-list" class="conversations-holder"></div>
-            </div>
 
             <!-- نافذة 2: المحادثات الجارية -->
             <div id="recent-tab" class="chat-tab-content" style="display:none;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h4 style="color:#00ffff;"><i class="fa-solid fa-comments"></i> المحادثات الجارية</h4>
-                    <button class="btn-action" style="background:#ff0055; color:#fff;" onclick="collapseChatSubWindows()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-                </div>
                 <div id="conversations-list" class="conversations-holder"></div>
-            </div>
 
             <!-- نافذة المحادثة المباشرة -->
             <div id="active-chat-box" class="active-chat-window" style="display:none; margin-top:15px; border-top:2px solid #3a86ff; padding-top:10px;">
@@ -206,31 +170,22 @@
                     <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                         <span id="current-chat-name" style="font-weight:bold; color:#00ffff;">محادثة مباشرة</span>
                         <button onclick="closeActiveChatWindow()" style="background:#ff0055; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> إغلاق</button>
-                    </div>
                     
                     <div class="chat-call-actions" style="display: flex; gap: 6px; width:100%;">
                         <button onclick="initiateVoiceCall('offline')" class="btn-action golden-edge" style="flex:1; background:#00ff88; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
                             <i class="fa-solid fa-wifi"></i> إتصال دون إنترنت (شبكة حرة)
-                        </button>
                         <button onclick="initiateVoiceCall('standard')" class="btn-action golden-edge" style="flex:1; background:#00ffff; color:#000; font-size:11px; justify-content:center; font-weight:bold;">
                             <i class="fa-solid fa-phone"></i> اتصال أساسي
-                        </button>
-                    </div>
-                </div>
 
                 <div id="reply-preview-bar" style="display:none; background:rgba(255,255,255,0.08); padding:6px 10px; border-right:3px solid #00ffff; margin-top:8px; font-size:11px; border-radius:4px; justify-content:space-between; align-items:center;">
                     <span>الرد على: <span id="reply-target-text" style="color:#00ffff;">...</span></span>
                     <i class="fa-solid fa-xmark" style="cursor:pointer; color:#ff0055;" onclick="cancelReplyMode()"></i>
-                </div>
 
                 <div id="chat-messages-container" style="height:230px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:10px; margin-top:8px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);"></div>
                 
                 <div class="chat-input-row" style="display:flex; gap:5px; margin-top:10px;">
                     <input type="text" id="chat-message-input" placeholder="اكتب رسالتك..." class="keyboard-target" style="flex:1; padding:10px; background:#120820; border:1px solid #3a86ff; color:#fff; border-radius:6px;">
                     <button id="send-chat-msg-btn" onclick="sendLiveChatMessageFromUI()" style="background:#3a86ff; color:#fff; border:none; padding:10px 18px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
 
         <!-- مودال الاتصال الصوتي -->
         <div id="voice-call-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(9,2,18,0.98); z-index:9999; justify-content:center; align-items:center; flex-direction:column; direction:rtl;">
@@ -240,10 +195,7 @@
                 <p id="call-target-user" style="color:#00ffff; font-size:16px; margin-bottom:20px; font-weight:bold;">الطرف المستلم</p>
                 <div style="margin-bottom:20px; font-size:12px; color:#00ff88; background:rgba(0,255,136,0.1); padding:8px; border-radius:6px;">
                     <span id="call-method-indicator"><i class="fa-solid fa-shield"></i> اتصال صوتي مباشر</span>
-                </div>
                 <button onclick="terminateVoiceCall()" style="background:#ff0055; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:14px; font-weight:bold; cursor:pointer; width:100%;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
-            </div>
-        </div>
 
         <!-- قسم الألعاب -->
         <div id="games-section" class="app-section">
@@ -258,12 +210,7 @@
                             <div class="ludo-corner ludo-blue">الكتيبة الزرقاء</div>
                             <div class="ludo-corner ludo-green">الكتيبة الخضراء</div>
                             <div class="ludo-corner ludo-yellow">الكتيبة الصفراء</div>
-                        </div>
-                    </div>
                     <button class="btn-action" style="width:100%; justify-content:center; margin-top:10px;" onclick="simulateLudoMatchLaunch()">بدء ساحة اللعب</button>
-                </div>
-            </div>
-        </div>
 
         <!-- قسم المحتوى والكاميرا -->
         <div id="reels-section" class="app-section">
@@ -273,15 +220,12 @@
                     <span class="reels-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> المعالجة المباشرة</span>
                     <h4>@alwaha_pro_digital</h4>
                     <p>صناعة المحتوى البصري المباشر وفلاتر الأنمي المتقدمة 🌟</p>
-                </div>
                 
                 <div class="reels-actions-side-bar">
                     <button class="reel-circle-btn" style="color:#ff0055;" onclick="triggerToastNotification('تم تسجيل الإعجاب بنجاح', 'success')"><i class="fa-solid fa-heart"></i><small>3.1k</small></button>
                     <button class="reel-circle-btn" onclick="triggerToastNotification('قسم التعليقات مفعل ومربوط بالتطبيق', 'info')"><i class="fa-solid fa-comment"></i><small>150</small></button>
                     <button class="reel-circle-btn" onclick="triggerToastNotification('تم نسخ رابط الفيديو إلى الحافظة', 'info')"><i class="fa-solid fa-share-nodes"></i><small>مشاركة</small></button>
                     <button class="reel-circle-btn camera-trigger" onclick="openProfessionalCameraView()"><i class="fa-solid fa-camera" style="color:#00ffff;"></i><small>إنتاج</small></button>
-                </div>
-            </div>
 
             <!-- الكاميرا المباشرة -->
             <div id="pro-camera-modal" class="camera-fullscreen-view" style="display:none;">
@@ -289,26 +233,17 @@
                     <button class="cam-top-btn" onclick="closeProfessionalCameraView()"><i class="fa-solid fa-arrow-right"></i></button>
                     <span style="color:#fff; font-size:13px;"><i class="fa-solid fa-wand-magic-sparkles" style="color:#00ffff;"></i> استوديو الكاميرا الفوري</span>
                     <button class="cam-top-btn"><i class="fa-solid fa-bolt"></i></button>
-                </div>
                 <div class="camera-preview-screen" id="camera-screen-lens" style="background:#221133; flex-direction:column; position:relative;">
                     <div style="position:absolute; bottom:20px; right:15px; display:flex; flex-direction:column; gap:8px; z-index:100;">
                         <button class="btn-action golden-edge" onclick="triggerFaceBeautyEnhancement()" style="background:rgba(0,0,0,0.7); color:#ff00ff;">
                             <i class="fa-solid fa-face-smile-wink"></i> فلتر التنقية والتجميل
-                        </button>
                         <button class="btn-action golden-edge" onclick="triggerAnimeAiConverterFilter()" style="background:rgba(0,0,0,0.7); color:#00ffff;">
                             <i class="fa-solid fa-user-astronaut"></i> مرشح الأنمي الفوري
-                        </button>
-                    </div>
-                </div>
                 <div class="camera-bottom-dashboard">
                     <div class="camera-shutter-row">
                         <button class="cam-secondary-circle" onclick="triggerToastNotification('معرض الوسائط جاهز', 'info')"><i class="fa-solid fa-images"></i><small>المعرض</small></button>
                         <div class="main-shutter-outer" onclick="triggerToastNotification('تم التقاط الصورة وحفظها بنجاح', 'success')"><div class="main-shutter-inner"></div></div>
                         <button class="cam-secondary-circle" onclick="openProfessionalCameraView()"><i class="fa-solid fa-camera-rotate"></i><small>تدوير</small></button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- قسم الشبكة الحرة -->
         <div id="free-section" class="app-section">
@@ -318,8 +253,6 @@
                 <div style="margin:15px 0;">
                     <button id="free-mode-toggle-main-btn" class="btn-action golden-edge" style="background:#ff0055; color:#fff; padding:10px 20px; font-weight:bold;" onclick="toggleFreeMeshShareSystem()">
                         ❌ وضع المشاركة الحرة: غير نشط
-                    </button>
-                </div>
 
                 <div id="radar-circle" class="pulse-signal"><i class="fa-solid fa-wifi"></i></div>
                 <p style="font-size:13px; color:#e0ffff;">
@@ -329,9 +262,6 @@
                 <div id="radar-live-results" style="display: none; text-align: right;" class="news-box">
                     <h5 style="color:#00ff88; margin-bottom:5px;"><i class="fa-solid fa-shield-halved"></i> الشبكة المحلية متصلة وفعالة</h5>
                     <p style="font-size:11px; color:#ccc;">🔄 جاهز لتبادل البيانات المباشر.</p>
-                </div>
-            </div>
-        </div>
 
         <!-- قسم الملف الشخصي -->
         <div id="profile-section" class="app-section">
@@ -340,32 +270,23 @@
                     <div class="profile-main-avatar-glow" id="my-profile-avatar-placeholder">ن</div>
                     <h3 id="my-profile-name-tag" style="margin-top:10px; color:#fff;">نصر <span id="verification-badge-slot"></span></h3>
                     <p id="my-profile-phone-tag" style="font-size:12px; color:#aaa;">يرجى تسجيل الدخول أو إعداد الحساب</p>
-                </div>
                 <div class="profile-options-menu-list" style="margin-top:15px;">
                     <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-login')">
                         <span>🔑 تسجيل الدخول</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
                     <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-register')">
                         <span>👤 إنشاء حساب جديد</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
                     <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-verify')">
                         <span>🛡️ توثيق الحساب بشارة موثوق به</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
                     <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-settings')">
                         <span>⚙️ الضبط</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
                     <button class="profile-menu-btn golden-edge" onclick="openSubProfileView('sub-prof-privacy')">
                         <span>🔒 الخصوصية</span> <i class="fa-solid fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
 
             <!-- 1. تسجيل الدخول -->
             <div id="sub-prof-login" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>🔑 تسجيل الدخول</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-login')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <label style="font-size:12px;">رقم الهاتف أو البريد:</label>
                     <input type="text" id="login-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد الإلكتروني">
@@ -374,30 +295,23 @@
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                         <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-reset-pass')" style="color:#00ffff; font-size:12px;">نسيت كلمة السر؟</a>
                         <a href="javascript:void(0)" onclick="openSubProfileView('sub-prof-register')" style="color:#00ffff; font-size:12px;">إضافة حساب جديد</a>
-                    </div>
                     <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="executeUserLoginAuth()">دخول</button>
-                </div>
-            </div>
 
             <!-- إعادة تعيين كلمة السر -->
             <div id="sub-prof-reset-pass" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>🔄 تحديث كلمة السر</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-reset-pass')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <label style="font-size:12px;">الرقم أو البريد للتحقق:</label>
                     <input type="text" id="reset-id" class="keyboard-target" placeholder="أدخل الرقم أو البريد">
                     <button class="btn-action" style="justify-content:center;" onclick="sendPasswordResetCodeAction()">إرسال كود التأكيد</button>
-                </div>
-            </div>
 
             <!-- 2. إنشاء حساب جديد -->
             <div id="sub-prof-register" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>👤 إنشاء حساب جديد</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-register')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <label style="font-size:12px;">أ ـ إضافة صورة أو تصويرها:</label>
                     <input type="file" accept="image/*" capture="user" onchange="previewRegisterOptionalAvatar(this)">
@@ -406,19 +320,16 @@
                     <div style="display:flex; gap:5px;">
                         <input type="text" id="reg-first-name" placeholder="الاسم الأول" class="keyboard-target">
                         <input type="text" id="reg-last-name" placeholder="اسم العائلة" class="keyboard-target">
-                    </div>
                     <label style="font-size:12px;">ج ـ الرقم أو البريد الإلكتروني:</label>
                     <div style="display:flex; gap:5px;">
                         <input type="text" id="reg-identifier" class="keyboard-target" placeholder="الرقم أو البريد" style="flex:1;">
                         <button class="btn-action" style="white-space:nowrap;" onclick="sendRealOTPCode()">إرسال كود</button>
-                    </div>
                     <div id="reg-otp-status-msg" style="font-size:11px; margin-top:2px;"></div>
                     <input type="text" id="reg-otp-code" placeholder="أدخل كود التأكيد" class="keyboard-target">
                     <label style="font-size:12px;">د ـ النوع:</label>
                     <select id="reg-gender" style="width:100%; padding:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#fff;">
                         <option>ذكر</option>
                         <option>أنثى</option>
-                    </select>
                     <label style="font-size:12px;">هـ ـ السن:</label>
                     <input type="number" id="reg-age" placeholder="العمر بالسنوات" class="keyboard-target">
                     <label style="font-size:12px;">ك ـ البلد:</label>
@@ -426,15 +337,12 @@
                     <label style="font-size:12px;">ي ـ المحافظة:</label>
                     <input type="text" id="reg-governorate" placeholder="المحافظة" class="keyboard-target">
                     <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="handleNewUserRegistrationSubmit()">تأكيد وإنشاء الحساب</button>
-                </div>
-            </div>
 
             <!-- 3. توثيق الحساب بشارة موثوق به -->
             <div id="sub-prof-verify" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>🛡️ توثيق الحساب بشارة موثوق به</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-verify')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <label style="font-size:12px;">أ ـ صورة حقيقية لايف مباشر:</label>
                     <input type="file" accept="image/*" capture="user">
@@ -442,28 +350,23 @@
                     <div style="display:flex; gap:5px;">
                         <input type="tel" id="verify-phone-input" placeholder="رقم الموبايل" class="keyboard-target" style="flex:1;">
                         <button class="btn-action" style="white-space:nowrap;" onclick="sendPhoneVerifyCodeAction()">إرسال كود</button>
-                    </div>
                     <input type="text" placeholder="أدخل كود تأكيد الهاتف" class="keyboard-target">
                     <label style="font-size:12px;">ج ـ جيميل حقيقي للتأكيد:</label>
                     <div style="display:flex; gap:5px;">
                         <input type="email" id="verify-email-input" placeholder="example@gmail.com" class="keyboard-target" style="flex:1;">
                         <button class="btn-action" style="white-space:nowrap;" onclick="sendEmailVerifyCodeAction()">إرسال كود</button>
-                    </div>
                     <input type="text" placeholder="أدخل كود تأكيد الجيميل" class="keyboard-target">
                     <label style="font-size:12px;">د ـ صورة بطاقة شخصية أو جواز سفر:</label>
                     <input type="file" accept="image/*">
                     <label style="font-size:12px;">هـ ـ الاسم رباعي:</label>
                     <input type="text" placeholder="أدخل الاسم الرباعي" class="keyboard-target">
                     <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="submitAccountVerificationRequest()">تقديم طلب التوثيق</button>
-                </div>
-            </div>
 
             <!-- 4. الضبط -->
             <div id="sub-prof-settings" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>⚙️ الضبط</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-settings')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     <div>
                         <label style="font-size:12px; display:block; margin-bottom:5px;">1 ـ تغيير الخلفية (ضبط الألوان تلقائي):</label>
@@ -473,32 +376,23 @@
                             <option value="nat2">خلفية طبيعية 2</option>
                             <option value="ani1">خلفية أنمي 1</option>
                             <option value="ani2">خلفية أنمي 2</option>
-                        </select>
-                    </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:12px;">2 ـ إيقاف الصوت:</span>
                         <input type="checkbox" onchange="toggleAppAudioState(this.checked)">
-                    </div>
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:12px;">3 ـ إيقاف النبض والتموج:</span>
                         <input type="checkbox" onchange="document.body.classList.toggle('pulse-disabled')">
-                    </div>
                     <div>
                         <label style="font-size:12px; display:block; margin-bottom:5px;">4 ـ اختيار الوضع (فاتح / داكن صافي):</label>
                         <div style="display:flex; gap:10px;">
                             <button class="btn-action" style="flex:1; justify-content:center;" onclick="document.body.className='theme-white'">فاتح</button>
                             <button class="btn-action" style="flex:1; justify-content:center; background:#111;" onclick="document.body.className=''">داكن صافي</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- 5. الخصوصية -->
             <div id="sub-prof-privacy" class="sub-profile-view-box" style="display:none;">
                 <div class="sub-view-header">
                     <h4>🔒 الخصوصية</h4>
                     <button class="close-sub-btn" onclick="closeSubProfileView('sub-prof-privacy')">إغلاق ✕</button>
-                </div>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <label style="font-size:12px;">أ ـ تغيير صورة الملف الشخصي:</label>
                     <input type="file" accept="image/*" onchange="updateProfileAvatarDirectly(this)">
@@ -508,14 +402,9 @@
                     <div style="display:flex; gap:5px;">
                         <input type="text" id="privacy-new-contact" placeholder="الرقم أو البريد الجديد" class="keyboard-target" style="flex:1;">
                         <button class="btn-action" style="white-space:nowrap;" onclick="sendPrivacyUpdateCodeAction()">إرسال كود</button>
-                    </div>
                     <input type="text" placeholder="أدخل كود التأكيد الفعلي" class="keyboard-target">
                     <button class="btn-action" style="width:100%; margin-top:10px; justify-content:center;" onclick="savePrivacyProfileUpdates()">حفظ التعديلات</button>
-                </div>
-            </div>
-        </div>
 
-    </div>
 
     <!-- عنصر التنبيهات المخصص (Toast Notification) -->
     <div id="custom-toast-notification" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.9); color:#00ffff; border:1px solid #00ffff; padding:10px 20px; border-radius:30px; font-size:12px; z-index:10000; box-shadow:0 0 15px rgba(0,255,255,0.4); text-align:center;"></div>
@@ -534,6 +423,7 @@
     <!-- مكتبة الأيقونات الشهيرة FontAwesome -->
     <!-- خط العرب الجميل -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -556,6 +446,7 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+
         /* شريط التنبيهات المؤقت (Toast) */
         #custom-toast-notification {
             position: fixed;
@@ -569,13 +460,12 @@
             border-radius: 30px;
             font-size: 13px;
             z-index: 9999999;
-            display: none;
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
             text-align: center;
             max-width: 90%;
+
         /* شريط التنقل السفلي */
         .bottom-nav-bar {
-            position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
@@ -592,9 +482,7 @@
             border: none;
             color: #94a3b8;
             font-size: 11px;
-            display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 3px;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -604,9 +492,9 @@
         .nav-item i {
             font-size: 18px;
         .nav-item.active {
-            color: #00ffff;
         .nav-item.active i {
             transform: scale(1.1);
+
         /* تأثير التموج للأزرار */
         span.ripple-effect {
             position: absolute;
@@ -617,47 +505,50 @@
             pointer-events: none;
         @keyframes rippleAnim {
             to { transform: scale(4); opacity: 0; }
+
         /* تنسيقات عامة للأزرار والصناديق */
         .btn-action {
-            cursor: pointer;
-            border: none;
             border-radius: 8px;
             font-weight: bold;
             transition: 0.2s;
         .btn-action:active {
             transform: scale(0.96);
+        
         .profile-menu-btn {
-            cursor: pointer;
-            transition: 0.2s;
         .profile-menu-btn:hover {
             background: rgba(255,255,255,0.08) !important;
     </style>
+
     <!-- التنبيه الموحد (Toast) -->
     <div id="custom-toast-notification">مرحباً بك في واحة المحترفين</div>
+
     <!-- ========================================== -->
     <!-- 1. قسم الرئيسية (Home / News Feed) -->
-    <!-- ========================================== -->
     <section id="home-section" class="app-section active-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
             <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ffff; padding:6px 12px; border-radius:20px; font-size:12px;" onclick="toggleInternalNotificationCenter()">
                 <i class="fa-solid fa-bell"></i> التنبيهات
+
         <!-- مركز الإشعارات الداخلي المنبثق -->
         <div id="internal-notification-center" style="display:none; background:rgba(20,20,30,0.95); border:1px solid #00ffff; border-radius:10px; margin-bottom:15px; overflow:hidden;"></div>
+
         <!-- صندوق كتابة منشور جديد -->
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px; margin-bottom:20px;">
             <textarea id="home-post-textarea" placeholder="بماذا تفكر، أو ما هو سؤالك التقني اليوم؟" class="keyboard-target" style="width:100%; background:transparent; border:none; color:#fff; resize:none; height:70px; font-size:13px; outline:none;"></textarea>
             <img id="home-post-image-preview" src="" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px; display:none; margin-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.1); pt:10px; margin-top:5px; padding-top:8px;">
                 <button class="btn-action" style="background:transparent; color:#00ffff; font-size:16px;" onclick="previewHomePostImage()">
+                    <i class="fa-solid fa-image"></i>
                 <button class="btn-action" style="background:linear-gradient(90deg, #00ffff, #3a86ff); color:#000; padding:6px 16px; border-radius:20px; font-size:12px;" onclick="publishNewHomePost()">
                     <i class="fa-solid fa-paper-plane"></i> نشر
+
         <!-- تغذية المنشورات -->
+        <div id="home-posts-feed-container">
             <div style="text-align:center; color:#38bdf8; font-size:12px; padding:20px;">جاري جلب المنشورات...</div>
     </section>
-    <!-- ========================================== -->
+
     <!-- 2. قسم السوق التجاري (Marketplace) -->
-    <!-- ========================================== -->
     <section id="market-section" class="app-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#ffd700; margin:0;"><i class="fa-solid fa-store"></i> سوق المحترفين</h2>
@@ -665,22 +556,29 @@
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ffff; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('buy')">الشراء</button>
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#ffd700; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('sell')">بيع سلعة</button>
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ff88; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('my-items')">سلعي</button>
+
         <!-- تبويب الشراء وعرض المنتجات -->
+        <div id="market-buy-view">
             <input type="text" id="market-search-input" placeholder="ابحث عن قطع غيار، هواتف، أو معدات..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px; outline:none;">
             <div id="market-products-list-container" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;"></div>
+
         <!-- تبويب إضافة سلعة للبيع -->
         <div id="market-sell-view" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:12px;">
             <h3 style="font-size:14px; color:#ffd700; margin-top:0;">إضافة إعلان جديد في السوق</h3>
+            <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">اسم المنتج أو السلعة</label>
                 <input type="text" id="prod-name" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
+            <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">السعر (مثال: 150 دولار / 5000 جنيه)</label>
                 <input type="text" id="prod-price" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
+            <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">التصنيف</label>
                 <select id="prod-category" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
                     <option value="صيانة هواتف">صيانة هواتف</option>
                     <option value="ماكينات خياطة">ماكينات خياطة</option>
                     <option value="إلكترونيات عامة">إلكترونيات عامة</option>
                     <option value="أخرى">أخرى</option>
+            <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">الوصف والموقع</label>
                 <textarea id="prod-desc-location" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; height:60px; margin-top:4px; resize:none;"></textarea>
             <div style="margin-bottom:15px;">
@@ -689,13 +587,15 @@
                     <i class="fa-solid fa-cloud-arrow-up"></i> رفع صور المنتج
                 <div id="prod-images-preview-container" style="display:flex; gap:8px; margin-top:8px;"></div>
             <button class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:10px; border-radius:8px; font-size:13px;" onclick="submitNewProductToMarket()">نشر الإعلان الآن</button>
+
         <!-- تبويب سلع الشخصية -->
+        <div id="market-my-items-view" style="display:none;">
             <h3 style="font-size:14px; color:#00ff88; margin-top:0;">إعلاناتك المعروضة</h3>
-    </section>
-    <!-- ========================================== -->
+            <div id="my-market-items-container"></div>
+
     <!-- 3. قسم الدردشة والتواصل (Chat / Lobby) -->
-    <!-- ========================================== -->
     <section id="chat-section" class="app-section">
+        <div id="chat-main-lobby-wrapper">
             <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-comments"></i> مركز المحادثات والتواصل</h2>
             <div style="display:flex; gap:10px; margin-bottom:15px;">
                 <button class="btn-action" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#00ff88; font-size:12px;" onclick="expandChatSubWindow('recent')">
@@ -703,11 +603,13 @@
                 <button class="btn-action" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#00ffff; font-size:12px;" onclick="expandChatSubWindow('all-users')">
                     <i class="fa-solid fa-users"></i> دليل المستخدمين
             <div id="conversations-list"></div>
+
         <!-- تبويب المحادثات السابقة أو الدليل -->
         <div id="recent-tab" class="chat-tab-content" style="display:none;"></div>
+        <div id="all-users-tab" class="chat-tab-content" style="display:none;">
             <input type="text" id="chat-search-users-input" placeholder="بحث بالاسم أو رقم الهاتف..." oninput="searchUsersByPhoneOrName(this.value)" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px; outline:none;">
             <div id="all-users-list"></div>
-    </section>
+
     <!-- نافذة الدردشة المباشرة المنبثقة (Active Chat Box) -->
     <div id="active-chat-box">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:10px;">
@@ -717,14 +619,18 @@
             <div style="display:flex; gap:12px;">
                 <button class="btn-action" style="background:transparent; color:#00ff88; font-size:16px;" onclick="initiateVoiceCall('online')"><i class="fa-solid fa-phone"></i></button>
                 <button class="btn-action" style="background:transparent; color:#00ffff; font-size:16px;" onclick="initiateVoiceCall('offline')"><i class="fa-solid fa-wifi"></i></button>
+        
         <div id="chat-messages-container" style="height: calc(100vh - 150px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column;"></div>
+        
         <div id="reply-preview-bar" style="display:none; background:rgba(255,255,255,0.05); padding:5px 10px; border-radius:6px; font-size:11px; margin-bottom:5px; justify-content:space-between; align-items:center;">
             <span id="reply-preview-text">جاري الرد...</span>
             <button onclick="cancelReplyMode()" style="background:none; border:none; color:#ff0055; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+
         <div style="display:flex; gap:8px; align-items:center; position:absolute; bottom:15px; left:15px; right:15px;">
             <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:20px; color:#fff; font-size:12px; outline:none;">
             <button class="btn-action" style="background:#00ffff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; justify-content:center; align-items:center;" onclick="sendLiveChatMessageFromUI()">
                 <i class="fa-solid fa-paper-plane"></i>
+
     <!-- نافذة الاتصال الصوتي المنبثقة (Voice Call Modal) -->
     <div id="voice-call-modal" style="display:none; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
         <div style="width:90px; height:90px; border-radius:50%; background:rgba(0,255,255,0.1); border:2px solid #00ffff; display:flex; justify-content:center; align-items:center; margin-bottom:20px; animation: pulseCall 1.5s infinite;">
@@ -734,31 +640,27 @@
         <div id="call-timer" style="color:#00ff88; font-size:16px; font-weight:bold; margin-bottom:30px;">00:00</div>
         <button class="btn-action" style="background:#ff0055; color:#fff; width:60px; height:60px; border-radius:50%; font-size:20px;" onclick="terminateVoiceCall()">
             <i class="fa-solid fa-phone-slash"></i>
-    <!-- ========================================== -->
+
     <!-- 4. قسم الملف الشخصي (Profile) -->
-    <!-- ========================================== -->
     <section id="profile-section" class="app-section">
         <div class="profile-card-header-view" style="text-align:center; padding:20px 0;">
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
             <h3 id="profile-name-display" style="margin:0; font-size:16px; color:#fff;">زائر واحة المحترفين</h3>
             <p id="profile-email-display" style="margin:5px 0 0 0; font-size:11px; color:#aaa;">guest@alwaha.pro</p>
+
         <div class="profile-options-menu-list" style="display:flex; flex-direction:column; gap:10px;">
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-register')">
                 <span style="font-size:13px; color:#00ff88;"><i class="fa-solid fa-user-plus"></i> إنشاء حساب جديد</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-login')">
                 <span style="font-size:13px; color:#00ffff;"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</span>
-                <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-recovery')">
                 <span style="font-size:13px; color:#ffd700;"><i class="fa-solid fa-shield-halved"></i> ربط الهاتف للاستعادة</span>
-                <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-privacy')">
                 <span style="font-size:13px; color:#ff00ff;"><i class="fa-solid fa-user-gear"></i> إعدادات الخصوصية والاسم</span>
-                <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-verify')">
                 <span style="font-size:13px; color:#38bdf8;"><i class="fa-solid fa-circle-check"></i> طلب توثيق الحساب (العلامة الزرقاء)</span>
-                <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
-    </section>
+
     <!-- النوافذ الفرعية التابعة للملف الشخصي (Sub Profile Views) -->
     <div id="sub-prof-register" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -774,18 +676,21 @@
             <option value="أنثى">أنثى</option>
         <input type="number" id="reg-age" placeholder="العمر" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
         <button class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="handleNewUserRegistrationSubmit()">تسجيل الحساب</button>
+
     <div id="sub-prof-login" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#00ffff; font-size:16px; margin:0;">تسجيل الدخول</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')"><i class="fa-solid fa-xmark"></i></button>
         <input type="text" id="login-id" placeholder="البريد الإلكتروني المسجل (Gmail)" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
         <button class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="executeUserLoginAuth()">دخول</button>
+
     <div id="sub-prof-recovery" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#ffd700; font-size:16px; margin:0;">ربط رقم الهاتف للاستعادة</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-recovery')"><i class="fa-solid fa-xmark"></i></button>
         <input type="text" id="recovery-phone-input" placeholder="رقم الموبايل للاستعادة" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
         <button class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="linkPhoneForAccountRecovery()">حفظ ربط الهاتف</button>
+
     <div id="sub-prof-privacy" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#ff00ff; font-size:16px; margin:0;">إعدادات الخصوصية والاسم</h3>
@@ -798,35 +703,31 @@
             <input type="checkbox" id="privacy-hide-phone-chk">
             <label for="privacy-hide-phone-chk" style="font-size:12px; color:#ccc;">إخفاء رقم الهاتف عن الآخرين</label>
         <button class="btn-action" style="width:100%; background:#ff00ff; color:#fff; padding:12px; border-radius:8px; font-size:13px;" onclick="savePrivacyProfileUpdates()">حفظ الإعدادات</button>
+
     <div id="sub-prof-verify" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#38bdf8; font-size:16px; margin:0;">طلب توثيق الحساب</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')"><i class="fa-solid fa-xmark"></i></button>
         <textarea id="verification-reason-input" placeholder="اكتب سبب طلب توثيق الحساب (خبرتك التقنية، صفحتك التجارية، إلخ)..." class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; height:80px; margin-bottom:15px; resize:none;"></textarea>
         <button class="btn-action" style="width:100%; background:#38bdf8; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="submitAccountVerificationRequest()">إرسال الطلب للإدارة</button>
-    <!-- ========================================== -->
+
     <!-- 5. قسم وضع المشاركة الحرة (Free Mesh Mode) -->
-    <!-- ========================================== -->
     <section id="free-section" class="app-section">
         <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-wifi"></i> وضع المشاركة الحرة (بدون إنترنت)</h2>
         <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
             <i class="fa-solid fa-power-off"></i> تفعيل وضع المشاركة الحرة
         <div id="radar-live-results" style="display:none;"></div>
-    </section>
-    <!-- ========================================== -->
+
     <!-- 6. قسم الألعاب (Games) -->
-    <!-- ========================================== -->
     <section id="games-section" class="app-section">
         <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> ألعاب واحة المحترفين</h2>
         <div id="games-list-container"></div>
-    </section>
-    <!-- ========================================== -->
+
     <!-- 7. قسم الريلز والفيديوهات القصيرة (Reels) -->
-    <!-- ========================================== -->
     <section id="reels-section" class="app-section">
         <h2 style="font-size:18px; color:#ff0055; margin-bottom:15px;"><i class="fa-solid fa-clapperboard"></i> ريلز المحترفين</h2>
         <div id="reels-container"></div>
-    </section>
+
     <!-- النوافذ الإضافية العامة (الكاميرا، التعليقات) -->
     <div id="pro-camera-modal" class="pro-camera-modal">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -836,17 +737,20 @@
         <div style="display:flex; justify-content:center; gap:15px;">
             <button class="btn-action cam-secondary-circle" style="background:rgba(255,255,255,0.1); color:#00ff88; padding:10px 15px; border-radius:8px; font-size:12px;" onclick="triggerFaceBeautyEnhancement()"><i class="fa-solid fa-wand-magic-sparkles"></i> تجميل الوجه</button>
             <button class="btn-action cam-secondary-circle" style="background:rgba(255,255,255,0.1); color:#ffd700; padding:10px 15px; border-radius:8px; font-size:12px;" onclick="triggerAnimeAiConverterFilter()"><i class="fa-solid fa-palette"></i> فلتر الأنيما</button>
+
     <!-- شريط التنقل السفلي الثابت (Bottom Navigation) -->
     <nav class="bottom-nav-bar">
         <button class="nav-item main-home active" onclick="showSection('home-section', this)">
             <i class="fa-solid fa-house"></i>
             <span>الرئيسية</span>
         <button class="nav-item market-center" onclick="showSection('market-section', this)">
+            <i class="fa-solid fa-store"></i>
             <span>السوق</span>
         <button class="nav-item chat" onclick="showSection('chat-section', this)">
             <i class="fa-solid fa-comments"></i>
             <span>الدردشة</span>
         <button class="nav-item free-mode" onclick="showSection('free-section', this)">
+            <i class="fa-solid fa-wifi"></i>
             <span>شبكة حرة</span>
         <button class="nav-item games" onclick="showSection('games-section', this)">
             <i class="fa-solid fa-gamepad"></i>
@@ -858,32 +762,29 @@
             <i class="fa-solid fa-user"></i>
             <span>حسابي</span>
     </nav>
+
+    <script>
         // دوال مساعدة لفتح وإغلاق القوائم والنافذة الخاصة بالملف الشخصي
         function openSubProfileView(id) {
             const box = document.getElementById(id);
             if(box) {
                 box.style.display = 'block';
                 document.body.classList.add('modal-active');
-            }
         function closeSubProfileView(id) {
             const box = document.getElementById(id);
-            if(box) {
                 box.style.display = 'none';
                 document.body.classList.remove('modal-active');
-            }
         function syncUiWithLoadedProfileData() {
             const name = localStorage.getItem('alwaha_profile_name');
             const email = localStorage.getItem('alwaha_profile_email');
             const avatar = localStorage.getItem('alwaha_profile_avatar');
+            
             if(name && document.getElementById('profile-name-display')) {
                 document.getElementById('profile-name-display').innerText = name;
-            }
             if(email && document.getElementById('profile-email-display')) {
                 document.getElementById('profile-email-display').innerText = email;
-            }
             if(avatar && document.getElementById('profile-avatar-display')) {
                 document.getElementById('profile-avatar-display').src = avatar;
-            }
         window.addEventListener('DOMContentLoaded', () => {
             syncUiWithLoadedProfileData();
             if(typeof initializeRippleEffectForNavButtons === 'function') initializeRippleEffectForNavButtons();
@@ -891,3 +792,4 @@
             if(typeof renderHomePostsFeed === 'function') renderHomePostsFeed();
         });
     <!-- ربط ملف المحرك البرمجي الأساسي -->
+    <script src="app.js"></script>
