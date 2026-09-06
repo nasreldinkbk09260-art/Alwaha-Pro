@@ -1,4 +1,4 @@
-name: بناء وتوقيع تطبيق واحة المحترفين (APK & AAB Release)
+name: بناء وتوقيع تطبيق واحة المحترفين (APK)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +18,7 @@ jobs:
       - name: إعداد بيئة Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: إعداد بيئة Java JDK 17
         uses: actions/setup-java@v4
@@ -29,7 +29,7 @@ jobs:
       - name: إعداد Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: تثبيت التبعيات وبناء مشروع Web
+      - name: تثبيت التبعيات وتحديث الملفات
         run: |
           npm install -g @capacitor/cli
           npm install
@@ -37,16 +37,16 @@ jobs:
           cp index.html www/ 2>/dev/null || true
           cp icon.png www/ 2>/dev/null || true
 
-      - name: مزامنة وإعداد منصة أندرويد عبر Capacitor
+      - name: مزامنة Capacitor مع أندرويد
         run: |
           npx cap add android 2>/dev/null || true
           npx cap sync android
 
-      - name: فك تشفير واستخراج ملف التوقيع Keystore
+      - name: استخراج ملف التوقيع Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
-      - name: بناء وتوقيع حزم Release (APK & AAB) عبر Gradle
+      - name: بناء وتوقيع APK عبر Gradle
         run: |
           cd android
           chmod +x gradlew
@@ -55,35 +55,9 @@ jobs:
             -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
             -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
             -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
-          
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=release.keystore \
-            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
-            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
 
-      - name: رفع الملفات الموقعة للأرشيف (Artifacts)
+      - name: رفع ملف الـ APK الجاهز للتحميل
         uses: actions/upload-artifact@v4
         with:
-          name: AlwahaPro-Signed-Packages
-          path: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/bundle/release/*.aab
-
-      - name: نشر الإصدار على GitHub Releases
-        uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        with:
-          tag_name: v2.7.0-build-${{ github.run_number }}
-          name: واحة المحترفين - الإصدار الموثق v2.7.0
-          body: |
-            تم بناء وتوقيع تطبيق **واحة المحترفين** بنجاح.
-            
-            **الملفات المتاحة:**
-            * **Release APK**: موثق ومستقل جاهز للتثبيت على الهواتف مباشرة.
-            * **Release AAB**: موثق وجاهز للرفع على Google Play Console.
-          files: |
-            android/app/build/outputs/apk/release/*.apk
-            android/app/build/outputs/bundle/release/*.aab
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: AlwahaPro-APK
+          path: android/app/build/outputs/apk/release/*.apk
