@@ -1562,7 +1562,32 @@
                     <button class="btn-action" style="background:#ffd700; color:#000; padding:8px 15px; font-size:12px;" onclick="triggerToastNotification('بدء التحدي...', 'success')">ابدأ التحدي</button>
                 </div>
             `;
-        }
-    </script>
+     
+      
+      }
+  // تسجيل الـ Service Worker تلقائياً
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then((registration) => {
+                console.log('Alwaha Pro Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('Service Worker registration failed:', error);
+            });
+    });
+}
+<!-- ربط ملف الـ Manifest -->
+<link rel="manifest" href="./manifest.json">
+
+<!-- إعدادات إضافية لدعم العرض كـ App على iOS و Android -->
+<meta name="theme-color" content="#0d1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Alwaha Pro">
+<link rel="apple-touch-icon" href="./icon.png">
+
+  </script>
 </body>
 </html>
