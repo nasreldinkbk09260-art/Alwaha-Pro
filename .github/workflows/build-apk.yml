@@ -1,0 +1,63 @@
+name: بناء وتوقيع تطبيق واحة المحترفين (APK)
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: جلب السورس كود
+        uses: actions/checkout@v4
+
+      - name: إعداد بيئة Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: إعداد بيئة Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: إعداد Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: تثبيت التبعيات وتحديث الملفات
+        run: |
+          npm install -g @capacitor/cli
+          npm install
+          mkdir -p www
+          cp index.html www/ 2>/dev/null || true
+          cp icon.png www/ 2>/dev/null || true
+
+      - name: مزامنة Capacitor مع أندرويد
+        run: |
+          npx cap add android 2>/dev/null || true
+          npx cap sync android
+
+      - name: استخراج ملف التوقيع Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: بناء وتوقيع APK عبر Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=release.keystore \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+
+      - name: رفع ملف الـ APK الجاهز للتحميل
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlwahaPro-APK
+          path: android/app/build/outputs/apk/release/*.apk
