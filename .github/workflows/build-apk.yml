@@ -36,9 +36,13 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: توليد أيقونات الشاشة الافتتاحية والشعار تلقائياً
+      - name: توليد أيقونات التطبيق وشاشة البداية
         run: |
           npm install -g @capacitor/assets
+          if [ -f "logo.png" ]; then
+            cp logo.png icon.png || true
+            cp logo.png splash.png || true
+          fi
           npx capacitor-assets generate --android --splashBackgroundColor "#0d1117"
 
       - name: بناء نسختي APK و AAB
@@ -48,10 +52,14 @@ jobs:
           ./gradlew assembleRelease
           ./gradlew bundleRelease
 
-      - name: رفع ملفات APK و AAB الناتجة
+      - name: رفع ملف APK الجاهز للتثبيت
         uses: actions/upload-artifact@v4
         with:
-          name: Alwaha-Pro-Release-Builds
-          path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+          name: Alwaha-Pro-APK
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: رفع ملف AAB الخاص بالمتجر
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
