@@ -43,7 +43,7 @@ jobs:
             cp logo.png icon.png || true
             cp logo.png splash.png || true
           fi
-          npx capacitor-assets generate --android --splashBackgroundColor "#0d1117"
+          npx capacitor-assets generate --android --splashBackgroundColor "#0d1117" || true
 
       - name: بناء نسختي APK و AAB
         run: |
@@ -56,10 +56,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Pro-APK
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/*.apk
 
       - name: رفع ملف AAB الخاص بالمتجر
         uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Pro-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/release/*.aab
