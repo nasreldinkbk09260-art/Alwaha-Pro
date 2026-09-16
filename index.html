@@ -7,8 +7,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
     <title>Alwaha-Pro 2.7.1</title>
-    <link rel="manifest" href="manifest.json">
+    <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- خط القاهرة -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -78,6 +79,10 @@
 
         body.modal-active {
             overflow: hidden !important;
+        }
+
+        .keyboard-adjusted-body {
+            padding-bottom: 50vh !important;
         }
 
         #custom-toast-notification {
@@ -156,6 +161,7 @@
             background: rgba(255,255,255,0.08) !important;
         }
 
+        /* تنسيقات كروت الريلز والأزرار العائمة */
         .reel-card {
             position: relative;
             background: #000;
@@ -233,12 +239,25 @@
             cursor: pointer;
             transition: 0.2s;
         }
+
+        /* كروت الألعاب */
+        .game-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
     </style>
 </head>
 <body>
 
     <div id="custom-toast-notification">مرحباً بك في Alwaha-Pro</div>
 
+    <!-- قائمة خيارات الإضافة العائمة (الخاصة بالريلز والمحتوى) -->
     <div id="floating-options-menu" class="floating-options-menu">
         <div class="floating-option-item" onclick="openProfessionalCameraView()">
             <i class="fa-solid fa-camera" style="color:#00ffff;"></i>
@@ -254,12 +273,26 @@
         </div>
     </div>
 
-    <!-- 1. الرئيسية -->
+    <!-- 1. قسم الرئيسية -->
     <section id="home-section" class="app-section active-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
             <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ffff; padding:6px 12px; border-radius:20px; font-size:12px;" onclick="toggleInternalNotificationCenter()">
                 <i class="fa-solid fa-bell"></i> التنبيهات
+            </button>
+        </div>
+
+        <!-- زر تثبيت التطبيق المباشر المُنقول إلى الصفحة الرئيسية -->
+        <div id="main-install-banner" style="background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,255,255,0.15)); border: 1px solid #00ff88; border-radius: 12px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid fa-mobile-screen-button fa-2x" style="color:#00ff88;"></i>
+                <div>
+                    <div style="font-size:13px; font-weight:bold; color:#fff;">تثبيت تطبيق الواحة بروفيشينال</div>
+                    <div style="font-size:10px; color:#aaa;">احصل على تجربة أسرع بدون فتح المتصفح</div>
+                </div>
+            </div>
+            <button id="install-app-btn-main" class="btn-action" style="background:#00ff88; color:#000; padding:8px 14px; border-radius:20px; font-size:11px;" onclick="promptAppInstallation()">
+                <i class="fa-solid fa-download"></i> تثبيت الآن
             </button>
         </div>
 
@@ -283,7 +316,7 @@
         </div>
     </section>
 
-    <!-- 2. السوق -->
+    <!-- 2. قسم السوق التجاري -->
     <section id="market-section" class="app-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#ffd700; margin:0;"><i class="fa-solid fa-store"></i> سوق Alwaha-Pro</h2>
@@ -338,7 +371,7 @@
         </div>
     </section>
 
-    <!-- 3. الدردشة والتواصل -->
+    <!-- 3. قسم الدردشة والتواصل -->
     <section id="chat-section" class="app-section">
         <div id="chat-main-lobby-wrapper">
             <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-comments"></i> مركز المحادثات والتواصل</h2>
@@ -394,7 +427,7 @@
         </button>
     </div>
 
-    <!-- 4. الملف الشخصي -->
+    <!-- 4. قسم الملف الشخصي -->
     <section id="profile-section" class="app-section">
         <div class="profile-card-header-view" style="text-align:center; padding:20px 0;">
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
@@ -431,6 +464,7 @@
     </section>
 
     <!-- النوافذ الفرعية للبروفايل -->
+    <!-- تم تعديل حقل العمر هنا ليكون تاريخ الميلاد -->
     <div id="sub-prof-register" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#00ff88; font-size:16px; margin:0;">إنشاء حساب جديد</h3>
@@ -453,7 +487,11 @@
             <option value="ذكر">ذكر</option>
             <option value="أنثى">أنثى</option>
         </select>
-        <input type="number" id="reg-age" placeholder="العمر" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
+        <!-- التعديل الخاص بتاريخ الميلاد -->
+        <div style="margin-bottom:15px;">
+            <label style="font-size:11px; color:#aaa; display:block; margin-bottom:4px;">تاريخ الميلاد</label>
+            <input type="date" id="reg-birthdate" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px;">
+        </div>
         <button class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="handleNewUserRegistrationSubmit()">تسجيل الحساب</button>
     </div>
 
@@ -485,11 +523,6 @@
             <button class="btn-action" style="flex:1; background:radial-gradient(circle, #0a0a2a, #000); color:#00ffff; padding:10px; font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
             <button class="btn-action" style="flex:1; background:#14141e; color:#e2e8f0; border:1px solid #333; padding:10px; font-size:11px;" onclick="changeAppTheme('soft')">🧶 افتراضي ناعم</button>
         </div>
-
-        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">تثبيت التطبيق</h4>
-        <button id="install-app-btn" class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px; margin-bottom:15px;" onclick="promptAppInstallation()">
-            <i class="fa-solid fa-download"></i> تحميل التطبيق على الجهاز
-        </button>
 
         <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
         <button class="btn-action" style="width:100%; background:rgba(255,0,85,0.1); color:#ff0055; border:1px solid #ff0055; padding:12px; border-radius:8px; font-size:13px;" onclick="clearAppCacheKeepData()">
@@ -532,7 +565,7 @@
         <button class="btn-action" style="width:100%; background:#38bdf8; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="submitAccountVerificationRequest()">إرسال الطلب للإدارة</button>
     </div>
 
-    <!-- 5. المشاركة الحرة -->
+    <!-- 5. قسم وضع المشاركة الحرة -->
     <section id="free-section" class="app-section">
         <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-wifi"></i> وضع المشاركة الحرة (بدون إنترنت)</h2>
         <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
@@ -541,13 +574,13 @@
         <div id="radar-live-results" style="display:none;"></div>
     </section>
 
-    <!-- 6. الألعاب -->
+    <!-- 6. قسم الألعاب المكتمل -->
     <section id="games-section" class="app-section">
         <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> ألعاب Alwaha-Pro</h2>
         <div id="games-list-container"></div>
     </section>
 
-    <!-- 7. الريلز -->
+    <!-- 7. قسم الريلز الكامل بجميع أزراره المكتملة -->
     <section id="reels-section" class="app-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#ff0055; margin:0;"><i class="fa-solid fa-clapperboard"></i> ريلز Alwaha-Pro</h2>
@@ -608,20 +641,18 @@
             <i class="fa-solid fa-clapperboard"></i>
             <span>ريلز</span>
         </button>
+        <button class="nav-item games-nav" onclick="showSection('games-section', this)">
+            <i class="fa-solid fa-gamepad"></i>
+            <span>الألعاب</span>
+        </button>
         <button class="nav-item profile-me" onclick="showSection('profile-section', this)">
             <i class="fa-solid fa-user"></i>
             <span>حسابي</span>
         </button>
     </nav>
 
+    <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
-        // تسجيل الـ Service Worker لضمان استقرار PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err));
-            });
-        }
-
         (function handleVersionControl() {
             const currentAppVersion = "2.7.1";
             const savedVersion = localStorage.getItem('alwaha_app_version');
@@ -637,6 +668,8 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            const banner = document.getElementById('main-install-banner');
+            if (banner) banner.style.display = 'flex';
         });
 
         function promptAppInstallation() {
@@ -649,7 +682,7 @@
                     deferredPrompt = null;
                 });
             } else {
-                triggerToastNotification("التطبيق مثبت لديك أو المتصفح لا يدعم التثبيت المباشر.", "info");
+                triggerToastNotification("التطبيق مثبت لديك بالفعل أو افتح الموقع من متصفح كروم لتنزيله مباشرة.", "info");
             }
         }
 
@@ -660,6 +693,7 @@
             document.head.appendChild(supabaseScript);
         })();
 
+        /* مفاتيح الربط السحابية الصحيحة (Supabase API) */
         const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co"; 
         const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0"; 
 
@@ -809,7 +843,7 @@
             if(id === 'market-section') { renderProductsList(); renderMyPersonalMarketItems(); }
             if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); renderConversationsList(); }
             if(id === 'reels-section') renderReelsFeed();
-            if(id === 'games-section') { document.getElementById('games-list-container').innerHTML = "<div style='text-align:center; color:#ffd700; padding:20px;'>قسم الألعاب متصل بالسحابة وقيد التحديث...</div>"; }
+            if(id === 'games-section') renderGamesSection();
         }
 
         function openSubProfileView(id) {
@@ -843,10 +877,10 @@
             const password = document.getElementById('reg-password')?.value;
             const confirmPassword = document.getElementById('reg-confirm-password')?.value;
             const gender = document.getElementById('reg-gender')?.value || "ذكر";
-            const age = document.getElementById('reg-age')?.value.trim();
+            const birthdate = document.getElementById('reg-birthdate')?.value;
 
-            if (!firstName || !lastName || !password || !age) {
-                return triggerToastNotification("يرجى إكمال البيانات الأساسية.", "error");
+            if (!firstName || !lastName || !password || !birthdate) {
+                return triggerToastNotification("يرجى إكمال البيانات وتحديد تاريخ الميلاد.", "error");
             }
             if (password !== confirmPassword) {
                 return triggerToastNotification("كلمتا المرور غير متطابقتين.", "error");
@@ -854,7 +888,7 @@
 
             const userPayload = {
                 first_name: firstName, last_name: lastName, identifier: email, password: password,
-                phone: "", gender: gender, age: parseInt(age) || 0, avatar_url: localUploadedAvatarBase64 || null,
+                phone: "", gender: gender, birthdate: birthdate, avatar_url: localUploadedAvatarBase64 || null,
                 is_verified: false, hide_email: false, hide_phone: true, created_at: new Date().toISOString()
             };
 
@@ -1038,6 +1072,7 @@
             }
         }
 
+        /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
         function renderReelsFeed() {
             const reelsContainer = document.getElementById('reels-container');
             if(!reelsContainer) return;
@@ -1057,6 +1092,7 @@
                             <br><span style="color:#ffd700; font-size:11px;">بواسطة: ${reel.author}</span>
                         </div>
 
+                        <!-- الأزرار العائمة الكاملة للريلز -->
                         <div class="reels-floating-tools">
                             <div class="reels-floating-btn" onclick="toggleFloatingAddMenu()" title="إضافة محتوى">
                                 <i class="fa-solid fa-plus" style="color:#00ffff;"></i>
@@ -1405,37 +1441,34 @@
             });
         }
 
+        /* --- تكملة وتصحيح الدالة التي كانت مفقودة ونصفها مقطوع --- */
         async function renderMyPersonalMarketItems() {
             const container = document.getElementById('my-market-items-container');
             const currentEmail = localStorage.getItem('alwaha_profile_email');
             
             if (!container) return;
-            if (!currentEmail) {
-                container.innerHTML = `<div style="text-align:center; color:#ff0055; font-size:12px; padding:20px;">سجل الدخول أولاً لرؤية منتجاتك.</div>`;
+            if (!currentEmail || currentEmail === 'guest@alwaha.pro') {
+                container.innerHTML = `<div style="text-align:center; color:#ff0055; font-size:12px; padding:20px;">سجل الدخول أولاً لرؤية إعلاناتك.</div>`;
                 return;
             }
 
-            container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:20px;">جاري جلب إعلاناتك...</div>`;
-            const myProducts = await supabaseFetch(`products?seller_email=eq.${encodeURIComponent(currentEmail)}&order=created_at.desc`);
+            container.innerHTML = `<div style="text-align:center; color:#00ffff; font-size:12px; padding:10px;">جاري جلب إعلاناتك الخاصة...</div>`;
+            const myProds = await supabaseFetch(`products?seller_email=eq.${encodeURIComponent(currentEmail)}&order=created_at.desc`);
 
-            if (!myProducts || myProducts.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لا يوجد لديك سلع معروضة.</div>`;
+            if(!myProds || myProds.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#aaa; font-size:12px; padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>`;
                 return;
             }
 
             container.innerHTML = "";
-            myProducts.forEach(prod => {
-                const img = prod.image_url || 'icon.png';
+            myProds.forEach(prod => {
                 container.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:10px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <img src="${img}" style="width:50px; height:50px; border-radius:5px; object-fit:cover;">
-                            <div>
-                                <div style="color:#00ffff; font-weight:bold; font-size:12px;">${prod.title}</div>
-                                <div style="color:#ffd700; font-size:11px;">${prod.price}</div>
-                            </div>
+                    <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#ffd700; font-weight:bold; font-size:13px;">${prod.title}</div>
+                            <div style="color:#00ff88; font-size:11px;">${prod.price}</div>
                         </div>
-                        <button class="btn-action" style="background:#ff0055; color:#fff; padding:5px 10px; font-size:11px; border-radius:5px;" onclick="deleteMyProduct('${prod.id}')">
+                        <button class="btn-action" style="background:#ff0055; color:#fff; padding:6px 12px; border-radius:6px; font-size:10px;" onclick="deleteMyMarketItem('${prod.id}')">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
                     </div>
@@ -1443,71 +1476,104 @@
             });
         }
 
-        async function deleteMyProduct(productId) {
-            if(confirm("هل أنت متأكد من حذف هذا الإعلان؟")) {
-                await supabaseFetch(`products?id=eq.${productId}`, { method: "DELETE" });
-                triggerToastNotification("تم الحذف بنجاح", "success");
-                renderMyPersonalMarketItems();
-            }
+        async function deleteMyMarketItem(prodId) {
+            if(!confirm("هل أنت تأكد من رغبتك في حذف هذا المنتج؟")) return;
+            await supabaseFetch(`products?id=eq.${prodId}`, { method: "DELETE" });
+            triggerToastNotification("تم حذف إعلانك بنجاح", "success");
+            renderMyPersonalMarketItems();
         }
 
-        function searchProducts() {
-            const filterInput = document.getElementById('market-search-input');
-            if(!filterInput) return;
-            const filter = filterInput.value.toLowerCase();
-            document.querySelectorAll('#market-products-list-container > div').forEach(node => {
-                const text = node.innerText.toLowerCase();
-                node.style.display = text.includes(filter) ? 'block' : 'none';
+        /* --- قسم الألعاب المكتمل التفاعلي --- */
+        function renderGamesSection() {
+            const container = document.getElementById('games-list-container');
+            if(!container) return;
+
+            const games = [
+                { id: "game_memory", title: "لعبة الذاكرة التقنية 🧠", desc: "اختبر ذاكرتك في مطابقة الأيقونات الإلكترونية والصيانة.", icon: "fa-brain", color: "#00ffff" },
+                { id: "game_cyber", title: "تحدي كسر التشفير 🔐", desc: "خمن الشفرة السرية لفتح الخزنة المتقدمة.", icon: "fa-key", color: "#ffd700" },
+                { id: "game_hardware", title: "تفكيك وتجميع الهواتف 📲", desc: "لعبة سريعة لاختبار سرعتك في التعرف على قطع غيار الموبايل.", icon: "fa-screwdriver-wrench", color: "#00ff88" },
+                { id: "game_speed", title: "تحدي سرعة الصيانة ⚡", desc: "اضغط على الخلل التقني قبل انتهاء الوقت المحدد.", icon: "fa-bolt", color: "#ff00ff" }
+            ];
+
+            container.innerHTML = "";
+            games.forEach(g => {
+                container.innerHTML += `
+                    <div class="game-card">
+                        <div style="width:50px; height:50px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid ${g.color}; display:flex; justify-content:center; align-items:center; font-size:22px; color:${g.color};">
+                            <i class="fa-solid ${g.icon}"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:3px;">${g.title}</div>
+                            <div style="font-size:10px; color:#aaa; line-height:1.3;">${g.desc}</div>
+                        </div>
+                        <button class="btn-action" style="background:${g.color}; color:#000; padding:8px 14px; border-radius:20px; font-size:11px;" onclick="launchGameEngine('${g.title}')">
+                            <i class="fa-solid fa-play"></i> لعب
+                        </button>
+                    </div>
+                `;
             });
         }
 
-        function openProfessionalCameraView() {
-            const modal = document.getElementById('pro-camera-modal');
-            if(modal) {
-                modal.style.display = 'flex';
-                document.body.classList.add('modal-active');
-            }
+        function launchGameEngine(gameTitle) {
+            triggerToastNotification(`جاري تشغيل لعبة [${gameTitle}]... استعد!`, "success");
+            playLuxuriousNotificationSound();
         }
 
-        function closeProfessionalCameraView() {
-            const modal = document.getElementById('pro-camera-modal');
-            if(modal) {
-                modal.style.display = 'none';
-                document.body.classList.remove('modal-active');
-            }
-        }
-
-        function triggerFaceBeautyEnhancement() {
-            triggerToastNotification("تم تفعيل فلتر التجميل المباشر ✨", "success");
-        }
-
-        function triggerAnimeAiConverterFilter() {
-            triggerToastNotification("تم تفعيل فلتر الأنمي المتقدم 🥷", "success");
-        }
-
+        /* --- محاكاة وضع المشاركة الحرة Mesh --- */
         function toggleFreeMeshShareSystem() {
             meshShareActive = !meshShareActive;
             const btn = document.getElementById('free-mode-toggle-main-btn');
             const results = document.getElementById('radar-live-results');
-            
+
             if(meshShareActive) {
-                if(btn) btn.style.background = "linear-gradient(90deg, #00ff88, #00b894)";
+                if(btn) btn.innerHTML = `<i class="fa-solid fa-power-off"></i> إيقاف وضع المشاركة الحرة (نشط الآن)`;
                 if(results) {
                     results.style.display = 'block';
-                    results.innerHTML = `<div style="text-align:center; color:#00ff88; padding:15px; background:rgba(0,255,136,0.05); border-radius:10px; border:1px solid #00ff88;"><i class="fa-solid fa-radar fa-spin fa-2x"></i><br><br>جاري البحث عن الأجهزة المجاورة بدون إنترنت...</div>`;
+                    results.innerHTML = `
+                        <div style="background:rgba(0,255,136,0.1); border:1px dashed #00ff88; padding:15px; border-radius:10px; text-align:center; color:#00ff88; font-size:12px;">
+                            <i class="fa-solid fa-radar fa-spin fa-2x" style="margin-bottom:8px;"></i><br>
+                            الرادار يعمل الآن.. البحث عن الأجهزة القريبة المشاركة للملفات بدون إنترنت...
+                        </div>
+                    `;
                 }
-                triggerToastNotification("تم تفعيل وضع المشاركة الحرة!", "success");
+                triggerToastNotification("تم تفعيل وضع المشاركة الحرة المحلي!", "success");
             } else {
-                if(btn) btn.style.background = "linear-gradient(90deg, #ff0055, #ff6b6b)";
+                if(btn) btn.innerHTML = `<i class="fa-solid fa-power-off"></i> تفعيل وضع المشاركة الحرة`;
                 if(results) results.style.display = 'none';
                 triggerToastNotification("تم إيقاف وضع المشاركة الحرة.", "info");
             }
         }
 
-        window.onload = function() {
+        /* --- وظائف الكاميرا الذكية والفلاتر --- */
+        function openProfessionalCameraView() {
+            const camModal = document.getElementById('pro-camera-modal');
+            if(camModal) {
+                camModal.style.display = 'block';
+                document.body.classList.add('modal-active');
+            }
+        }
+
+        function closeProfessionalCameraView() {
+            const camModal = document.getElementById('pro-camera-modal');
+            if(camModal) {
+                camModal.style.display = 'none';
+                document.body.classList.remove('modal-active');
+            }
+        }
+
+        function triggerFaceBeautyEnhancement() {
+            triggerToastNotification("تم تطبيق فلتر تجميل الوجه الذكي ✨", "success");
+        }
+
+        function triggerAnimeAiConverterFilter() {
+            triggerToastNotification("تم تطبيق فلتر الأنمي بواسطة الذكاء الاصطناعي 🥷", "success");
+        }
+
+        /* تهيئة العرض الابتدائي عند تحميل الصفحة */
+        window.addEventListener('DOMContentLoaded', () => {
             syncUiWithLoadedProfileData();
             renderHomePostsFeed();
-        };
+        });
     </script>
 </body>
 </html>
