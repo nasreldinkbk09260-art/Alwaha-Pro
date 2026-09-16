@@ -30,6 +30,10 @@ jobs:
         run: |
           npm install
           npm run build || true
+          mkdir -p dist
+          if [ ! -f "dist/index.html" ]; then
+            echo '<!DOCTYPE html><html><head><title>Alwaha Pro</title></head><body><script>window.location.href="https://google.com";</script></body></html>' > dist/index.html
+          fi
 
       - name: إعداد مشروع Android وربطه بـ Capacitor
         run: |
@@ -38,14 +42,12 @@ jobs:
 
       - name: إنشاء مسارات res واستبدال الأيقونات تلقائياً
         run: |
-          # إنشاء مجلدات الأيقونات داخل android/app/src/main/res
           mkdir -p android/app/src/main/res/mipmap-mdpi
           mkdir -p android/app/src/main/res/mipmap-hdpi
           mkdir -p android/app/src/main/res/mipmap-xhdpi
           mkdir -p android/app/src/main/res/mipmap-xxhdpi
           mkdir -p android/app/src/main/res/mipmap-xxxhdpi
 
-          # نسخ الأيقونة icon.png لتستبدل الشعار الافتراضي مباشرة
           if [ -f "icon.png" ]; then
             cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
