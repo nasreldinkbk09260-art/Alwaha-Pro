@@ -36,14 +36,35 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: توليد أيقونات التطبيق وشاشة البداية
+      - name: إنشاء مسارات res واستبدال الأيقونات تلقائياً
         run: |
-          npm install -g @capacitor/assets
+          # إنشاء مجلدات الأيقونات داخل android/app/src/main/res
+          mkdir -p android/app/src/main/res/mipmap-mdpi
+          mkdir -p android/app/src/main/res/mipmap-hdpi
+          mkdir -p android/app/src/main/res/mipmap-xhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxhdpi
+          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+
+          # نسخ الأيقونة icon.png لتستبدل الشعار الافتراضي مباشرة
           if [ -f "icon.png" ]; then
-            cp icon.png logo.png || true
-            cp icon.png splash.png || true
+            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+            
+            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+            
+            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
           fi
-          npx capacitor-assets generate --android --splashBackgroundColor "#0d1117" || true
 
       - name: بناء نسختي APK و AAB
         run: |
@@ -52,11 +73,15 @@ jobs:
           ./gradlew assembleRelease
           ./gradlew bundleRelease
 
-      - name: إنشاء مفتاح توقيع وتوقيع الـ APK تلقائياً
+      - name: محاذاة وتوقيع ملف APK تلقائياً
         run: |
           cd android/app/build/outputs/apk/release/
+          BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0
+          
+          $BUILD_TOOLS/zipalign -v 4 app-release-unsigned.apk app-release-aligned.apk
+          
           keytool -genkeypair -v -keystore auto-release-key.jks -alias alwaha -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Alwaha, OU=Dev, O=Alwaha, L=Cairo, C=EG"
-          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks auto-release-key.jks --ks-pass pass:123456 --out app-release-signed.apk app-release-unsigned.apk
+          $BUILD_TOOLS/apksigner sign --ks auto-release-key.jks --ks-pass pass:123456 --out app-release-signed.apk app-release-aligned.apk
 
       - name: رفع ملف APK الموقّع الجاهز للتثبيت
         uses: actions/upload-artifact@v4
