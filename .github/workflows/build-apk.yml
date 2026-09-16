@@ -1,4 +1,4 @@
-concurrency: name: Build Android App
+name: Build Android App
 
 on:
   push:
@@ -36,28 +36,16 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: تغيير اسم التطبيق إلى Alwaha-Pro
-        run: |
-          # تغيير اسم التطبيق في ملف Capacitor
-          if [ -f "capacitor.config.json" ]; then
-            sed -i 's/"appName": ".*"/"appName": "Alwaha-Pro"/' capacitor.config.json
-          fi
-          
-          # تغيير اسم التطبيق في إعدادات أندرويد الرئيسية
-          STRINGS_FILE="android/app/src/main/res/values/strings.xml"
-          if [ -f "$STRINGS_FILE" ]; then
-            sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Alwaha-Pro<\/string>/' $STRINGS_FILE
-            sed -i 's/<string name="title_activity_main">.*<\/string>/<string name="title_activity_main">Alwaha-Pro<\/string>/' $STRINGS_FILE
-          fi
-
       - name: إنشاء مسارات res واستبدال الأيقونات تلقائياً
         run: |
+          # إنشاء مجلدات الأيقونات داخل android/app/src/main/res
           mkdir -p android/app/src/main/res/mipmap-mdpi
           mkdir -p android/app/src/main/res/mipmap-hdpi
           mkdir -p android/app/src/main/res/mipmap-xhdpi
           mkdir -p android/app/src/main/res/mipmap-xxhdpi
           mkdir -p android/app/src/main/res/mipmap-xxxhdpi
 
+          # نسخ الأيقونة icon.png لتستبدل الشعار الافتراضي مباشرة
           if [ -f "icon.png" ]; then
             cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
