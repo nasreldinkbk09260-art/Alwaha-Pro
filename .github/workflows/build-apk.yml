@@ -33,15 +33,19 @@ jobs:
           mkdir -p dist
           cp -r index.html sw.js manifest.json icon.png app.js style.css privacy.html dist/ 2>/dev/null || true
 
-      - name: تثبيت Capacitor وإعداد البيئة
+      - name: تثبيت Capacitor والرموز وإعداد البيئة
         run: |
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets
 
       - name: تهيئة Capacitor وإنشاء مجلد Android
         run: |
           npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir dist
           npx cap add android
+
+      - name: توليد أيقونات التطبيق
+        run: |
+          npx capacitor-assets generate --android || true
 
       - name: مزامنة الملفات مع مشروع Android
         run: |
