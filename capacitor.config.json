@@ -1,7 +1,7 @@
 {
   "appId": "pro.alwaha.app",
   "appName": "Alwaha-Pro",
-  "webDir": ".",
+  "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
