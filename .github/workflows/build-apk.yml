@@ -43,18 +43,24 @@ jobs:
           npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir dist
           npx cap add android
 
-      - name: مزامنة الملفات مع مشروع Android
-        run: |
-          npx cap sync android
-
-      - name: تطبيق أيقونة التطبيق مباشرة
+      - name: تطبيق أيقونة التطبيق وحذف التعارضات
         run: |
           RES_DIR="android/app/src/main/res"
+          
+          # حذف مجلد الـ XML الذي يسبب التكرار والتعارض
+          rm -rf $RES_DIR/mipmap-anydpi-v26
+          
+          # استبدال جميع الصور في مجلدات Mipmap بـ icon.png
           for dir in $RES_DIR/mipmap-*; do
+            rm -f $dir/ic_launcher*
             cp icon.png "$dir/ic_launcher.png"
             cp icon.png "$dir/ic_launcher_round.png"
             cp icon.png "$dir/ic_launcher_foreground.png"
           done
+
+      - name: مزامنة الملفات مع مشروع Android
+        run: |
+          npx cap sync android
 
       - name: بناء ملف APK
         run: |
