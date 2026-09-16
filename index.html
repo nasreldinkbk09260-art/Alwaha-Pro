@@ -7,9 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
     <title>Alwaha-Pro 2.7.1</title>
-    <!-- مكتبة الأيقونات FontAwesome -->
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- خط القاهرة -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -40,7 +39,8 @@
         }
         body.theme-tech .btn-action { border-color: #00ffff !important; }
         
-    
+        body.theme-soft {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.05"/></svg>'), #14141e;
         }
 
         .app-section {
@@ -78,10 +78,6 @@
 
         body.modal-active {
             overflow: hidden !important;
-        }
-
-        .keyboard-adjusted-body {
-            padding-bottom: 50vh !important;
         }
 
         #custom-toast-notification {
@@ -160,7 +156,6 @@
             background: rgba(255,255,255,0.08) !important;
         }
 
-        /* تنسيقات كروت الريلز والأزرار العائمة */
         .reel-card {
             position: relative;
             background: #000;
@@ -244,7 +239,6 @@
 
     <div id="custom-toast-notification">مرحباً بك في Alwaha-Pro</div>
 
-    <!-- قائمة خيارات الإضافة العائمة (الخاصة بالريلز والمحتوى) -->
     <div id="floating-options-menu" class="floating-options-menu">
         <div class="floating-option-item" onclick="openProfessionalCameraView()">
             <i class="fa-solid fa-camera" style="color:#00ffff;"></i>
@@ -260,7 +254,7 @@
         </div>
     </div>
 
-    <!-- 1. قسم الرئيسية -->
+    <!-- 1. الرئيسية -->
     <section id="home-section" class="app-section active-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
@@ -289,7 +283,7 @@
         </div>
     </section>
 
-    <!-- 2. قسم السوق التجاري -->
+    <!-- 2. السوق -->
     <section id="market-section" class="app-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#ffd700; margin:0;"><i class="fa-solid fa-store"></i> سوق Alwaha-Pro</h2>
@@ -344,7 +338,7 @@
         </div>
     </section>
 
-    <!-- 3. قسم الدردشة والتواصل -->
+    <!-- 3. الدردشة والتواصل -->
     <section id="chat-section" class="app-section">
         <div id="chat-main-lobby-wrapper">
             <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-comments"></i> مركز المحادثات والتواصل</h2>
@@ -400,7 +394,7 @@
         </button>
     </div>
 
-    <!-- 4. قسم الملف الشخصي -->
+    <!-- 4. الملف الشخصي -->
     <section id="profile-section" class="app-section">
         <div class="profile-card-header-view" style="text-align:center; padding:20px 0;">
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
@@ -538,7 +532,7 @@
         <button class="btn-action" style="width:100%; background:#38bdf8; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="submitAccountVerificationRequest()">إرسال الطلب للإدارة</button>
     </div>
 
-    <!-- 5. قسم وضع المشاركة الحرة -->
+    <!-- 5. المشاركة الحرة -->
     <section id="free-section" class="app-section">
         <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-wifi"></i> وضع المشاركة الحرة (بدون إنترنت)</h2>
         <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
@@ -547,13 +541,13 @@
         <div id="radar-live-results" style="display:none;"></div>
     </section>
 
-    <!-- 6. قسم الألعاب -->
+    <!-- 6. الألعاب -->
     <section id="games-section" class="app-section">
         <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> ألعاب Alwaha-Pro</h2>
         <div id="games-list-container"></div>
     </section>
 
-    <!-- 7. قسم الريلز الكامل بجميع أزراره المكتملة -->
+    <!-- 7. الريلز -->
     <section id="reels-section" class="app-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#ff0055; margin:0;"><i class="fa-solid fa-clapperboard"></i> ريلز Alwaha-Pro</h2>
@@ -620,8 +614,14 @@
         </button>
     </nav>
 
-    <!-- محرك JavaScript الموحد والكلامل والمربوط بالسحابة -->
     <script>
+        // تسجيل الـ Service Worker لضمان استقرار PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed: ', err));
+            });
+        }
+
         (function handleVersionControl() {
             const currentAppVersion = "2.7.1";
             const savedVersion = localStorage.getItem('alwaha_app_version');
@@ -1038,7 +1038,6 @@
             }
         }
 
-        /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
         function renderReelsFeed() {
             const reelsContainer = document.getElementById('reels-container');
             if(!reelsContainer) return;
@@ -1058,27 +1057,22 @@
                             <br><span style="color:#ffd700; font-size:11px;">بواسطة: ${reel.author}</span>
                         </div>
 
-                        <!-- الأزرار العائمة الكاملة للريلز -->
                         <div class="reels-floating-tools">
-                            <!-- 1. زر إضافة المحتوى -->
                             <div class="reels-floating-btn" onclick="toggleFloatingAddMenu()" title="إضافة محتوى">
                                 <i class="fa-solid fa-plus" style="color:#00ffff;"></i>
                                 <span class="reels-btn-label">إضافة</span>
                             </div>
 
-                            <!-- 2. زر الإعجاب -->
                             <div class="reels-floating-btn" id="reel-like-btn-${reel.id}" onclick="toggleReelLike('${reel.id}')" title="إعجاب">
                                 <i class="fa-solid fa-heart" id="reel-like-icon-${reel.id}" style="color:#fff;"></i>
                                 <span class="reels-btn-label" id="reel-like-count-${reel.id}">${reel.likes}</span>
                             </div>
 
-                            <!-- 3. زر التعليق -->
                             <div class="reels-floating-btn" onclick="openCommentsModal('${reel.id}')" title="تعليق">
                                 <i class="fa-solid fa-comment-dots" style="color:#00ffff;"></i>
                                 <span class="reels-btn-label">${reel.comments}</span>
                             </div>
 
-                            <!-- 4. زر المشاركة -->
                             <div class="reels-floating-btn" onclick="shareReelContent('${reel.title}')" title="مشاركة">
                                 <i class="fa-solid fa-share-nodes" style="color:#00ff88;"></i>
                                 <span class="reels-btn-label">مشاركة</span>
