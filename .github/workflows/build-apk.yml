@@ -1,96 +1,46 @@
-name: Build Android App
+name: Build Android APK
 
 on:
   push:
     branches:
       - main
-      - master
-  workflow_dispatch:
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: فحص الكود
-        uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-      - name: إعداد بيئة Java JDK 17
-        uses: actions/setup-java@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          distribution: 'zulu'
-          java-version: '17'
+          node-version: 18
 
-      - name: إعداد بيئة Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: تثبيت التبعيات وبناء الويب
+      - name: Install Dependencies
         run: |
           npm install
-          npm run build || true
+          npm install @capacitor/cli @capacitor/core @capacitor/android
 
-      - name: إعداد مشروع Android وربطه بـ Capacitor
+      - name: Add Android Platform
         run: |
           npx cap add android || true
           npx cap sync android
 
-      - name: إنشاء مسارات res واستبدال الأيقونات تلقائياً
-        run: |
-          # إنشاء مجلدات الأيقونات داخل android/app/src/main/res
-          mkdir -p android/app/src/main/res/mipmap-mdpi
-          mkdir -p android/app/src/main/res/mipmap-hdpi
-          mkdir -p android/app/src/main/res/mipmap-xhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxhdpi
-          mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-          # نسخ الأيقونة icon.png لتستبدل الشعار الافتراضي مباشرة
-          if [ -f "icon.png" ]; then
-            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            
-            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
-            
-            cp icon.png android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
-            cp icon.png android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
-            cp icon.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
-            cp icon.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
-            cp icon.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
-          fi
-
-      - name: بناء نسختي APK و AAB
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
-          ./gradlew bundleRelease
+          ./gradlew assembleDebug
 
-      - name: محاذاة وتوقيع ملف APK تلقائياً
-        run: |
-          cd android/app/build/outputs/apk/release/
-          BUILD_TOOLS=$ANDROID_HOME/build-tools/34.0.0
-          
-          $BUILD_TOOLS/zipalign -v 4 app-release-unsigned.apk app-release-aligned.apk
-          
-          keytool -genkeypair -v -keystore auto-release-key.jks -alias alwaha -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Alwaha, OU=Dev, O=Alwaha, L=Cairo, C=EG"
-          $BUILD_TOOLS/apksigner sign --ks auto-release-key.jks --ks-pass pass:123456 --out app-release-signed.apk app-release-aligned.apk
-
-      - name: رفع ملف APK الموقّع الجاهز للتثبيت
-        uses: actions/upload-artifact@v4
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: Alwaha-Pro-APK
-          path: android/app/build/outputs/apk/release/app-release-signed.apk
-
-      - name: رفع ملف AAB الخاص بالمتجر
-        uses: actions/upload-artifact@v4
-        with:
-          name: Alwaha-Pro-AAB
-          path: android/app/build/outputs/bundle/release/*.aab
+          name: AlwahaPro-Debug-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
