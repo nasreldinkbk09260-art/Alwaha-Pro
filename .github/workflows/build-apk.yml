@@ -39,9 +39,9 @@ jobs:
       - name: توليد أيقونات التطبيق وشاشة البداية
         run: |
           npm install -g @capacitor/assets
-          if [ -f "logo.png" ]; then
-            cp logo.png icon.png || true
-            cp logo.png splash.png || true
+          if [ -f "icon.png" ]; then
+            cp icon.png logo.png || true
+            cp icon.png splash.png || true
           fi
           npx capacitor-assets generate --android --splashBackgroundColor "#0d1117" || true
 
@@ -52,11 +52,17 @@ jobs:
           ./gradlew assembleRelease
           ./gradlew bundleRelease
 
-      - name: رفع ملف APK الجاهز للتثبيت
+      - name: إنشاء مفتاح توقيع وتوقيع الـ APK تلقائياً
+        run: |
+          cd android/app/build/outputs/apk/release/
+          keytool -genkeypair -v -keystore auto-release-key.jks -alias alwaha -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Alwaha, OU=Dev, O=Alwaha, L=Cairo, C=EG"
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks auto-release-key.jks --ks-pass pass:123456 --out app-release-signed.apk app-release-unsigned.apk
+
+      - name: رفع ملف APK الموقّع الجاهز للتثبيت
         uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Pro-APK
-          path: android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/app-release-signed.apk
 
       - name: رفع ملف AAB الخاص بالمتجر
         uses: actions/upload-artifact@v4
