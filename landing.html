@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واحة المحترفين | Alwaha Pro - المنصة الشاملة للفنيين والمحترفين</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#16a34a',
+                            600: '#15803d',
+                            700: '#166534',
+                            dark: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="icon.png" alt="Alwaha Pro Logo" class="w-10 h-10 rounded-xl shadow-md border border-slate-700" onerror="this.src='https://via.placeholder.com/40'">
+                <span class="text-xl font-bold tracking-tight text-white">واحة <span class="text-brand-500">المحترفين</span></span>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+                <a href="#features" class="hover:text-brand-500 transition-colors">المميزات</a>
+                <a href="#about" class="hover:text-brand-500 transition-colors">عن المنصة</a>
+                <a href="privacy.html" class="hover:text-brand-500 transition-colors">سياسة الخصوصية</a>
+            </div>
+
+            <a href="#download" class="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-brand-600/20 transition-all transform hover:-translate-y-0.5">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>تحميل التطبيق</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-36 pb-20 overflow-hidden relative">
+        <div class="absolute top-1/4 right-1/2 translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-500 border border-brand-500/20 text-sm font-semibold mb-6">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> منصة العمل والحلول الفنية الأولى
+            </span>
+            
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white leading-tight max-w-4xl mx-auto mb-6">
+                كل ما يحتاجه <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-emerald-400">الفني والمحترف</span> في مكان واحد
+            </h1>
+            
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                تواصل، تسوّق المعدات، شارك خبراتك عبر الريلز، وتواصل حتى بدون اتصال بالإنترنت. منصتك المتكاملة للارتقاء بأعمالك الصيانة والإنتاج.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16" id="download">
+                <a href="#" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-brand-600 hover:bg-brand-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-brand-600/25 transition-all transform hover:-translate-y-1">
+                    <i data-lucide="android" class="w-6 h-6"></i>
+                    <div class="text-right">
+                        <div class="text-xs font-normal opacity-80">تحميل مباشر</div>
+                        <div>ملف Android APK</div>
+                    </div>
+                </a>
+                
+                <a href="#features" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 px-8 py-4 rounded-2xl font-semibold text-lg transition-all">
+                    <span>استكشف المميزات</span>
+                    <i data-lucide="arrow-down" class="w-5 h-5"></i>
+                </a>
+            </div>
+
+            <!-- App Mockup Placeholder -->
+            <div class="relative max-w-sm mx-auto rounded-[2.5rem] p-4 bg-slate-900 border-4 border-slate-800 shadow-2xl shadow-brand-500/10">
+                <div class="rounded-[2rem] overflow-hidden bg-slate-950 aspect-[9/19] flex items-center justify-center border border-slate-800 relative">
+                    <img src="icon.png" alt="App Preview" class="w-24 h-24 rounded-2xl animate-pulse" onerror="this.src='https://via.placeholder.com/100'">
+                    <div class="absolute bottom-6 left-0 right-0 text-center text-xs text-slate-500 font-semibold">
+                        واحة المحترفين - Alwaha Pro
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 bg-slate-900/50 border-t border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">مميزات صُممت من أجلك</h2>
+                <p class="text-slate-400">مجموعة شاملة من الأدوات التي تساعدك في أداء مهامك الفنية والتجارية بفاعلية عالية.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Feature 1 -->
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">سوق ومعدات</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">متجر متكامل لشراء وبيع أدوات الصيانة، قطع الغيار، ومعدات التصنيع بكل سهولة.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="message-square" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">مجتمع وتواصل</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">غرف محادثة وتواصل مباشر مع الفنيين والمحترفين لتبادل الخبرات والاستشارات.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="video" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">مقاطع ريلز قصيرة</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">استعرض شروحات وحلول الأعطال السريعة عبر فيديوهات قصيرة ومفيدة من المحترفين.</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-brand-500/50 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="wifi-off" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">تواصل بدون إنترنت</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">دعم تقنيات التواصل المحلي للحفاظ على استمرارية عملك حتى في أوقات انقطاع الشبكة.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <img src="icon.png" alt="Alwaha Pro Logo" class="w-8 h-8 rounded-lg" onerror="this.src='https://via.placeholder.com/30'">
+                <span class="font-bold text-white">واحة المحترفين</span>
+            </div>
+            
+            <p class="text-slate-500 text-sm">
+                جميع الحقوق محفوظة &copy; 2026 Alwaha Pro Org
+            </p>
+
+            <div class="flex items-center gap-6 text-sm text-slate-400">
+                <a href="privacy.html" class="hover:text-white transition-colors">سياسة الخصوصية</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
