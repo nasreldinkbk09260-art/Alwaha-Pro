@@ -1,7 +1,8 @@
 {
   "name": "Alwaha-Pro",
   "short_name": "AlwahaPro",
-  "description": "تطبيق واحة المحترفين للتواصل والسوق والخدمات التقنية",
+  "description": "تطبيق alwaha-pro
+ للتواصل والسوق والخدمات التقنية",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0f19",
