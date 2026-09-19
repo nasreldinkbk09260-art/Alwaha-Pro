@@ -1,71 +1,3 @@
-name: Build and Release Android Signed APK and AAB
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Setup Java JDK
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: قبول تراخيص Android SDK وتثبيت Build Tools
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0" "build-tools;29.0.3" "platforms;android-34"
-
-      - name: تجهيز مجلد dist ونقل الملفات
-        run: |
-          mkdir -p dist
-          cp -r index.html sw.js manifest.json icon.png app.js style.css privacy.html dist/ 2>/dev/null || true
-
-      - name: تثبيت Capacitor وإعداد البيئة
-        run: |
-          npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-
-      - name: تهيئة Capacitor وإنشاء مجلد Android
-        run: |
-          npx cap init "Alwaha Pro" "com.alwahapro.app" --web-dir dist
-          npx cap add android
-
-      - name: تطبيق أيقونة التطبيق وحذف التعارضات
-        run: |
-          RES_DIR="android/app/src/main/res"
-          rm -rf $RES_DIR/mipmap-anydpi-v26
-          for dir in $RES_DIR/mipmap-*; do
-            rm -f $dir/ic_launcher*
-            cp icon.png "$dir/ic_launcher.png"
-            cp icon.png "$dir/ic_launcher_round.png"
-            cp icon.png "$dir/ic_launcher_foreground.png"
-          done
-
-      - name: مزامنة الملفات مع مشروع Android
-        run: |
-          npx cap sync android
-
-      - name: بناء ملفات APK و AAB (نسخة الإصدار Release)
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease
-          ./gradlew bundleRelease
-
       - name: توقيع ملف APK
         uses: r0adkll/sign-android-release@v1
         id: sign_apk
@@ -75,6 +7,7 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
+          buildToolsVersion: 34.0.0
 
       - name: توقيع ملف AAB
         uses: r0adkll/sign-android-release@v1
@@ -85,15 +18,4 @@ jobs:
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
-
-      - name: رفع ملف APK الموقع كـ Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlwahaPro-Signed-APK
-          path: ${{ steps.sign_apk.outputs.signedReleaseFile }}
-
-      - name: رفع ملف AAB الموقع كـ Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: AlwahaPro-Signed-AAB
-          path: ${{ steps.sign_aab.outputs.signedReleaseFile }}
+          buildToolsVersion: 34.0.0
