@@ -1,0 +1,16 @@
+project_id = "kjuixjdtqwcsnxefftrt"
+
+[api]
+enabled = true
+
+[db]
+enabled = true
+
+[storage]
+enabled = true
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true

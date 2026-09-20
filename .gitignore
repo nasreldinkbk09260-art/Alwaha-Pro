@@ -1,0 +1,12 @@
+node_modules/
+dist/
+android/
+ios/
+.gradle/
+.idea/
+*.iml
+local.properties
+android/keystore.properties
+android/release-key.jks
+.DS_Store
+npm-debug.log*

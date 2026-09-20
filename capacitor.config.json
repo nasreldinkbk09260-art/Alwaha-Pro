@@ -1,0 +1,10 @@
+{
+  "appId": "pro.alwaha.app",
+  "appName": "Alwaha-Pro",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
+
+}

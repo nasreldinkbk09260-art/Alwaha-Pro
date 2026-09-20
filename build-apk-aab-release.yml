@@ -1,0 +1,307 @@
+name: Build Android APK + AAB + Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-main
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '24'
+  JAVA_VERSION: '17'
+  CAPACITOR_VERSION: '8.5.2'
+  PACKAGE_ID: 'com.alwahapro.app'
+
+jobs:
+  build-android:
+    name: Build signed APK + AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+          java -version
+
+      - name: Extract app version from index.html
+        id: app_version
+        shell: bash
+        run: |
+          APP_VERSION="$(grep -oP '<title>Alwaha-Pro\\s+\\K[0-9]+\\.[0-9]+\\.[0-9]+' index.html | head -n1 || true)"
+          if [ -z "$APP_VERSION" ]; then
+            APP_VERSION="2.8.0"
+          fi
+          echo "version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+          echo "APP_VERSION=$APP_VERSION"
+
+      - name: Validate required web files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in index.html manifest.json sw.js icon.png; do
+            test -f "$f" || { echo "ERROR: missing required file: $f"; exit 1; }
+          done
+
+      - name: Prepare Capacitor web directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+
+          # Files currently used by Alwaha-Pro.
+          for p in index.html sw.js manifest.json icon.png app.js style.css privacy.html; do
+            if [ -e "$p" ]; then
+              cp -R "$p" dist/
+            fi
+          done
+
+          # Preserve common static asset folders when present.
+          for p in assets images img media fonts; do
+            if [ -e "$p" ]; then
+              cp -R "$p" dist/
+            fi
+          done
+
+      - name: Install Capacitor 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+
+      - name: Recreate Android project cleanly
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android
+          npx cap init "Alwaha-Pro" "$PACKAGE_ID" --web-dir dist
+          python3 - <<'PYCFG'
+          import json
+          from pathlib import Path
+          cfg = json.loads(Path("capacitor.config.json").read_text(encoding="utf-8"))
+          if cfg.get("appId") != "com.alwahapro.app":
+              raise SystemExit(f"Unexpected appId: {cfg.get('appId')}")
+          if cfg.get("webDir") != "dist":
+              raise SystemExit(f"Unexpected webDir: {cfg.get('webDir')}")
+          PYCFG
+          npx cap add android
+          npx cap sync android
+
+      - name: Configure launcher icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          RES_DIR="android/app/src/main/res"
+
+          # Avoid adaptive-icon XML/resource duplication for the single icon.png used by the repo.
+          rm -rf "$RES_DIR/mipmap-anydpi-v26"
+
+          found=0
+          for dir in "$RES_DIR"/mipmap-*; do
+            [ -d "$dir" ] || continue
+            found=1
+            rm -f "$dir"/ic_launcher* "$dir"/ic_launcher_round* "$dir"/ic_launcher_foreground*
+            cp icon.png "$dir/ic_launcher.png"
+            cp icon.png "$dir/ic_launcher_round.png"
+            cp icon.png "$dir/ic_launcher_foreground.png"
+          done
+
+          if [ "$found" -eq 0 ]; then
+            echo "ERROR: Android mipmap directories were not generated."
+            exit 1
+          fi
+
+      - name: Add Android permissions required by current app
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          text = p.read_text(encoding="utf-8")
+
+          permissions = [
+              '    <uses-permission android:name="android.permission.CAMERA" />',
+              '    <uses-permission android:name="android.permission.RECORD_AUDIO" />',
+              '    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
+          ]
+
+          marker = "<application"
+          if marker not in text:
+              raise SystemExit("AndroidManifest.xml does not contain <application>")
+
+          existing = set(text.splitlines())
+          additions = [line for line in permissions if line not in existing]
+          if additions:
+              text = text.replace(marker, "\n".join(additions) + "\n\n    " + marker, 1)
+              p.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Load release signing key from GitHub Secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "ERROR: missing secret ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "ERROR: missing secret ANDROID_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "ERROR: missing secret ANDROID_KEY_ALIAS"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "ERROR: missing secret ANDROID_KEY_PASSWORD"; exit 1; }
+
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release-key.jks
+
+          cat > android/keystore.properties <<PROP
+          storeFile=release-key.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          PROP
+
+          chmod 600 android/release-key.jks android/keystore.properties
+
+      - name: Configure Gradle release signing and app version
+        env:
+          VERSION_NAME: ${{ steps.app_version.outputs.version }}
+          VERSION_CODE: ${{ github.run_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path("android/app/build.gradle")
+          text = p.read_text(encoding="utf-8")
+
+          # Load signing properties.
+          loader = '''\n\ndef keystorePropertiesFile = rootProject.file("keystore.properties")\ndef keystoreProperties = new Properties()\nif (keystorePropertiesFile.exists()) {\n    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))\n}\n'''
+          if "keystorePropertiesFile" not in text:
+              text = loader + text
+
+          # Add signing config inside android { ... }.
+          signing_block = '''\n    signingConfigs {\n        release {\n            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null\n            storePassword keystoreProperties['storePassword']\n            keyAlias keystoreProperties['keyAlias']\n            keyPassword keystoreProperties['keyPassword']\n        }\n    }\n'''
+          if "signingConfigs {" not in text:
+              m = re.search(r'(?m)^android\\s*\\{\\s*$', text)
+              if not m:
+                  raise SystemExit("Could not find android { block in android/app/build.gradle")
+              text = text[:m.end()] + signing_block + text[m.end():]
+
+          # Add/replace version fields in defaultConfig.
+          import os
+          version_name = os.environ["VERSION_NAME"]
+          version_code = os.environ["VERSION_CODE"]
+          m = re.search(r'(?s)defaultConfig\\s*\\{(.*?)\\n\\s*\\}', text)
+          if not m:
+              raise SystemExit("Could not find defaultConfig block in android/app/build.gradle")
+          block = m.group(1)
+          block = re.sub(r'(?m)^\\s*versionCode\\s+.*$', f'        versionCode {version_code}', block)
+          block = re.sub(r'(?m)^\\s*versionName\\s+.*$', f'        versionName "{version_name}"', block)
+          if "versionCode" not in block:
+              block = f'\n        versionCode {version_code}' + block
+          if "versionName" not in block:
+              block = f'\n        versionName "{version_name}"' + block
+          text = text[:m.start(1)] + block + text[m.end(1):]
+
+          # Make release build use the secret-backed signing config.
+          release_pattern = r'(?s)(buildTypes\\s*\\{\\s*release\\s*\\{)(.*?)\\n\\s*\\}'
+          rm = re.search(release_pattern, text)
+          if not rm:
+              raise SystemExit("Could not find buildTypes { release { block in android/app/build.gradle")
+          release_block = rm.group(2)
+          if "signingConfig signingConfigs.release" not in release_block:
+              release_block = "\n            signingConfig signingConfigs.release" + release_block
+          text = text[:rm.start(2)] + release_block + text[rm.end(2):]
+
+          p.write_text(text, encoding="utf-8")
+          print(p.read_text(encoding="utf-8"))
+          PY
+
+      - name: Build signed release AAB and APK
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew clean bundleRelease assembleRelease --no-daemon --stacktrace
+
+      - name: Verify signed outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+
+          test -s "$AAB" || { echo "ERROR: AAB was not generated."; exit 1; }
+          test -s "$APK" || { echo "ERROR: APK was not generated."; exit 1; }
+
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)"
+          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
+          jarsigner -verify -verbose -certs "$AAB" >/tmp/aab-signature.txt
+          grep -q "jar verified" /tmp/aab-signature.txt
+
+          mkdir -p release
+          cp "$AAB" "release/Alwaha-Pro-${{ steps.app_version.outputs.version }}.aab"
+          cp "$APK" "release/Alwaha-Pro-${{ steps.app_version.outputs.version }}.apk"
+          sha256sum release/*.aab release/*.apk > release/SHA256SUMS.txt
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Pro-Android-${{ steps.app_version.outputs.version }}-build-${{ github.run_number }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ steps.app_version.outputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v${APP_VERSION}-build.${RUN_NUMBER}"
+          TITLE="Alwaha-Pro ${APP_VERSION} • Build ${RUN_NUMBER}"
+
+          gh release create "$TAG" \
+            release/Alwaha-Pro-${APP_VERSION}.aab \
+            release/Alwaha-Pro-${APP_VERSION}.apk \
+            release/SHA256SUMS.txt \
+            --target "$SHA" \
+            --title "$TITLE" \
+            --notes "Automated Android release for Alwaha-Pro ${APP_VERSION}.\n\nAAB: Alwaha-Pro-${APP_VERSION}.aab\nAPK: Alwaha-Pro-${APP_VERSION}.apk\nCommit: ${SHA}\nBuild: ${RUN_NUMBER}"
+
+      - name: Remove signing material
+        if: always()
+        shell: bash
+        run: |
+          rm -f android/release-key.jks android/keystore.properties
