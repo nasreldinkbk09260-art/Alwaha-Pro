@@ -16,7 +16,7 @@ env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
   PACKAGE_ID: 'pro.alwaha.app'
-  SUPABASE_PROJECT_ID: 'kjuixjdtqwcsnxefftr'
+  SUPABASE_PROJECT_ID: 'kjuixjdtqwcsnxefftrt'
 
 jobs:
   deploy-and-build:
@@ -89,7 +89,43 @@ jobs:
 
 
       # ============================================================
-      # 5) ربط المشروع بـ Supabase
+      # 5) تنظيف حالة Supabase القديمة
+      #
+      # مهم:
+      # .temp و .branches حالات داخلية للـSupabase CLI.
+      # نحذفها قبل link حتى لا يحاول CLI استخدام Branch قديم.
+      # ============================================================
+      - name: Clean Supabase CLI link state
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Cleaning old Supabase CLI state..."
+
+          rm -rf supabase/.temp
+          rm -rf supabase/.branches
+
+          echo "Supabase CLI state cleaned."
+
+
+      # ============================================================
+      # 6) فحص Supabase Project ID
+      # ============================================================
+      - name: Validate Supabase project reference
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Supabase Project ID:"
+          echo "$SUPABASE_PROJECT_ID"
+
+          test "$SUPABASE_PROJECT_ID" = "kjuixjdtqwcsnxefftrt"
+
+          echo "Supabase Project ID validated."
+
+
+      # ============================================================
+      # 7) ربط المشروع الصحيح بـ Supabase
       # ============================================================
       - name: Link Supabase project
         env:
@@ -99,6 +135,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          echo "Linking Supabase project..."
+
           supabase link \
             --project-ref "$SUPABASE_PROJECT_ID" \
             --password "$SUPABASE_DB_PASSWORD"
@@ -107,11 +145,33 @@ jobs:
 
 
       # ============================================================
-      # 6) تطبيق migrations تلقائيًا
+      # 8) التحقق من المشروع المرتبط
       # ============================================================
-      - name: Deploy Supabase migrations automatically
+      - name: Verify Supabase link
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Supabase linked project state:"
+
+          if [ -f supabase/.temp/project-ref ]; then
+            echo "project-ref:"
+            cat supabase/.temp/project-ref
+          fi
+
+          if [ -f supabase/.temp/linked-project.json ]; then
+            echo "linked-project.json:"
+            cat supabase/.temp/linked-project.json
+          fi
+
+          echo "Supabase link verification completed."
+
+
+      # ============================================================
+      # 9) فحص migration history
+      # ============================================================
+      - name: Check Supabase migration status
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         shell: bash
         run: |
@@ -123,7 +183,20 @@ jobs:
             --linked \
             --password "$SUPABASE_DB_PASSWORD"
 
-          echo "Applying pending migrations..."
+          echo "Migration status checked successfully."
+
+
+      # ============================================================
+      # 10) تطبيق migrations تلقائيًا
+      # ============================================================
+      - name: Deploy Supabase migrations automatically
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Applying pending Supabase migrations..."
 
           supabase db push \
             --linked \
@@ -134,11 +207,10 @@ jobs:
 
 
       # ============================================================
-      # 7) إعداد حساب الإدارة اختياريًا
+      # 11) إعداد حساب الإدارة اختياريًا
       # ============================================================
       - name: Configure optional Alwaha admin account
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           ALWAHA_ADMIN_EMAIL: ${{ secrets.ALWAHA_ADMIN_EMAIL }}
         shell: bash
@@ -177,7 +249,7 @@ jobs:
 
 
       # ============================================================
-      # 8) إعداد Node.js
+      # 12) إعداد Node.js
       # ============================================================
       - name: Setup Node.js
         uses: actions/setup-node@v7.0.0
@@ -187,7 +259,7 @@ jobs:
 
 
       # ============================================================
-      # 9) إعداد Java JDK
+      # 13) إعداد Java JDK
       # ============================================================
       - name: Setup Java JDK 21
         uses: actions/setup-java@v6.0.1
@@ -197,7 +269,7 @@ jobs:
 
 
       # ============================================================
-      # 10) تثبيت Dependencies
+      # 14) تثبيت Dependencies
       # ============================================================
       - name: Install web/native dependencies
         shell: bash
@@ -220,7 +292,7 @@ jobs:
 
 
       # ============================================================
-      # 11) بناء Web
+      # 15) بناء Web
       # ============================================================
       - name: Build web bundle
         shell: bash
@@ -233,7 +305,7 @@ jobs:
 
 
       # ============================================================
-      # 12) فحص JavaScript
+      # 16) فحص JavaScript
       # ============================================================
       - name: Validate web JavaScript
         shell: bash
@@ -265,7 +337,7 @@ jobs:
 
 
       # ============================================================
-      # 13) فحص onclick
+      # 17) فحص onclick
       # ============================================================
       - name: Validate all visible onclick handlers
         shell: bash
@@ -331,7 +403,7 @@ jobs:
 
 
       # ============================================================
-      # 14) إنشاء مشروع Android نظيف
+      # 18) إنشاء مشروع Android نظيف
       # ============================================================
       - name: Recreate clean Capacitor Android project
         shell: bash
@@ -353,7 +425,7 @@ jobs:
 
 
       # ============================================================
-      # 15) إعداد صلاحيات Android والأيقونة
+      # 19) إعداد صلاحيات Android والأيقونة
       # ============================================================
       - name: Configure Android permissions and launcher icon
         shell: bash
@@ -428,10 +500,9 @@ jobs:
 
 
       # ============================================================
-      # 16) تحميل مفتاح التوقيع
+      # 20) تحميل مفتاح التوقيع
       #
-      # IMPORTANT:
-      # نحن نستخدم أسماء الأسرار الموجودة فعليًا عندك:
+      # الأسرار الموجودة عندك:
       #
       # KEYSTORE_BASE64
       # KEYSTORE_PASSWORD
@@ -487,7 +558,7 @@ jobs:
 
 
       # ============================================================
-      # 17) إعداد إصدار التطبيق والتوقيع
+      # 21) إعداد إصدار التطبيق والتوقيع
       # ============================================================
       - name: Configure release signing and version
         env:
@@ -507,9 +578,6 @@ jobs:
           text = p.read_text(encoding='utf-8')
 
 
-          # --------------------------------------------------------
-          # Load keystore.properties
-          # --------------------------------------------------------
           if 'keystorePropertiesFile' not in text:
 
               loader = r'''
@@ -526,9 +594,6 @@ jobs:
               text = loader + text
 
 
-          # --------------------------------------------------------
-          # Add release signing configuration
-          # --------------------------------------------------------
           if 'signingConfigs {' not in text:
 
               m = re.search(
@@ -560,9 +625,6 @@ jobs:
               )
 
 
-          # --------------------------------------------------------
-          # Configure versionCode/versionName
-          # --------------------------------------------------------
           m = re.search(
               r'(?s)defaultConfig\s*\{(.*?)\n\s*\}',
               text
@@ -609,9 +671,6 @@ jobs:
           )
 
 
-          # --------------------------------------------------------
-          # Configure release build type
-          # --------------------------------------------------------
           rm = re.search(
               r'(?s)(buildTypes\s*\{\s*release\s*\{)(.*?)\n\s*\}',
               text
@@ -649,7 +708,7 @@ jobs:
 
 
       # ============================================================
-      # 18) بناء APK + AAB
+      # 22) بناء APK + AAB
       # ============================================================
       - name: Build signed APK + AAB
         working-directory: android
@@ -668,7 +727,7 @@ jobs:
 
 
       # ============================================================
-      # 19) التحقق من الملفات والتوقيع
+      # 23) التحقق من الملفات والتوقيع
       # ============================================================
       - name: Verify Android outputs
         shell: bash
@@ -720,7 +779,7 @@ jobs:
 
 
       # ============================================================
-      # 20) رفع الملفات كـ Artifact
+      # 24) رفع الملفات كـArtifact
       # ============================================================
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v4
@@ -732,7 +791,7 @@ jobs:
 
 
       # ============================================================
-      # 21) إنشاء GitHub Release
+      # 25) إنشاء GitHub Release
       # ============================================================
       - name: Publish GitHub Release
         env:
@@ -755,9 +814,9 @@ jobs:
 
 
       # ============================================================
-      # 22) تنظيف مفاتيح التوقيع
+      # 26) تنظيف مفاتيح التوقيع وحالة Supabase
       # ============================================================
-      - name: Cleanup signing files
+      - name: Cleanup signing and Supabase files
         if: always()
         shell: bash
         run: |
@@ -765,4 +824,8 @@ jobs:
             android/release-key.jks \
             android/keystore.properties
 
-          echo "Signing files cleaned up."
+          rm -rf \
+            supabase/.temp \
+            supabase/.branches
+
+          echo "Sensitive signing files and temporary Supabase state cleaned."
