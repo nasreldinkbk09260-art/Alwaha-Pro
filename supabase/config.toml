@@ -1,52 +1,16 @@
-      # ============================================================
-      # 7) التحقق من المشروع ثم ربط Supabase
-      # ============================================================
-      - name: Verify and link Supabase project
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        shell: bash
-        run: |
-          set -euo pipefail
+project_id = "kjuixjdtqwcsnxefftrt"
 
-          echo "=========================================="
-          echo "Supabase Project Verification"
-          echo "=========================================="
+[api]
+enabled = true
 
-          echo "Project Ref: $SUPABASE_PROJECT_ID"
+[db]
+enabled = true
 
-          test "$SUPABASE_PROJECT_ID" = "kjuixjdtqwcsnxefftrt"
+[storage]
+enabled = true
 
-          echo "Project reference format is correct."
+[realtime]
+enabled = true
 
-          echo "Supabase CLI version:"
-          supabase --version
-
-          echo "Removing any temporary CLI state..."
-          rm -rf supabase/.temp
-          rm -rf supabase/.branches
-
-          echo "Linking production/base Supabase project..."
-
-          if ! supabase link \
-            --project-ref "$SUPABASE_PROJECT_ID" \
-            --password "$SUPABASE_DB_PASSWORD"; then
-
-            echo ""
-            echo "=========================================="
-            echo "SUPABASE LINK FAILED"
-            echo "Running diagnostic information..."
-            echo "=========================================="
-
-            supabase link \
-              --project-ref "$SUPABASE_PROJECT_ID" \
-              --password "$SUPABASE_DB_PASSWORD" \
-              --debug
-
-            exit 1
-          fi
-
-          echo ""
-          echo "=========================================="
-          echo "Supabase project linked successfully."
-          echo "=========================================="
+[auth]
+enabled = true
