@@ -16,7 +16,7 @@ env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
   PACKAGE_ID: 'pro.alwaha.app'
-  SUPABASE_PROJECT_ID: 'kjuixjdtqwcsnxefftrt'
+  SUPABASE_PROJECT_ID: 'kjuixjdtqwcsnxefftr'
 
 jobs:
   deploy-and-build:
@@ -24,13 +24,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # ============================================================
+      # 1) تحميل المشروع
+      # ============================================================
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
 
+
+      # ============================================================
+      # 2) فحص ملفات المشروع الأساسية
+      # ============================================================
       - name: Validate application version and required files
         shell: bash
         run: |
           set -euo pipefail
+
           test -f index.html
           test -f manifest.json
           test -f sw.js
@@ -39,15 +48,67 @@ jobs:
           test -f package.json
           test -f supabase/config.toml
           test -f supabase/migrations/20260920090000_alwaha_pro_v282.sql
+
           grep -q 'Alwaha-Pro 2.8.2' index.html
           grep -q '"appId": "pro.alwaha.app"' capacitor.config.json
-          echo "Project files validated."
 
+          echo "Project files validated successfully."
+
+
+      # ============================================================
+      # 3) تثبيت Supabase CLI
+      # ============================================================
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2.1.1
         with:
           version: latest
 
+
+      # ============================================================
+      # 4) فحص أسرار Supabase
+      # ============================================================
+      - name: Validate Supabase secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: SUPABASE_ACCESS_TOKEN"
+            exit 1
+          fi
+
+          if [ -z "${SUPABASE_DB_PASSWORD:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: SUPABASE_DB_PASSWORD"
+            exit 1
+          fi
+
+          echo "Supabase secrets are available."
+
+
+      # ============================================================
+      # 5) ربط المشروع بـ Supabase
+      # ============================================================
+      - name: Link Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          supabase link \
+            --project-ref "$SUPABASE_PROJECT_ID" \
+            --password "$SUPABASE_DB_PASSWORD"
+
+          echo "Supabase project linked successfully."
+
+
+      # ============================================================
+      # 6) تطبيق migrations تلقائيًا
+      # ============================================================
       - name: Deploy Supabase migrations automatically
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -55,19 +116,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$SUPABASE_ACCESS_TOKEN" || { echo "Missing GitHub Secret: SUPABASE_ACCESS_TOKEN"; exit 1; }
-          test -n "$SUPABASE_DB_PASSWORD" || { echo "Missing GitHub Secret: SUPABASE_DB_PASSWORD"; exit 1; }
 
-          supabase link \
-            --project-ref "$SUPABASE_PROJECT_ID" \
+          echo "Checking Supabase migration status..."
+
+          supabase migration list \
+            --linked \
             --password "$SUPABASE_DB_PASSWORD"
 
-          # Applies only migrations not yet recorded in Supabase migration history.
+          echo "Applying pending migrations..."
+
           supabase db push \
             --linked \
             --password "$SUPABASE_DB_PASSWORD" \
             --yes
 
+          echo "Supabase migrations deployed successfully."
+
+
+      # ============================================================
+      # 7) إعداد حساب الإدارة اختياريًا
+      # ============================================================
       - name: Configure optional Alwaha admin account
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -76,149 +144,351 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           if [ -z "${ALWAHA_ADMIN_EMAIL:-}" ]; then
-            echo "ALWAHA_ADMIN_EMAIL is not configured; admin auto-bootstrap is skipped."
+            echo "ALWAHA_ADMIN_EMAIL is not configured."
+            echo "Admin auto-bootstrap will be skipped."
             exit 0
           fi
 
-          # Store the bootstrap address in a table with no API grants.
-          # The Auth trigger uses it when the matching account is created.
           escaped_email="$(printf '%s' "$ALWAHA_ADMIN_EMAIL" | sed "s/'/''/g")"
+
           supabase db query \
             --linked \
             --password "$SUPABASE_DB_PASSWORD" \
-            "insert into public.app_settings(key,value,updated_at) values ('initial_admin_email','$escaped_email',now()) on conflict (key) do update set value=excluded.value,updated_at=now(); update public.users set is_admin=true,updated_at=now() where lower(identifier)=lower('$escaped_email');"
+            "insert into public.app_settings(key,value,updated_at)
+             values (
+               'initial_admin_email',
+               '$escaped_email',
+               now()
+             )
+             on conflict (key)
+             do update set
+               value=excluded.value,
+               updated_at=now();
 
+             update public.users
+             set
+               is_admin=true,
+               updated_at=now()
+             where lower(identifier)=lower('$escaped_email');"
+
+          echo "Optional admin configuration completed."
+
+
+      # ============================================================
+      # 8) إعداد Node.js
+      # ============================================================
       - name: Setup Node.js
         uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
 
+
+      # ============================================================
+      # 9) إعداد Java JDK
+      # ============================================================
       - name: Setup Java JDK 21
         uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
+
+      # ============================================================
+      # 10) تثبيت Dependencies
+      # ============================================================
       - name: Install web/native dependencies
         shell: bash
         run: |
           set -euo pipefail
+
           npm install --no-audit --no-fund
+
+          echo "Node:"
           node --version
+
+          echo "NPM:"
           npm --version
+
+          echo "Capacitor:"
           npx cap --version
+
+          echo "Java:"
           java -version
 
+
+      # ============================================================
+      # 11) بناء Web
+      # ============================================================
       - name: Build web bundle
         shell: bash
-        run: npm run build
+        run: |
+          set -euo pipefail
 
+          npm run build
+
+          echo "Web build completed."
+
+
+      # ============================================================
+      # 12) فحص JavaScript
+      # ============================================================
       - name: Validate web JavaScript
         shell: bash
         run: |
           set -euo pipefail
+
           node - <<'NODE'
           const fs = require('fs');
+
           const html = fs.readFileSync('index.html', 'utf8');
+
           const start = html.indexOf('<script>');
           const end = html.lastIndexOf('</script>');
-          if (start < 0 || end <= start) throw new Error('Inline app script not found');
-          fs.writeFileSync('/tmp/alwaha-pro.js', html.slice(start + '<script>'.length, end), 'utf8');
+
+          if (start < 0 || end <= start) {
+            throw new Error('Inline app script not found');
+          }
+
+          fs.writeFileSync(
+            '/tmp/alwaha-pro.js',
+            html.slice(start + '<script>'.length, end),
+            'utf8'
+          );
           NODE
+
           node --check /tmp/alwaha-pro.js
+
           echo "JavaScript syntax check passed."
 
+
+      # ============================================================
+      # 13) فحص onclick
+      # ============================================================
       - name: Validate all visible onclick handlers
         shell: bash
         run: |
           set -euo pipefail
+
           node - <<'NODE'
           const fs = require('fs');
+
           const html = fs.readFileSync('index.html', 'utf8');
-          const funcs = new Set([...html.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]));
-          const ignored = new Set(['if','for','while','switch','setTimeout','remove','closest','filter','map','join','click','then','catch','push','confirm','console']);
+
+          const funcs = new Set(
+            [...html.matchAll(
+              /\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g
+            )].map(m => m[1])
+          );
+
+          const ignored = new Set([
+            'if',
+            'for',
+            'while',
+            'switch',
+            'setTimeout',
+            'remove',
+            'closest',
+            'filter',
+            'map',
+            'join',
+            'click',
+            'then',
+            'catch',
+            'push',
+            'confirm',
+            'console'
+          ]);
+
           const missing = new Set();
+
           for (const match of html.matchAll(/onclick="([^"]+)"/g)) {
-            for (const fn of match[1].matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)) {
+
+            for (const fn of match[1].matchAll(
+              /\b([A-Za-z_$][\w$]*)\s*\(/g
+            )) {
+
               const name = fn[1];
-              if (!funcs.has(name) && !ignored.has(name)) missing.add(name);
+
+              if (!funcs.has(name) && !ignored.has(name)) {
+                missing.add(name);
+              }
             }
           }
-          if (missing.size) throw new Error(`Missing onclick handlers: ${[...missing].join(', ')}`);
-          console.log(`onclick validation passed (${funcs.size} functions discovered).`);
+
+          if (missing.size) {
+            throw new Error(
+              `Missing onclick handlers: ${[...missing].join(', ')}`
+            );
+          }
+
+          console.log(
+            `onclick validation passed (${funcs.size} functions discovered).`
+          );
           NODE
 
+
+      # ============================================================
+      # 14) إنشاء مشروع Android نظيف
+      # ============================================================
       - name: Recreate clean Capacitor Android project
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf android
-          npx cap add android
-          npx cap sync android
-          grep -q 'pro.alwaha.app' android/app/build.gradle || { echo 'ERROR: Capacitor generated a different Android application ID.'; exit 1; }
 
+          rm -rf android
+
+          npx cap add android
+
+          npx cap sync android
+
+          grep -q 'pro.alwaha.app' android/app/build.gradle || {
+            echo 'ERROR: Capacitor generated a different Android application ID.'
+            exit 1
+          }
+
+          echo "Android project created successfully."
+
+
+      # ============================================================
+      # 15) إعداد صلاحيات Android والأيقونة
+      # ============================================================
       - name: Configure Android permissions and launcher icon
         shell: bash
         run: |
           set -euo pipefail
+
           RES_DIR="android/app/src/main/res"
           MANIFEST="android/app/src/main/AndroidManifest.xml"
 
           rm -rf "$RES_DIR/mipmap-anydpi-v26"
+
           found=0
+
           for dir in "$RES_DIR"/mipmap-*; do
+
             [ -d "$dir" ] || continue
+
             found=1
-            rm -f "$dir"/ic_launcher* "$dir"/ic_launcher_round* "$dir"/ic_launcher_foreground*
+
+            rm -f \
+              "$dir/ic_launcher"* \
+              "$dir/ic_launcher_round"* \
+              "$dir/ic_launcher_foreground"*
+
             cp icon.png "$dir/ic_launcher.png"
             cp icon.png "$dir/ic_launcher_round.png"
+
           done
+
           test "$found" -eq 1
 
           python3 - <<'PY'
           from pathlib import Path
+
           p = Path('android/app/src/main/AndroidManifest.xml')
+
           text = p.read_text(encoding='utf-8')
+
           permissions = [
               '    <uses-permission android:name="android.permission.CAMERA" />',
               '    <uses-permission android:name="android.permission.RECORD_AUDIO" />',
               '    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
           ]
+
           marker = '<application'
+
           if marker not in text:
-              raise SystemExit('AndroidManifest.xml missing <application>')
+              raise SystemExit(
+                  'AndroidManifest.xml missing <application>'
+              )
+
           lines = set(text.splitlines())
-          add = [x for x in permissions if x not in lines]
+
+          add = [
+              permission
+              for permission in permissions
+              if permission not in lines
+          ]
+
           if add:
-              text = text.replace(marker, '\n'.join(add) + '\n\n    ' + marker, 1)
+              text = text.replace(
+                  marker,
+                  '\n'.join(add) + '\n\n    ' + marker,
+                  1
+              )
+
               p.write_text(text, encoding='utf-8')
+
           PY
 
+          echo "Android permissions and launcher icon configured."
+
+
+      # ============================================================
+      # 16) تحميل مفتاح التوقيع
+      #
+      # IMPORTANT:
+      # نحن نستخدم أسماء الأسرار الموجودة فعليًا عندك:
+      #
+      # KEYSTORE_BASE64
+      # KEYSTORE_PASSWORD
+      # KEY_ALIAS
+      # KEY_PASSWORD
+      # ============================================================
       - name: Load Android release signing key
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing GitHub Secret: ANDROID_KEYSTORE_BASE64"; exit 1; }
-          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing GitHub Secret: ANDROID_KEYSTORE_PASSWORD"; exit 1; }
-          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing GitHub Secret: ANDROID_KEY_ALIAS"; exit 1; }
-          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing GitHub Secret: ANDROID_KEY_PASSWORD"; exit 1; }
 
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release-key.jks
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: KEYSTORE_BASE64"
+            exit 1
+          fi
+
+          if [ -z "${KEYSTORE_PASSWORD:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: KEYSTORE_PASSWORD"
+            exit 1
+          fi
+
+          if [ -z "${KEY_ALIAS:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: KEY_ALIAS"
+            exit 1
+          fi
+
+          if [ -z "${KEY_PASSWORD:-}" ]; then
+            echo "ERROR: Missing GitHub Secret: KEY_PASSWORD"
+            exit 1
+          fi
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/release-key.jks
+
           cat > android/keystore.properties <<PROP
           storeFile=release-key.jks
-          storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyAlias=$ANDROID_KEY_ALIAS
-          keyPassword=$ANDROID_KEY_PASSWORD
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
           PROP
-          chmod 600 android/release-key.jks android/keystore.properties
 
+          chmod 600 \
+            android/release-key.jks \
+            android/keystore.properties
+
+          test -s android/release-key.jks
+
+          echo "Android signing key loaded successfully."
+
+
+      # ============================================================
+      # 17) إعداد إصدار التطبيق والتوقيع
+      # ============================================================
       - name: Configure release signing and version
         env:
           VERSION_NAME: '2.8.2'
@@ -226,74 +496,232 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           python3 - <<'PY'
           from pathlib import Path
-          import os, re
+          import os
+          import re
 
           p = Path('android/app/build.gradle')
+
           text = p.read_text(encoding='utf-8')
 
+
+          # --------------------------------------------------------
+          # Load keystore.properties
+          # --------------------------------------------------------
           if 'keystorePropertiesFile' not in text:
-              loader = '''\n\ndef keystorePropertiesFile = rootProject.file("keystore.properties")\ndef keystoreProperties = new Properties()\nif (keystorePropertiesFile.exists()) {\n    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))\n}\n'''
+
+              loader = r'''
+          def keystorePropertiesFile = rootProject.file("keystore.properties")
+          def keystoreProperties = new Properties()
+
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(
+                  new FileInputStream(keystorePropertiesFile)
+              )
+          }
+          '''
+
               text = loader + text
 
-          if 'signingConfigs {' not in text:
-              m = re.search(r'(?m)^android\s*\{\s*$', text)
-              if not m:
-                  raise SystemExit('android { block not found')
-              signing = '''\n    signingConfigs {\n        release {\n            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null\n            storePassword keystoreProperties['storePassword']\n            keyAlias keystoreProperties['keyAlias']\n            keyPassword keystoreProperties['keyPassword']\n        }\n    }\n'''
-              text = text[:m.end()] + signing + text[m.end():]
 
-          m = re.search(r'(?s)defaultConfig\s*\{(.*?)\n\s*\}', text)
+          # --------------------------------------------------------
+          # Add release signing configuration
+          # --------------------------------------------------------
+          if 'signingConfigs {' not in text:
+
+              m = re.search(
+                  r'(?m)^android\s*\{\s*$',
+                  text
+              )
+
+              if not m:
+                  raise SystemExit(
+                      'android { block not found'
+                  )
+
+              signing = r'''
+              signingConfigs {
+                  release {
+                      storeFile keystoreProperties['storeFile'] ?
+                          file(keystoreProperties['storeFile']) : null
+                      storePassword keystoreProperties['storePassword']
+                      keyAlias keystoreProperties['keyAlias']
+                      keyPassword keystoreProperties['keyPassword']
+                  }
+              }
+          '''
+
+              text = (
+                  text[:m.end()]
+                  + signing
+                  + text[m.end():]
+              )
+
+
+          # --------------------------------------------------------
+          # Configure versionCode/versionName
+          # --------------------------------------------------------
+          m = re.search(
+              r'(?s)defaultConfig\s*\{(.*?)\n\s*\}',
+              text
+          )
+
           if not m:
-              raise SystemExit('defaultConfig block not found')
+              raise SystemExit(
+                  'defaultConfig block not found'
+              )
+
           block = m.group(1)
+
           vc = os.environ['VERSION_CODE']
           vn = os.environ['VERSION_NAME']
-          block = re.sub(r'(?m)^\s*versionCode\s+.*$', f'        versionCode {vc}', block)
-          block = re.sub(r'(?m)^\s*versionName\s+.*$', f'        versionName "{vn}"', block)
-          if 'versionCode' not in block: block = f'\n        versionCode {vc}' + block
-          if 'versionName' not in block: block = f'\n        versionName "{vn}"' + block
-          text = text[:m.start(1)] + block + text[m.end(1):]
 
-          rm = re.search(r'(?s)(buildTypes\s*\{\s*release\s*\{)(.*?)\n\s*\}', text)
+          block = re.sub(
+              r'(?m)^\s*versionCode\s+.*$',
+              f'        versionCode {vc}',
+              block
+          )
+
+          block = re.sub(
+              r'(?m)^\s*versionName\s+.*$',
+              f'        versionName "{vn}"',
+              block
+          )
+
+          if 'versionCode' not in block:
+              block = (
+                  f'\n        versionCode {vc}'
+                  + block
+              )
+
+          if 'versionName' not in block:
+              block = (
+                  f'\n        versionName "{vn}"'
+                  + block
+              )
+
+          text = (
+              text[:m.start(1)]
+              + block
+              + text[m.end(1):]
+          )
+
+
+          # --------------------------------------------------------
+          # Configure release build type
+          # --------------------------------------------------------
+          rm = re.search(
+              r'(?s)(buildTypes\s*\{\s*release\s*\{)(.*?)\n\s*\}',
+              text
+          )
+
           if not rm:
-              raise SystemExit('release buildType not found')
-          release_block = rm.group(2)
-          if 'signingConfig signingConfigs.release' not in release_block:
-              release_block = '\n            signingConfig signingConfigs.release' + release_block
-          text = text[:rm.start(2)] + release_block + text[rm.end(2):]
+              raise SystemExit(
+                  'release buildType not found'
+              )
 
-          p.write_text(text, encoding='utf-8')
+          release_block = rm.group(2)
+
+          if 'signingConfig signingConfigs.release' not in release_block:
+
+              release_block = (
+                  '\n            signingConfig signingConfigs.release'
+                  + release_block
+              )
+
+          text = (
+              text[:rm.start(2)]
+              + release_block
+              + text[rm.end(2):]
+          )
+
+
+          p.write_text(
+              text,
+              encoding='utf-8'
+          )
+
+          print('Android release configuration completed.')
+
           PY
 
+
+      # ============================================================
+      # 18) بناء APK + AAB
+      # ============================================================
       - name: Build signed APK + AAB
         working-directory: android
         shell: bash
         run: |
           set -euo pipefail
-          chmod +x gradlew
-          ./gradlew clean bundleRelease assembleRelease --no-daemon --stacktrace
 
+          chmod +x gradlew
+
+          ./gradlew \
+            clean \
+            bundleRelease \
+            assembleRelease \
+            --no-daemon \
+            --stacktrace
+
+
+      # ============================================================
+      # 19) التحقق من الملفات والتوقيع
+      # ============================================================
       - name: Verify Android outputs
         shell: bash
         run: |
           set -euo pipefail
+
           AAB="android/app/build/outputs/bundle/release/app-release.aab"
           APK="android/app/build/outputs/apk/release/app-release.apk"
+
           test -s "$AAB"
           test -s "$APK"
 
-          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)"
-          "$BUILD_TOOLS/apksigner" verify --verbose "$APK"
-          jarsigner -verify -verbose -certs "$AAB" >/tmp/aab-signature.txt
-          grep -q 'jar verified' /tmp/aab-signature.txt
+          echo "APK and AAB files exist."
+
+          BUILD_TOOLS="$(
+            ls -d "$ANDROID_HOME"/build-tools/* \
+            | sort -V \
+            | tail -n1
+          )"
+
+          "$BUILD_TOOLS/apksigner" verify \
+            --verbose \
+            "$APK"
+
+          jarsigner \
+            -verify \
+            -verbose \
+            -certs \
+            "$AAB" \
+            >/tmp/aab-signature.txt
+
+          grep -q 'jar verified' \
+            /tmp/aab-signature.txt
 
           mkdir -p release
-          cp "$AAB" "release/Alwaha-Pro-2.8.2.aab"
-          cp "$APK" "release/Alwaha-Pro-2.8.2.apk"
-          sha256sum release/*.aab release/*.apk > release/SHA256SUMS.txt
 
+          cp "$AAB" \
+            "release/Alwaha-Pro-2.8.2.aab"
+
+          cp "$APK" \
+            "release/Alwaha-Pro-2.8.2.apk"
+
+          sha256sum \
+            release/*.aab \
+            release/*.apk \
+            > release/SHA256SUMS.txt
+
+          echo "Android outputs verified successfully."
+
+
+      # ============================================================
+      # 20) رفع الملفات كـ Artifact
+      # ============================================================
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -302,13 +730,19 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+
+      # ============================================================
+      # 21) إنشاء GitHub Release
+      # ============================================================
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+
           TAG="v2.8.2-build.${GITHUB_RUN_NUMBER}"
+
           gh release create "$TAG" \
             release/Alwaha-Pro-2.8.2.aab \
             release/Alwaha-Pro-2.8.2.apk \
@@ -317,7 +751,18 @@ jobs:
             --title "Alwaha-Pro 2.8.2 • Build ${GITHUB_RUN_NUMBER}" \
             --notes "Automated Android APK/AAB build with Supabase migration deployment. Commit: ${GITHUB_SHA}."
 
+          echo "GitHub Release created successfully."
+
+
+      # ============================================================
+      # 22) تنظيف مفاتيح التوقيع
+      # ============================================================
       - name: Cleanup signing files
         if: always()
         shell: bash
-        run: rm -f android/release-key.jks android/keystore.properties
+        run: |
+          rm -f \
+            android/release-key.jks \
+            android/keystore.properties
+
+          echo "Signing files cleaned up."
