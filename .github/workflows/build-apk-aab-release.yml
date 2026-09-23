@@ -90,10 +90,6 @@ jobs:
 
       # ============================================================
       # 5) تنظيف حالة Supabase القديمة
-      #
-      # مهم:
-      # .temp و .branches حالات داخلية للـSupabase CLI.
-      # نحذفها قبل link حتى لا يحاول CLI استخدام Branch قديم.
       # ============================================================
       - name: Clean Supabase CLI link state
         shell: bash
@@ -241,7 +237,7 @@ jobs:
 
 
       # ============================================================
-      # 11) إعداد حساب الإدارة اختياريًا
+      # 11) إعداد حساب الإدارة (تم التعديل بحذف الخيار غير المدعوم)
       # ============================================================
       - name: Configure optional Alwaha admin account
         env:
@@ -261,7 +257,6 @@ jobs:
 
           supabase db query \
             --linked \
-            --password "$SUPABASE_DB_PASSWORD" \
             "insert into public.app_settings(key,value,updated_at)
              values (
                'initial_admin_email',
@@ -535,13 +530,6 @@ jobs:
 
       # ============================================================
       # 20) تحميل مفتاح التوقيع
-      #
-      # الأسرار الموجودة عندك:
-      #
-      # KEYSTORE_BASE64
-      # KEYSTORE_PASSWORD
-      # KEY_ALIAS
-      # KEY_PASSWORD
       # ============================================================
       - name: Load Android release signing key
         env:
