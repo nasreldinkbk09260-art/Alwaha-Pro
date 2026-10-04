@@ -61,7 +61,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2.1.1
         with:
-          version: latest
+          version: 2.98.2
 
 
       # ============================================================
@@ -239,7 +239,7 @@ jobs:
 
 
       # ============================================================
-      # 11) إعداد حساب الإدارة (تم الإصلاح بإضافة SUPABASE_ACCESS_TOKEN)
+      # 11) إعداد حساب الإدارة
       # ============================================================
       - name: Configure optional Alwaha admin account
         env:
@@ -602,7 +602,6 @@ jobs:
 
           text = p.read_text(encoding='utf-8')
 
-
           if 'keystorePropertiesFile' not in text:
 
               loader = r'''
@@ -617,7 +616,6 @@ jobs:
           '''
 
               text = loader + text
-
 
           if 'signingConfigs {' not in text:
 
@@ -648,7 +646,6 @@ jobs:
                   + signing
                   + text[m.end():]
               )
-
 
           m = re.search(
               r'(?s)defaultConfig\s*\{(.*?)\n\s*\}',
@@ -695,7 +692,6 @@ jobs:
               + text[m.end(1):]
           )
 
-
           rm = re.search(
               r'(?s)(buildTypes\s*\{\s*release\s*\{)(.*?)\n\s*\}',
               text
@@ -720,7 +716,6 @@ jobs:
               + release_block
               + text[rm.end(2):]
           )
-
 
           p.write_text(
               text,
