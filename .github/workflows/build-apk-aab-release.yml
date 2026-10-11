@@ -68,6 +68,26 @@ jobs:
           console.log('Project files and configuration validated.');
           NODE
 
+      - name: Validate JSON, service worker and application JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check sw.js
+          node <<'NODE'
+          const fs = require('node:fs');
+          for (const file of ['package.json','manifest.json','capacitor.config.json']) {
+            JSON.parse(fs.readFileSync(file,'utf8'));
+            console.log('Valid JSON:',file);
+          }
+          const html = fs.readFileSync('index.html','utf8');
+          const start = html.indexOf('<script>');
+          const end = html.lastIndexOf('</script>');
+          if (start < 0 || end <= start) throw new Error('Inline application script not found.');
+          fs.writeFileSync('/tmp/alwaha-pro-inline.js',html.slice(start + '<script>'.length,end),'utf8');
+          NODE
+          node --check /tmp/alwaha-pro-inline.js
+          echo 'JSON, service worker and inline JavaScript validated.'
+
       - name: Install npm dependencies
         shell: bash
         run: npm install --no-audit --no-fund

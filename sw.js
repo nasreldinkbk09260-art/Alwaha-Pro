@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v2.8.2';
+const CACHE_NAME = 'alwaha-pro-v2.8.2-cosmic1';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -66,10 +66,6 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cachedResponse);
       return cachedResponse || networkPromise;
-    })
-  );
-});
-eturn cachedResponse || networkPromise;
     })
   );
 });
