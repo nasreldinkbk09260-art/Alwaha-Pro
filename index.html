@@ -335,6 +335,31 @@
             gap: 15px;
         }
     </style>
+<style id="alwaha-cosmic-garden">
+body,body.theme-nature,body.theme-tech,body.theme-soft{isolation:isolate;background:radial-gradient(ellipse at 12% 8%,#1e9aa72c,transparent 36%),radial-gradient(ellipse at 88% 27%,#9a58d22b,transparent 38%),radial-gradient(ellipse at 68% 86%,#3dc9a31d,transparent 35%),linear-gradient(155deg,#06111d 0%,#10192d 48%,#111329 100%)!important;padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+body:before{content:"";position:fixed;inset:-20%;z-index:-2;pointer-events:none;background:radial-gradient(circle at 15% 24%,#4eeeff35 0 2%,transparent 15%),radial-gradient(circle at 78% 20%,#c997ff30 0 3%,transparent 17%),radial-gradient(circle at 72% 76%,#64ffc525 0 3%,transparent 18%),radial-gradient(circle at 26% 82%,#ffa0d91f 0 2.5%,transparent 16%);filter:blur(6px);animation:alwahaNebula 34s ease-in-out infinite alternate}
+body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.32;background-image:radial-gradient(circle,#ffffffbf 0 1px,transparent 1.8px),radial-gradient(circle,#8bf4ffad 0 1px,transparent 2px);background-size:97px 113px,157px 173px;background-position:13px 21px,51px 73px;mask-image:linear-gradient(#000,transparent 88%)}
+@keyframes alwahaNebula{to{transform:translate3d(1.5%,1%,0) scale(1.06)}}
+.bottom-nav-bar{position:fixed!important;left:8px!important;right:8px!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;width:auto!important;height:auto!important;min-height:74px;padding:7px 5px 6px!important;gap:3px!important;justify-content:space-evenly!important;border:1px solid #b8e7ff38!important;border-radius:27px!important;background:#091223d9!important;box-shadow:0 12px 34px #0007,inset 0 1px #ffffff1a!important;backdrop-filter:blur(22px) saturate(1.45);z-index:9999}
+.bottom-nav-bar .nav-item{position:relative;display:flex;flex:1 1 0;min-width:0;max-width:54px;padding:0!important;gap:4px;align-items:center;justify-content:center;flex-direction:column;overflow:visible;color:#b4c4d8!important;font-size:8px;font-weight:700;white-space:nowrap;background:transparent!important;border:0!important;box-shadow:none!important}
+.bottom-nav-bar .nav-item i{display:grid;place-items:center;width:clamp(32px,9.5vw,44px);height:clamp(32px,9.5vw,44px);flex:0 0 auto;border-radius:50%;border:1px solid #ffffff5c;color:#fff!important;font-size:clamp(14px,4.4vw,19px);background:radial-gradient(circle at 28% 18%,#ffffffee 0 4%,#ffffff54 14%,transparent 32%),linear-gradient(145deg,var(--orb-a),var(--orb-b) 54%,var(--orb-c));box-shadow:0 5px 16px var(--orb-shadow),inset 0 1px 3px #ffffff99;animation:alwahaOrbFloat 5.4s ease-in-out infinite;transition:transform .22s,box-shadow .22s}
+.bottom-nav-bar .nav-item:nth-child(1){--orb-a:#adfff0;--orb-b:#27b7c7;--orb-c:#276b88;--orb-shadow:#36e3e65c}
+.bottom-nav-bar .nav-item:nth-child(2){--orb-a:#fff0ad;--orb-b:#f5a74b;--orb-c:#bd5d70;--orb-shadow:#ffbf6555;animation-delay:-.7s}
+.bottom-nav-bar .nav-item:nth-child(3){--orb-a:#b7fbd1;--orb-b:#43c6a2;--orb-c:#2b8b9e;--orb-shadow:#49e7b150;animation-delay:-1.4s}
+.bottom-nav-bar .nav-item:nth-child(4){--orb-a:#d5d0ff;--orb-b:#8c83ef;--orb-c:#5650a0;--orb-shadow:#a697ff5a;animation-delay:-2.1s}
+.bottom-nav-bar .nav-item:nth-child(5){--orb-a:#ffcae7;--orb-b:#e66cbb;--orb-c:#a04e94;--orb-shadow:#ff84d34f;animation-delay:-2.8s}
+.bottom-nav-bar .nav-item:nth-child(6){--orb-a:#e0d4ff;--orb-b:#a38be8;--orb-c:#6565ad;--orb-shadow:#bea2ff50;animation-delay:-3.5s}
+.bottom-nav-bar .nav-item:nth-child(7){--orb-a:#b8edff;--orb-b:#6aa8ed;--orb-c:#4161b2;--orb-shadow:#68b9ff55;animation-delay:-4.2s}
+.bottom-nav-bar .nav-item.active{color:#fff!important}.bottom-nav-bar .nav-item.active i{transform:translateY(-4px) scale(1.08);box-shadow:0 0 0 3px #ffffff20,0 8px 24px var(--orb-shadow),inset 0 1px 3px #ffffffce}
+.bottom-nav-bar .nav-item span{line-height:1.2}
+.verification-field{display:block;width:100%;box-sizing:border-box;background:#0005;border:1px solid #b8e7ff35;padding:11px 12px;border-radius:12px;color:#fff;font-family:inherit;font-size:12px;margin:7px 0 12px;outline:none}
+.verification-field:focus{border-color:#8bf4ff;box-shadow:0 0 0 3px #8bf4ff18}
+#profile-email-display{display:none!important}
+.profile-card-header-view #profile-avatar-display{box-shadow:0 0 0 4px #8bf4ff19,0 0 25px #61d8ff33}
+@media(max-width:360px){.bottom-nav-bar{left:4px!important;right:4px!important;gap:1px!important;padding-left:3px!important;padding-right:3px!important}.bottom-nav-bar .nav-item{font-size:7px}.bottom-nav-bar .nav-item i{width:31px;height:31px;font-size:14px}}
+@keyframes alwahaOrbFloat{0%,100%{translate:0 0}50%{translate:0 -2px}}
+@media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
+</style>
 </head>
 <body>
 
@@ -546,7 +571,8 @@
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
         <button class="btn-action" style="width:100%;margin-top:10px;background:rgba(255,0,85,.12);color:#ff6688;border:1px solid #ff0055;padding:9px;border-radius:8px;font-size:12px;" onclick="signOutAlwaha()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
             <h3 id="profile-name-display" style="margin:0; font-size:16px; color:#fff;">زائر Alwaha-Pro</h3>
-            <p id="profile-email-display" style="margin:5px 0 0 0; font-size:11px; color:#aaa;">guest@alwaha.pro</p>
+            <p id="profile-email-display" aria-hidden="true" style="display:none"></p>
+            <p style="margin:6px 0 0;color:#a9bfd2;font-size:10px;">ملفك العام يعرض الاسم والصورة فقط؛ بيانات التواصل خاصة.</p>
         </div>
 
         <div class="profile-options-menu-list" style="display:flex; flex-direction:column; gap:10px;">
@@ -594,7 +620,8 @@
         </div>
         <input type="text" id="reg-first-name" placeholder="الاسم الأول" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="text" id="reg-last-name" placeholder="اسم العائلة" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
-        <input type="text" id="reg-identifier" placeholder="البريد الإلكتروني" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="email" id="reg-identifier" placeholder="البريد الإلكتروني (اختياري)" autocomplete="email" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="tel" id="reg-phone" placeholder="رقم الهاتف (اختياري، بصيغة دولية مثل +20)" autocomplete="tel" inputmode="tel" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="password" id="reg-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="password" id="reg-confirm-password" placeholder="تأكيد كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <select id="reg-gender" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
@@ -614,7 +641,7 @@
             <h3 style="color:#00ffff; font-size:16px; margin:0;">تسجيل الدخول</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <input type="text" id="login-id" placeholder="البريد الإلكتروني المسجل" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="text" id="login-id" placeholder="البريد الإلكتروني أو رقم الهاتف المسجل" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="password" id="login-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
         
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
@@ -671,12 +698,27 @@
     </div>
 
     <div id="sub-prof-verify" class="sub-profile-view-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="color:#38bdf8; font-size:16px; margin:0;">طلب توثيق الحساب</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')"><i class="fa-solid fa-xmark"></i></button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب</h3>
+            <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <textarea id="verification-reason-input" placeholder="اكتب سبب طلب توثيق الحساب..." class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; height:80px; margin-bottom:15px; resize:none;"></textarea>
-        <button class="btn-action" style="width:100%; background:#38bdf8; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="submitAccountVerificationRequest()">إرسال الطلب للإدارة</button>
+        <p style="font-size:11px;line-height:1.8;color:#b9c8d9;">أكمل البيانات التالية ليتمكن فريق الإدارة من مراجعة الطلب. رقم الهاتف والبريد لن يظهرا في ملفك العام.</p>
+        <div style="display:flex;align-items:center;gap:12px;margin:12px 0;padding:11px;border:1px solid #8bf4ff30;border-radius:14px;">
+            <img id="verification-avatar-preview" src="icon.png" alt="الصورة الشخصية" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff;">
+            <div style="flex:1;min-width:0;"><strong style="font-size:12px;">الصورة الشخصية</strong><div id="verification-avatar-status" style="font-size:10px;color:#a9bfd2;margin-top:5px;">ارفع صورة حقيقية لإكمال الطلب.</div></div>
+            <button type="button" class="btn-action" onclick="handleVerificationAvatarPick()" style="padding:8px 10px;border-radius:18px;background:#16344a;color:#8bf4ff;border:1px solid #8bf4ff55;">رفع صورة</button>
+        </div>
+        <label for="verification-phone-input" style="font-size:11px;color:#c6d5e7;">رقم هاتف للتواصل — خاص</label>
+        <input id="verification-phone-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="+201xxxxxxxxx" class="verification-field">
+        <label for="verification-category-input" style="font-size:11px;color:#c6d5e7;">نوع الحساب</label>
+        <select id="verification-category-input" class="verification-field"><option value="شخصي">شخصي</option><option value="صانع محتوى">صانع محتوى</option><option value="نشاط تجاري">نشاط تجاري</option><option value="مؤسسة">مؤسسة / جهة رسمية</option></select>
+        <label for="verification-profile-link" style="font-size:11px;color:#c6d5e7;">رابط موثوق (اختياري)</label>
+        <input id="verification-profile-link" type="url" inputmode="url" placeholder="https://..." class="verification-field">
+        <label for="verification-reason-input" style="font-size:11px;color:#c6d5e7;">سبب طلب التوثيق</label>
+        <textarea id="verification-reason-input" placeholder="اشرح سبب طلب التوثيق..." class="verification-field keyboard-target" style="height:82px;resize:vertical;"></textarea>
+        <textarea id="verification-extra-input" placeholder="تفاصيل إضافية (اختياري)" class="verification-field keyboard-target" style="height:66px;resize:vertical;"></textarea>
+        <button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#a8fff0,#8c83ef);color:#10162a;padding:12px;border-radius:13px;font-weight:bold;" onclick="submitAccountVerificationRequest()">إرسال طلب التوثيق</button>
+        <p style="font-size:10px;color:#8296ad;line-height:1.7;margin-top:10px;">لن تُقبل الصورة الافتراضية بدل الصورة الحقيقية في طلب التوثيق. لا ترفع مستند هوية حساس قبل تخصيص مساحة تخزين خاصة له.</p>
     </div>
 
     <!-- 5. قسم وضع المشاركة الحرة -->
@@ -736,36 +778,15 @@
         </div>
     </div>
 
-    <!-- شريط التنقل السفلي -->
-    <nav class="bottom-nav-bar">
-        <button class="nav-item main-home active" onclick="showSection('home-section', this)">
-            <i class="fa-solid fa-house"></i>
-            <span>الرئيسية</span>
-        </button>
-        <button class="nav-item market-center" onclick="showSection('market-section', this)">
-            <i class="fa-solid fa-shop"></i>
-            <span>السوق</span>
-        </button>
-        <button class="nav-item free-mesh" onclick="showSection('free-section', this)">
-            <i class="fa-solid fa-wifi"></i>
-            <span>الشبكة</span>
-        </button>
-        <button class="nav-item chat" onclick="showSection('chat-section', this)">
-            <i class="fa-solid fa-comments"></i>
-            <span>محادثة</span>
-        </button>
-        <button class="nav-item reels" onclick="showSection('reels-section', this)">
-            <i class="fa-solid fa-clapperboard"></i>
-            <span>ريلز</span>
-        </button>
-        <button class="nav-item games-nav" onclick="showSection('games-section', this)">
-            <i class="fa-solid fa-gamepad"></i>
-            <span>الألعاب</span>
-        </button>
-        <button class="nav-item profile-me" onclick="showSection('profile-section', this)">
-            <i class="fa-solid fa-user"></i>
-            <span>حسابي</span>
-        </button>
+    <!-- سبع كرات زجاجية عائمة للتنقل الرئيسي -->
+    <nav class="bottom-nav-bar" aria-label="التنقل الرئيسي">
+        <button type="button" class="nav-item main-home active" aria-label="الرئيسية" onclick="showSection('home-section', this)"><i class="fa-solid fa-house"></i><span>الرئيسية</span></button>
+        <button type="button" class="nav-item market-center" aria-label="السوق" onclick="showSection('market-section', this)"><i class="fa-solid fa-shop"></i><span>السوق</span></button>
+        <button type="button" class="nav-item free-mesh" aria-label="الشبكة" onclick="showSection('free-section', this)"><i class="fa-solid fa-wifi"></i><span>الشبكة</span></button>
+        <button type="button" class="nav-item chat" aria-label="المحادثات" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>محادثة</span></button>
+        <button type="button" class="nav-item reels" aria-label="الريلز" onclick="showSection('reels-section', this)"><i class="fa-solid fa-clapperboard"></i><span>ريلز</span></button>
+        <button type="button" class="nav-item games-nav" aria-label="الألعاب" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
+        <button type="button" class="nav-item profile-me" aria-label="حسابي" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>حسابي</span></button>
     </nav>
 
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
@@ -1051,7 +1072,7 @@ async function handleReelUploadFromGallery() {
         }
 
         async function clearLocalProfileCache() {
-            ['alwaha_profile_name','alwaha_profile_email','alwaha_profile_phone','alwaha_profile_avatar','alwaha_auth_user_id'].forEach(k => localStorage.removeItem(k));
+            ['alwaha_profile_name','alwaha_profile_email','alwaha_profile_phone','alwaha_profile_avatar','alwaha_profile_gender','alwaha_auth_user_id'].forEach(k => localStorage.removeItem(k));
         }
 
         async function signOutAlwaha() {
@@ -1079,7 +1100,8 @@ async function handleReelUploadFromGallery() {
                 localStorage.setItem('alwaha_profile_email', profile.identifier || authUser.email || '');
                 localStorage.setItem('alwaha_auth_user_id', authUser.id);
                 localStorage.setItem('alwaha_profile_phone', profile.phone || '');
-                if (profile.avatar_url) localStorage.setItem('alwaha_profile_avatar', profile.avatar_url);
+                localStorage.setItem('alwaha_profile_gender', profile.gender || authUser.user_metadata?.gender || 'ذكر');
+                localStorage.setItem('alwaha_profile_avatar', profile.avatar_url || getDefaultAvatar(profile.gender || authUser.user_metadata?.gender));
                 const pendingAvatar = localStorage.getItem('alwaha_pending_avatar_data');
                 if (pendingAvatar && !profile.avatar_url) {
                     try {
@@ -1095,7 +1117,9 @@ async function handleReelUploadFromGallery() {
             } else {
                 localStorage.setItem('alwaha_profile_email', authUser.email || '');
                 localStorage.setItem('alwaha_auth_user_id', authUser.id);
-                localStorage.setItem('alwaha_profile_name', authUser.user_metadata?.first_name || 'مستخدم');
+                localStorage.setItem('alwaha_profile_name', [authUser.user_metadata?.first_name, authUser.user_metadata?.last_name].filter(Boolean).join(' ') || 'مستخدم');
+                localStorage.setItem('alwaha_profile_gender', authUser.user_metadata?.gender || 'ذكر');
+                localStorage.setItem('alwaha_profile_avatar', getDefaultAvatar(authUser.user_metadata?.gender || 'ذكر'));
             }
             syncUiWithLoadedProfileData();
             return profile;
@@ -2517,6 +2541,277 @@ function triggerAnimeAiConverterFilter() {
             subscribeToDirectMessages();
             syncUiWithLoadedProfileData();
             renderHomePostsFeed();
+        });
+
+
+        // Alwaha-Pro Cosmic Garden UX and production-safe form behavior.
+        function getDefaultAvatar(gender = 'ذكر') {
+            const female = String(gender || '').trim() === 'أنثى';
+            const foreground = female ? '#ffd2e9' : '#c2f5ff';
+            const background = female ? '#884b8e' : '#285b88';
+            const silhouette = female
+              ? '<path d="M35 145c1-27 13-45 31-53-10-8-16-21-16-35 0-20 13-34 30-34s30 14 30 34c0 14-6 27-16 35 18 8 30 26 31 53H35z" fill="'+foreground+'"/><path d="M49 55c-7-31 7-48 31-48s38 17 31 48c-6-10-11-21-12-30-14 13-30 17-50 17z" fill="#452956"/>'
+              : '<circle cx="80" cy="57" r="27" fill="'+foreground+'"/><path d="M29 145c4-31 23-48 51-48s47 17 51 48" fill="'+foreground+'"/><path d="M52 52c-4-21 8-38 28-38s32 17 28 38c-7-9-16-13-28-14-12 1-21 5-28 14z" fill="#17364d"/>';
+            const svg='<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><defs><radialGradient id="g" cx="25%" cy="20%"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset="1" stop-color="'+background+'"/></radialGradient></defs><circle cx="80" cy="80" r="78" fill="url(#g)"/>'+silhouette+'<circle cx="80" cy="80" r="76" fill="none" stroke="#ffffff" stroke-opacity=".38" stroke-width="2"/></svg>';
+            return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        }
+        function alwahaIsVisible(element) {
+            return !!element && getComputedStyle(element).display !== 'none' && getComputedStyle(element).visibility !== 'hidden';
+        }
+        window.alwahaSectionHistory = window.alwahaSectionHistory || [];
+        window.alwahaModalHistory = window.alwahaModalHistory || [];
+
+        function showSection(id, element, options = {}) {
+            const current = document.querySelector('.app-section.active-section')?.id
+                || document.querySelector('.app-section[style*="display: block"]')?.id
+                || 'home-section';
+            if (!options.fromBack && current !== id) {
+                window.alwahaSectionHistory.push(current);
+                if (window.alwahaSectionHistory.length > 40) window.alwahaSectionHistory.shift();
+                try { history.pushState({alwahaSection:id}, '', location.href); } catch (e) {}
+            }
+            document.querySelectorAll('.app-section').forEach(section => {
+                section.style.display = 'none';
+                section.classList.remove('active-section');
+            });
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            const target = document.getElementById(id);
+            if (target) { target.style.display = 'block'; target.classList.add('active-section'); }
+            const navButton = element || document.querySelector('.nav-item[onclick*="' + id + '"]');
+            if (navButton) navButton.classList.add('active');
+            if (id !== 'profile-section') {
+                document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
+                window.alwahaModalHistory = [];
+                document.body.classList.remove('modal-active');
+            }
+            if (typeof playLuxuriousNotificationSound === 'function') playLuxuriousNotificationSound();
+            window.scrollTo({top:0, behavior:'smooth'});
+            if (id === 'home-section' && typeof renderHomePostsFeed==='function') renderHomePostsFeed();
+            if (id === 'market-section') { if(typeof renderProductsList==='function')renderProductsList(); if(typeof renderMyPersonalMarketItems==='function')renderMyPersonalMarketItems(); }
+            if (id === 'chat-section') { if(typeof collapseChatSubWindows==='function')collapseChatSubWindows(); if(typeof loadAllRegisteredUsersList==='function')loadAllRegisteredUsersList(); if(typeof renderConversationsList==='function')renderConversationsList(); }
+            if (id === 'reels-section' && typeof renderReelsFeed==='function') renderReelsFeed();
+            if (id === 'games-section' && typeof renderGamesSection==='function') renderGamesSection();
+        }
+        function openSubProfileView(id) {
+            const view = document.getElementById(id);
+            if (!view) return;
+            document.querySelectorAll('.sub-profile-view-box').forEach(box => { if (box !== view) box.style.display = 'none'; });
+            const wasOpen = alwahaIsVisible(view);
+            view.style.display = 'block';
+            document.body.classList.add('modal-active');
+            if (!wasOpen) {
+                window.alwahaModalHistory.push(id);
+                try { history.pushState({alwahaModal:id}, '', location.href); } catch (e) {}
+            }
+            if (id === 'sub-prof-verify') {
+                const phone = document.getElementById('verification-phone-input');
+                if (phone && !phone.value) phone.value = localStorage.getItem('alwaha_profile_phone') || '';
+                syncUiWithLoadedProfileData();
+            }
+        }
+        function closeSubProfileView(id) {
+            const view = document.getElementById(id);
+            if (view) view.style.display = 'none';
+            window.alwahaModalHistory = (window.alwahaModalHistory || []).filter(item => item !== id);
+            if (history.state?.alwahaModal === id) {
+                try { history.replaceState({alwahaGuard:true}, '', location.href); } catch (e) {}
+            }
+            const anyProfileModal = Array.from(document.querySelectorAll('.sub-profile-view-box')).some(alwahaIsVisible);
+            const chat = document.getElementById('active-chat-box');
+            const call = document.getElementById('voice-call-modal');
+            document.body.classList.toggle('modal-active', anyProfileModal || alwahaIsVisible(chat) || alwahaIsVisible(call));
+        }
+        function navigateBack() {
+            const exit = document.getElementById('exit-modal-confirmation');
+            if (alwahaIsVisible(exit)) { closeExitConfirmationModal(); return; }
+            const subViews = Array.from(document.querySelectorAll('.sub-profile-view-box')).filter(alwahaIsVisible);
+            if (subViews.length) { closeSubProfileView(subViews[subViews.length - 1].id); return; }
+            const chat = document.getElementById('active-chat-box');
+            if (alwahaIsVisible(chat)) {
+                chat.style.display = 'none';
+                const lobby = document.getElementById('chat-main-lobby-wrapper');
+                if (lobby) lobby.style.display = 'block';
+                if (typeof collapseChatSubWindows === 'function') collapseChatSubWindows();
+                document.body.classList.remove('modal-active');
+                return;
+            }
+            if (alwahaIsVisible(document.getElementById('comments-modal-box'))) { closeCommentsModal(); return; }
+            if (alwahaIsVisible(document.getElementById('pro-camera-modal'))) { closeProfessionalCameraView(); return; }
+            if (alwahaIsVisible(document.getElementById('voice-call-modal'))) {
+                if (typeof terminateVoiceCall === 'function') terminateVoiceCall();
+                else { document.getElementById('voice-call-modal').style.display = 'none'; document.body.classList.remove('modal-active'); }
+                return;
+            }
+            for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay','.local-share-card']) {
+                const box = document.querySelector(selector);
+                if (!alwahaIsVisible(box)) continue;
+                box.style.display = 'none';
+                document.body.classList.remove('modal-active');
+                return;
+            }
+            if (Array.from(document.querySelectorAll('.chat-tab-content')).some(alwahaIsVisible)) {
+                if (typeof collapseChatSubWindows === 'function') collapseChatSubWindows();
+                return;
+            }
+            const current = document.querySelector('.app-section.active-section')?.id || 'home-section';
+            const previous = window.alwahaSectionHistory.pop();
+            if (previous && previous !== current && document.getElementById(previous)) {
+                showSection(previous, null, {fromBack:true});
+                return;
+            }
+            if (current !== 'home-section') { showSection('home-section', null, {fromBack:true}); return; }
+            if (exit) { exit.style.display='flex'; exit.setAttribute('aria-hidden','false'); }
+        }
+        function handlePopState() {
+            try { history.pushState({alwahaGuard:true}, '', location.href); } catch (e) {}
+            navigateBack();
+        }
+        function syncUiWithLoadedProfileData() {
+            const name = localStorage.getItem('alwaha_profile_name') || 'زائر Alwaha-Pro';
+            const gender = localStorage.getItem('alwaha_profile_gender') || 'ذكر';
+            const avatar = localStorage.getItem('alwaha_profile_avatar') || getDefaultAvatar(gender);
+            const nameEl = document.getElementById('profile-name-display');
+            const emailEl = document.getElementById('profile-email-display');
+            const avatarEl = document.getElementById('profile-avatar-display');
+            if (nameEl) nameEl.textContent = name;
+            if (emailEl) { emailEl.textContent = ''; emailEl.style.display = 'none'; emailEl.setAttribute('aria-hidden','true'); }
+            if (avatarEl) { avatarEl.src = avatar; avatarEl.onerror = () => { avatarEl.onerror=null; avatarEl.src=getDefaultAvatar(gender); }; }
+            const verifyAvatar = document.getElementById('verification-avatar-preview');
+            if (verifyAvatar) { verifyAvatar.src=avatar; verifyAvatar.onerror=()=>{verifyAvatar.onerror=null;verifyAvatar.src=getDefaultAvatar(gender);}; }
+            const avatarStatus = document.getElementById('verification-avatar-status');
+            if (avatarStatus) avatarStatus.textContent = localStorage.getItem('alwaha_profile_avatar') && !String(avatar).startsWith('data:image/svg+xml') ? 'تم حفظ الصورة الشخصية' : 'ارفع صورة حقيقية للملف';
+            const emailChk = document.getElementById('privacy-hide-email-chk');
+            const phoneChk = document.getElementById('privacy-hide-phone-chk');
+            if (emailChk) { emailChk.checked = true; emailChk.disabled = true; emailChk.title = 'بيانات الاتصال خاصة دائمًا في الملف العام'; }
+            if (phoneChk) { phoneChk.checked = true; phoneChk.disabled = true; phoneChk.title = 'بيانات الاتصال خاصة دائمًا في الملف العام'; }
+            if (emailChk || phoneChk) getCurrentProfile().then(profile => {
+                if (!profile) return;
+                if (emailChk) emailChk.checked = true;
+                if (phoneChk) phoneChk.checked = true;
+            }).catch(()=>{});
+        }
+        async function handleNewUserRegistrationSubmit() {
+            if (!supabaseClient) return triggerToastNotification('خدمة المصادقة غير متاحة حالياً.','error');
+            const firstName = document.getElementById('reg-first-name')?.value.trim() || '';
+            const lastName = document.getElementById('reg-last-name')?.value.trim() || '';
+            const email = document.getElementById('reg-identifier')?.value.trim().toLowerCase() || '';
+            const phoneRaw = document.getElementById('reg-phone')?.value.trim() || '';
+            const phone = phoneRaw.replace(/[\s().-]/g,'');
+            const password = document.getElementById('reg-password')?.value || '';
+            const confirmPassword = document.getElementById('reg-confirm-password')?.value || '';
+            const gender = document.getElementById('reg-gender')?.value || 'ذكر';
+            const birthdate = document.getElementById('reg-birthdate')?.value || '';
+            if (!firstName) return triggerToastNotification('اكتب الاسم الأول على الأقل.','error');
+            if (!email && !phone) return triggerToastNotification('أدخل البريد الإلكتروني أو رقم الهاتف؛ يكفي واحد منهما.','error');
+            if (email && !/^\S+@\S+\.\S+$/.test(email)) return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
+            if (phoneRaw && !/^\+[1-9]\d{7,14}$/.test(phone)) return triggerToastNotification('اكتب رقم الهاتف بصيغة دولية مثل +201xxxxxxxxx.','error');
+            if (password.length < 8) return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','error');
+            if (password !== confirmPassword) return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
+            const metadata = {first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||null,avatar_url:null,hide_email:true,hide_phone:true};
+            const authPayload = email ? {email,password,options:{data:metadata}} : {phone,password,options:{data:metadata}};
+            const {data,error} = await supabaseClient.auth.signUp(authPayload);
+            if (error) return triggerToastNotification(formatAuthError(error),'error');
+            localUploadedAvatarBase64 = '';
+            if (data?.session) {
+                await hydrateAuthProfile(data.user);
+                syncUiWithLoadedProfileData();
+                await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+                triggerToastNotification('تم إنشاء الحساب وتسجيل الدخول بنجاح.','success');
+            } else {
+                triggerToastNotification(email ? 'تم إنشاء الحساب. افتح رسالة تأكيد البريد ثم سجّل الدخول.' : 'تم إنشاء الحساب. أكمل تأكيد الهاتف إذا طلبه النظام.','success');
+            }
+            closeSubProfileView('sub-prof-register');
+        }
+        async function executeUserLoginAuth() {
+            if (!supabaseClient) return triggerToastNotification('خدمة المصادقة غير متاحة حالياً.','error');
+            const loginId = document.getElementById('login-id')?.value.trim() || '';
+            const password = document.getElementById('login-password')?.value || '';
+            if (!loginId || !password) return triggerToastNotification('اكتب البريد الإلكتروني أو رقم الهاتف وكلمة المرور.','error');
+            let credentials;
+            if (loginId.includes('@')) credentials = {email:loginId.toLowerCase(),password};
+            else {
+                const phone = loginId.replace(/[\s().-]/g,'');
+                if (!/^\+[1-9]\d{7,14}$/.test(phone)) return triggerToastNotification('استخدم رقم الهاتف بصيغة دولية مثل +201xxxxxxxxx.','error');
+                credentials = {phone,password};
+            }
+            const {data,error} = await supabaseClient.auth.signInWithPassword(credentials);
+            if (error) return triggerToastNotification(formatAuthError(error),'error');
+            await hydrateAuthProfile(data.user);
+            syncUiWithLoadedProfileData();
+            await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+            triggerToastNotification('مرحباً بك مجدداً.','success');
+            closeSubProfileView('sub-prof-login');
+        }
+        async function handleVerificationAvatarPick() {
+            const user = await requireAuthenticatedUser('سجل الدخول أولاً لرفع الصورة الشخصية.');
+            if (!user) return;
+            pickFilesFromDevice({accept:'image/*',multiple:false,onFiles:async files=>{
+                const original=files?.[0]; if(!original) return;
+                try {
+                    const file=await compressImageFile(original,900,.82);
+                    const url=await uploadFileToStorage(file,'avatars',{maxBytes:5*1024*1024});
+                    if(!url) return;
+                    const saved=await supabaseFetch('users?id=eq.'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify({avatar_url:url}),prefer:'return=representation'});
+                    if(!saved) return triggerToastNotification('تعذر حفظ الصورة في الملف الشخصي.','error');
+                    localStorage.setItem('alwaha_profile_avatar',url);
+                    syncUiWithLoadedProfileData();
+                    triggerToastNotification('تم تحديث الصورة الشخصية.','success');
+                } catch (error) { console.warn(error); triggerToastNotification('تعذر رفع الصورة؛ تحقق من الاتصال ثم حاول مجدداً.','error'); }
+            }});
+        }
+        async function submitAccountVerificationRequest() {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لطلب التوثيق.');
+            if(!user) return;
+            const phoneRaw=document.getElementById('verification-phone-input')?.value.trim()||'';
+            const phone=phoneRaw.replace(/[\s().-]/g,'');
+            const reason=document.getElementById('verification-reason-input')?.value.trim()||'';
+            const category=document.getElementById('verification-category-input')?.value||'شخصي';
+            const profileUrl=document.getElementById('verification-profile-link')?.value.trim()||'';
+            const extra=document.getElementById('verification-extra-input')?.value.trim()||'';
+            if(!/^\+[1-9]\d{7,14}$/.test(phone)) return triggerToastNotification('أدخل رقم هاتف بصيغة دولية صحيحة مثل +201xxxxxxxxx.','error');
+            if(!reason) return triggerToastNotification('اكتب سبب طلب التوثيق أولاً.','error');
+            if(profileUrl&&!/^https?:\/\//i.test(profileUrl)) return triggerToastNotification('الرابط يجب أن يبدأ بـ https:// أو http://.','error');
+            const profile=await getCurrentProfile();
+            if(!profile?.avatar_url) return triggerToastNotification('ارفع صورة شخصية حقيقية أولاً؛ الصورة الافتراضية لا تكفي للتوثيق.','error');
+            const updated=await supabaseFetch('users?id=eq.'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify({phone,hide_email:true,hide_phone:true}),prefer:'return=representation'});
+            if(!updated) return triggerToastNotification('تعذر حفظ رقم التواصل الخاص في الملف.','error');
+            const result=await supabaseFetch('verification_requests',{method:'POST',body:JSON.stringify({user_id:user.id,reason,phone,avatar_url:profile.avatar_url,category,profile_url:profileUrl||null,extra_details:extra||null}),prefer:'return=representation'});
+            if(!result) return triggerToastNotification('تعذر إرسال الطلب. قد يكون لديك طلب توثيق قيد المراجعة بالفعل.','error');
+            localStorage.setItem('alwaha_profile_phone',phone);
+            for(const id of ['verification-phone-input','verification-reason-input','verification-profile-link','verification-extra-input']) { const field=document.getElementById(id); if(field) field.value=''; }
+            triggerToastNotification('تم إرسال طلب التوثيق للمراجعة.','success');
+            closeSubProfileView('sub-prof-verify');
+        }
+        async function loadAllRegisteredUsersList() {
+            const container=document.getElementById('all-users-list'); if(!container) return;
+            const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض دليل المستخدمين.'); if(!me) return;
+            container.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:12px;padding:12px;">جاري تحميل أعضاء الواحة...</div>';
+            const [users,requests]=await Promise.all([
+                supabaseFetch('user_directory?select=id,first_name,last_name,avatar_url,is_verified,created_at,gender&limit=100'),
+                supabaseFetch('friend_requests?or=(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(me.id)+')&select=id,requester_id,target_id,status')
+            ]);
+            if(!Array.isArray(users)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل دليل المستخدمين.</div>';return;}
+            const map=new Map((requests||[]).map(r=>[r.requester_id===me.id?r.target_id:r.requester_id,r]));
+            const list=users.filter(u=>u.id!==me.id);
+            if(!list.length){container.innerHTML='<div style="text-align:center;color:#a9bfd2;padding:18px;">لا يوجد أعضاء آخرون حالياً.</div>';return;}
+            container.innerHTML=list.map(u=>{
+                const req=map.get(u.id);
+                const avatar=u.avatar_url||getDefaultAvatar(u.gender);
+                const name=([u.first_name||'',u.last_name||''].join(' ').trim()||'مستخدم');
+                let friendBtn=`<button class="btn-action" style="padding:7px 10px;background:#a8ffd7;color:#102033;border-radius:18px;" onclick="sendFriendRequest('${escapeJs(u.id)}')"><i class="fa-solid fa-user-plus"></i></button>`;
+                if(req?.status==='pending') friendBtn='<span style="color:#ffe7a3;font-size:10px;">قيد الانتظار</span>';
+                else if(req?.status==='accepted') friendBtn='<span style="color:#a8ffd7;font-size:10px;">أصدقاء</span>';
+                return `<div class="profile-menu-btn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:#ffffff0b;padding:11px;border:1px solid #b8e7ff20;border-radius:14px;gap:8px;"><div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="${escapeHtml(avatar)}" alt="الصورة الشخصية" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff55;"><div style="min-width:0;"><div style="font-weight:bold;color:#e8fbff;">${escapeHtml(name)} ${u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#8bf4ff;"></i>':''}</div><div style="font-size:10px;color:#92a8c0;">عضو في الواحة · بيانات التواصل خاصة</div></div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">${friendBtn}<button class="btn-action" style="padding:7px 11px;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#102033;border-radius:20px;" onclick="openTargetUserDirectChat('${escapeJs(name)}','','${escapeJs(u.id)}')"><i class="fa-solid fa-paper-plane"></i></button></div></div>`;
+            }).join('');
+        }
+        document.addEventListener('DOMContentLoaded',()=>{
+            const gender=document.getElementById('reg-gender');
+            const registerAvatar=document.getElementById('reg-avatar-preview');
+            if(registerAvatar) registerAvatar.src=getDefaultAvatar(gender?.value||'ذكر');
+            if(gender) gender.addEventListener('change',()=>{if(registerAvatar&&!localUploadedAvatarBase64)registerAvatar.src=getDefaultAvatar(gender.value);});
+            const phone=document.getElementById('verification-phone-input');
+            if(phone&&!phone.value)phone.value=localStorage.getItem('alwaha_profile_phone')||'';
+            syncUiWithLoadedProfileData();
         });
 
     </script>
