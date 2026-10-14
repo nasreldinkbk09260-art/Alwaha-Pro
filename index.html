@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.2</title>
+    <title>Alwaha-Pro 2.8.3</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <!-- خط القاهرة -->
@@ -360,6 +360,8 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @keyframes alwahaOrbFloat{0%,100%{translate:0 0}50%{translate:0 -2px}}
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
+    <script src="./assets/chess.min.js"></script>
+    <script src="./games.js?v=2.8.3" defer></script>
 </head>
 <body>
 
@@ -2501,7 +2503,7 @@ function triggerAnimeAiConverterFilter() {
             const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','deleteMyMarketItem','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 2.8.2 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 2.8.3 self-test: OK', getAlwahaCapabilityStatus());
         }
 
         // تهيئة كل المكونات بعد جاهزية DOM

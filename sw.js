@@ -1,9 +1,11 @@
-const CACHE_NAME = 'alwaha-pro-v2.8.2-cosmic1';
+const CACHE_NAME = 'alwaha-pro-v2.8.3-multiplayer';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.png'
+  './icon.png',
+  './games.js',
+  './assets/chess.min.js'
 ];
 
 self.addEventListener('install', (event) => {

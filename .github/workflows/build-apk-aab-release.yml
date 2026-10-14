@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - alwaha-build-only-repair-20261011-121903
+      - alwaha-games-release-2.8.3
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '2.8.2'
+  APP_VERSION: '2.8.3'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
@@ -52,12 +53,14 @@ jobs:
           test -s package.json
           test -s capacitor.config.json
           test -s scripts/build-web.mjs
-          grep -Fq 'Alwaha-Pro 2.8.2' index.html
+          test -s games.js
+          test -s supabase/migrations/20261012140000_multiplayer_game_rooms.sql
+          grep -Fq 'Alwaha-Pro 2.8.3' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
-          if (pkg.version !== '2.8.2') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (pkg.version !== '2.8.3') throw new Error(`Unexpected package version: ${pkg.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
           if (pkg.scripts?.build !== 'node scripts/build-web.mjs') throw new Error('Unexpected web build command.');
@@ -73,6 +76,8 @@ jobs:
         run: |
           set -euo pipefail
           node --check sw.js
+          node --check games.js
+          test -s assets/chess.min.js
           node <<'NODE'
           const fs = require('node:fs');
           for (const file of ['package.json','manifest.json','capacitor.config.json']) {
@@ -195,7 +200,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '2.8.2'
+          VERSION_NAME: '2.8.3'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -389,15 +394,15 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-2.8.2.apk
-          cp "$AAB" release/Alwaha-Pro-2.8.2.aab
-          sha256sum release/Alwaha-Pro-2.8.2.apk release/Alwaha-Pro-2.8.2.aab > release/SHA256SUMS.txt
+          cp "$APK" release/Alwaha-Pro-2.8.3.apk
+          cp "$AAB" release/Alwaha-Pro-2.8.3.aab
+          sha256sum release/Alwaha-Pro-2.8.3.apk release/Alwaha-Pro-2.8.3.aab > release/SHA256SUMS.txt
           echo 'Signed APK and AAB verified successfully.'
 
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-2.8.2-build-${{ github.run_number }}
+          name: Alwaha-Pro-2.8.3-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30
