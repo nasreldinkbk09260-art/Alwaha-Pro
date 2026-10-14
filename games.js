@@ -1,4 +1,4 @@
-/* Alwaha-Pro 2.8.5: online chess, two-player Ludo, and War (playing cards). */
+/* Alwaha-Pro 2.8.6: online chess, two-player Ludo, and War (playing cards). */
 (() => {
   'use strict';
 
@@ -100,7 +100,7 @@
     const code = (window.prompt('أدخل كود الغرفة المكوّن من 6 أحرف أو أرقام:') || '').trim().toUpperCase();
     if (!code) return;
     if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) return toast('كود الغرفة غير صحيح.', 'error');
-    const joined = normalizeRoom(await window.supabaseFetch('rpc/join_game_room', { method: 'POST', body: JSON.stringify({ p_room_code: code }), prefer: 'return=representation' }));
+    const joined = normalizeRoom(await window.supabaseFetch('rpc/join_game_room', { method: 'POST', body: JSON.stringify({ p_room_code: code, p_expected_game_id: gameId }), prefer: 'return=representation' }));
     if (!joined || !joined.id) return toast('تعذر الانضمام. تحقق من الكود، وأن الغرفة تنتظر لاعباً، وأن ترحيل قاعدة البيانات مطبّق.', 'error');
     if (joined.game_id !== gameId) return toast(`هذا الكود مخصص للعبة ${GAME_INFO[joined.game_id]?.title || joined.game_id}. افتحها من قسم اللعبة الصحيح.`, 'error');
     SESSION.user = user;

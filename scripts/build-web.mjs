@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
-const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js'];
+const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'production-polish.js'];
 
 for (const file of required) {
   if (!fs.existsSync(path.join(root, file))) {

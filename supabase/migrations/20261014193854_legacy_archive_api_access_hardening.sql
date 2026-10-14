@@ -1,0 +1,34 @@
+-- Alwaha-Pro production hardening: legacy tables stay archived, data is preserved.
+-- Verified live row counts at application time: posts=2, products=3, comments=0, messages=0.
+BEGIN;
+REVOKE ALL PRIVILEGES ON TABLE public.posts_legacy_20260923010735 FROM PUBLIC, anon, authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.products_legacy_20260923010735 FROM PUBLIC, anon, authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.comments_legacy_20260923010735 FROM PUBLIC, anon, authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.messages_legacy_20260923010735 FROM PUBLIC, anon, authenticated;
+ALTER TABLE public.posts_legacy_20260923010735 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products_legacy_20260923010735 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments_legacy_20260923010735 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages_legacy_20260923010735 ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Delete Access for Posts" ON public.posts_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Insert Access for Posts" ON public.posts_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Read Access for Posts" ON public.posts_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Update Access for Posts" ON public.posts_legacy_20260923010735;
+DROP POLICY IF EXISTS "Authenticated users can insert products" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Delete Access for Products" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Insert Access for Products" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Read Access for Products" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Update Access for Products" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public products are viewable by everyone" ON public.products_legacy_20260923010735;
+DROP POLICY IF EXISTS "Authenticated users can insert comments" ON public.comments_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Insert Access for Comments" ON public.comments_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Read Access for Comments" ON public.comments_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public comments are viewable by everyone" ON public.comments_legacy_20260923010735;
+DROP POLICY IF EXISTS "Public Access for Messages" ON public.messages_legacy_20260923010735;
+DROP POLICY IF EXISTS "Users can delete their sent messages" ON public.messages_legacy_20260923010735;
+DROP POLICY IF EXISTS "Users can read their own messages" ON public.messages_legacy_20260923010735;
+DROP POLICY IF EXISTS "Users can send messages" ON public.messages_legacy_20260923010735;
+COMMENT ON TABLE public.posts_legacy_20260923010735 IS 'Archived legacy data. API access revoked; use public.posts for application data.';
+COMMENT ON TABLE public.products_legacy_20260923010735 IS 'Archived legacy data. API access revoked; use public.products for application data.';
+COMMENT ON TABLE public.comments_legacy_20260923010735 IS 'Archived legacy data. API access revoked; use public.comments for application data.';
+COMMENT ON TABLE public.messages_legacy_20260923010735 IS 'Archived legacy data. API access revoked; use public.messages for application data.';
+COMMIT;

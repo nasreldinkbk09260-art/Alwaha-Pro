@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.5</title>
+    <title>Alwaha-Pro 2.8.6</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <!-- خط القاهرة -->
@@ -15,6 +15,7 @@
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
+    <script src="./production-polish.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -361,7 +362,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=2.8.5" defer></script>
+    <script src="./games.js?v=2.8.6" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -812,11 +813,11 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "2.8.2";
+            const currentAppVersion = "2.8.6";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.2 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.6 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);

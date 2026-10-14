@@ -1,10 +1,11 @@
-const CACHE_NAME = 'alwaha-pro-v2.8.5-multiplayer';
+const CACHE_NAME = 'alwaha-pro-v2.8.6-polished-audio';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './icon.png',
   './games.js',
+  './production-polish.js',
   './assets/chess.min.js'
 ];
 

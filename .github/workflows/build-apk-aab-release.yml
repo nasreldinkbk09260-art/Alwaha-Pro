@@ -8,6 +8,7 @@ on:
       - alwaha-games-release-2.8.3
       - alwaha-production-completion-20261014
       - alwaha-social-completion-2.8.5
+      - alwaha-social-polish-2.8.6
   workflow_dispatch:
 
 permissions:
@@ -20,7 +21,7 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '2.8.5'
+  APP_VERSION: '2.8.6'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
@@ -56,17 +57,29 @@ jobs:
           test -s capacitor.config.json
           test -s scripts/build-web.mjs
           test -s games.js
-          test -s supabase/migrations/20261012140000_multiplayer_game_rooms.sql
-          test -s supabase/migrations/20261014090000_username_follows_call_features.sql
+          test -s production-polish.js
+          test -s supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql
+          test -s supabase/migrations/20261014192321_username_follows_call_features_20261014090000.sql
+          test -s supabase/migrations/20261007082734_20261005000000_fix_like_count_security.sql
+          test -s supabase/migrations/20261011204819_secure_contact_privacy_defaults.sql
+          test -s supabase/migrations/20261014193854_legacy_archive_api_access_hardening.sql
+          test -s supabase/migrations/20261014194007_safe_public_directory_invoker.sql
+          test -s supabase/migrations/20261014194053_app_settings_api_privacy.sql
+          test -s supabase/migrations/20261014194820_release_policy_performance_cleanup.sql
+          test -s supabase/migrations/20261014194848_rls_initplan_optimization.sql
+          test -s supabase/migrations/20261014195018_game_room_join_game_validation.sql
+          test -s supabase/migrations/20261014195108_game_room_join_rpc_compatibility.sql
+          test -s supabase/migrations/20261014195445_friend_request_column_privileges.sql
+          test -s supabase/migrations/20261014195540_friend_request_policy_consolidation.sql
           test -s supabase/functions/username-auth/index.ts
           test -s supabase/functions/call-config/index.ts
-          grep -Fq 'Alwaha-Pro 2.8.5' index.html
+          grep -Fq 'Alwaha-Pro 2.8.6' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          if (pkg.version !== '2.8.5') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (pkg.version !== '2.8.6') throw new Error(`Unexpected package version: ${pkg.version}`);
           if (manifest.version !== pkg.version) throw new Error(`Manifest version mismatch: ${manifest.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
@@ -84,6 +97,7 @@ jobs:
           set -euo pipefail
           node --check sw.js
           node --check games.js
+          node --check production-polish.js
           test -s assets/chess.min.js
           node <<'NODE'
           const fs = require('node:fs');
@@ -117,6 +131,7 @@ jobs:
           test -s dist/manifest.json
           test -s dist/sw.js
           test -s dist/icon.png
+          test -s dist/production-polish.js
           echo 'Web build validated.'
 
       - name: Create or sync Android project
@@ -211,7 +226,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '2.8.5'
+          VERSION_NAME: '2.8.6'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -405,15 +420,15 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-2.8.5.apk
-          cp "$AAB" release/Alwaha-Pro-2.8.5.aab
-          sha256sum release/Alwaha-Pro-2.8.5.apk release/Alwaha-Pro-2.8.5.aab > release/SHA256SUMS.txt
+          cp "$APK" release/Alwaha-Pro-2.8.6.apk
+          cp "$AAB" release/Alwaha-Pro-2.8.6.aab
+          sha256sum release/Alwaha-Pro-2.8.6.apk release/Alwaha-Pro-2.8.6.aab > release/SHA256SUMS.txt
           echo 'Signed APK and AAB verified successfully.'
 
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-2.8.5-build-${{ github.run_number }}
+          name: Alwaha-Pro-2.8.6-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30
