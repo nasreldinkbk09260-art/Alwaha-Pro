@@ -1,4 +1,4 @@
-/* Alwaha-Pro 2.8.4: online chess, two-player Ludo, and War (playing cards). */
+/* Alwaha-Pro 2.8.5: online chess, two-player Ludo, and War (playing cards). */
 (() => {
   'use strict';
 

@@ -7,6 +7,7 @@ on:
       - alwaha-build-only-repair-20261011-121903
       - alwaha-games-release-2.8.3
       - alwaha-production-completion-20261014
+      - alwaha-social-completion-2.8.5
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '2.8.4'
+  APP_VERSION: '2.8.5'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
@@ -56,12 +57,17 @@ jobs:
           test -s scripts/build-web.mjs
           test -s games.js
           test -s supabase/migrations/20261012140000_multiplayer_game_rooms.sql
-          grep -Fq 'Alwaha-Pro 2.8.4' index.html
+          test -s supabase/migrations/20261014090000_username_follows_call_features.sql
+          test -s supabase/functions/username-auth/index.ts
+          test -s supabase/functions/call-config/index.ts
+          grep -Fq 'Alwaha-Pro 2.8.5' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
-          if (pkg.version !== '2.8.4') throw new Error(`Unexpected package version: ${pkg.version}`);
+          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          if (pkg.version !== '2.8.5') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (manifest.version !== pkg.version) throw new Error(`Manifest version mismatch: ${manifest.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
           if (pkg.scripts?.build !== 'node scripts/build-web.mjs') throw new Error('Unexpected web build command.');
@@ -205,7 +211,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '2.8.4'
+          VERSION_NAME: '2.8.5'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -399,15 +405,15 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-2.8.4.apk
-          cp "$AAB" release/Alwaha-Pro-2.8.4.aab
-          sha256sum release/Alwaha-Pro-2.8.4.apk release/Alwaha-Pro-2.8.4.aab > release/SHA256SUMS.txt
+          cp "$APK" release/Alwaha-Pro-2.8.5.apk
+          cp "$AAB" release/Alwaha-Pro-2.8.5.aab
+          sha256sum release/Alwaha-Pro-2.8.5.apk release/Alwaha-Pro-2.8.5.aab > release/SHA256SUMS.txt
           echo 'Signed APK and AAB verified successfully.'
 
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-2.8.4-build-${{ github.run_number }}
+          name: Alwaha-Pro-2.8.5-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30

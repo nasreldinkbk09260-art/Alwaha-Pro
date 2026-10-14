@@ -1,1 +1,7 @@
 project_id = "kjuixjdtqwcsnxefftrt"
+
+[functions.username-auth]
+verify_jwt = false
+
+[functions.call-config]
+verify_jwt = true

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v2.8.4-multiplayer';
+const CACHE_NAME = 'alwaha-pro-v2.8.5-multiplayer';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
