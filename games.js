@@ -1,14 +1,7 @@
-/* Alwaha-Pro 2.8.3: online chess, two-player Ludo, and War (playing cards). */
+/* Alwaha-Pro 2.8.4: online chess, two-player Ludo, and War (playing cards). */
 (() => {
   'use strict';
 
-  const legacyLaunch = window.launchGameEngine;
-  const LEGACY_TITLES = new Set([
-    'لعبة الذاكرة التقنية 🧠',
-    'تحدي كسر التشفير 🔐',
-    'تفكيك وتجميع الهواتف 📲',
-    'تحدي سرعة الصيانة ⚡'
-  ]);
   const GAME_INFO = {
     chess: { title: 'الشطرنج', icon: '♟️', color: '#70d6ff', description: 'شطرنج بقواعد قانونية كاملة، بما فيها الكش والكش مات والتعادل.' },
     ludo: { title: 'ليدو', icon: '🎲', color: '#00e0a4', description: 'ليدو لشخصين: رمي النرد، إخراج القطع، أكل قطع الخصم والوصول إلى النهاية.' },
@@ -358,22 +351,23 @@
 
   function renderGamesSection() {
     addStyles();
-    const container = $('games-list-container'); if (!container) return;
-    const cards = Object.entries(GAME_INFO).map(([id, game]) => `<article class="mp-game-card" style="border-color:${game.color}55"><div class="mp-game-icon">${game.icon}</div><div class="mp-game-title">${esc(game.title)}</div><div class="mp-game-desc">${esc(game.description)}</div><button class="mp-action mp-create" data-mp-create="${id}">إنشاء غرفة</button><button class="mp-action mp-join" data-mp-join="${id}">الانضمام بكود</button></article>`).join('');
-    container.innerHTML = `<div class="mp-help" style="font-size:12px">ألعاب جماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div><div class="mp-legacy"><strong style="font-size:13px;color:#d8e5f2">الألعاب الفردية الحالية</strong><div class="mp-help">تم الإبقاء على الألعاب السابقة بدل حذفها قبل اختبار النسخة الجديدة.</div><button data-mp-legacy="لعبة الذاكرة التقنية 🧠">🧠 لعبة الذاكرة التقنية</button><button data-mp-legacy="تحدي كسر التشفير 🔐">🔐 تحدي كسر التشفير</button><button data-mp-legacy="تفكيك وتجميع الهواتف 📲">📲 تفكيك وتجميع الهواتف</button><button data-mp-legacy="تحدي سرعة الصيانة ⚡">⚡ تحدي سرعة الصيانة</button></div>`;
+    const container = $('games-list-container');
+    if (!container) return;
+    const cards = Object.entries(GAME_INFO).map(([id, game]) => `<article class="mp-game-card" style="border-color:${game.color}55"><div class="mp-game-icon">${game.icon}</div><div class="mp-game-title">${esc(game.title)}</div><div class="mp-game-desc">${esc(game.description)}</div><button type="button" class="mp-action mp-create" data-mp-create="${id}">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="${id}">الانضمام بكود</button></article>`).join('');
+    container.innerHTML = `<div class="mp-help" style="font-size:12px">الألعاب الجماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div>`;
     container.onclick = (event) => {
-      const create = event.target.closest('[data-mp-create]'); if (create) { createRoom(create.dataset.mpCreate); return; }
-      const join = event.target.closest('[data-mp-join]'); if (join) { joinRoom(join.dataset.mpJoin); return; }
-      const legacy = event.target.closest('[data-mp-legacy]'); if (legacy) { if (typeof legacyLaunch === 'function' && LEGACY_TITLES.has(legacy.dataset.mpLegacy)) legacyLaunch(legacy.dataset.mpLegacy); else toast('اللعبة القديمة غير متاحة في هذه النسخة.', 'error'); }
+      const create = event.target.closest('[data-mp-create]');
+      if (create) { createRoom(create.dataset.mpCreate); return; }
+      const join = event.target.closest('[data-mp-join]');
+      if (join) joinRoom(join.dataset.mpJoin);
     };
   }
   window.renderGamesSection = renderGamesSection;
-  // Keep compatibility with other UI code that calls launchGameEngine().
+  // Only multiplayer games are exposed in this release candidate.
   window.launchGameEngine = function(gameTitle) {
-    if (LEGACY_TITLES.has(gameTitle) && typeof legacyLaunch === 'function') return legacyLaunch(gameTitle);
     const id = Object.keys(GAME_INFO).find(key => GAME_INFO[key].title === gameTitle);
     if (id) return createRoom(id);
-    return toast('اختر لعبة من قسم الألعاب.', 'info');
+    return toast('اختر لعبة جماعية من قسم الألعاب.', 'info');
   };
   window.closeAlwahaGameRoom = closeRoom;
   document.addEventListener('DOMContentLoaded', () => {

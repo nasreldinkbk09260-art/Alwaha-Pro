@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.3</title>
+    <title>Alwaha-Pro 2.8.4</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <!-- خط القاهرة -->
@@ -361,7 +361,17 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=2.8.3" defer></script>
+    <script src="./games.js?v=2.8.4" defer></script>
+
+    <style id="alwaha-real-theme-palettes">
+      body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
+      body.theme-nature { background:radial-gradient(ellipse at 10% 12%,rgba(74,222,128,.18),transparent 38%),radial-gradient(ellipse at 90% 70%,rgba(20,184,166,.15),transparent 40%),linear-gradient(155deg,#071713 0%,#102922 52%,#0b1a20 100%) !important; background-attachment:fixed !important; }
+      body.theme-tech { background:radial-gradient(ellipse at 12% 18%,rgba(34,211,238,.20),transparent 38%),radial-gradient(ellipse at 82% 68%,rgba(99,102,241,.17),transparent 40%),linear-gradient(155deg,#030712 0%,#0b1530 52%,#090d1b 100%) !important; background-attachment:fixed !important; }
+      body.theme-soft { background:radial-gradient(ellipse at 12% 12%,rgba(147,197,253,.18),transparent 40%),radial-gradient(ellipse at 90% 75%,rgba(196,181,253,.16),transparent 42%),linear-gradient(155deg,#121a2a 0%,#1b2638 52%,#202033 100%) !important; background-attachment:fixed !important; }
+      body.theme-nature:before { background:radial-gradient(circle at 15% 24%,#5af59b24 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#4de2c42a 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#7de39a20 0 3%,transparent 19%); }
+      body.theme-soft:before { background:radial-gradient(circle at 15% 24%,#94c8ff20 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#d8c7ff24 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#b6e5ff1c 0 3%,transparent 19%); }
+    </style>
+
 </head>
 <body>
 
@@ -456,7 +466,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
         </div>
 
         <div id="market-sell-view" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:12px;">
-            <h3 style="font-size:14px; color:#ffd700; margin-top:0;">إضافة إعلان جديد في السوق</h3>
+            <h3 id="market-sell-title" style="font-size:14px; color:#ffd700; margin-top:0;">إضافة إعلان جديد في السوق</h3>
             <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">اسم المنتج أو السلعة</label>
                 <input type="text" id="prod-name" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
@@ -485,7 +495,8 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
                 </button>
                 <div id="prod-images-preview-container" style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;"></div>
             </div>
-            <button class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:10px; border-radius:8px; font-size:13px;" onclick="submitNewProductToMarket()">نشر الإعلان الآن</button>
+            <button type="button" id="market-submit-product-btn" class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:10px; border-radius:8px; font-size:13px;" onclick="submitNewProductToMarket()">نشر الإعلان الآن</button>
+            <button type="button" id="market-cancel-edit-btn" class="btn-action" style="display:none;width:100%;margin-top:8px;background:#253449;color:#fff;padding:9px;border-radius:8px;font-size:12px;" onclick="cancelEditMyMarketItem()">إلغاء التعديل</button>
         </div>
 
         <div id="market-my-items-view" style="display:none;">
@@ -534,7 +545,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
             </div>
             <div style="display:flex; gap:12px;">
                 <button class="btn-action" style="background:transparent; color:#00ff88; font-size:16px;" onclick="initiateVoiceCall('online')"><i class="fa-solid fa-phone"></i></button>
-                <button class="btn-action" style="background:transparent; color:#00ffff; font-size:16px;" onclick="initiateVoiceCall('offline')"><i class="fa-solid fa-wifi"></i></button>
+                <button type="button" class="btn-action" disabled aria-disabled="true" title="مكالمات البلوتوث قيد التطوير" style="background:transparent;color:#718198;font-size:12px;opacity:.68;cursor:not-allowed;" aria-label="مكالمات بلوتوث قيد التطوير"><i class="fa-brands fa-bluetooth-b"></i><span style="font-size:9px;display:block;">بلوتوث لاحقاً</span></button>
             </div>
         </div>
         <div id="chat-messages-container" style="height: calc(100vh - 150px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column;"></div>
@@ -661,10 +672,11 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
         </div>
         
         <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">خلفيات التطبيق والمظهر</h4>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <button class="btn-action" style="flex:1; background:linear-gradient(135deg, #0f2027, #203a43); color:#fff; padding:10px; font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
-            <button class="btn-action" style="flex:1; background:radial-gradient(circle, #0a0a2a, #000); color:#00ffff; padding:10px; font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
-            <button class="btn-action" style="flex:1; background:#14141e; color:#e2e8f0; border:1px solid #333; padding:10px; font-size:11px;" onclick="changeAppTheme('soft')">🧶 افتراضي ناعم</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#050813,#1b2144);color:#d9e8ff;padding:10px;font-size:11px;border:1px solid #91a9ff55;" onclick="changeAppTheme('default')">🌌 فضائي افتراضي</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0f2027,#203a43);color:#fff;padding:10px;font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:radial-gradient(circle,#0a0a2a,#000);color:#00ffff;padding:10px;font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#14141e,#29364a);color:#e2e8f0;border:1px solid #ffffff25;padding:10px;font-size:11px;" onclick="changeAppTheme('soft')">🌙 هادئ</button>
         </div>
 
         <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
@@ -725,7 +737,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 
     <!-- 5. قسم وضع المشاركة الحرة -->
     <section id="free-section" class="app-section">
-        <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-wifi"></i> وضع المشاركة الحرة (بدون إنترنت)</h2>
+        <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-share-nodes"></i> مشاركة الملفات المحلية</h2>
         <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
             <i class="fa-solid fa-power-off"></i> تفعيل وضع المشاركة الحرة
         </button>
@@ -889,15 +901,18 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
         let pendingHomePostDataUrl = '';
         let localUploadedAvatarFile = null;
         let marketMultiFilesArray = [];
+        let editingMarketProductId = null;
+        let marketEditingExistingImageUrls = [];
         let notificationChannel = null;
 
         function changeAppTheme(themeName, showToast = true) {
-            document.body.className = '';
-            if(themeName !== 'default') {
-                document.body.classList.add(`theme-${themeName}`);
-            }
-            localStorage.setItem('alwaha_theme', themeName);
-            if(showToast) triggerToastNotification("تم تغيير المظهر بنجاح!", "success");
+            const allowedThemes = new Set(['default', 'nature', 'tech', 'soft']);
+            const selectedTheme = allowedThemes.has(themeName) ? themeName : 'default';
+            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft');
+            if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
+            try { localStorage.setItem('alwaha_theme', selectedTheme); }
+            catch (error) { console.warn('Unable to persist theme selection:', error); }
+            if (showToast) triggerToastNotification('تم حفظ المظهر وتفعيله.', 'success');
         }
 
         async function clearAppCacheKeepData() {
@@ -1523,6 +1538,9 @@ async function renderHomePostsFeed() {
             const mineSet=new Set((mine||[]).map(x=>String(x.post_id)));
             container.innerHTML=posts.map(post=>{
                 const id=String(post.id), liked=mineSet.has(id), count=countMap.get(id)||0;
+                const ownerActions = me && post.author_id === me.id
+                    ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل المنشور</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف المنشور</button></div>`
+                    : '';
                 const imageMarkup=post.image_url?`<img src="${escapeHtml(post.image_url)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:8px 0;" loading="lazy" alt="">`:'';
                 return `<div style="border-right:3px solid ${post.post_type==='تقني'?'#00ffff':'#ff00ff'};background:rgba(0,0,0,.3);padding:15px;border-radius:8px;margin-bottom:15px;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span style="color:#ffd700;font-weight:bold;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.author_name||'مستخدم')}</span><span style="background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;font-size:10px;color:#aaa;">${escapeHtml(post.post_type||'عام')}</span></div>
@@ -1531,7 +1549,7 @@ async function renderHomePostsFeed() {
                         <button class="btn-action ${liked?'liked':''}" style="background:transparent;color:${liked?'#ff0055':'#fff'};padding:4px 8px;font-size:12px;flex:1;" id="like-btn-${escapeJs(id)}" onclick="togglePostLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${escapeJs(id)}">${count}</span>)</button>
                         <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
                         <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="shareTextContent('منشور Alwaha-Pro','${escapeJs((post.content||'').slice(0,160))}')"><i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة</button>
-                    </div></div>`;
+                    </div>${ownerActions}</div>`;
             }).join('');
         }
 
@@ -1557,6 +1575,24 @@ async function togglePostLike(id) {
             playLuxuriousNotificationSound(); renderHomePostsFeed();
         }
 
+        async function editOwnHomePost(postId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل منشور.');if(!user)return;
+            const rows=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}&select=id,content,image_url&limit=1`);
+            const post=Array.isArray(rows)?rows[0]:null;if(!post)return triggerToastNotification('لم يتم العثور على منشور تملكه.','error');
+            const nextContent=window.prompt('عدّل نص المنشور:',post.content||'');if(nextContent===null)return;
+            if(!nextContent.trim()&&!post.image_url)return triggerToastNotification('أضف نصاً أو صورة قبل الحفظ.','error');
+            const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({content:nextContent.trim()||'📷 صورة'}),prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر تعديل المنشور.','error');
+            triggerToastNotification('تم تعديل المنشور.','success');renderHomePostsFeed();
+        }
+        async function deleteOwnHomePost(postId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
+            if(!window.confirm('هل تريد حذف هذا المنشور نهائياً؟'))return;
+            const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور.','error');
+            triggerToastNotification('تم حذف المنشور.','success');renderHomePostsFeed();
+        }
+
         /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
 
 async function renderReelsFeed() {
@@ -1570,6 +1606,9 @@ async function renderReelsFeed() {
             const mineSet=new Set((mine||[]).map(x=>String(x.reel_id)));
             reelsContainer.innerHTML=reels.map(reel=>{
                 const id=String(reel.id), liked=mineSet.has(id), count=countMap.get(id)||0;
+                const ownerActions = me && reel.author_id === me.id
+                    ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnReel('${escapeJs(id)}')">تعديل العنوان</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnReel('${escapeJs(id)}')">حذف الريلز</button></div>`
+                    : '';
                 const media=reel.media_url?`<video src="${escapeHtml(reel.media_url)}" controls playsinline preload="metadata" style="width:100%;max-height:62vh;object-fit:contain;background:#000;border-radius:12px;"></video>`:`<div style="text-align:center;color:#aaa;padding:35px;"><i class="fa-solid fa-circle-play fa-4x" style="color:#ff0055;margin-bottom:10px;"></i></div>`;
                 return `<div class="reel-card" style="position:relative;overflow:hidden;">${media}<div style="padding:10px 4px;"><div style="color:#fff;font-weight:bold;font-size:14px;">${escapeHtml(reel.title||'ريلز')}</div><div style="color:#ffd700;font-size:11px;margin-top:4px;">بواسطة: ${escapeHtml(reel.author_name||'مستخدم')}</div></div>
                     <div class="reels-floating-tools">
@@ -1577,7 +1616,7 @@ async function renderReelsFeed() {
                         <div class="reels-floating-btn ${liked?'liked':''}" id="reel-like-btn-${escapeJs(id)}" onclick="toggleReelLike('${escapeJs(id)}')" title="إعجاب"><i class="fa-solid fa-heart" id="reel-like-icon-${escapeJs(id)}" style="color:${liked?'#ff0055':'#fff'};"></i><span class="reels-btn-label" id="reel-like-count-${escapeJs(id)}">${count}</span></div>
                         <div class="reels-floating-btn" onclick="openCommentsModal('${escapeJs(id)}','reel')" title="تعليق"><i class="fa-solid fa-comment-dots" style="color:#00ffff;"></i><span class="reels-btn-label">تعليق</span></div>
                         <div class="reels-floating-btn" onclick="shareReelContent('${escapeJs(reel.title||'ريلز')}', '${escapeJs(reel.media_url||'') }')" title="مشاركة"><i class="fa-solid fa-share-nodes" style="color:#00ff88;"></i><span class="reels-btn-label">مشاركة</span></div>
-                    </div></div>`;
+                    </div>${ownerActions}</div>`;
             }).join('');
         }
 
@@ -1599,7 +1638,25 @@ async function shareReelContent(title, mediaUrl='') {
             } catch(e) {}
         }
 
-async function openCommentsModal(targetId, targetType='post') {
+async function editOwnReel(reelId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل ريلز.');if(!user)return;
+            const rows=await supabaseFetch(`reels?id=eq.${encodeURIComponent(reelId)}&author_id=eq.${encodeURIComponent(user.id)}&select=id,title&limit=1`);
+            const reel=Array.isArray(rows)?rows[0]:null;if(!reel)return triggerToastNotification('لم يتم العثور على ريلز تملكه.','error');
+            const nextTitle=window.prompt('عدّل عنوان الريلز:',reel.title||'ريلز جديد');if(nextTitle===null)return;
+            if(!nextTitle.trim())return triggerToastNotification('عنوان الريلز لا يمكن أن يكون فارغاً.','error');
+            const result=await supabaseFetch(`reels?id=eq.${encodeURIComponent(reelId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({title:nextTitle.trim().slice(0,120)}),prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر تعديل عنوان الريلز.','error');
+            triggerToastNotification('تم تعديل عنوان الريلز.','success');renderReelsFeed();
+        }
+        async function deleteOwnReel(reelId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف ريلز.');if(!user)return;
+            if(!window.confirm('هل تريد حذف هذا الريلز من المنصة؟'))return;
+            const result=await supabaseFetch(`reels?id=eq.${encodeURIComponent(reelId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف الريلز.','error');
+            triggerToastNotification('تم حذف الريلز.','success');renderReelsFeed();
+        }
+
+        async function openCommentsModal(targetId, targetType='post') {
             currentActiveCommentPostId=String(targetId); window.currentActiveCommentType=targetType;
             const modal=document.getElementById('comments-modal-box'); if(modal){modal.style.display='block';document.body.classList.add('modal-active');}
             await loadCommentsForTarget(targetId,targetType);
@@ -2106,6 +2163,7 @@ async function renderConversationsList() {
         }
 
         async function initiateVoiceCall(type) {
+            if (type === 'offline') return triggerToastNotification('المكالمات عبر البلوتوث لم تُنفذ بعد؛ مكالمات النسخة الحالية تعتمد على الإنترنت.', 'info');
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لإجراء مكالمة صوتية.');
             if (!user) return;
             const targetId = currentChatUserId || '';
@@ -2176,28 +2234,35 @@ function handleMarketMultiImages() {
         }
 
 async function submitNewProductToMarket() {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لنشر إعلان في السوق.'); if(!user)return;
-            const name=document.getElementById('prod-name')?.value.trim();
-            const price=document.getElementById('prod-price')?.value.trim();
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لنشر إعلان في السوق.');if(!user)return;
+            const name=document.getElementById('prod-name')?.value.trim()||'';
+            const price=document.getElementById('prod-price')?.value.trim()||'';
             const category=document.getElementById('prod-category')?.value||'أخرى';
-            const desc=document.getElementById('prod-desc-location')?.value.trim();
+            const desc=document.getElementById('prod-desc-location')?.value.trim()||'';
             if(!name||!price||!desc)return triggerToastNotification('يرجى كتابة كافة البيانات الأساسية للمنتج.','error');
-            let imageUrl='';
-            let imageUrls=[];
+            let imageUrls=editingMarketProductId?[...marketEditingExistingImageUrls].slice(0,6):[];
             if(marketMultiFilesArray.length){
+                const uploadedUrls=[];
                 for(const file of marketMultiFilesArray.slice(0,6)){
                     const uploaded=await uploadFileToStorage(file,'products',{maxBytes:8*1024*1024});
-                    if(uploaded) imageUrls.push(uploaded);
+                    if(!uploaded)return triggerToastNotification('تعذر رفع إحدى الصور؛ لم يتم حفظ الإعلان. حاول مرة أخرى.','error');
+                    uploadedUrls.push(uploaded);
                 }
-                imageUrl=imageUrls[0]||'';
+                imageUrls=uploadedUrls;
             }
-            const profile=await getCurrentProfile();
-            const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrl,image_urls:imageUrls,seller_email:profile?.identifier||user.email||''};
-            const res=await supabaseFetch('products',{method:'POST',body:JSON.stringify(payload)});
-            if(!res)return triggerToastNotification('تعذر نشر الإعلان. تحقق من الاتصال والصلاحيات.','error');
-            ['prod-name','prod-price','prod-desc-location'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-            marketMultiFilesArray=[];const preview=document.getElementById('prod-images-preview-container');if(preview)preview.innerHTML='';
-            triggerToastNotification('تم نشر الإعلان في السوق بنجاح.','success');switchMarketSubView('buy');
+            const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||'',image_urls:imageUrls};
+            const isEditing=!!editingMarketProductId;
+            const endpoint=isEditing?`products?id=eq.${encodeURIComponent(editingMarketProductId)}&seller_id=eq.${encodeURIComponent(user.id)}`:'products';
+            const result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+            if(result===null||(isEditing&&Array.isArray(result)&&result.length===0))return triggerToastNotification(isEditing?'تعذر تحديث الإعلان؛ تحقق من الملكية والصلاحيات.':'تعذر نشر الإعلان. تحقق من الاتصال والصلاحيات.','error');
+            ['prod-name','prod-price','prod-desc-location'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});
+            marketMultiFilesArray=[];marketEditingExistingImageUrls=[];editingMarketProductId=null;
+            const preview=document.getElementById('prod-images-preview-container');if(preview)preview.innerHTML='';
+            const title=document.getElementById('market-sell-title');if(title)title.textContent='إضافة إعلان جديد في السوق';
+            const submit=document.getElementById('market-submit-product-btn');if(submit)submit.textContent='نشر الإعلان الآن';
+            const cancel=document.getElementById('market-cancel-edit-btn');if(cancel)cancel.style.display='none';
+            triggerToastNotification(isEditing?'تم تحديث إعلانك بنجاح.':'تم نشر الإعلان في السوق بنجاح.','success');
+            switchMarketSubView('buy');renderMyPersonalMarketItems();
         }
 
         function searchProducts() {
@@ -2227,56 +2292,103 @@ async function submitNewProductToMarket() {
         }
 
         async function renderProductsList(searchQuery = '') {
-            const container = document.getElementById('market-products-list-container');
-            if (!container) return;
-            container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#ffd700; font-size:12px; padding:15px;">جاري تحديث السلع...</div>`;
-            const products = await supabaseFetch("products?select=*&order=created_at.desc");
-            if (!products || !Array.isArray(products) || products.length === 0) {
-                container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد سلع معروضة.</div>`;
-                return;
-            }
-            const esc = escapeHtml;
-            const q = String(searchQuery || '').trim().toLowerCase();
-            const filtered = products.filter(prod => !q || `${prod.title || ''} ${prod.category || ''} ${prod.description || ''} ${prod.seller_email || ''}`.toLowerCase().includes(q));
-            if (!filtered.length) {
-                container.innerHTML = `<div id="market-search-empty" style="grid-column:1/-1; text-align:center; color:#aaa; font-size:12px; padding:20px;">لا توجد نتائج مطابقة للبحث.</div>`;
-                return;
-            }
-            container.innerHTML = filtered.map(prod => {
-                const urls = Array.isArray(prod.image_urls) ? prod.image_urls.filter(x => typeof x === 'string' && /^(https?:\/\/|data:image\/)/i.test(x)).slice(0,6) : [];
-                if (!urls.length && typeof prod.image_url === 'string' && /^(https?:\/\/|data:image\/)/i.test(prod.image_url)) urls.push(prod.image_url);
-                const gallery = urls.length ? `<div style="display:grid;grid-template-columns:repeat(${Math.min(3,Math.max(1,urls.length))},1fr);gap:4px;margin-bottom:8px;">${urls.map(u=>`<img src="${esc(u)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" loading="lazy" alt="">`).join('')}</div>` : `<img src="icon.png" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" loading="lazy" alt="">`;
-                return `
-                    <div data-market-card="true" data-search="${esc(`${prod.title || ''} ${prod.category || ''} ${prod.description || ''}`).replace(/"/g,'&quot;')}" style="background:rgba(255,255,255,0.05); border-radius:10px; padding:10px; border:1px solid rgba(255,255,255,0.1);">
-                        ${gallery}
-                        <div style="font-weight:bold; color:#00ffff; margin-bottom:3px; font-size:13px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${esc(prod.title || 'منتج')}</div>
-                        <div style="color:#ffd700; font-weight:bold; margin-bottom:5px; font-size:14px;">💰 ${esc(prod.price || '')}</div>
-                        <div style="font-size:10px; color:#aaa; margin-bottom:8px; min-height:30px; max-height:46px; overflow:hidden;">${esc(prod.description || 'لا يوجد وصف')}</div>
-                        <div style="font-size:9px;color:#888;margin-bottom:8px;">${esc(prod.category || 'أخرى')}</div>
-                        <button class="btn-action" style="width:100%; justify-content:center; font-size:11px; padding:8px; background:linear-gradient(90deg, #00ffff, #3a86ff); color:#000; border:none; border-radius:5px;" onclick="openTargetUserDirectChat('بائع المنتج: ${escapeJs(prod.title || 'المنتج')}', '${escapeJs(prod.seller_email || '')}', '${escapeJs(prod.seller_id || '')}')">
-                            <i class="fa-solid fa-cart-shopping"></i> تواصل للشراء
-                        </button>
-                    </div>`;
+            const container=document.getElementById('market-products-list-container');if(!container)return;
+            container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السلع...</div>';
+            const products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&order=created_at.desc');
+            if(!Array.isArray(products)||!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
+            const q=String(searchQuery||'').trim().toLowerCase();
+            const filtered=products.filter(prod=>!q||`${prod.title||''} ${prod.category||''} ${prod.description||''}`.toLowerCase().includes(q));
+            if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد نتائج مطابقة للبحث.</div>';return;}
+            container.innerHTML=filtered.map(prod=>{
+              const urls=Array.isArray(prod.image_urls)?prod.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
+              if(!urls.length&&typeof prod.image_url==='string'&&/^https?:\/\//i.test(prod.image_url))urls.push(prod.image_url);
+              const gallery=urls.length?`<div style="display:grid;grid-template-columns:repeat(${Math.min(3,Math.max(1,urls.length))},1fr);gap:4px;margin-bottom:8px;">${urls.map(url=>`<img src="${escapeHtml(url)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" loading="lazy" alt="">`).join('')}</div>`:'<img src="icon.png" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" loading="lazy" alt="">';
+              return `
+                <article data-market-card="true" data-search="${escapeHtml(`${prod.title||''} ${prod.category||''} ${prod.description||''}`)}" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.1);">
+                  ${gallery}
+                  <div style="font-weight:bold;color:#00ffff;margin-bottom:3px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(prod.title||'منتج')}</div>
+                  <div style="color:#ffd700;font-weight:bold;margin-bottom:5px;font-size:14px;">💰 ${escapeHtml(prod.price||'')}</div>
+                  <div style="font-size:10px;color:#aaa;margin-bottom:8px;min-height:30px;max-height:46px;overflow:hidden;">${escapeHtml(prod.description||'لا يوجد وصف')}</div>
+                  <div style="font-size:9px;color:#888;margin-bottom:8px;">${escapeHtml(prod.category||'أخرى')}</div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(prod.id)}')"><i class="fa-solid fa-circle-info"></i> التفاصيل</button>
+                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openTargetUserDirectChat('بائع المنتج: ${escapeJs(prod.title||'المنتج')}','','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> تواصل للشراء</button>
+                  </div>
+                </article>`;
             }).join('');
         }
-
-        /* --- تكملة وتصحيح الدالة التي كانت مفقودة ونصفها مقطوع --- */
-
-async function renderMyPersonalMarketItems() {
-            const container=document.getElementById('my-market-items-container'); if(!container)return;
-            const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.'); if(!me){container.innerHTML='';return;}
-            container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const myProds=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&order=created_at.desc`);
-            if(!Array.isArray(myProds)||!myProds.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
-            container.innerHTML=myProds.map(prod=>`<div style="background:rgba(255,255,255,.05);border-radius:8px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="flex:1;"><div style="color:#ffd700;font-weight:bold;font-size:13px;">${escapeHtml(prod.title)}</div><div style="color:#00ff88;font-size:11px;">${escapeHtml(prod.price)}</div></div><button class="btn-action" style="background:#ff0055;color:#fff;padding:6px 12px;border-radius:6px;font-size:10px;" onclick="deleteMyMarketItem('${escapeJs(prod.id)}')"><i class="fa-solid fa-trash"></i> حذف</button></div>`).join('');
+        async function openMarketProductDetails(productId) {
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&limit=1`);
+            const product=Array.isArray(rows)?rows[0]:null;
+            if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
+            const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
+            if(!urls.length&&typeof product.image_url==='string'&&/^https?:\/\//i.test(product.image_url))urls.push(product.image_url);
+            const images=urls.length?`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0;">${urls.map(url=>`<img src="${escapeHtml(url)}" alt="" loading="lazy" style="width:100%;max-height:190px;object-fit:contain;background:#050914;border-radius:10px;">`).join('')}</div>`:'<img src="icon.png" alt="" style="width:100%;max-height:160px;object-fit:contain;margin:12px 0;">';
+            const me=await getCurrentAuthUser();
+            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع.</div>':(product.seller_id===me.id?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله من قسم إعلاناتك.</div>':`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="closeMarketProductDetails();openTargetUserDirectChat('بائع المنتج: ${escapeJs(product.title||'المنتج')}','','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> تواصل مع البائع</button>`);
+            let modal=document.getElementById('market-product-detail-modal');
+            if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay';document.body.appendChild(modal);}
+            modal.innerHTML=`<div class="game-modal-card" role="dialog" aria-modal="true" aria-label="تفاصيل المنتج" style="width:min(94vw,520px);max-height:90vh;overflow:auto;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><h3 style="margin:0;color:#8bf4ff;font-size:16px;">تفاصيل المنتج</h3><button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:20px;" onclick="closeMarketProductDetails()" aria-label="إغلاق">×</button></div>
+              ${images}<h4 style="margin:8px 0;color:#fff;font-size:17px;">${escapeHtml(product.title||'منتج')}</h4>
+              <div style="color:#ffd700;font-size:16px;font-weight:bold;margin-bottom:8px;">${escapeHtml(product.price||'')}</div>
+              <div style="color:#9fb1c8;font-size:11px;margin-bottom:8px;">${escapeHtml(product.category||'أخرى')}</div>
+              <p style="color:#eef4ff;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(product.description||'لا يوجد وصف إضافي.')}</p>${message}
+            </div>`;
+            modal.style.display='flex';document.body.classList.add('modal-active');modal.onclick=event=>{if(event.target===modal)closeMarketProductDetails();};
+        }
+        function closeMarketProductDetails() {
+            const modal=document.getElementById('market-product-detail-modal');if(modal)modal.style.display='none';
+            const stillOpen=document.querySelector('.sub-profile-view-box[style*="display: block"],#active-chat-box[style*="display: block"],#comments-modal-box[style*="display: block"],#voice-call-modal[style*="display: flex"]');
+            if(!stillOpen)document.body.classList.remove('modal-active');
         }
 
-async function deleteMyMarketItem(prodId) {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً.'); if(!user)return;
-            if(!confirm('هل أنت متأكد من حذف هذا الإعلان؟'))return;
-            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'});
-            if(result===null)return triggerToastNotification('تعذر حذف الإعلان.','error');
-            triggerToastNotification('تم حذف إعلانك بنجاح.','success');renderMyPersonalMarketItems();renderProductsList();
+                /* --- تكملة وتصحيح الدالة التي كانت مفقودة ونصفها مقطوع --- */
+
+async function renderMyPersonalMarketItems() {
+            const container=document.getElementById('my-market-items-container');if(!container)return;
+            const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
+            container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
+            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&order=created_at.desc`);
+            if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
+            if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
+            container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="color:#ffd700;font-weight:bold;font-size:13px;overflow-wrap:anywhere;">${escapeHtml(product.title||'منتج')}</div><div style="color:#00ff88;font-size:11px;margin-top:4px;">${escapeHtml(product.price||'')}</div><div style="color:#8da2ba;font-size:10px;margin-top:4px;">${escapeHtml(product.category||'أخرى')}</div></div>
+                <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;"><button type="button" class="btn-action" style="background:#8bf4ff;color:#091223;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="editMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-pen"></i> تعديل</button><button type="button" class="btn-action" style="background:#ff0055;color:#fff;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="deleteMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-trash"></i> حذف</button></div>
+              </div><button type="button" class="btn-action" style="width:100%;margin-top:8px;background:#253449;color:#fff;padding:7px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
+            </div>`).join('');
+        }
+        async function editMyMarketItem(productId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,title,price,category,description,image_url,image_urls&limit=1`);
+            const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
+            editingMarketProductId=String(product.id);
+            marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
+            if(!marketEditingExistingImageUrls.length&&/^https?:\/\//i.test(product.image_url||''))marketEditingExistingImageUrls=[product.image_url];
+            document.getElementById('prod-name').value=product.title||'';document.getElementById('prod-price').value=product.price||'';
+            document.getElementById('prod-category').value=product.category||'أخرى';document.getElementById('prod-desc-location').value=product.description||'';
+            const title=document.getElementById('market-sell-title');if(title)title.textContent='تعديل إعلانك';
+            const submit=document.getElementById('market-submit-product-btn');if(submit)submit.textContent='حفظ التعديلات';
+            const cancel=document.getElementById('market-cancel-edit-btn');if(cancel)cancel.style.display='block';
+            const preview=document.getElementById('prod-images-preview-container');
+            if(preview){preview.innerHTML='';marketEditingExistingImageUrls.forEach(url=>{const img=document.createElement('img');img.src=url;img.alt='صورة حالية للمنتج';img.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #8bf4ff;';preview.appendChild(img);});}
+            marketMultiFilesArray=[];switchMarketSubView('sell');document.getElementById('prod-name')?.focus();
+            triggerToastNotification('عدّل البيانات ثم احفظ؛ رفع صور جديدة سيستبدل صور الإعلان الحالية.','info');
+        }
+        function cancelEditMyMarketItem() {
+            editingMarketProductId=null;marketEditingExistingImageUrls=[];marketMultiFilesArray=[];
+            ['prod-name','prod-price','prod-desc-location'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});
+            const preview=document.getElementById('prod-images-preview-container');if(preview)preview.innerHTML='';
+            const title=document.getElementById('market-sell-title');if(title)title.textContent='إضافة إعلان جديد في السوق';
+            const submit=document.getElementById('market-submit-product-btn');if(submit)submit.textContent='نشر الإعلان الآن';
+            const cancel=document.getElementById('market-cancel-edit-btn');if(cancel)cancel.style.display='none';switchMarketSubView('my-items');
+        }
+        async function deleteMyMarketItem(prodId) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً.');if(!user)return;
+            if(!window.confirm('هل أنت متأكد من حذف هذا الإعلان؟'))return;
+            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف الإعلان؛ تحقق من ملكية الإعلان والصلاحيات.','error');
+            triggerToastNotification('تم حذف إعلانك بنجاح.','success');await renderMyPersonalMarketItems();await renderProductsList();
         }
 
         /* --- قسم الألعاب المكتمل التفاعلي --- */
@@ -2500,14 +2612,17 @@ function triggerAnimeAiConverterFilter() {
         }
 
         function runAlwahaSelfTest() {
-            const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','deleteMyMarketItem','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage'];
+            const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 2.8.3 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 2.8.4 self-test: OK', getAlwahaCapabilityStatus());
         }
 
         // تهيئة كل المكونات بعد جاهزية DOM
         window.addEventListener('DOMContentLoaded', async () => {
+            let savedTheme = 'default';
+            try { savedTheme = localStorage.getItem('alwaha_theme') || 'default'; } catch (error) {}
+            changeAppTheme(savedTheme, false);
             runAlwahaSelfTest();
             registerAlwahaServiceWorker();
             history.replaceState({ alwahaGuard: true }, '', location.href);
