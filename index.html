@@ -6,12 +6,12 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.6</title>
+    <title>Alwaha-Pro 2.8.7</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <!-- خط القاهرة -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    
+
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
@@ -102,7 +102,7 @@
             font-family: 'Cairo', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
             background-color: #0b0f19;
             color: #ffffff;
@@ -123,7 +123,7 @@
             background: radial-gradient(circle at center, #0a0a2a, #000000);
         }
         body.theme-tech .btn-action { border-color: #00ffff !important; }
-        
+
         body.theme-soft {
             background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.05"/></svg>'), #14141e;
         }
@@ -155,7 +155,7 @@
             display: none;
             animation: slideUpFade 0.3s ease-out forwards;
         }
-        
+
         @keyframes slideUpFade {
             from { transform: translateY(50px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -236,7 +236,7 @@
         .btn-action:active {
             transform: scale(0.96);
         }
-        
+
         .profile-menu-btn {
             cursor: pointer;
             transition: 0.2s;
@@ -362,7 +362,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=2.8.6" defer></script>
+    <script src="./games.js?v=2.8.7" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -372,6 +372,18 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
       body.theme-nature:before { background:radial-gradient(circle at 15% 24%,#5af59b24 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#4de2c42a 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#7de39a20 0 3%,transparent 19%); }
       body.theme-soft:before { background:radial-gradient(circle at 15% 24%,#94c8ff20 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#d8c7ff24 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#b6e5ff1c 0 3%,transparent 19%); }
     </style>
+
+
+<style id="alwaha-2-8-7-wallpaper-and-accessibility">
+body:not(.theme-nature):not(.theme-tech):not(.theme-soft){background-image:linear-gradient(160deg,rgba(2,6,18,.82),rgba(5,12,28,.70)),url('./assets/backgrounds/bg-nebula.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
+body.theme-nature{background-image:linear-gradient(160deg,rgba(2,18,23,.72),rgba(2,24,33,.60)),url('./assets/backgrounds/bg-aurora.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
+body.theme-tech{background-image:linear-gradient(160deg,rgba(0,9,22,.72),rgba(2,12,30,.62)),url('./assets/backgrounds/bg-underwater.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
+body.theme-soft{background-image:linear-gradient(160deg,rgba(5,14,29,.72),rgba(6,14,30,.57)),url('./assets/backgrounds/bg-moonlit.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
+body.alwaha-reduced-motion *,body.alwaha-data-saver *{animation:none!important;scroll-behavior:auto!important;transition:none!important}
+body.alwaha-data-saver *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.bottom-nav-bar{padding-bottom:6px!important}
+@media(max-width:360px){.bottom-nav-bar .nav-item span{font-size:6.5px}.bottom-nav-bar .nav-item i{width:29px;height:29px}}
+</style>
 
 </head>
 <body>
@@ -660,12 +672,12 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
         </div>
         <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="password" id="login-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
-        
+
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <a href="#" style="color:#00ff88; font-size:11px; text-decoration:none;" onclick="closeSubProfileView('sub-prof-login'); openSubProfileView('sub-prof-register')">ليس لديك حساب؟ أنشئ الآن</a>
             <a href="#" style="color:#ffd700; font-size:11px; text-decoration:none;" onclick="closeSubProfileView('sub-prof-login'); openSubProfileView('sub-prof-recovery')">نسيت كلمة السر؟</a>
         </div>
-        
+
         <button class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="executeUserLoginAuth()">دخول</button>
     </div>
 
@@ -674,19 +686,28 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
             <h3 style="color:#e2e8f0; font-size:16px; margin:0;"><i class="fa-solid fa-gear"></i> الضبط والمظهر</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-settings')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        
+
         <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">خلفيات التطبيق والمظهر</h4>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#050813,#1b2144);color:#d9e8ff;padding:10px;font-size:11px;border:1px solid #91a9ff55;" onclick="changeAppTheme('default')">🌌 فضائي افتراضي</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0f2027,#203a43);color:#fff;padding:10px;font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:radial-gradient(circle,#0a0a2a,#000);color:#00ffff;padding:10px;font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#14141e,#29364a);color:#e2e8f0;border:1px solid #ffffff25;padding:10px;font-size:11px;" onclick="changeAppTheme('soft')">🌙 هادئ</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#05081399,#1b214499),url('./assets/backgrounds/bg-nebula.webp') center/cover;color:#d9e8ff;padding:10px;font-size:11px;border:1px solid #91a9ff55;" onclick="changeAppTheme('default')">🌌 فضائي افتراضي</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0f202799,#203a4399),url('./assets/backgrounds/bg-aurora.webp') center/cover;color:#fff;padding:10px;font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0a0a2a88,#0009),url('./assets/backgrounds/bg-underwater.webp') center/cover;color:#00ffff;padding:10px;font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
+            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#14141e88,#29364a88),url('./assets/backgrounds/bg-moonlit.webp') center/cover;color:#e2e8f0;border:1px solid #ffffff25;padding:10px;font-size:11px;" onclick="changeAppTheme('soft')">🌙 هادئ</button>
         </div>
 
 
-        <div style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;"><label style="display:flex;gap:9px;align-items:center;color:#d8e9f7;font-size:12px;margin-bottom:10px;"><input id="alwaha-call-ringtone-enabled" type="checkbox" checked onchange="setAlwahaRingtoneEnabled(this.checked)"> تفعيل رنة الواحة الحصرية للمكالمات الواردة</label><button type="button" class="btn-action" style="width:100%;background:linear-gradient(110deg,#00d9b3,#83d7ff);color:#071722;padding:10px;border-radius:10px;font-size:12px;" onclick="previewAlwahaCallRingtone()"><i class="fa-solid fa-music"></i> تجربة رنة الواحة الحديثة</button><div style="font-size:10px;color:#8ba3ba;margin-top:8px;line-height:1.7;">رنة أصلية مولّدة داخل التطبيق بإيقاع مبهج ولمسات إيقاعية أفريقية. استقبال الرنين يتطلب أن يكون التطبيق نشطًا؛ التنبيه أثناء الإغلاق الكامل يحتاج إشعارات أصلية.</div></div>
+        <div style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;"><label style="display:flex;gap:9px;align-items:center;color:#d8e9f7;font-size:12px;margin-bottom:10px;"><input id="alwaha-call-ringtone-enabled" type="checkbox" checked onchange="setAlwahaRingtoneEnabled(this.checked)"> تفعيل رنة الواحة الحصرية للمكالمات الواردة</label><label for="alwaha-ringtone-choice" style="display:block;color:#c9ddec;font-size:11px;margin:8px 0 5px;">اختيار نغمة المكالمة</label><select id="alwaha-ringtone-choice" aria-label="اختيار نغمة المكالمة" style="width:100%;background:#0c1420;color:#fff;border:1px solid #8bf4ff44;border-radius:9px;padding:10px;margin-bottom:9px;font-size:12px;"><option value="saffron_tide">Saffron Tide — نغمة هادئة</option><option value="marimba_bloom">Marimba Bloom — نغمة مشرقة</option></select><button type="button" class="btn-action" style="width:100%;background:linear-gradient(110deg,#00d9b3,#83d7ff);color:#071722;padding:10px;border-radius:10px;font-size:12px;" onclick="previewAlwahaCallRingtone()"><i class="fa-solid fa-music"></i> تجربة رنة الواحة الحديثة</button><div style="font-size:10px;color:#8ba3ba;margin-top:8px;line-height:1.7;">رنة أصلية مولّدة داخل التطبيق بإيقاع مبهج ولمسات إيقاعية أفريقية. استقبال الرنين يتطلب أن يكون التطبيق نشطًا؛ التنبيه أثناء الإغلاق الكامل يحتاج إشعارات أصلية.</div></div>
 
-        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
+
+        <div id="alwaha-ux-preferences" style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;display:grid;gap:12px;">
+          <label for="alwaha-language-choice" style="display:grid;gap:6px;color:#d8e9f7;font-size:12px;">لغة التطبيق
+            <select id="alwaha-language-choice" aria-label="لغة التطبيق" style="width:100%;background:#0c1420;color:#fff;border:1px solid #8bf4ff44;border-radius:9px;padding:10px;font-size:12px;"><option value="ar">العربية</option><option value="en">English</option></select>
+          </label>
+          <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-data-saver" type="checkbox"> توفير البيانات والتحميل الكسول للصور</label>
+          <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
+          <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
+        </div>
+<h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
         <button class="btn-action" style="width:100%; background:rgba(255,0,85,0.1); color:#ff0055; border:1px solid #ff0055; padding:12px; border-radius:8px; font-size:13px;" onclick="clearAppCacheKeepData()">
             <i class="fa-solid fa-broom"></i> تنظيف الكاش وتسريع التطبيق
         </button>
@@ -813,11 +834,11 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "2.8.6";
+            const currentAppVersion = "2.8.7";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.6 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.7 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
@@ -874,8 +895,8 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
         })();
 
         /* مفاتيح الربط السحابية الصحيحة (Supabase API) */
-        const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co"; 
-        const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0"; 
+        const DEFAULT_SUPABASE_URL = "https://kjuixjdtqwcsnxefftrt.supabase.co";
+        const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0";
 
         const SUPABASE_URL = localStorage.getItem('EXTERNAL_API_URL') || DEFAULT_SUPABASE_URL;
         const SUPABASE_KEY = localStorage.getItem('EXTERNAL_API_KEY') || DEFAULT_SUPABASE_KEY;
@@ -973,6 +994,18 @@ async function handleReelUploadFromGallery() {
         }
 
         async function supabaseFetch(endpoint, options = {}) {
+            const requestMethod = String(options.method || 'GET').toUpperCase();
+            const tableName = String(endpoint).split('?')[0];
+            const safePublicTables = new Set(['posts','reels','products','comments','post_like_counts','reel_like_counts']);
+            const apiCache = window.__alwahaPublicReadCache || (window.__alwahaPublicReadCache = new Map());
+            const cacheable = requestMethod === 'GET' && safePublicTables.has(tableName);
+            const cacheKey = cacheable ? String(endpoint) : '';
+            if (requestMethod !== 'GET') apiCache.clear();
+            if (cacheable) {
+                const cached = apiCache.get(cacheKey);
+                if (cached && cached.expiresAt > Date.now()) return JSON.parse(JSON.stringify(cached.value));
+                if (cached) apiCache.delete(cacheKey);
+            }
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             let accessToken = SUPABASE_KEY;
             try {
@@ -999,12 +1032,17 @@ async function handleReelUploadFromGallery() {
                 const contentType = response.headers.get('content-type') || '';
                 const data = contentType.includes('application/json') ? await response.json() : await response.text();
                 if (!response.ok) {
+                    const serverMessage = (data && typeof data === 'object') ? (data.message || data.error_description || data.hint || data.details || data.error || '') : String(data || '');
+                    window.__alwahaLastApiError = { status: response.status, message: String(serverMessage).slice(0, 240), code: data && typeof data === 'object' ? String(data.code || '') : '' };
                     console.warn('Supabase Status:', response.status, data);
                     return null;
                 }
+                window.__alwahaLastApiError = null;
+                if (cacheable && data !== '') apiCache.set(cacheKey, { expiresAt: Date.now() + 6500, value: data });
                 return data === '' ? true : data;
             } catch (error) {
                 if (timeoutId) clearTimeout(timeoutId);
+                window.__alwahaLastApiError = { status: 0, message: error?.name === 'AbortError' ? 'انتهت مهلة الاتصال' : 'تعذر الاتصال بالخادم', code: error?.name || 'NETWORK_ERROR' };
                 console.error('Supabase Request Error:', error);
                 return null;
             }
@@ -1163,7 +1201,7 @@ async function handleReelUploadFromGallery() {
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             if(multiple) fileInput.multiple = true;
-            
+
             fileInput.onchange = (e) => {
                 if (e.target.files && e.target.files.length > 0) {
                     Array.from(e.target.files).forEach(file => {
@@ -1275,7 +1313,7 @@ async function toggleInternalNotificationCenter() {
         function showSection(id, element) {
             document.querySelectorAll('.app-section').forEach(s => { s.style.display = 'none'; s.classList.remove('active-section'); });
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            
+
             const targetSec = document.getElementById(id);
             if(targetSec) { targetSec.style.display = 'block'; targetSec.classList.add('active-section'); }
             if(element) element.classList.add('active');
@@ -1864,7 +1902,16 @@ async function loadAllRegisteredUsersList() {
                 method:'POST',
                 body:JSON.stringify({ sender_id:user.id, receiver_id:currentChatUserId, message:input.value.trim() })
             });
-            if (!result) return triggerToastNotification('تعذر حفظ الرسالة.', 'error');
+            if (!result) {
+                const apiError = window.__alwahaLastApiError || {};
+                console.warn('Message insert failed safely:', apiError);
+                let friendly = 'تعذر حفظ الرسالة. حاول مرة أخرى.';
+                if (apiError.status === 401) friendly = 'انتهت جلسة الدخول؛ سجّل الدخول مرة أخرى.';
+                else if (apiError.status === 403) friendly = 'الخادم رفض الإرسال بسبب الصلاحيات (403). راجع تسجيل الدخول وأمان الرسائل.';
+                else if (apiError.status === 400) friendly = 'تعذر حفظ الرسالة؛ تحقق من المستلم ثم أعد المحاولة.';
+                else if (apiError.status === 0) friendly = 'تعذر الاتصال لحفظ الرسالة. تحقق من الإنترنت ثم أعد المحاولة.';
+                return triggerToastNotification(friendly, 'error');
+            }
             input.value = '';
             await loadDirectMessages();
             playLuxuriousNotificationSound();
@@ -2228,7 +2275,7 @@ async function renderConversationsList() {
             const buyView = document.getElementById('market-buy-view');
             const sellView = document.getElementById('market-sell-view');
             const myItemsView = document.getElementById('market-my-items-view');
-            
+
             if(buyView) buyView.style.display = view === 'buy' ? 'block' : 'none';
             if(sellView) sellView.style.display = view === 'sell' ? 'block' : 'none';
             if(myItemsView) myItemsView.style.display = view === 'my-items' ? 'block' : 'none';
@@ -2582,7 +2629,7 @@ function triggerAnimeAiConverterFilter() {
             closeProfessionalCameraView();
         }
 
-        function handlePopState() {
+        function showExitModalFallback() {
             const modal = document.getElementById('exit-modal-confirmation');
             if (!modal) return;
             history.pushState({ alwahaGuard: true }, '', location.href);
@@ -2658,12 +2705,17 @@ function triggerAnimeAiConverterFilter() {
             history.replaceState({ alwahaGuard: true }, '', location.href);
             history.pushState({ alwahaGuard: true }, '', location.href);
             window.addEventListener('popstate', handlePopState);
+            const alwahaHandleSystemBack = () => { if (typeof navigateBack === 'function') navigateBack(); };
+            document.addEventListener('backbutton', alwahaHandleSystemBack, false);
+            window.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); alwahaHandleSystemBack(); } });
+            try { const appPlugin = window.Capacitor?.Plugins?.App; if (appPlugin?.addListener) appPlugin.addListener('backButton', alwahaHandleSystemBack); } catch (error) { console.info('Native App back listener unavailable; web history fallback remains enabled.'); }
             bindCallControls();
             updateCallUi('idle');
 
             if (supabaseClient) {
                 supabaseClient.auth.onAuthStateChange((event, session) => {
                     if (event === 'SIGNED_OUT') {
+                        window.__alwahaPublicReadCache?.clear();
                         clearLocalProfileCache().then(() => syncUiWithLoadedProfileData());
                         if (notificationChannel && supabaseClient) { supabaseClient.removeChannel(notificationChannel).catch(()=>{}); notificationChannel=null; }
                         if(activeCallManager){activeCallManager.end(false).catch(()=>{});activeCallManager.ensureInbox().catch(()=>{});}stopAlwahaCallRingtone();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v2.8.6-polished-audio';
+const CACHE_NAME = 'alwaha-pro-v2.8.7-polished-audio';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,11 @@ const PRECACHE_ASSETS = [
   './icon.png',
   './games.js',
   './production-polish.js',
-  './assets/chess.min.js'
+  './assets/chess.min.js',
+  './assets/backgrounds/bg-nebula.webp',
+  './assets/backgrounds/bg-aurora.webp',
+  './assets/backgrounds/bg-underwater.webp',
+  './assets/backgrounds/bg-moonlit.webp'
 ];
 
 self.addEventListener('install', (event) => {
