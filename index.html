@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.7</title>
+    <title>Alwaha-Pro 2.8.8</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
     <!-- خط القاهرة -->
@@ -362,7 +362,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=2.8.7" defer></script>
+    <script src="./games.js?v=2.8.8" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -384,6 +384,28 @@ body.alwaha-data-saver *{backdrop-filter:none!important;-webkit-backdrop-filter:
 .bottom-nav-bar{padding-bottom:6px!important}
 @media(max-width:360px){.bottom-nav-bar .nav-item span{font-size:6.5px}.bottom-nav-bar .nav-item i{width:29px;height:29px}}
 </style>
+
+
+<style id="alwaha-2-8-8-touch-wallpaper">
+:root{--alwaha-pointer-x:50%;--alwaha-pointer-y:48%}
+/* Default: black, burgundy, cyan and rose; lightweight CSS effects only. */
+body:not(.theme-nature):not(.theme-tech):not(.theme-soft){
+ background-color:#07060b!important;
+ background-image:radial-gradient(ellipse at var(--alwaha-pointer-x) var(--alwaha-pointer-y),rgba(0,218,235,.16),transparent 35%),radial-gradient(ellipse at 78% 20%,rgba(190,20,67,.24),transparent 44%),radial-gradient(ellipse at 15% 85%,rgba(92,0,37,.28),transparent 45%),linear-gradient(155deg,#050609,#170711 52%,#050a11)!important;
+ background-attachment:fixed!important;background-size:cover!important
+}
+#alwaha-touch-atmosphere{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;opacity:.72}
+#alwaha-touch-atmosphere .alwaha-stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 18%,#dffcffaa 98%,transparent),radial-gradient(1px 1px at 75% 13%,#ffffffaa 98%,transparent),radial-gradient(2px 2px at 42% 31%,#ffbed6aa 98%,transparent),radial-gradient(1px 1px at 89% 63%,#9cfbffbb 98%,transparent),radial-gradient(1px 1px at 23% 75%,#ffffff99 98%,transparent),radial-gradient(1px 1px at 61% 87%,#f4a7c599 98%,transparent);background-size:360px 300px;animation:alwaha-star-drift 42s linear infinite}
+#alwaha-touch-atmosphere .alwaha-wave{position:absolute;left:-25%;width:150%;height:26%;bottom:-9%;border:1px solid rgba(0,225,239,.14);border-radius:48% 52% 0 0;box-shadow:0 -8px 32px rgba(0,204,225,.045);transform:translateX(var(--alwaha-wave-shift,0px)) rotate(-2deg);background:linear-gradient(0deg,rgba(0,170,190,.08),rgba(100,0,40,.04),transparent);}
+#alwaha-touch-atmosphere .alwaha-wave.wave-two{bottom:-14%;left:-18%;height:31%;border-color:rgba(235,58,117,.16);transform:translateX(calc(var(--alwaha-wave-shift,0px)*-.65)) rotate(3deg)}
+@keyframes alwaha-star-drift{from{background-position:0 0}to{background-position:360px 300px}}
+body.alwaha-reduced-motion #alwaha-touch-atmosphere *{animation:none!important}
+/* Keep interactive UI above the decorative atmosphere. */
+body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
+</style>
+<script id="alwaha-2-8-8-touch-wallpaper-script">
+(()=>{if(window.__alwaha288Atmosphere)return;window.__alwaha288Atmosphere=true;const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-stars"></div><div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);let scheduled=false;const move=e=>{if(document.body.classList.contains('theme-nature')||document.body.classList.contains('theme-tech')||document.body.classList.contains('theme-soft'))return;const t=e.touches?.[0]||e;document.documentElement.style.setProperty('--alwaha-pointer-x',Math.max(0,Math.min(100,t.clientX/innerWidth*100))+'%');document.documentElement.style.setProperty('--alwaha-pointer-y',Math.max(0,Math.min(100,t.clientY/innerHeight*100))+'%');document.documentElement.style.setProperty('--alwaha-wave-shift',((t.clientX/innerWidth)-.5)*32+'px');};document.addEventListener('pointermove',move,{passive:true});document.addEventListener('touchmove',move,{passive:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();
+</script>
 
 </head>
 <body>
@@ -834,11 +856,11 @@ body.alwaha-data-saver *{backdrop-filter:none!important;-webkit-backdrop-filter:
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "2.8.7";
+            const currentAppVersion = "2.8.8";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.7 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.8 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
