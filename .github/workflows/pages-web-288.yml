@@ -1,0 +1,79 @@
+name: Alwaha-Pro Web Pages 2.8.8
+
+on:
+  push:
+    branches:
+      - alwaha-social-ultimate-2.8.8
+    paths:
+      - 'index.html'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'icon.png'
+      - 'games.js'
+      - 'production-polish.js'
+      - 'assets/**'
+      - 'images/**'
+      - 'img/**'
+      - 'media/**'
+      - 'fonts/**'
+      - 'scripts/build-web.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pages-web-288.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alwaha-pro-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Verify built files
+        run: |
+          set -eu
+          for file in index.html manifest.json sw.js icon.png games.js production-polish.js; do
+            test -s "dist/$file" || { echo "Missing or empty dist/$file"; exit 1; }
+          done
+          grep -q '<title>Alwaha-Pro 2.8.8</title>' dist/index.html
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
