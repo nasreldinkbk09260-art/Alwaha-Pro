@@ -67,6 +67,18 @@ if (pkg.scripts?.["audit:performance"] === "node scripts/performance-audit.mjs")
   pass("performance audit npm script is registered");
 else fail("performance audit npm script missing");
 
+
+// Guard against deleting caches owned by unrelated applications.
+if (
+  /const\s+appCacheNames\s*=\s*names\.filter\s*\(\s*name\s*=>\s*name\.startsWith\(['"]alwaha-pro-['"]\)\s*\)/s.test(html) &&
+  /appCacheNames\.map\s*\(\s*name\s*=>\s*caches\.delete\(name\)\s*\)/s.test(html) &&
+  !/Promise\.all\s*\(\s*names\.map\s*\(\s*name\s*=>\s*caches\.delete\(name\)\s*\)\s*\)/s.test(html)
+) {
+  pass("cache cleanup is restricted to the alwaha-pro- namespace");
+} else {
+  fail("cache cleanup must delete only alwaha-pro- caches");
+}
+
 console.log("\n===== STORAGE USAGE INVENTORY (read-only) =====");
 const files = ["index.html", "sw.js"];
 for (const file of files) {

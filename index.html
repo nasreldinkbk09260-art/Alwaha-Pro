@@ -986,7 +986,12 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
             try {
                 if ('caches' in window) {
                     const names = await caches.keys();
-                    await Promise.all(names.map(name => caches.delete(name)));
+                    const appCacheNames = names.filter(name =>
+                        name.startsWith('alwaha-pro-')
+                    );
+                    await Promise.all(
+                        appCacheNames.map(name => caches.delete(name))
+                    );
                 }
                 if (navigator.serviceWorker?.getRegistrations) {
                     const regs = await navigator.serviceWorker.getRegistrations();
