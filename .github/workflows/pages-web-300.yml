@@ -1,0 +1,46 @@
+name: Alwaha-Pro 3.0.0 Web Build Only (No Deploy)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alwaha-pro-web-build-300
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout selected source branch
+        uses: actions/checkout@v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run release preflight
+        run: npm run audit:release
+      - name: Build web assets
+        run: npm run build
+      - name: Verify web output (build only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html manifest.json sw.js icon.png games.js production-polish.js; do
+            test -s "dist/$file" || { echo "Missing dist/$file"; exit 1; }
+          done
+          grep -Fq '<title>Alwaha-Pro 3.0.0</title>' dist/index.html
+          echo 'Web build validated. No website was published.'
+      - name: Upload web build artifact (no deployment)
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Alwaha-Pro-3.0.0-web-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

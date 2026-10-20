@@ -6,15 +6,19 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 2.8.8</title>
+    <title>Alwaha-Pro 3.0.0</title>
     <!-- مكتبة الأيقونات FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+    <link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css">
     <!-- خط القاهرة -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./assets/vendor/cairo/300.css">
+    <link rel="stylesheet" href="./assets/vendor/cairo/400.css">
+    <link rel="stylesheet" href="./assets/vendor/cairo/600.css">
+    <link rel="stylesheet" href="./assets/vendor/cairo/700.css">
+    <link rel="stylesheet" href="./assets/vendor/cairo/900.css">
 
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
+    <script src="./assets/vendor/supabase/supabase.js"></script>
     <script src="./production-polish.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
@@ -362,7 +366,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=2.8.8" defer></script>
+    <script src="./games.js?v=3.0.0" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -856,11 +860,11 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "2.8.8";
+            const currentAppVersion = "3.0.0";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 2.8.8 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.0 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
@@ -1259,18 +1263,41 @@ function handleRegisterAvatarPick() {
             setTimeout(() => { toast.style.display = "none"; }, 3500);
         }
 
-        function playLuxuriousNotificationSound() {
-            if (audioMuted) return;
+        function playAlwahaInboundSound(kind = 'notification') {
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch (e) {}
+                if (audioMuted || localStorage.getItem('alwaha_audio_muted') === 'true') return;
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                const ctx = new AudioContextClass();
+                const notes = kind === 'message'
+                    ? [[784, 0, 0.11], [1046.5, 0.14, 0.14]]
+                    : [[659.25, 0, 0.10], [830.61, 0.13, 0.11], [987.77, 0.28, 0.16]];
+                const start = () => {
+                    if (ctx.state === 'closed') return;
+                    const base = ctx.currentTime + 0.025;
+                    const master = ctx.createGain();
+                    master.gain.value = 0.34;
+                    master.connect(ctx.destination);
+                    for (const [frequency, offset, duration] of notes) {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(frequency, base + offset);
+                        gain.gain.setValueAtTime(0.0001, base + offset);
+                        gain.gain.exponentialRampToValueAtTime(0.055, base + offset + 0.018);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, base + offset + duration);
+                        osc.connect(gain);
+                        gain.connect(master);
+                        osc.start(base + offset);
+                        osc.stop(base + offset + duration + 0.025);
+                    }
+                    setTimeout(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); }, 900);
+                };
+                Promise.resolve(ctx.resume()).then(start).catch(() => { if (ctx.state !== 'closed') ctx.close().catch(() => {}); });
+            } catch (_) {}
         }
+        window.playAlwahaInboundSound = playAlwahaInboundSound;
+        function playLuxuriousNotificationSound(kind = 'notification') { playAlwahaInboundSound(kind); }
 
 async function toggleInternalNotificationCenter() {
             const center = document.getElementById('internal-notification-center');
@@ -1326,6 +1353,7 @@ async function toggleInternalNotificationCenter() {
             if (!me || !supabaseClient) return;
             if (notificationChannel) { try { await supabaseClient.removeChannel(notificationChannel); } catch(e){} notificationChannel=null; }
             notificationChannel = supabaseClient.channel(`notifications-${me.id}`).on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`recipient_id=eq.${me.id}`}, payload => {
+                if (payload?.new?.type !== 'message') playAlwahaInboundSound('notification');
                 triggerToastNotification(payload?.new?.title || 'لديك إشعار جديد.', 'info');
                 const center=document.getElementById('internal-notification-center'); if (center?.style.display==='block') renderInternalNotificationCenter();
             });
@@ -1345,7 +1373,7 @@ async function toggleInternalNotificationCenter() {
                 document.body.classList.remove('modal-active');
             }
 
-            playLuxuriousNotificationSound();
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if(id === 'home-section') renderHomePostsFeed();
@@ -1641,7 +1669,7 @@ async function togglePostLike(id) {
             let ok;
             if(Array.isArray(existing)&&existing.length){ok=await supabaseFetch(`post_likes?post_id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'});}else{ok=await supabaseFetch('post_likes',{method:'POST',body:JSON.stringify({post_id:Number(id),user_id:user.id}),prefer:'return=minimal'});}
             if(ok===null) return triggerToastNotification('تعذر تحديث الإعجاب.','error');
-            playLuxuriousNotificationSound(); renderHomePostsFeed();
+ renderHomePostsFeed();
         }
 
         async function editOwnHomePost(postId) {
@@ -1696,7 +1724,7 @@ async function toggleReelLike(reelId) {
             if(Array.isArray(existing)&&existing.length) ok=await supabaseFetch(`reel_likes?reel_id=eq.${encodeURIComponent(reelId)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'});
             else ok=await supabaseFetch('reel_likes',{method:'POST',body:JSON.stringify({reel_id:Number(reelId),user_id:user.id}),prefer:'return=minimal'});
             if(ok===null)return triggerToastNotification('تعذر تحديث الإعجاب.','error');
-            playLuxuriousNotificationSound(); renderReelsFeed();
+ renderReelsFeed();
         }
 
 async function shareReelContent(title, mediaUrl='') {
@@ -1856,6 +1884,7 @@ async function loadAllRegisteredUsersList() {
                     table: 'messages',
                     filter: `receiver_id=eq.${me.id}`
                 }, async (payload) => {
+                    if (payload?.new?.sender_id && payload.new.sender_id !== me.id) playAlwahaInboundSound('message');
                     if (payload?.new?.sender_id === currentChatUserId) await loadDirectMessages();
                 })
                 .subscribe();
@@ -1936,7 +1965,7 @@ async function loadAllRegisteredUsersList() {
             }
             input.value = '';
             await loadDirectMessages();
-            playLuxuriousNotificationSound();
+
         }
 
 async function renderConversationsList() {
@@ -2697,21 +2726,10 @@ function triggerAnimeAiConverterFilter() {
             const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 2.8.5 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 3.0.0 self-test: OK', getAlwahaCapabilityStatus());
         }
 
 
-        let alwahaIncomingRingtoneTimer=null,alwahaIncomingRingtoneStopTimer=null,alwahaIncomingRingtoneContext=null,alwahaIncomingRingtoneNodes=[];
-        function setAlwahaRingtoneEnabled(enabled){localStorage.setItem('alwaha_call_ringtone_enabled',enabled?'true':'false');if(!enabled)stopAlwahaCallRingtone();triggerToastNotification(enabled?'تم تفعيل رنة الواحة للمكالمات الواردة.':'تم إيقاف رنة المكالمات الواردة.','success');}
-        async function playAlwahaCallRingtone(preview=false){
-            if(localStorage.getItem('alwaha_call_ringtone_enabled')==='false')return;stopAlwahaCallRingtone();const AC=window.AudioContext||window.webkitAudioContext;if(!AC){if(preview)triggerToastNotification('الصوت غير مدعوم في هذا الجهاز.','error');return;}
-            try{alwahaIncomingRingtoneContext=new AC();const ctx=alwahaIncomingRingtoneContext;await ctx.resume();const phrase=()=>{if(!alwahaIncomingRingtoneContext||ctx.state==='closed')return;const t=ctx.currentTime+.035;
-              const notes=[[784,0,.19],[988,.24,.16],[1175,.48,.24],[988,.79,.16],[784,1.03,.18],[659,1.28,.23],[784,1.63,.18],[988,1.88,.24]];
-              for(const [freq,offset,duration] of notes){const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();osc.type='sine';osc.frequency.setValueAtTime(freq,t+offset);filter.type='lowpass';filter.frequency.value=2600;gain.gain.setValueAtTime(.0001,t+offset);gain.gain.exponentialRampToValueAtTime(.13,t+offset+.025);gain.gain.exponentialRampToValueAtTime(.0001,t+offset+duration);osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);osc.onended=()=>{alwahaIncomingRingtoneNodes=alwahaIncomingRingtoneNodes.filter(n=>n!==osc)};osc.start(t+offset);osc.stop(t+offset+duration+.04);alwahaIncomingRingtoneNodes.push(osc);}
-              for(const [offset,freq] of [[0,125],[.52,98],[1.07,125],[1.58,98]]){const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='triangle';osc.frequency.setValueAtTime(freq,t+offset);osc.frequency.exponentialRampToValueAtTime(54,t+offset+.13);gain.gain.setValueAtTime(.0001,t+offset);gain.gain.exponentialRampToValueAtTime(.08,t+offset+.012);gain.gain.exponentialRampToValueAtTime(.0001,t+offset+.16);osc.connect(gain);gain.connect(ctx.destination);osc.onended=()=>{alwahaIncomingRingtoneNodes=alwahaIncomingRingtoneNodes.filter(n=>n!==osc)};osc.start(t+offset);osc.stop(t+offset+.18);alwahaIncomingRingtoneNodes.push(osc);}};phrase();if(preview)alwahaIncomingRingtoneStopTimer=setTimeout(stopAlwahaCallRingtone,2600);else alwahaIncomingRingtoneTimer=setInterval(phrase,2800);
-            }catch(e){console.warn('Alwaha ringtone:',e);if(preview)triggerToastNotification('لم تعمل الرنة؛ اضغط تجربة الرنة مرة أخرى.','info');}}
-        function previewAlwahaCallRingtone(){playAlwahaCallRingtone(true);}
-        function stopAlwahaCallRingtone(){if(alwahaIncomingRingtoneTimer)clearInterval(alwahaIncomingRingtoneTimer);if(alwahaIncomingRingtoneStopTimer)clearTimeout(alwahaIncomingRingtoneStopTimer);alwahaIncomingRingtoneTimer=null;alwahaIncomingRingtoneStopTimer=null;for(const n of alwahaIncomingRingtoneNodes){try{n.stop()}catch(e){}}alwahaIncomingRingtoneNodes=[];const c=alwahaIncomingRingtoneContext;alwahaIncomingRingtoneContext=null;if(c&&c.state!=='closed')c.close().catch(()=>{});}
         async function getAlwahaIceServers(){const fallback=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];try{const {data,error}=await supabaseClient.functions.invoke('call-config',{body:{}});if(!error&&Array.isArray(data?.iceServers)&&data.iceServers.length)return data.iceServers;}catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}return fallback;}
         function wireAlwahaSignupCountryPicker(){const select=document.getElementById('reg-country-code'),custom=document.getElementById('reg-country-code-custom');if(!select||!custom)return;const update=()=>{const manual=select.value==='custom';custom.style.display=manual?'block':'none';if(!manual)custom.value='';};select.addEventListener('change',update);update();}
 
@@ -2806,7 +2824,7 @@ function triggerAnimeAiConverterFilter() {
                 window.alwahaModalHistory = [];
                 document.body.classList.remove('modal-active');
             }
-            if (typeof playLuxuriousNotificationSound === 'function') playLuxuriousNotificationSound();
+
             window.scrollTo({top:0, behavior:'smooth'});
             if (id === 'home-section' && typeof renderHomePostsFeed==='function') renderHomePostsFeed();
             if (id === 'market-section') { if(typeof renderProductsList==='function')renderProductsList(); if(typeof renderMyPersonalMarketItems==='function')renderMyPersonalMarketItems(); }

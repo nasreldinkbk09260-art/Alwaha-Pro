@@ -245,8 +245,8 @@
       audio.preload = 'none';
       audio.loop = !preview;
       audio.volume = 0.78;
+      if (preview) audio.addEventListener('ended', () => { if (ringtoneAudio === audio) { ringtoneAudio = null; if (ringtoneTimeout) clearTimeout(ringtoneTimeout); ringtoneTimeout = null; } }, { once: true });
       await audio.play();
-      if (preview) ringtoneTimeout = setTimeout(stopRingtoneMedia, 8000);
     } catch (error) {
       console.warn('Supplied ringtone could not play; using the built-in fallback.', error);
       stopRingtoneMedia();

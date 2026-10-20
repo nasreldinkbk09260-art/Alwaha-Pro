@@ -10,6 +10,7 @@ on:
       - alwaha-social-completion-2.8.5
       - alwaha-social-polish-2.8.6
       - alwaha-social-ultimate-2.8.8
+      - alwaha-social-ultimate-3.0.0
   workflow_dispatch:
 
 permissions:
@@ -22,7 +23,7 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '2.8.8'
+  APP_VERSION: '3.0.0'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
@@ -80,13 +81,13 @@ jobs:
           test -s supabase/migrations/20261014195540_friend_request_policy_consolidation.sql
           test -s supabase/functions/username-auth/index.ts
           test -s supabase/functions/call-config/index.ts
-          grep -Fq 'Alwaha-Pro 2.8.8' index.html
+          grep -Fq 'Alwaha-Pro 3.0.0' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          if (pkg.version !== '2.8.8') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (pkg.version !== '3.0.0') throw new Error(`Unexpected package version: ${pkg.version}`);
           if (manifest.version !== pkg.version) throw new Error(`Manifest version mismatch: ${manifest.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
@@ -239,7 +240,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '2.8.8'
+          VERSION_NAME: '3.0.0'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -366,6 +367,7 @@ jobs:
           source = set_property(source, 'defaultConfig', 'applicationId', app_id)
           source = set_property(source, 'defaultConfig', 'versionCode', os.environ['VERSION_CODE'])
           source = set_property(source, 'defaultConfig', 'versionName', version_name)
+          source = set_property(source, 'defaultConfig', 'targetSdkVersion', '36')
 
           android_block = require_block(source, 'android')
           signing = find_block(source, 'signingConfigs', android_block[1] + 1, android_block[2])
@@ -409,6 +411,14 @@ jobs:
           print('Android ID, version and release signing configured.')
           PY
 
+      - name: Verify Google Play target API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s android/app/build.gradle
+          grep -Eq '^[[:space:]]*targetSdkVersion[[:space:]]*=?[[:space:]]*36([[:space:]]|$)' android/app/build.gradle
+          echo 'Verified targetSdkVersion 36 for Google Play.'
+
       - name: Build signed APK and AAB
         working-directory: android
         shell: bash
@@ -433,15 +443,15 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-2.8.8.apk
-          cp "$AAB" release/Alwaha-Pro-2.8.8.aab
-          sha256sum release/Alwaha-Pro-2.8.8.apk release/Alwaha-Pro-2.8.8.aab > release/SHA256SUMS.txt
+          cp "$APK" release/Alwaha-Pro-3.0.0.apk
+          cp "$AAB" release/Alwaha-Pro-3.0.0.aab
+          sha256sum release/Alwaha-Pro-3.0.0.apk release/Alwaha-Pro-3.0.0.aab > release/SHA256SUMS.txt
           echo 'Signed APK and AAB verified successfully.'
 
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-2.8.8-build-${{ github.run_number }}
+          name: Alwaha-Pro-3.0.0-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30
