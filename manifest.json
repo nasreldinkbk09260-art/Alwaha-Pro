@@ -1,7 +1,7 @@
 {
   "name": "Alwaha-Pro",
   "short_name": "AlwahaPro",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "تطبيق Alwaha-Pro للتواصل والسوق والخدمات التقنية",
   "start_url": "./index.html",
   "scope": "./",

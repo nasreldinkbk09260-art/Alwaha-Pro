@@ -12,10 +12,10 @@ for(const theme of ['default','nature','tech','soft'])if(!html.includes(`changeA
 if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
 if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
-if(pkg.version!=='3.0.0'||lock.version!=='3.0.0'||lock.packages?.['']?.version!=='3.0.0')fail('package and lockfile versions must be 3.0.0.');
+if(pkg.version!=='3.0.1'||lock.version!=='3.0.1'||lock.packages?.['']?.version!=='3.0.1')fail('package and lockfile versions must be 3.0.1.');
 if(cap.appId!=='pro.alwaha.app'||cap.webDir!=='dist')fail('Unexpected Capacitor app configuration.');
 if(manifest.version!==pkg.version)fail('manifest.json version must match package.json.');
-if(!html.includes('Alwaha-Pro 3.0.0'))fail('HTML release version is not 3.0.0.');
+if(!html.includes('Alwaha-Pro 3.0.1'))fail('HTML release version is not 3.0.1.');
 for(const file of ['icon.png','manifest.json','sw.js','scripts/build-web.mjs','production-polish.js','supabase/migrations/20261007082734_20261005000000_fix_like_count_security.sql','supabase/migrations/20261011204819_secure_contact_privacy_defaults.sql','supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql','supabase/migrations/20261014192321_username_follows_call_features_20261014090000.sql','supabase/migrations/20261014193854_legacy_archive_api_access_hardening.sql','supabase/migrations/20261014194007_safe_public_directory_invoker.sql','supabase/migrations/20261014194053_app_settings_api_privacy.sql','supabase/migrations/20261014194820_release_policy_performance_cleanup.sql','supabase/migrations/20261014194848_rls_initplan_optimization.sql','supabase/migrations/20261014195018_game_room_join_game_validation.sql','supabase/migrations/20261014195108_game_room_join_rpc_compatibility.sql','supabase/migrations/20261014195445_friend_request_column_privileges.sql','supabase/migrations/20261014195540_friend_request_policy_consolidation.sql','supabase/migrations/20261014232322_notification_fail_safe.sql'])if(!fs.existsSync(path.join(process.cwd(),file)))fail(`Missing release file: ${file}`);
 if(fs.statSync(path.join(process.cwd(),'icon.png')).size<1000)fail('icon.png unexpectedly small.');
 if(process.exitCode)throw new Error('Alwaha-Pro release preflight failed.');
@@ -29,8 +29,8 @@ if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
 for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vendor/supabase/supabase.js','./assets/vendor/cairo/300.css','./assets/vendor/cairo/400.css','./assets/vendor/cairo/600.css','./assets/vendor/cairo/700.css','./assets/vendor/cairo/900.css'])if(!html.includes(asset))fail('Critical UI dependency is not served locally: '+asset);
-for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-aurora.webp','assets/backgrounds/bg-underwater.webp','assets/backgrounds/bg-moonlit.webp'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.0 media asset: '+asset);
+for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-aurora.webp','assets/backgrounds/bg-underwater.webp','assets/backgrounds/bg-moonlit.webp'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.1 media asset: '+asset);
 for(const helper of ['setAlwahaLanguage','setAlwahaDataSaver','setAlwahaReducedMotion','setAlwahaRingtoneChoice'])if(!fs.readFileSync(path.join(process.cwd(),'production-polish.js'),'utf8').includes('window.'+helper))fail('Missing settings handler: '+helper);
 if(!fs.readFileSync(path.join(process.cwd(),'games.js'),'utf8').includes('p_expected_game_id'))fail('Missing wrong-game room join guard.');
-console.log('Alwaha-Pro 3.0.0 release preflight checks passed.');
+console.log('Alwaha-Pro 3.0.1 release preflight checks passed.');
 console.log('Static checks do not replace Supabase integration tests or two-device call tests.');

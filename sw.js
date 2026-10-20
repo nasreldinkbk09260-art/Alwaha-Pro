@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.0-polished-audio';
+const CACHE_NAME = 'alwaha-pro-v3.0.1-mobile-performance';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

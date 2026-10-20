@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 3.0.0</title>
+    <title>Alwaha-Pro 3.0.1</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css">
     <!-- خط القاهرة -->
@@ -364,9 +364,21 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(max-width:360px){.bottom-nav-bar{left:4px!important;right:4px!important;gap:1px!important;padding-left:3px!important;padding-right:3px!important}.bottom-nav-bar .nav-item{font-size:7px}.bottom-nav-bar .nav-item i{width:31px;height:31px;font-size:14px}}
 @keyframes alwahaOrbFloat{0%,100%{translate:0 0}50%{translate:0 -2px}}
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
+/* 3.0.1 mobile performance guard */
+@media (max-width: 768px), (pointer: coarse) {
+  body:before { animation:none!important; filter:none!important; }
+  #alwaha-touch-atmosphere .alwaha-stars { animation:none!important; }
+  .bottom-nav-bar {
+    backdrop-filter:none!important;
+    -webkit-backdrop-filter:none!important;
+  }
+  body.theme-tech, body.theme-soft {
+    background-attachment:scroll!important;
+  }
+}
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=3.0.0" defer></script>
+    <script src="./games.js?v=3.0.1" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -860,11 +872,11 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "3.0.0";
+            const currentAppVersion = "3.0.1";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.0 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.1 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
@@ -2726,7 +2738,7 @@ function triggerAnimeAiConverterFilter() {
             const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 3.0.0 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 3.0.1 self-test: OK', getAlwahaCapabilityStatus());
         }
 
 

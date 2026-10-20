@@ -1,6 +1,6 @@
 {
   "name": "alwaha-pro",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Alwaha-Pro Unified Web and Mobile Application",
   "private": true,
   "main": "index.html",
@@ -9,7 +9,8 @@
     "build": "node scripts/build-web.mjs",
     "cap:sync": "npx cap sync",
     "audit:release": "node scripts/release-preflight.mjs",
-    "prebuild": "node scripts/vendor-assets.mjs"
+    "prebuild": "node scripts/vendor-assets.mjs",
+    "audit:performance": "node scripts/performance-audit.mjs"
   },
   "engines": {
     "node": ">=22"
