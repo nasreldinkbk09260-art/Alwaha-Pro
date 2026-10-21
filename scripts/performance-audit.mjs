@@ -79,6 +79,19 @@ if (
   fail("cache cleanup must delete only alwaha-pro- caches");
 }
 
+
+// Guard against updating service workers owned by unrelated applications.
+if (
+  /const\s+appWorkerUrl\s*=\s*new URL\(['"]\.\/sw\.js['"],\s*window\.location\.href\)\.href/.test(html) &&
+  /const\s+appRegs\s*=\s*regs\.filter/.test(html) &&
+  /appRegs\.map\s*\(\s*async\s*\(reg\)/s.test(html) &&
+  !/Promise\.all\s*\(\s*regs\.map\s*\(\s*async\s*\(reg\)/s.test(html)
+) {
+  pass("service-worker cleanup is restricted to the app's ./sw.js registration");
+} else {
+  fail("service-worker cleanup must target only the app's ./sw.js registration");
+}
+
 console.log("\n===== STORAGE USAGE INVENTORY (read-only) =====");
 const files = ["index.html", "sw.js"];
 for (const file of files) {
