@@ -1349,28 +1349,55 @@ async function toggleInternalNotificationCenter() {
             center.style.display = 'block';
             center.innerHTML = '<div style="padding:14px;text-align:center;color:#00ffff;font-size:12px;">جاري تحميل التنبيهات...</div>';
             const rows = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`);
-            if (!Array.isArray(rows) || !rows.length) {
-                center.innerHTML = '<div style="padding:14px;color:#aaa;font-size:11px;text-align:center;">لا توجد إشعارات حالياً.</div>';
+            if (!Array.isArray(rows)) {
+                center.innerHTML = '<div style="padding:14px;color:#ffb8dd;font-size:11px;text-align:center;">تعذر تحميل الإشعارات. حاول مرة أخرى.</div>';
                 return;
             }
-            const parts = rows.map(n => {
-                let payload = {}; try { payload = JSON.parse(n.body || '{}'); } catch(e) {}
-                const actions = n.type === 'friend_request' ? `<div style="display:flex;gap:6px;margin-top:8px;"><button class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','accepted')">قبول</button><button class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','rejected')">رفض</button></div>` : (n.type === 'message' ? `<button class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>` : '');
+            const parts = rows.length ? rows.map(n => {
+                let payload = {};
+                try { payload = JSON.parse(n.body || '{}'); } catch(e) {}
+                const actions = n.type === 'friend_request'
+                    ? `<div style="display:flex;gap:6px;margin-top:8px;"><button class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','accepted')">قبول</button><button class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','rejected')">رفض</button></div>`
+                    : (n.type === 'message'
+                        ? `<button class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>`
+                        : '');
                 return `<div style="padding:11px;border-bottom:1px solid rgba(255,255,255,.07);background:${n.is_read ? 'transparent':'rgba(0,255,255,.05)'};">
                     <div style="display:flex;justify-content:space-between;gap:8px;"><strong style="color:#00ffff;font-size:11px;">${escapeHtml(n.title)}</strong><small style="color:#777;">${new Date(n.created_at).toLocaleString('ar-EG')}</small></div>
                     <div style="color:#ddd;font-size:10px;margin-top:4px;line-height:1.6;">${escapeHtml(n.type === 'friend_request' ? (payload.requester_name ? `أرسل لك ${payload.requester_name} طلب صداقة.` : 'أرسل لك أحد المستخدمين طلب صداقة.') : (n.type === 'message' ? 'لديك رسالة جديدة.' : (n.type === 'follow' ? ((payload.follower_name || 'عضو في الواحة') + ' بدأ بمتابعتك.') : (n.body || ''))))}</div>${actions}</div>`;
-            }).join('');
+            }).join('') : '<div style="padding:14px;color:#aaa;font-size:11px;text-align:center;">لا توجد إشعارات حالياً.</div>';
+
             const profile = await getCurrentProfile();
             let adminHtml = '';
             if (profile?.is_admin) {
-                const pending = await supabaseFetch('verification_requests?status=eq.pending&select=id,user_id,reason,created_at&order=created_at.desc&limit=30');
-                if (Array.isArray(pending) && pending.length) {
-                    adminHtml = `<div style="padding:10px;border-top:1px solid #333;color:#ffd700;font-size:11px;font-weight:700;">طلبات التوثيق المعلقة</div>` + pending.map(r => `<div style="padding:10px;border-top:1px solid rgba(255,255,255,.06);"><div style="color:#fff;font-size:11px;">${escapeHtml(r.reason)}</div><div style="display:flex;gap:6px;margin-top:7px;"><button class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="reviewVerificationRequest('${escapeJs(r.id)}','approved')">موافقة</button><button class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="reviewVerificationRequest('${escapeJs(r.id)}','rejected')">رفض</button></div></div>`).join('');
+                const pending = await supabaseFetch('verification_requests?status=eq.pending&select=id,user_id,reason,category,extra_details,profile_url,created_at&order=created_at.desc&limit=30');
+                let pendingCards;
+                if (!Array.isArray(pending)) {
+                    pendingCards = '<div style="padding:12px;color:#ffb8dd;font-size:11px;text-align:center;">تعذر تحميل طلبات التوثيق.</div>';
+                } else if (!pending.length) {
+                    pendingCards = '<div style="padding:12px;color:#9fb1c7;font-size:11px;text-align:center;">لا توجد طلبات توثيق معلقة حالياً.</div>';
+                } else {
+                    pendingCards = pending.map(r => {
+                        const evidenceUrl = /^https?:\/\//i.test(r.profile_url || '')
+                            ? `<a href="${escapeHtml(r.profile_url)}" target="_blank" rel="noopener noreferrer" style="color:#8bf4ff;font-size:10px;">فتح الرابط المرفق</a>`
+                            : '';
+                        return `<article style="padding:12px;border-top:1px solid rgba(255,255,255,.08);display:grid;gap:6px;">
+                            <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="color:#fff;font-size:12px;">طلب #${escapeHtml(r.id)} — ${escapeHtml(r.category || 'نوع غير محدد')}</strong><small style="color:#829cb1;font-size:9px;">${escapeHtml(new Date(r.created_at).toLocaleDateString('ar-EG'))}</small></div>
+                            <div style="color:#e1eaf5;font-size:11px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(r.reason || 'لم يذكر المستخدم سبباً.')}</div>
+                            ${r.extra_details ? `<div style="color:#a9bfd2;font-size:10px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">تفاصيل إضافية: ${escapeHtml(r.extra_details)}</div>` : ''}
+                            ${evidenceUrl}
+                            <div style="display:flex;gap:8px;margin-top:4px;"><button type="button" class="btn-action" style="flex:1;background:#00ff88;color:#000;padding:8px;border-radius:8px;font-size:11px;" onclick="reviewVerificationRequest('${escapeJs(r.id)}','approved')">موافقة</button><button type="button" class="btn-action" style="flex:1;background:#ff0055;color:#fff;padding:8px;border-radius:8px;font-size:11px;" onclick="reviewVerificationRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>
+                        </article>`;
+                    }).join('');
                 }
+                adminHtml = `<section aria-label="لوحة الإدارة" style="margin-top:8px;border:1px solid #ffd70055;border-radius:12px;overflow:hidden;background:#ffd70006;">
+                    <header style="padding:12px;color:#ffd700;font-size:12px;font-weight:700;border-bottom:1px solid #ffd70033;"><i class="fa-solid fa-shield-halved"></i> لوحة الإدارة — طلبات التوثيق</header>
+                    ${pendingCards}
+                </section>`;
             }
             center.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><span>🔔 الإشعارات</span><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:5px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button></div>${parts}${adminHtml}`;
-            await markNotificationsReadSilently(rows.filter(x=>!x.is_read).map(x=>x.id));
+            await markNotificationsReadSilently(rows.filter(x => !x.is_read).map(x => x.id));
         }
+
         async function subscribeToNotifications() {
             const me = await getCurrentAuthUser();
             if (!me || !supabaseClient) return;
@@ -1888,8 +1915,10 @@ async function loadAllRegisteredUsersList() {
         async function reviewVerificationRequest(requestId,status) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً.'); if(!user)return;
             if(!['approved','rejected'].includes(status))return;
-            const result=await supabaseFetch(`verification_requests?id=eq.${encodeURIComponent(requestId)}&status=eq.pending`,{method:'PATCH',body:JSON.stringify({status,reviewed_at:new Date().toISOString(),reviewed_by:user.id})});
-            if(!result)return triggerToastNotification('تعذر تحديث طلب التوثيق.','error');
+            const profile=await getCurrentProfile();
+            if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.','error');
+            const result=await supabaseFetch(`verification_requests?id=eq.${encodeURIComponent(requestId)}&status=eq.pending`,{method:'PATCH',body:JSON.stringify({status,reviewed_at:new Date().toISOString(),reviewed_by:user.id}),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تحديث الطلب؛ ربما تمت مراجعته بالفعل أو لا تملك الصلاحية.','error');
             triggerToastNotification(status==='approved'?'تم توثيق الحساب.':'تم رفض طلب التوثيق.','success');
             await renderInternalNotificationCenter();
         }
@@ -2025,6 +2054,7 @@ async function renderConversationsList() {
                 this.pendingCandidates = [];
                 this.isMuted = false;
                 this.closed = false;
+                this.disconnectTimer = null;
                 this.rtcConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -2050,9 +2080,37 @@ async function renderConversationsList() {
                     if (event.candidate) this.signaling.send({ type: 'candidate', candidate: event.candidate });
                 };
                 this.peerConnection.onconnectionstatechange = () => {
-                    const state = this.peerConnection?.connectionState;
-                    if (state === 'connected') this.onState('connected');
-                    if (['failed','disconnected','closed'].includes(state)) this.onState('failed');
+                    const pc = this.peerConnection;
+                    if (!pc || this.closed) return;
+
+                    const state = pc.connectionState;
+
+                    if (state === 'connected') {
+                        if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                        this.disconnectTimer = null;
+                        this.onState('connected');
+                        return;
+                    }
+
+                    if (state === 'disconnected') {
+                        if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                        this.disconnectTimer = setTimeout(() => {
+                            this.disconnectTimer = null;
+                            if (!this.closed &&
+                                this.peerConnection === pc &&
+                                pc.connectionState === 'disconnected') {
+                                console.warn('WebRTC connection remained disconnected for 10 seconds.');
+                                this.onState('failed');
+                            }
+                        }, 10000);
+                        return;
+                    }
+
+                    if (state === 'failed') {
+                        if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                        this.disconnectTimer = null;
+                        this.onState('failed');
+                    }
                 };
             }
             async waitForIceGathering(timeoutMs = 3500) {
@@ -2113,6 +2171,8 @@ async function renderConversationsList() {
             }
             endCall(notifyRemote = true) {
                 this.closed = true;
+                if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                this.disconnectTimer = null;
                 if (notifyRemote) this.signaling.send({ type: 'end' });
                 this.localStream?.getTracks?.().forEach(track => track.stop());
                 this.localStream = null;

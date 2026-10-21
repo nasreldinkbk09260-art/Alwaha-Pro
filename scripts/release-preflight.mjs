@@ -6,6 +6,9 @@ const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('pack
 const polish=read('production-polish.js');
 for(const id of ['home-section','market-section','free-section','chat-section','reels-section','games-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
 for(const handler of ['publishNewHomePost','editOwnHomePost','deleteOwnHomePost','renderReelsFeed','editOwnReel','deleteOwnReel','submitNewProductToMarket','editMyMarketItem','deleteMyMarketItem','openMarketProductDetails','handleNewUserRegistrationSubmit','executeUserLoginAuth','savePrivacyProfileUpdates','changeAppTheme']){if(!new RegExp(`(?:async\\s+)?function\\s+${handler}\\s*\\(`).test(html))fail(`Missing app handler: ${handler}`);}
+if(!html.includes('لوحة الإدارة — طلبات التوثيق'))fail('Admin verification dashboard missing.');
+if(!html.includes('لا توجد طلبات توثيق معلقة حالياً.'))fail('Admin empty state missing.');
+if(!html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.','error');"))fail('Admin review authorization guard missing.');
 if(html.includes('seller_email'))fail('Frontend must not request or render seller_email.');
 if(!html.includes("savedTheme = localStorage.getItem('alwaha_theme') || 'default'"))fail('Saved theme is not restored on startup.');
 for(const theme of ['default','nature','tech','soft'])if(!html.includes(`changeAppTheme('${theme}')`))fail(`Missing theme selection: ${theme}`);
