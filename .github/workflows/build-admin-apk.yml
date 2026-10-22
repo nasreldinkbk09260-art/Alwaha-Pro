@@ -82,7 +82,7 @@ jobs:
           s=s[:pos]+'\n            signingConfig signingConfigs.release'+s[pos:]
           s=re.sub(r'(?m)^(\s*applicationId\s+).+$',r'\1"pro.alwaha.admin"',s)
           s=re.sub(r'(?m)^(\s*versionName\s+).+$',r'\1"1.0.0"',s)
-          s=re.sub(r'(?m)^(\s*versionCode\s+).+$',r'\1'+os.environ['VERSION_CODE'],s)
+          s=re.sub(r'(?m)^(\s*versionCode\s+).+$',lambda m: m.group(1)+os.environ['VERSION_CODE'],s)
           p.write_text(s)
           icon=Path('dist/icon.png'); res=Path('android/app/src/main/res')
           (res/'drawable-nodpi').mkdir(parents=True,exist_ok=True)
