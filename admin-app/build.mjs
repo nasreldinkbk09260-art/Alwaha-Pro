@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import sharp from 'sharp';
+const here = path.dirname(new URL(import.meta.url).pathname);
+const dist = path.join(here, 'dist');
+fs.rmSync(dist, {recursive:true, force:true});
+fs.mkdirSync(dist, {recursive:true});
+fs.copyFileSync(path.join(here,'index.html'),path.join(dist,'index.html'));
+await sharp(fs.readFileSync(path.join(here,'icon.svg'))).resize(1024,1024).png().toFile(path.join(dist,'icon.png'));
+console.log('Alwaha Admin web build passed.');

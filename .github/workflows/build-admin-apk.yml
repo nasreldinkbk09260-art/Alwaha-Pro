@@ -1,0 +1,129 @@
+name: Alwaha Admin • Independent Android APK/AAB
+on:
+  push:
+    branches: [alwaha-admin-app-1.0.0]
+    paths:
+      - 'admin-app/**'
+      - '.github/workflows/build-admin-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: alwaha-admin-android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install and build web app
+        working-directory: admin-app
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npm run build
+          test -s dist/index.html
+          test -s dist/icon.png
+      - name: Create Android project
+        working-directory: admin-app
+        run: |
+          set -euo pipefail
+          npx cap add android
+          npx cap sync android
+      - name: Configure signing, package ID and icon
+        working-directory: admin-app
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 || secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          : "${KEYSTORE_BASE64:?Missing release keystore secret}"
+          : "${KEYSTORE_PASSWORD:?Missing keystore password secret}"
+          : "${KEY_ALIAS:?Missing key alias secret}"
+          : "${KEY_PASSWORD:?Missing key password secret}"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/admin-release-key.jks
+          test -s android/admin-release-key.jks
+          chmod 600 android/admin-release-key.jks
+          python3 <<'PY'
+          from pathlib import Path
+          import os,re,shutil
+          p=Path('android/app/build.gradle'); s=p.read_text()
+          # Capacitor's generated Gradle template has an android { } block.
+          if not re.search(r'(?m)^android\s*\{',s): raise SystemExit('android block not found')
+          signing='''
+              signingConfigs {
+                  release {
+                      storeFile file("../admin-release-key.jks")
+                      storePassword System.getenv("KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("KEY_ALIAS")
+                      keyPassword System.getenv("KEY_PASSWORD")
+                  }
+              }
+          '''
+          s=re.sub(r'(?m)^android\s*\{',lambda m:m.group(0)+signing,s,count=1)
+          # Apply the release signing config within the release build type.
+          bm=re.search(r'(?m)^\s*buildTypes\s*\{',s)
+          if not bm: raise SystemExit('buildTypes block not found')
+          tail=s[bm.end():]
+          m=re.search(r'(?m)^(\s*)release\s*\{',tail)
+          if not m: raise SystemExit('release build type not found')
+          pos=bm.end()+m.end()
+          s=s[:pos]+'\n            signingConfig signingConfigs.release'+s[pos:]
+          s=re.sub(r'(?m)^(\s*applicationId\s+).+$',r'\1"pro.alwaha.admin"',s)
+          s=re.sub(r'(?m)^(\s*versionName\s+).+$',r'\1"1.0.0"',s)
+          s=re.sub(r'(?m)^(\s*versionCode\s+).+$',r'\1'+os.environ['VERSION_CODE'],s)
+          p.write_text(s)
+          icon=Path('dist/icon.png'); res=Path('android/app/src/main/res')
+          (res/'drawable-nodpi').mkdir(parents=True,exist_ok=True)
+          shutil.copy2(icon,res/'drawable-nodpi/ic_admin_foreground.png')
+          for folder in res.glob('mipmap-*'):
+              if not folder.is_dir() or folder.name=='mipmap-anydpi-v26': continue
+              for name in ('ic_launcher','ic_launcher_round'):
+                  for old in folder.glob(name+'.*'):
+                      if old.suffix.lower()!='.png': old.unlink()
+                  shutil.copy2(icon,folder/(name+'.png'))
+          adaptive=res/'mipmap-anydpi-v26'; adaptive.mkdir(parents=True,exist_ok=True)
+          xml='''<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+            <background android:drawable="@android:color/black" />
+            <foreground android:drawable="@drawable/ic_admin_foreground" />
+          </adaptive-icon>'''
+          (adaptive/'ic_launcher.xml').write_text(xml);(adaptive/'ic_launcher_round.xml').write_text(xml)
+          print('Configured pro.alwaha.admin and independent icon.')
+          PY
+      - name: Build and verify signed release
+        working-directory: admin-app/android
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleRelease bundleRelease
+          APK=app/build/outputs/apk/release/app-release.apk
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          test -s "$APK"; test -s "$AAB"
+          BT="$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)"
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --verbose "$APK"
+          "$ANDROID_HOME/build-tools/$BT/aapt" dump badging "$APK" | grep -F "package: name='pro.alwaha.admin'"
+      - name: Prepare artifacts
+        working-directory: admin-app
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/app-release.apk release/Alwaha-Admin-1.0.0.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab release/Alwaha-Admin-1.0.0.aab
+          sha256sum release/* > release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Alwaha-Admin-1.0.0-${{ github.run_number }}
+          path: admin-app/release/*
+          if-no-files-found: error
+          retention-days: 30
