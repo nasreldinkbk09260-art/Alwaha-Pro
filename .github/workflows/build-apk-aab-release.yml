@@ -117,7 +117,7 @@ jobs:
           }
           const html = fs.readFileSync('index.html','utf8');
           const start = html.indexOf('<script>');
-          const end = html.lastIndexOf('</script>');
+          const end = start < 0 ? -1 : html.indexOf('</script>', start + '<script>'.length);
           if (start < 0 || end <= start) throw new Error('Inline application script not found.');
           fs.writeFileSync('/tmp/alwaha-pro-inline.js',html.slice(start + '<script>'.length,end),'utf8');
           NODE
