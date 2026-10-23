@@ -745,6 +745,17 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
           <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
         </div>
+        <div style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;">
+          <h4 style="color:#8bf4ff;font-size:12px;margin:0 0 8px;">الاتصال والمشاركة القريبة</h4>
+          <p style="font-size:10px;color:#9fb2cc;line-height:1.8;margin:0 0 10px;">الوصول إلى مشاركة الملفات من الدردشة. الرسائل والملفات المباشرة بين جهازين والمكالمات المحلية ما زالت مرحلة تطوير واختبار.</p>
+          <button type="button" class="btn-action" style="width:100%;background:#17354a;color:#b8f5ff;border:1px solid #8bf4ff55;padding:10px;border-radius:10px;font-size:12px;" onclick="openAlwahaLocalNetworkPanel()"><i class="fa-solid fa-wifi"></i> إعدادات الشبكة القريبة</button>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px;">
+            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">إشعارات الرسائل والمكالمات — لاحقًا</button>
+            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">التنزيل التلقائي للوسائط — لاحقًا</button>
+            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">إدارة التخزين — لاحقًا</button>
+            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">نطاق الشبكة — بعد اختبار الأجهزة</button>
+          </div>
+        </div>
 <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
         <button class="btn-action" style="width:100%; background:rgba(255,0,85,0.1); color:#ff0055; border:1px solid #ff0055; padding:12px; border-radius:8px; font-size:13px;" onclick="clearAppCacheKeepData()">
             <i class="fa-solid fa-broom"></i> تنظيف الكاش وتسريع التطبيق
@@ -803,9 +814,10 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 
     <!-- 5. قسم وضع المشاركة الحرة -->
     <section id="free-section" class="app-section">
-        <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-share-nodes"></i> مشاركة الملفات المحلية</h2>
+        <button type="button" id="alwaha-free-back-to-chat" class="btn-action" style="width:100%;margin-bottom:12px;background:#17263b;color:#b8f5ff;border:1px solid #8bf4ff44;padding:10px;border-radius:10px;font-size:12px;" onclick="showSection('chat-section', document.querySelector('.nav-item.chat'))"><i class="fa-solid fa-arrow-right"></i> العودة إلى الدردشة</button>
+        <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-share-nodes"></i> مشاركة الملفات عبر نظام الهاتف</h2>
         <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
-            <i class="fa-solid fa-power-off"></i> تفعيل وضع المشاركة الحرة
+            <i class="fa-solid fa-share-nodes"></i> عرض خيارات مشاركة الملفات
         </button>
         <div id="radar-live-results" style="display:none;"></div>
     </section>
@@ -862,7 +874,6 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
     <nav class="bottom-nav-bar" aria-label="التنقل الرئيسي">
         <button type="button" class="nav-item main-home active" aria-label="الرئيسية" onclick="showSection('home-section', this)"><i class="fa-solid fa-house"></i><span>الرئيسية</span></button>
         <button type="button" class="nav-item market-center" aria-label="السوق" onclick="showSection('market-section', this)"><i class="fa-solid fa-shop"></i><span>السوق</span></button>
-        <button type="button" class="nav-item free-mesh" aria-label="الشبكة" onclick="showSection('free-section', this)"><i class="fa-solid fa-wifi"></i><span>الشبكة</span></button>
         <button type="button" class="nav-item chat" aria-label="المحادثات" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>محادثة</span></button>
         <button type="button" class="nav-item reels" aria-label="الريلز" onclick="showSection('reels-section', this)"><i class="fa-solid fa-clapperboard"></i><span>ريلز</span></button>
         <button type="button" class="nav-item games-nav" aria-label="الألعاب" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
@@ -2650,15 +2661,15 @@ async function launchGameEngine(gameTitle) {
                 const questions=[['أين توجد حماية البطارية؟',['PMIC','Mic','Speaker'],'PMIC'],['ما القطعة المسؤولة عن الصوت؟',['Speaker','RAM','GPU'],'Speaker'],['ما القطعة التي تحفظ البيانات مؤقتاً؟',['RAM','Charging Port','Antenna'],'RAM'],['ما الجزء الخاص بالشحن السلكي؟',['Charging Port','Camera','Flash'],'Charging Port']];let q=0,score=0,start=performance.now();const next=()=>{if(q>=questions.length){finish(score,`أنهيت التحدي في ${((performance.now()-start)/1000).toFixed(1)} ثانية.`);return;}const [question,opts,answer]=questions[q];stage.innerHTML=`<div style="color:#fff;font-size:13px;margin:15px 0;">${question}</div>`+opts.map(o=>`<button class="choice-btn" data-v="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('');stage.querySelectorAll('.choice-btn').forEach(b=>b.onclick=()=>{if(b.dataset.v===answer)score+=25;q++;next();});};next();}
         }
 
-        /* --- المشاركة المحلية الحقيقية عبر نظام المشاركة في الهاتف --- */
+        /* --- مشاركة الملفات عبر واجهة المشاركة القياسية للهاتف --- */
 
 function toggleFreeMeshShareSystem() {
             meshShareActive=!meshShareActive;
             const btn=document.getElementById('free-mode-toggle-main-btn'); const results=document.getElementById('radar-live-results');
             if(meshShareActive){
-                if(btn)btn.innerHTML='<i class="fa-solid fa-share-nodes"></i> إيقاف المشاركة المحلية';
-                if(results){results.style.display='block';results.innerHTML=`<div class="local-share-card" style="position:static;background:rgba(0,255,136,.05);backdrop-filter:none;display:block;padding:15px;"><div style="color:#00ff88;font-size:12px;font-weight:bold;">المشاركة المحلية جاهزة</div><div style="color:#aaa;font-size:10px;line-height:1.7;margin:7px 0 12px;">اختَر ملفاً ثم استخدم قائمة المشاركة في الهاتف. هذا المسار يعمل بدون حاجة إلى خادم مشاركة من داخل التطبيق.</div><button class="btn-action" id="local-share-file-btn" style="width:100%;background:#00ff88;color:#000;padding:10px;border-radius:10px;font-size:12px;"><i class="fa-solid fa-file-arrow-up"></i> اختيار ملف ومشاركته</button></div>`;document.getElementById('local-share-file-btn').onclick=()=>pickFilesFromDevice({accept:'*/*',multiple:false,onFiles:async files=>{const file=files[0];if(!file)return;try{if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:'مشاركة Alwaha-Pro',files:[file]});}else if(navigator.share){await navigator.share({title:'مشاركة Alwaha-Pro',text:file.name});}else{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);triggerToastNotification('تم تجهيز الملف للمشاركة/الحفظ.','success');}}catch(e){}}});}
-            }else{if(btn)btn.innerHTML='<i class="fa-solid fa-power-off"></i> تفعيل وضع المشاركة المحلية';if(results){results.style.display='none';results.innerHTML='';}}
+                if(btn)btn.innerHTML='<i class="fa-solid fa-eye-slash"></i> إخفاء خيارات المشاركة';
+                if(results){results.style.display='block';results.innerHTML=`<div class="local-share-card" style="position:static;background:rgba(0,255,136,.05);backdrop-filter:none;display:block;padding:15px;"><div style="color:#00ff88;font-size:12px;font-weight:bold;">مشاركة الملفات عبر الهاتف جاهزة</div><div style="color:#aaa;font-size:10px;line-height:1.7;margin:7px 0 12px;">اختَر ملفاً لفتح قائمة المشاركة التي يوفرها نظام الهاتف. قد تحتاج الوجهة المختارة إلى اتصال أو تطبيق متوافق؛ هذه ليست شبكة ندّية مباشرة داخل Alwaha-Pro.</div><button class="btn-action" id="local-share-file-btn" style="width:100%;background:#00ff88;color:#000;padding:10px;border-radius:10px;font-size:12px;"><i class="fa-solid fa-file-arrow-up"></i> اختيار ملف ومشاركته</button></div>`;document.getElementById('local-share-file-btn').onclick=()=>pickFilesFromDevice({accept:'*/*',multiple:false,onFiles:async files=>{const file=files[0];if(!file)return;try{if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:'مشاركة Alwaha-Pro',files:[file]});}else if(navigator.share){await navigator.share({title:'مشاركة Alwaha-Pro',text:file.name});}else{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);triggerToastNotification('تم تجهيز الملف للمشاركة/الحفظ.','success');}}catch(e){}}});}
+            }else{if(btn)btn.innerHTML='<i class="fa-solid fa-share-nodes"></i> عرض خيارات المشاركة';if(results){results.style.display='none';results.innerHTML='';}}
         }
 
         /* --- وظائف الكاميرا الذكية والفلاتر --- */
@@ -3179,5 +3190,81 @@ function triggerAnimeAiConverterFilter() {
         });
 
     </script>
+<script id="alwaha-phase1-local-network-structure">
+(function () {
+  'use strict';
+  if (window.__ALWAHA_PHASE1_LOCAL_NETWORK_V1) return;
+  window.__ALWAHA_PHASE1_LOCAL_NETWORK_V1 = true;
+  const text = (tag, value, className) => { const node = document.createElement(tag); if (className) node.className = className; node.textContent = value; return node; };
+  const style = document.createElement('style');
+  style.id = 'alwaha-phase1-local-network-style';
+  style.textContent = [
+    '#alwaha-local-network-modal{position:fixed;inset:0;z-index:100000001;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,7,18,.92)}',
+    '#alwaha-local-network-modal[aria-hidden="false"]{display:flex}',
+    '#alwaha-local-network-modal .alwaha-ln-card{width:min(100%,520px);max-height:88vh;overflow:auto;border:1px solid #70dff055;border-radius:20px;background:#0e1a2b;color:#edf8ff;padding:16px;box-shadow:0 18px 55px #0009}',
+    '#alwaha-local-network-modal .alwaha-ln-head{display:flex;align-items:center;justify-content:space-between;gap:8px}',
+    '#alwaha-local-network-modal h2{font-size:17px;margin:0 0 8px;color:#8bf4ff}',
+    '#alwaha-local-network-modal p{font-size:12px;line-height:1.85;color:#b4c7db}',
+    '#alwaha-local-network-modal .alwaha-ln-current{border:1px solid #48cba355;background:#48cba311;padding:12px;border-radius:12px;color:#d0fff0;font-size:12px;line-height:1.85;margin:12px 0}',
+    '#alwaha-local-network-modal .alwaha-ln-grid{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}',
+    '#alwaha-local-network-modal button{font:inherit;font-size:12px;font-weight:700;border:1px solid #ffffff20;border-radius:11px;padding:11px;background:#17263b;color:#e8f4ff;cursor:pointer}',
+    '#alwaha-local-network-modal button.primary{background:#67e8f9;color:#09212a;border:0}',
+    '#alwaha-local-network-modal button:disabled{opacity:.55;cursor:not-allowed;border-style:dashed}',
+    '#alwaha-local-network-modal .alwaha-ln-status{display:inline-block;border-radius:20px;padding:4px 9px;background:#38445a;color:#ffe5a3;font-size:10px}',
+    '#alwaha-local-network-modal .alwaha-ln-close{font-size:18px;padding:6px 10px}',
+    '.bottom-nav-bar .nav-item.reels{--orb-a:#ffcae7;--orb-b:#e66cbb;--orb-c:#a04e94;--orb-shadow:#ff84d34f}',
+    '.bottom-nav-bar .nav-item.games-nav{--orb-a:#e0d4ff;--orb-b:#a38be8;--orb-c:#6565ad;--orb-shadow:#bea2ff50}',
+    '.bottom-nav-bar .nav-item.profile-me{--orb-a:#b8edff;--orb-b:#6aa8ed;--orb-c:#4161b2;--orb-shadow:#68b9ff55}',
+    '@media(min-width:460px){#alwaha-local-network-modal .alwaha-ln-grid{grid-template-columns:1fr 1fr}}'
+  ].join('');
+  document.head.appendChild(style);
+  const oldFreeNav = document.querySelector('.bottom-nav-bar .nav-item.free-mesh');
+  if (oldFreeNav) oldFreeNav.remove();
+  const headerActions = document.querySelector('#active-chat-box > div:first-child > div:last-child');
+  if (headerActions && !document.getElementById('alwaha-local-network-open')) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.id = 'alwaha-local-network-open'; button.className = 'btn-action';
+    button.setAttribute('aria-label', 'فتح خيارات الشبكة القريبة'); button.title = 'مشاركة الملفات وخطة الشبكة القريبة';
+    button.style.cssText = 'background:transparent;color:#8bf4ff;font-size:12px;min-width:48px;padding:5px 2px;';
+    button.innerHTML = '<i class="fa-solid fa-wifi"></i><span style="font-size:9px;display:block;">الشبكة</span>';
+    const bluetooth = headerActions.querySelector('button[disabled][aria-label*="بلوتوث"]');
+    headerActions.insertBefore(button, bluetooth || null);
+    button.addEventListener('click', () => window.openAlwahaLocalNetworkPanel());
+  }
+  const modal = document.createElement('div');
+  modal.id = 'alwaha-local-network-modal'; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-hidden', 'true'); modal.setAttribute('aria-labelledby', 'alwaha-local-network-title');
+  const card = document.createElement('section'); card.className = 'alwaha-ln-card';
+  const head = document.createElement('div'); head.className = 'alwaha-ln-head';
+  const headingWrap = document.createElement('div');
+  const heading = text('h2', 'الشبكة القريبة ومشاركة الملفات'); heading.id = 'alwaha-local-network-title'; headingWrap.appendChild(heading);
+  const subtitle = text('div', 'مركز الوصول الحالي وخطة التطوير', 'alwaha-ln-status'); headingWrap.appendChild(subtitle);
+  const close = text('button', '×', 'alwaha-ln-close'); close.type = 'button'; close.setAttribute('aria-label', 'إغلاق');
+  head.append(headingWrap, close); card.appendChild(head);
+  const current = text('div', 'المتاح حاليًا: فتح قائمة المشاركة القياسية في الهاتف لاختيار تطبيق/وجهة مشاركة. هذا لا يثبت اتصالًا مباشرًا بين جهازين ولا يضمن العمل دون إنترنت.', 'alwaha-ln-current'); card.appendChild(current);
+  const intro = text('p', 'ترتيب التطوير: نبدأ باختبارات الأجهزة القريبة جدًا، ثم نتحقق من الأمان والثبات قبل توسيع النطاق. لا تُرسل ملفات حساسة إلا بعد التحقق من الوجهة في قائمة المشاركة.'); card.appendChild(intro);
+  const active = text('button', 'فتح أدوات مشاركة الملفات المتاحة', 'primary'); active.type = 'button';
+  active.addEventListener('click', () => { closePanel(); if (typeof window.showSection === 'function') window.showSection('free-section', null); else document.getElementById('free-section')?.scrollIntoView(); });
+  card.appendChild(active);
+  const grid = document.createElement('div'); grid.className = 'alwaha-ln-grid';
+  const future = [
+    'رسائل مباشرة بين جهازين قريبين — المرحلة التالية',
+    'إرسال ملفات متعددة بالتوازي مع إظهار التقدم — المرحلة التالية',
+    'مكالمة صوتية محلية عبر قناة ندّية — بعد اختبار الإشارة والأذونات',
+    'تحديد نطاق الاتصال القريب جدًا ثم توسيعه — بعد التحقق الميداني'
+  ];
+  for (const label of future) { const b = text('button', label); b.type = 'button'; b.disabled = true; b.setAttribute('aria-disabled', 'true'); grid.appendChild(b); }
+  card.appendChild(grid);
+  card.appendChild(text('p', 'هذه الأزرار المستقبلية معطلة عمدًا في مرحلة تجهيز الهيكل؛ لا يوجد ادعاء بأن شبكة ندّية محلية أو إرسالًا متوازيًا أو مكالمات محلية قد تم تنفيذها.'));
+  modal.appendChild(card); document.body.appendChild(modal);
+  let lastOpener = null;
+  function closePanel() { modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-active'); const target = lastOpener || document.getElementById('alwaha-local-network-open'); if (target && target.isConnected) target.focus(); lastOpener = null; }
+  window.openAlwahaLocalNetworkPanel = function openAlwahaLocalNetworkPanel() { lastOpener = document.activeElement; modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-active'); close.focus(); };
+  close.addEventListener('click', closePanel);
+  modal.addEventListener('click', e => { if (e.target === modal) closePanel(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closePanel(); });
+  const backToChat = document.getElementById('alwaha-free-back-to-chat');
+  if (backToChat) backToChat.addEventListener('click', () => { if (typeof window.showSection === 'function') window.showSection('chat-section', document.querySelector('.nav-item.chat')); });
+})();
+</script>
 </body>
 </html>
