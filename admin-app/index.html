@@ -14,33 +14,130 @@
 <section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section></section>
 <p class="muted" style="text-align:center">صلاحيات Supabase هي المرجع النهائي. لا يتضمن التطبيق مفتاح service_role.</p></main>
 <script>
-(()=>{'use strict';
+(()=>{
+'use strict';
 const URL='https://kjuixjdtqwcsnxefftrt.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0';
-const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}}),$=id=>document.getElementById(id);let profile=null,users=[];
+const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=id=>document.getElementById(id);
+let profile=null,users=[],userSearchTimer=null,usersLoadSequence=0;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt=v=>v?new Date(v).toLocaleString('ar'):'—';
 function msg(id,t,k=''){const e=$(id);e.textContent=t;e.className='notice '+k}
 function showLogin(){$('login').classList.remove('hidden');$('dashboard').classList.add('hidden')}
 function showDash(){$('login').classList.add('hidden');$('dashboard').classList.remove('hidden')}
-async function verifyAdmin(session){if(!session?.user?.id){profile=null;showLogin();return}
-const {data,error}=await db.from('users').select('id,first_name,last_name,identifier,is_admin').eq('id',session.user.id).maybeSingle();
-if(error)throw error;if(!data?.is_admin){await db.auth.signOut();showLogin();msg('loginMsg','هذا الحساب ليس مديراً مخوّلاً.','error');return}
-profile=data;$('who').textContent=((data.first_name||'')+' '+(data.last_name||'')+' • '+(data.identifier||session.user.email)).trim();showDash();await refresh()}
-async function counts(){const [u,r]=await Promise.all([db.from('users').select('id',{count:'exact',head:true}),db.from('verification_requests').select('id',{count:'exact',head:true}).eq('status','pending')]);$('usersCount').textContent=u.error?'—':(u.count??0).toLocaleString('ar');$('pendingCount').textContent=r.error?'—':(r.count??0).toLocaleString('ar');if(u.error||r.error)msg('msg','تعذر تحميل بعض الإحصاءات. افحص صلاحيات RLS والاتصال.','error')}
-async function requests(){ $('requestsList').textContent='جارٍ التحميل…';const {data,error}=await db.from('verification_requests').select('id,user_id,reason,status,created_at').order('created_at',{ascending:false}).limit(100);if(error){$('requestsList').innerHTML='<div class="notice error">تعذرت قراءة الطلبات. تحقق من سياسة RLS للمدير.</div>';return}
-const rows=data||[];$('pendingCount').textContent=rows.filter(x=>x.status==='pending').length.toLocaleString('ar');if(!rows.length){$('requestsList').textContent='لا توجد طلبات توثيق.';return}
-$('requestsList').innerHTML=rows.map(r=>`<article class="item"><div class="top"><h3>طلب #${esc(r.id)}</h3><span class="status">${esc(r.status)}</span></div><div class="muted">معرّف الحساب: ${esc(r.user_id)}<br>التاريخ: ${esc(dt(r.created_at))}</div><p>${esc(r.reason||'لم يُذكر سبب.')}</p>${r.status==='pending'?`<div class="actions"><button class="approve" data-id="${esc(r.id)}" data-status="approved">الموافقة</button><button class="reject" data-id="${esc(r.id)}" data-status="rejected">الرفض</button></div>`:''}</article>`).join('')}
-async function loadUsers(){$('usersList').textContent='جارٍ التحميل…';const {data,error}=await db.from('users').select('id,first_name,last_name,identifier,is_verified,is_admin,created_at').order('created_at',{ascending:false}).limit(250);if(error){users=[];$('usersList').innerHTML='<div class="notice error">قاعدة البيانات لا تسمح بعرض قائمة الحسابات. لم نغيّر سياسات الأمان تلقائياً.</div>';return}users=data||[];renderUsers()}
-function renderUsers(){const q=$('search').value.trim().toLocaleLowerCase(),rows=users.filter(u=>((u.first_name||'')+' '+(u.last_name||'')+' '+(u.identifier||'')).toLocaleLowerCase().includes(q));if(!rows.length){$('usersList').textContent='لا توجد نتائج.';return}
-$('usersList').innerHTML=rows.map(u=>`<article class="item"><div class="top"><h3>${esc(((u.first_name||'')+' '+(u.last_name||'')).trim()||'حساب بلا اسم')}</h3><span class="status">${u.is_admin?'مدير':u.is_verified?'موثّق':'غير موثّق'}</span></div><div class="muted">المعرّف: ${esc(u.identifier||'—')}<br>تاريخ الإنشاء: ${esc(dt(u.created_at))}</div></article>`).join('')}
+async function adminApi(action,fields={}){
+  const {data,error}=await db.functions.invoke('admin-api',{body:Object.assign({action},fields)});
+  if(error){
+    let message=error.message||'تعذر الاتصال بخدمة الإدارة.';
+    try{const payload=await error.context?.json();if(payload?.error)message=payload.error}catch{}
+    throw new Error(message);
+  }
+  if(data?.error)throw new Error(data.error);
+  return data||{};
+}
+function applySummary(data){
+  $('usersCount').textContent=Number(data.usersCount??0).toLocaleString('ar');
+  $('pendingCount').textContent=Number(data.pendingCount??0).toLocaleString('ar');
+}
+async function verifyAdmin(session){
+  if(!session?.user?.id){profile=null;showLogin();return}
+  const summary=await adminApi('summary');
+  profile={id:session.user.id,is_admin:true};
+  $('who').textContent=session.user.email||'مدير معتمد';
+  showDash();applySummary(summary);
+  await Promise.all([requests(),loadUsers()]);
+}
+async function counts(){
+  try{applySummary(await adminApi('summary'))}
+  catch(error){$('usersCount').textContent='—';$('pendingCount').textContent='—';msg('msg',error.message||'تعذر تحميل الإحصاءات.','error')}
+}
+async function requests(){
+  $('requestsList').textContent='جارٍ التحميل…';
+  try{
+    const result=await adminApi('list_verification_requests',{status:'pending',offset:0,limit:100});
+    const rows=Array.isArray(result.requests)?result.requests:[];
+    if(!rows.length){$('requestsList').textContent='لا توجد طلبات توثيق معلّقة.';return}
+    $('requestsList').innerHTML=rows.map(r=>
+      '<article class="item"><div class="top"><h3>طلب #'+esc(r.id)+'</h3><span class="status">'+esc(r.status)+'</span></div>'+
+      '<div class="muted">معرّف الحساب: '+esc(r.user_id)+'<br>التاريخ: '+esc(dt(r.created_at))+'</div>'+
+      '<p>'+esc(r.reason||'لم يُذكر سبب.')+'</p>'+
+      (r.status==='pending'?'<div class="actions"><button class="approve" data-id="'+esc(r.id)+'" data-status="approved">الموافقة</button><button class="reject" data-id="'+esc(r.id)+'" data-status="rejected">الرفض</button></div>':'')+
+      '</article>'
+    ).join('');
+  }catch(error){
+    $('requestsList').innerHTML='<div class="notice error">'+esc(error.message||'تعذّر تحميل طلبات التوثيق.')+'</div>';
+  }
+}
+async function loadUsers(){
+  const sequence=++usersLoadSequence;
+  const query=$('search').value.trim();
+  $('usersList').textContent='جارٍ التحميل…';
+  try{
+    const result=await adminApi('list_users',{offset:0,limit:100,query});
+    if(sequence!==usersLoadSequence)return;
+    users=Array.isArray(result.users)?result.users:[];
+    if(!users.length){$('usersList').textContent='لا توجد نتائج.';return}
+    const notice=!query&&result.hasMore?'<div class="notice">تم عرض أول 100 حساب. استخدم البحث لتحديد الحساب المطلوب.</div>':'';
+    $('usersList').innerHTML=notice+users.map(u=>
+      '<article class="item"><div class="top"><h3>'+esc(((u.first_name||'')+' '+(u.last_name||'')).trim()||'حساب بلا اسم')+'</h3>'+
+      '<span class="status">'+(u.is_admin?'مدير':u.is_verified?'موثّق':'غير موثّق')+'</span></div>'+
+      '<div class="muted">المعرّف: '+esc(u.identifier||'—')+'<br>اسم المستخدم: '+esc(u.username||'—')+
+      '<br>تاريخ الإنشاء: '+esc(dt(u.created_at))+'</div></article>'
+    ).join('');
+  }catch(error){
+    if(sequence!==usersLoadSequence)return;
+    users=[];
+    $('usersList').innerHTML='<div class="notice error">'+esc(error.message||'تعذر تحميل قائمة الحسابات.')+'</div>';
+  }
+}
 async function refresh(){await Promise.all([counts(),requests(),loadUsers()])}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();$('loginForm').querySelector('button').disabled=true;try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await verifyAdmin(data.session)}catch(e){msg('loginMsg',e.message||'تعذر تسجيل الدخول.','error')}finally{$('loginForm').querySelector('button').disabled=false}});
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const button=$('loginForm').querySelector('button');button.disabled=true;
+  try{
+    const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+    if(error)throw error;
+    await verifyAdmin(data.session);
+  }catch(error){
+    await db.auth.signOut();profile=null;showLogin();
+    msg('loginMsg',error.message||'تعذر تسجيل الدخول أو لا توجد صلاحية إدارية.','error');
+  }finally{button.disabled=false}
+});
 $('logout').addEventListener('click',async()=>{await db.auth.signOut();profile=null;showLogin()});
-$('refreshRequests').addEventListener('click',requests);$('refreshUsers').addEventListener('click',loadUsers);$('search').addEventListener('input',renderUsers);
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users')}));
-$('requestsList').addEventListener('click',async e=>{const b=e.target.closest('button[data-id]');if(!b)return;if(!profile?.is_admin){msg('msg','انتهت صلاحية المدير.','error');return}const status=b.dataset.status,id=b.dataset.id;if(!confirm(status==='approved'?'الموافقة على التوثيق؟':'رفض طلب التوثيق؟'))return;b.disabled=true;const {error}=await db.from('verification_requests').update({status,reviewed_by:profile.id}).eq('id',id).eq('status','pending');if(error){msg('msg','فشل تحديث الطلب: '+error.message,'error');b.disabled=false;return}msg('msg','تم إرسال القرار إلى قاعدة البيانات.','success');await refresh()});
+$('refreshRequests').addEventListener('click',requests);
+$('refreshUsers').addEventListener('click',loadUsers);
+$('search').addEventListener('input',()=>{
+  clearTimeout(userSearchTimer);
+  userSearchTimer=setTimeout(()=>{loadUsers()},300);
+});
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
+  $('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');
+  $('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');
+}));
+$('requestsList').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-id]');if(!b)return;
+  if(!profile?.is_admin){msg('msg','انتهت صلاحية المدير.','error');return}
+  const status=b.dataset.status,id=b.dataset.id;
+  if(!confirm(status==='approved'?'الموافقة على التوثيق؟':'رفض طلب التوثيق؟'))return;
+  b.disabled=true;
+  try{
+    await adminApi('review_verification',{id,status});
+    msg('msg','تم تسجيل القرار عبر خدمة الإدارة.','success');
+    await refresh();
+  }catch(error){
+    msg('msg',error.message||'فشل تحديث طلب التوثيق.','error');b.disabled=false;
+  }
+});
 db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){profile=null;showLogin()}});
-(async()=>{const {data,error}=await db.auth.getSession();if(error){msg('loginMsg','تعذر استعادة الجلسة.','error');return}if(data.session)try{await verifyAdmin(data.session)}catch(e){await db.auth.signOut();msg('loginMsg','تعذر التحقق من صلاحية المدير: '+e.message,'error')}})();
+(async()=>{
+  const {data,error}=await db.auth.getSession();
+  if(error){msg('loginMsg','تعذر استعادة الجلسة.','error');return}
+  if(data.session)try{await verifyAdmin(data.session)}catch(error){
+    await db.auth.signOut();profile=null;showLogin();
+    msg('loginMsg',error.message||'تعذر التحقق من صلاحية المدير.','error');
+  }
+})();
 })();
 </script></body></html>
