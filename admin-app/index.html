@@ -4,14 +4,51 @@
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--p:#121e31;--line:#26364f;--txt:#edf6ff;--muted:#9fb2cc;--cyan:#67e8f9}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#142847,var(--bg) 55%);color:var(--txt);font-family:system-ui,sans-serif}main{max-width:900px;margin:auto;padding:18px 13px 45px}.brand{display:flex;align-items:center;gap:12px;margin:8px 0 20px}.brand img{width:54px;height:54px;border-radius:15px}.brand h1{font-size:21px;margin:0}.muted{color:var(--muted);font-size:12px;line-height:1.7}.panel,.item,.stat{background:var(--p);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px}h2{font-size:17px;margin:0 0 13px}h3{font-size:14px;margin:0 0 8px}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid #344866;border-radius:10px;background:#091321;color:white;font:inherit}button{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.primary{background:var(--cyan);color:#06202a}.secondary{background:#26364f;color:white}.approve{background:#064e3b;color:#a7f3d0}.reject{background:#4c1524;color:#fecdd3}.hidden{display:none!important}.row,.top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{margin:0}.stat strong{display:block;color:var(--cyan);font-size:25px}.notice{padding:11px;border-radius:10px;background:#182b43;color:#c8e5ff;font-size:12px;line-height:1.7;margin:10px 0}.error{background:#451a26;color:#fecdd3}.success{background:#073b32;color:#a7f3d0}.status{font-size:11px;background:#26364f;padding:5px 8px;border-radius:18px}.item p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.7}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1}.tabs{display:flex;gap:8px;margin-bottom:12px}.tabs button{flex:1}.tabs .active{background:#fbbf24;color:#241700}
+
+.feature-map-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.feature-map-card{min-width:0;border:1px solid var(--line);border-radius:13px;background:#0b1627;padding:12px}
+.feature-map-card p{font-size:11px;line-height:1.85;color:var(--muted);margin:8px 0}
+.feature-map-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.feature-map-top h3{margin:0}
+.feature-live,.feature-next{font-size:10px;border-radius:20px;padding:4px 7px;white-space:nowrap}
+.feature-live{background:#123b36;color:#a7f3d0}.feature-next{background:#42351b;color:#ffe5a3}
+.feature-map-card button,.future-admin-grid button{width:100%;margin-top:7px;background:#17263b;color:#c4d3e4;border:1px dashed #5d718b;cursor:not-allowed;opacity:.8}
+.future-admin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+@media(max-width:520px){.feature-map-grid,.future-admin-grid{grid-template-columns:1fr}.tabs button{padding:10px 6px;font-size:11px}}
 </style></head><body><main>
 <header class="brand"><img src="icon.png" alt="شعار إدارة الواحة"><div><h1>إدارة الواحة</h1><div class="muted">تطبيق إداري مستقل • 1.0.0</div></div></header>
 <section id="login" class="panel"><h2>دخول المدير</h2><p class="muted">استخدم حساب المدير. لوحة التحكم لا تفتح إلا بعد التحقق من public.users.is_admin.</p>
 <form id="loginForm"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required><div style="height:14px"></div><button class="primary" type="submit" style="width:100%">تسجيل الدخول</button></form><div id="loginMsg" class="notice hidden"></div></section>
 <section id="dashboard" class="hidden"><div class="panel"><div class="top"><div><h2>لوحة التحكم</h2><div id="who" class="muted"></div></div><button id="logout" class="secondary">خروج آمن</button></div><div id="msg" class="notice hidden"></div><div class="stats"><div class="stat"><span class="muted">إجمالي الحسابات</span><strong id="usersCount">—</strong></div><div class="stat"><span class="muted">طلبات معلّقة</span><strong id="pendingCount">—</strong></div></div></div>
-<div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button></div>
+<div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="catalog">خريطة الميزات</button></div>
 <section id="requestsPane" class="panel"><div class="top"><h2>طلبات التوثيق</h2><button id="refreshRequests" class="secondary">تحديث</button></div><div id="requestsList" class="muted">جارٍ التحميل…</div></section>
-<section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section></section>
+<section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section>
+<section id="catalogPane" class="panel hidden">
+  <div class="top"><div><h2>خريطة التطبيق العام وترتيب الإضافات</h2><div class="muted">النسخة المرجعية: Alwaha-Pro 3.0.1 — هذه الخريطة تنظيمية ولا تغيّر صلاحيات الخدمة.</div></div><span class="status">مرحلة الهيكل</span></div>
+  <div class="notice">نعتمد وظائف التطبيق العام الفعلية أولًا. زر الشبكة ينتقل إلى ترويسة المحادثة؛ المتاح حاليًا هو فتح قائمة مشاركة الهاتف فقط. الرسائل والملفات المباشرة والمكالمات المحلية غير مفعّلة بعد.</div>
+  <div class="feature-map-grid">
+    <article class="feature-map-card"><div class="feature-map-top"><h3>01 · الرئيسية</h3><span class="feature-live">موجود</span></div><p>الخلاصة والمنشورات والتفاعل والتعليقات وإدارة المحتوى الشخصي حسب الوظائف الموجودة في التطبيق العام.</p><button type="button" disabled aria-disabled="true">إدارة المنشورات · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>02 · السوق</h3><span class="feature-live">موجود</span></div><p>عرض المنتجات والإعلانات وإدارة عناصر المستخدم نفسه؛ أدوات المراجعة الإدارية لا تُضاف قبل تحديد صلاحياتها.</p><button type="button" disabled aria-disabled="true">مراجعة إعلانات السوق · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>03 · الدردشة والاتصال</h3><span class="feature-live">موجود</span></div><p>دليل المستخدمين والمحادثات والرسائل النصية والاتصال الصوتي عبر WebRTC مع إشارة Supabase.</p><button type="button" disabled aria-disabled="true">مراجعة البلاغات والرسائل · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>04 · الشبكة القريبة</h3><span class="feature-next">قيد التجهيز</span></div><p>مدخل الشبكة بجوار الاتصال في الدردشة. البداية المستهدفة: أجهزة قريبة جدًا ثم توسيع النطاق بعد الاختبارات.</p><button type="button" disabled aria-disabled="true">رسائل مباشرة دون سحابة</button><button type="button" disabled aria-disabled="true">ملفات متعددة بالتوازي</button><button type="button" disabled aria-disabled="true">مكالمة صوتية محلية</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>05 · مشاركة الملفات</h3><span class="feature-live">موجود بحدود</span></div><p>فتح قائمة مشاركة الهاتف واختيار التطبيق/الوجهة. لا تعني هذه الوظيفة وجود شبكة مباشرة داخل Alwaha.</p><button type="button" disabled aria-disabled="true">قناة نقل داخل التطبيق · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>06 · الريلز</h3><span class="feature-live">موجود</span></div><p>عرض المحتوى والتفاعل والتعليقات وإضافة المحتوى وفق الوظائف الحالية.</p><button type="button" disabled aria-disabled="true">أدوات مراجعة الريلز · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>07 · الألعاب</h3><span class="feature-live">موجود</span></div><p>قسم الألعاب والأنماط متعددة اللاعبين الموجودة. يجب أن تبقى صلاحيات الغرف والحركات محمية من الخادم.</p><button type="button" disabled aria-disabled="true">إشراف الألعاب والغرف · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>08 · الحساب والضبط</h3><span class="feature-live">موجود</span></div><p>إنشاء الحساب والدخول والاستعادة والخصوصية والتوثيق والمظهر واللغة وتوفير البيانات وتقليل الحركة ونغمة الاتصال.</p><button type="button" disabled aria-disabled="true">سياسات ضبط إدارية · مرحلة لاحقة</button></article>
+    <article class="feature-map-card"><div class="feature-map-top"><h3>09 · الإشعارات</h3><span class="feature-live">موجود</span></div><p>الإشعارات داخل التطبيق وإعدادات الصوت المرتبطة بالموجود حاليًا.</p><button type="button" disabled aria-disabled="true">تقارير الإشعارات والأعطال · مرحلة لاحقة</button></article>
+  </div>
+  <h3 style="margin-top:18px">أقسام الإدارة المخططة بالترتيب</h3>
+  <div class="future-admin-grid">
+    <button type="button" disabled aria-disabled="true">إدارة المحتوى والمنشورات</button>
+    <button type="button" disabled aria-disabled="true">إدارة السوق والإعلانات</button>
+    <button type="button" disabled aria-disabled="true">بلاغات الدردشة والشبكة</button>
+    <button type="button" disabled aria-disabled="true">إدارة الريلز والألعاب</button>
+    <button type="button" disabled aria-disabled="true">التقارير والإحصاءات الموسعة</button>
+    <button type="button" disabled aria-disabled="true">سجل الأمان والإجراءات</button>
+    <button type="button" disabled aria-disabled="true">إعدادات التطبيق العامة</button>
+  </div>
+  <p class="muted">الأزرار المستقبلية معطّلة عمدًا؛ لم نضف استدعاءات API غير موجودة ولم نغيّر الـ Edge Function أو سياسات قاعدة البيانات.</p>
+</section></section>
 <p class="muted" style="text-align:center">صلاحيات Supabase هي المرجع النهائي. لا يتضمن التطبيق مفتاح service_role.</p></main>
 <script>
 (()=>{
@@ -115,6 +152,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
   $('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');
   $('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');
+  $('catalogPane').classList.toggle('hidden',b.dataset.tab!=='catalog');
 }));
 $('requestsList').addEventListener('click',async e=>{
   const b=e.target.closest('button[data-id]');if(!b)return;
@@ -140,4 +178,5 @@ db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){profile=nul
   }
 })();
 })();
-</script></body></html>
+</script>
+</body></html>
