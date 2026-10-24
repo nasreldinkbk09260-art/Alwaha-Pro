@@ -181,6 +181,8 @@ jobs:
               'android.permission.CAMERA',
               'android.permission.RECORD_AUDIO',
               'android.permission.MODIFY_AUDIO_SETTINGS',
+              'android.permission.ACCESS_COARSE_LOCATION',
+              'android.permission.ACCESS_FINE_LOCATION',
           )
           app_pos = source.find('<application')
           if app_pos < 0:

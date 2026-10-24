@@ -9,6 +9,7 @@ function handleAndroidBack() {
 }
 
 if (window.Capacitor?.getPlatform?.() === 'android') {
+  window.alwahaExitNativeApp = () => App.exitApp();
   App.addListener('backButton', handleAndroidBack)
     .then(() => console.info('[Alwaha-Pro] Android back-button handler registered.'))
     .catch((error) => console.warn('[Alwaha-Pro] Could not register Android back handler:', error));

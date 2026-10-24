@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.1-post-details-20261024';
+const CACHE_NAME = 'alwaha-pro-v3.0.1-market-reels-privacy-20261024';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

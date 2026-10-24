@@ -40,24 +40,47 @@
         }
         .btn-glow-cyan:active, .btn-glow-pink:active { transform: scale(.95); }
         #exit-modal-confirmation {
-            position: fixed;
-            inset: 0;
+            position: fixed !important;
+            inset: 0 !important;
+            box-sizing: border-box;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 100svh;
+            margin: 0;
             background: rgba(0,0,0,.88);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 99999999;
-            padding: 20px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            z-index: 2147483000 !important;
+            padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+            isolation: isolate;
         }
+        #exit-modal-confirmation[aria-hidden="false"] { display: flex !important; }
         .exit-modal-card {
+            box-sizing: border-box;
+            position: relative;
             width: min(92vw, 360px);
+            max-height: calc(100dvh - 36px);
+            overflow-y: auto;
+            margin: auto;
             background: #111827;
             border: 1px solid rgba(0,255,255,.65);
             box-shadow: 0 0 35px rgba(0,255,255,.24);
             border-radius: 22px;
-            padding: 25px;
+            padding: clamp(16px, 5vw, 25px);
             text-align: center;
+            flex: 0 0 auto;
+        }
+        body.alwaha-exit-confirm-open { overflow: hidden !important; touch-action: none; }
+        #exit-modal-confirmation button { min-height: 44px; }
+        @media (max-height: 470px) {
+            #exit-modal-confirmation { align-items: flex-start; }
+            .exit-modal-card { margin-block: 8px; }
         }
         .chat-call-controls {
             display: flex;
@@ -265,67 +288,88 @@
 
         .reels-floating-tools {
             position: absolute;
-            bottom: 30px;
-            left: 15px;
+            inset-inline-end: max(10px, env(safe-area-inset-right));
+            bottom: max(18px, env(safe-area-inset-bottom));
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            z-index: 10;
+            gap: clamp(8px, 1.5vh, 13px);
+            z-index: 12;
             align-items: center;
+            max-height: calc(100% - 34px);
+            overflow-y: auto;
+            scrollbar-width: none;
+            padding: 4px;
         }
-
+        .reels-floating-tools::-webkit-scrollbar { display: none; }
         .reels-floating-btn {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 auto;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(12, 18, 30, .38);
+            -webkit-backdrop-filter: blur(9px);
+            backdrop-filter: blur(9px);
+            border: 1px solid rgba(255, 255, 255, .58);
             color: #fff;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 18px;
+            font-size: 17px;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
+            padding: 0;
+            box-shadow: 0 4px 15px #0005, inset 0 1px #ffffff45;
+            transition: transform .16s ease, background .16s ease;
         }
-        .reels-floating-btn:active {
-            transform: scale(0.9);
-        }
-        .reels-btn-label {
-            font-size: 9px;
-            margin-top: 2px;
-            color: #ddd;
-        }
+        .reels-floating-btn:active { transform: scale(.91); }
+        .reels-floating-btn:focus-visible { outline: 2px solid #8bf4ff; outline-offset: 2px; }
+        .reels-btn-label { font-size: 8px; margin-top: 1px; color: #fff; line-height: 1.1; }
+        .reels-floating-btn .reels-count { font-size: 9px; line-height: 1; margin-top: 1px; }
 
         .floating-options-menu {
-            position: fixed;
-            bottom: 140px;
-            left: 70px;
-            background: rgba(18, 18, 24, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 255, 255, 0.4);
-            border-radius: 15px;
+            position: fixed !important;
+            inset-inline-end: max(12px, env(safe-area-inset-right));
+            bottom: calc(92px + env(safe-area-inset-bottom));
+            left: auto;
+            top: auto;
+            width: min(88vw, 340px);
+            max-height: calc(100dvh - 122px - env(safe-area-inset-bottom));
+            overflow-y: auto;
+            background: rgba(10, 18, 31, .96);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 244, 255, .45);
+            border-radius: 18px;
             padding: 10px;
             display: none;
             flex-direction: column;
-            gap: 10px;
-            z-index: 999999;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            gap: 8px;
+            z-index: 2147482000;
+            box-shadow: 0 8px 25px rgba(0,0,0,.6);
         }
         .floating-option-item {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            width: 100%; min-height: 44px;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .14);
             color: #fff;
-            padding: 8px 14px;
-            border-radius: 20px;
+            padding: 10px 14px;
+            border-radius: 13px;
             font-size: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             cursor: pointer;
-            transition: 0.2s;
+            text-align: right;
+            font-family: inherit;
+        }
+        .floating-option-item:active { background: rgba(139,244,255,.16); }
+        @media (max-height: 550px) {
+            .reels-floating-tools { gap: 5px; bottom: 8px; }
+            .reels-floating-btn { width: 38px; height: 38px; font-size: 15px; }
+            .reels-btn-label { font-size: 7px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .reels-floating-btn { transition: none; }
         }
 
         /* كروت الألعاب */
@@ -424,6 +468,12 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </script>
 
     <script defer src="./alwaha-native-back-handler.js"></script>
+<style id="alwaha-mobile-performance-final">
+@media (max-width: 768px), (pointer: coarse) {
+  body:not(.theme-nature):not(.theme-tech):not(.theme-soft), body.theme-nature, body.theme-tech, body.theme-soft { background-attachment: scroll !important; }
+  .reels-floating-btn, .floating-options-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+}
+</style>
 </head>
 <body>
 
@@ -442,20 +492,28 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
         </div>
     </div>
 
-    <!-- قائمة خيارات الإضافة العائمة (الخاصة بالريلز والمحتوى) -->
-    <div id="floating-options-menu" class="floating-options-menu">
-        <div class="floating-option-item" onclick="openProfessionalCameraView()">
-            <i class="fa-solid fa-camera" style="color:#00ffff;"></i>
-            <span>تصوير مباشر / كاميرا</span>
+    <div id="alwaha-privacy-notice" class="game-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="alwaha-privacy-title" style="display:none;z-index:2147482500;">
+        <div class="game-modal-card" style="width:min(94vw,520px);max-height:88dvh;overflow:auto;">
+            <h3 id="alwaha-privacy-title" style="margin:0 0 10px;color:#8bf4ff;font-size:17px;">الخصوصية والأذونات</h3>
+            <p style="font-size:12px;line-height:1.9;color:#d8e7f5;margin:0 0 10px;">نطلب إذن الكاميرا أو الميكروفون فقط عند تشغيل التصوير أو المكالمة، ويظهر طلب Android وقت الاستخدام. اختيار الصور والفيديو يتم من منتقي الهاتف، ولا نطلب الوصول الشامل إلى ملفاتك.</p>
+            <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 10px;">تُحفظ تفضيلات التطبيق والمسودات محليًا عند الإمكان. المنشورات العامة والحسابات والرسائل التي تنشرها تُعالج عبر خوادم الخدمة. التخزين المؤقت المحلي للعرض لا يُعد نسخة احتياطية كاملة ولا يغني عن الخادم.</p>
+            <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 14px;">لا تشارك كلمات المرور أو معلوماتك الحساسة. في السوق، التقِ بالبائع في مكان عام، وافحص السلعة قبل الدفع، وأبلغ عن الاحتيال من داخل التطبيق.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn-action" style="flex:1;min-height:44px;background:#8bf4ff;color:#071722;border-radius:11px;padding:10px;font-weight:bold" onclick="acknowledgeAlwahaPrivacyNotice()">فهمت والمتابعة</button>
+                <button type="button" class="btn-action" style="flex:1;min-height:44px;background:#253449;color:#fff;border-radius:11px;padding:10px" onclick="acknowledgeAlwahaPrivacyNotice()">تأجيل الأذونات</button>
+            </div>
         </div>
-        <div class="floating-option-item" onclick="handleReelUploadFromGallery()">
-            <i class="fa-solid fa-photo-film" style="color:#00ff88;"></i>
-            <span>اختيار فيديو من المعرض</span>
-        </div>
-        <div class="floating-option-item" style="color:#ff0055;" onclick="toggleFloatingAddMenu()">
-            <i class="fa-solid fa-xmark"></i>
-            <span>إغلاق القائمة</span>
-        </div>
+    </div>
+
+    <!-- قائمة إنشاء/حفظ المحتوى: داخل حدود الشاشة وتدعم قارئات الشاشة -->
+    <div id="floating-options-menu" class="floating-options-menu" role="dialog" aria-label="خيارات الريلز والمحتوى" aria-hidden="true">
+        <button type="button" class="floating-option-item" onclick="openProfessionalCameraView();toggleFloatingAddMenu(false)"><i class="fa-solid fa-camera" style="color:#8bf4ff"></i><span>التقاط صورة للمنشور</span></button>
+        <button type="button" class="floating-option-item" onclick="startReelRecording();toggleFloatingAddMenu(false)"><i class="fa-solid fa-video" style="color:#ff9bd5"></i><span>تصوير فيديو جديد</span></button>
+        <button type="button" class="floating-option-item" onclick="handleReelUploadFromGallery();toggleFloatingAddMenu(false)"><i class="fa-solid fa-photo-film" style="color:#8cffc1"></i><span>اختيار فيديو من الهاتف ونشره</span></button>
+        <button type="button" class="floating-option-item" onclick="handleImagePostFromGallery();toggleFloatingAddMenu(false)"><i class="fa-solid fa-image" style="color:#ffd86b"></i><span>اختيار صورة وتحرير منشورها</span></button>
+        <button type="button" class="floating-option-item" onclick="downloadActiveReel();toggleFloatingAddMenu(false)"><i class="fa-solid fa-download"></i><span>حفظ الريلز الحالي في الهاتف</span></button>
+        <button type="button" class="floating-option-item" data-reel-owner-action="true" onclick="editActiveReelTitle();toggleFloatingAddMenu(false)"><i class="fa-solid fa-pen"></i><span>تعديل عنوان الريلز الحالي</span></button>
+        <button type="button" class="floating-option-item" style="color:#ff9ab4" onclick="toggleFloatingAddMenu(false)"><i class="fa-solid fa-xmark"></i><span>إغلاق الخيارات</span></button>
     </div>
 
     <!-- 1. قسم الرئيسية -->
@@ -513,8 +571,15 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
         </div>
 
         <div id="market-buy-view">
-            <input type="text" id="market-search-input" placeholder="ابحث عن قطع غيار، هواتف، أو معدات..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px; outline:none;">
-            <div id="market-products-list-container" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;"></div>
+            <input type="text" id="market-search-input" placeholder="ابحث عن منتج أو تصنيف أو منطقة..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:8px; outline:none;">
+            <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                <select id="market-radius-select" aria-label="نطاق البحث عن المنتجات" style="flex:1;min-width:115px;background:#101a2b;color:#fff;border:1px solid #ffffff2a;border-radius:9px;padding:9px;font-size:11px;">
+                    <option value="all">كل المناطق</option><option value="5">ضمن 5 كم</option><option value="10">ضمن 10 كم</option><option value="25">ضمن 25 كم</option><option value="50">ضمن 50 كم</option>
+                </select>
+                <button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:9px;padding:9px 10px;font-size:11px;" onclick="setMarketSearchLocation()"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي</button>
+            </div>
+            <div id="market-location-status" style="font-size:10px;color:#9fb1c8;margin-bottom:10px;" aria-live="polite">الموقع اختياري. لن نطلبه إلا عند الضغط على «تحديد موقعي».</div>
+            <div id="market-products-list-container" style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px;"></div>
         </div>
 
         <div id="market-sell-view" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:12px;">
@@ -539,6 +604,12 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
             <div style="margin-bottom:10px;">
                 <label style="font-size:11px; color:#aaa;">الوصف والموقع</label>
                 <textarea id="prod-desc-location" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; height:60px; margin-top:4px; resize:none;"></textarea>
+            </div>
+            <div style="margin-bottom:10px;">
+                <label for="prod-location-label" style="font-size:11px;color:#aaa;">المنطقة أو المدينة (اختياري)</label>
+                <input type="text" id="prod-location-label" maxlength="120" placeholder="مثال: القاهرة، مدينة نصر" class="keyboard-target" style="width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:8px;border-radius:6px;color:#fff;font-size:12px;margin-top:4px;">
+                <button type="button" class="btn-action" style="margin-top:7px;background:#17354a;color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:8px;padding:8px 10px;font-size:10px;" onclick="setProductLocationFromDevice()"><i class="fa-solid fa-location-dot"></i> إضافة إحداثيات موقعي (اختياري)</button>
+                <div id="prod-location-status" aria-live="polite" style="font-size:10px;color:#9fb1c8;margin-top:5px;">لن تتم مشاركة موقعك إلا إذا اخترت ذلك.</div>
             </div>
             <div style="margin-bottom:15px;">
                 <label style="font-size:11px; color:#aaa; display:block; margin-bottom:5px;">صور المنتج</label>
@@ -652,6 +723,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
                 <span style="font-size:13px; color:#ffd700;"><i class="fa-solid fa-shield-halved"></i> استعادة كلمة المرور بالبريد</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
+            <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(139,244,255,.06);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff22;color:#8bf4ff;font:inherit;text-align:right;" onclick="showAlwahaPrivacyPolicy()"><span style="font-size:13px;"><i class="fa-solid fa-shield-halved"></i> سياسة الاستخدام والخصوصية والأذونات</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-privacy')">
                 <span style="font-size:13px; color:#ff00ff;"><i class="fa-solid fa-user-gear"></i> إعدادات الخصوصية والاسم</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
@@ -853,7 +925,11 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
             <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#00ff88; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerFaceBeautyEnhancement()"><i class="fa-solid fa-wand-magic-sparkles"></i> تجميل الوجه</button>
             <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#ffd700; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerAnimeAiConverterFilter()"><i class="fa-solid fa-user-ninja"></i> فلتر أنمي</button>
             <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#00ffff; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="captureCameraFrame()"><i class="fa-solid fa-camera-retro"></i> التقاط</button>
-            <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#38bdf8; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="switchCameraLens()"><i class="fa-solid fa-repeat"></i> تبديل الكاميرا</button>
+            <button type="button" class="btn-action" style="background:rgba(255,255,255,0.1); color:#38bdf8; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="switchCameraLens()"><i class="fa-solid fa-repeat"></i> تبديل الكاميرا</button>
+            <button type="button" id="reel-record-start-btn" class="btn-action" style="background:rgba(255,0,85,.16);color:#ff9ab4;border:1px solid #ff0055;padding:9px 12px;border-radius:8px;font-size:11px;" onclick="startReelRecording()"><i class="fa-solid fa-circle"></i> تسجيل فيديو</button>
+            <button type="button" id="reel-record-stop-btn" class="btn-action" style="display:none;background:rgba(255,215,0,.12);color:#ffd86b;border:1px solid #ffd86b;padding:9px 12px;border-radius:8px;font-size:11px;" onclick="stopReelRecording()"><i class="fa-solid fa-stop"></i> إنهاء التسجيل</button>
+            <button type="button" id="reel-record-save-btn" class="btn-action" style="display:none;background:rgba(0,255,136,.13);color:#8cffc1;padding:9px 12px;border-radius:8px;font-size:11px;" onclick="saveRecordedReelToPhone()"><i class="fa-solid fa-download"></i> حفظ في الهاتف</button>
+            <button type="button" id="reel-record-publish-btn" class="btn-action" style="display:none;background:rgba(0,255,255,.13);color:#8bf4ff;padding:9px 12px;border-radius:8px;font-size:11px;" onclick="publishRecordedReel()"><i class="fa-solid fa-cloud-arrow-up"></i> نشر الفيديو</button>
         </div>
         <canvas id="camera-capture-canvas" style="display:none;"></canvas>
     </div>
@@ -1003,6 +1079,18 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
         let marketMultiFilesArray = [];
         let editingMarketProductId = null;
         let marketEditingExistingImageUrls = [];
+        let marketProductLatitude = null;
+        let marketProductLongitude = null;
+        let marketSearchLatitude = null;
+        let marketSearchLongitude = null;
+        let marketLifecycleSchemaReady = null;
+        let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
+        let reelRecorder = null;
+        let reelRecorderChunks = [];
+        let pendingRecordedReel = null;
+        let reelRecordingStream = null;
+        let exitModalHistoryGuarded = false;
+        let privacyNoticePreviousFocus = null;
         let notificationChannel = null;
 
         function changeAppTheme(themeName, showToast = true) {
@@ -1050,38 +1138,164 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
             }
         }
 
-        function toggleFloatingAddMenu() {
+        function toggleFloatingAddMenu(forceOpen, reelId) {
             const menu = document.getElementById('floating-options-menu');
-            if (menu) {
-                menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+            if (!menu) return;
+            const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : menu.style.display !== 'flex';
+            if (reelId) {
+                const card = Array.from(document.querySelectorAll('[data-reel-id]')).find(item => item.dataset.reelId === String(reelId));
+                if (card) activeReelContext = { id:String(reelId), title:card.dataset.reelTitle||'ريلز', mediaUrl:card.dataset.reelMedia||'', authorId:card.dataset.reelAuthor||'' };
+            } else if (!document.querySelector('#reels-section.active-section')) {
+                activeReelContext = {id:'',title:'',mediaUrl:'',authorId:''};
+            }
+            const ownerAction = menu.querySelector('[data-reel-owner-action="true"]');
+            if (ownerAction) ownerAction.style.display = activeReelContext.id && activeReelContext.authorId && activeReelContext.authorId === localStorage.getItem('alwaha_auth_user_id') ? 'flex' : 'none';
+            menu.style.display = shouldOpen ? 'flex' : 'none';
+            menu.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+            if (shouldOpen) {
+                const rect = menu.getBoundingClientRect();
+                if (rect.top < 8) { menu.style.bottom = `calc(${Math.max(8, window.innerHeight - (window.innerHeight - 8))}px + env(safe-area-inset-bottom))`; }
+                requestAnimationFrame(() => menu.querySelector('button')?.focus({preventScroll:true}));
             }
         }
 
-async function handleReelUploadFromGallery() {
+async function publishReelFile(file, title='ريلز جديد') {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لإضافة ريلز.');
-            if (!user) return;
+            if (!user || !file) return false;
+            if (!String(file.type||'').startsWith('video/')) { triggerToastNotification('اختر ملف فيديو صالحًا.','error'); return false; }
+            if (file.size > 50*1024*1024) { triggerToastNotification('الحد الأقصى لفيديو الريلز هو 50MB.','error'); return false; }
+            const url = await uploadFileToStorage(file,'reels',{maxBytes:50*1024*1024});
+            if (!url) return false;
+            const profile = await getCurrentProfile();
+            const authorName = `${profile?.first_name||user.user_metadata?.first_name||''} ${profile?.last_name||user.user_metadata?.last_name||''}`.trim() || 'مستخدم';
+            const row = await supabaseFetch('reels',{method:'POST',body:JSON.stringify({author_id:user.id,title:String(title||'ريلز جديد').trim().slice(0,120)||'ريلز جديد',author_name:authorName,media_url:url})});
+            if (!row) return false;
+            activeReelContext = {id:String(Array.isArray(row)&&row[0]?.id||''),title:String(title||'ريلز جديد'),mediaUrl:url,authorId:user.id};
+            triggerToastNotification('تم نشر الفيديو بنجاح.','success');
+            await renderReelsFeed();
+            return true;
+        }
+
+async function handleReelUploadFromGallery() {
+            const user = await requireAuthenticatedUser('سجل الدخول أولاً لإضافة ريلز.'); if (!user) return;
             pickFilesFromDevice({accept:'video/*', multiple:false, onFiles: async files => {
                 const file=files[0]; if(!file) return;
-                if(file.size > 50*1024*1024) return triggerToastNotification('الحد الأقصى لفيديو الريلز هو 50MB.', 'error');
-                const title = prompt('اكتب عنوان الريلز:','ريلز جديد')?.trim() || 'ريلز جديد';
-                const url = await uploadFileToStorage(file,'reels',{maxBytes:50*1024*1024});
-                if(!url) return;
-                const profile = await getCurrentProfile();
-                const authorName = `${profile?.first_name||user.user_metadata?.first_name||''} ${profile?.last_name||user.user_metadata?.last_name||''}`.trim() || 'مستخدم';
-                const row = await supabaseFetch('reels',{method:'POST',body:JSON.stringify({author_id:user.id,title,author_name:authorName,media_url:url})});
-                if(!row) return;
-                triggerToastNotification('تم رفع الريلز ونشره فعلياً.', 'success');
-                toggleFloatingAddMenu();
-                renderReelsFeed();
+                const title = window.prompt('اكتب عنوان الريلز:','ريلز جديد');
+                if (title === null) return;
+                await publishReelFile(file, title.trim() || 'ريلز جديد');
             }});
+        }
+
+async function handleImagePostFromGallery() {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لنشر صورة.'); if(!user)return;
+            pickFilesFromDevice({accept:'image/*',multiple:false,onFiles:async files=>{
+                const file=files[0];if(!file)return;
+                pendingHomePostFile=await compressImageFile(file,1400,.82);
+                pendingHomePostDataUrl=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(pendingHomePostFile);});
+                const preview=document.getElementById('home-post-image-preview');if(preview){preview.src=pendingHomePostDataUrl;preview.style.display='block';}
+                const textarea=document.getElementById('home-post-textarea');
+                if (typeof showSection==='function') showSection('home-section',document.querySelector('.nav-item[aria-label="الرئيسية"]'));
+                textarea?.focus({preventScroll:true});
+                triggerToastNotification('الصورة جاهزة؛ أضف تعليقك ثم اضغط نشر المنشور.','success');
+            }});
+        }
+
+async function startReelRecording() {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لتسجيل ونشر فيديو.');if(!user)return;
+            if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')return triggerToastNotification('تسجيل الفيديو غير مدعوم في هذا الجهاز أو إصدار Android. اختر فيديو من المعرض بدلاً منه.','error');
+            const modal=document.getElementById('pro-camera-modal'),box=document.getElementById('camera-view-box');
+            if(!modal||!box)return;
+            try {
+                if(cameraStream)cameraStream.getTracks().forEach(track=>track.stop());
+                cameraStream=null;
+                if(reelRecordingStream)reelRecordingStream.getTracks().forEach(track=>track.stop());
+                reelRecordingStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode},audio:true});
+                cameraStream=reelRecordingStream;
+                modal.style.display='block';document.body.classList.add('modal-active');
+                box.innerHTML='<video id="camera-live-video" class="camera-video-preview" autoplay muted playsinline></video><div id="reel-recording-indicator" style="position:absolute;top:18px;right:18px;color:#ff456f;background:#0009;border-radius:9px;padding:6px 10px;font-size:11px;display:none;">● جاري التسجيل</div>';
+                const video=document.getElementById('camera-live-video');if(video)video.srcObject=reelRecordingStream;
+                const mimeType=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(type=>MediaRecorder.isTypeSupported?.(type))||'';
+                reelRecorderChunks=[];pendingRecordedReel=null;
+                reelRecorder=new MediaRecorder(reelRecordingStream,mimeType?{mimeType}:undefined);
+                reelRecorder.ondataavailable=event=>{if(event.data?.size)reelRecorderChunks.push(event.data);};
+                reelRecorder.onerror=()=>triggerToastNotification('حدث خطأ أثناء تسجيل الفيديو.','error');
+                reelRecorder.onstop=()=>{
+                    const type=reelRecorder?.mimeType||'video/webm';
+                    pendingRecordedReel=new File([new Blob(reelRecorderChunks,{type})],`alwaha-reel-${Date.now()}.${type.includes('mp4')?'mp4':'webm'}`,{type});
+                    const preview=document.getElementById('camera-live-video');
+                    if(preview){preview.srcObject=null;preview.src=URL.createObjectURL(pendingRecordedReel);preview.controls=true;preview.muted=false;preview.play().catch(()=>{});}
+                    const indicator=document.getElementById('reel-recording-indicator');if(indicator)indicator.style.display='none';
+                    const start=document.getElementById('reel-record-start-btn'),stop=document.getElementById('reel-record-stop-btn'),save=document.getElementById('reel-record-save-btn'),publish=document.getElementById('reel-record-publish-btn');
+                    if(start)start.style.display='inline-flex';if(stop)stop.style.display='none';if(save)save.style.display='inline-flex';if(publish)publish.style.display='inline-flex';
+                    triggerToastNotification('انتهى التسجيل. يمكنك حفظ الفيديو في الهاتف أو نشره.','success');
+                };
+                reelRecorder.start(1000);
+                const indicator=document.getElementById('reel-recording-indicator');if(indicator)indicator.style.display='block';
+                document.getElementById('reel-record-start-btn').style.display='none';document.getElementById('reel-record-stop-btn').style.display='inline-flex';
+                ['reel-record-save-btn','reel-record-publish-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+                triggerToastNotification('بدأ تسجيل الفيديو. اضغط إنهاء التسجيل عند الانتهاء.','info');
+            } catch(error) {
+                console.warn('Reel recording permission/device error:',error);
+                reelRecordingStream?.getTracks?.().forEach(track=>track.stop());reelRecordingStream=null;
+                triggerToastNotification(error?.name==='NotAllowedError'?'لم تسمح بإذن الكاميرا أو الميكروفون. يمكنك تفعيل الإذن من إعدادات Android.':'تعذر تشغيل التسجيل؛ تحقق من الأذونات أو استخدم فيديو من المعرض.','error');
+            }
+        }
+
+function stopReelRecording() {
+            if(reelRecorder&&reelRecorder.state!=='inactive') { try { reelRecorder.stop(); } catch(error) { console.warn(error); } }
+            reelRecordingStream?.getTracks?.().forEach(track=>track.stop());
+            if(cameraStream===reelRecordingStream)cameraStream=null;
+            reelRecordingStream=null;
+        }
+
+function saveBlobToDevice(blob, filename) {
+            if(!blob)return triggerToastNotification('لا يوجد ملف جاهز للحفظ بعد.','info');
+            const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=filename||'alwaha-media';anchor.rel='noopener';document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+            triggerToastNotification('بدأ حفظ الملف في الهاتف. تحقق من مجلد التنزيلات.','success');
+        }
+function saveRecordedReelToPhone(){if(!pendingRecordedReel)return triggerToastNotification('سجّل فيديو أولاً.','info');saveBlobToDevice(pendingRecordedReel,pendingRecordedReel.name||'alwaha-reel.webm');}
+async function publishRecordedReel(){if(!pendingRecordedReel)return triggerToastNotification('سجّل فيديو أولاً.','info');const title=window.prompt('عنوان الريلز:','ريلز جديد');if(title===null)return;const ok=await publishReelFile(pendingRecordedReel,title.trim()||'ريلز جديد');if(ok)closeProfessionalCameraView();}
+
+async function downloadReelMedia(mediaUrl, title='alwaha-reel') {
+            if(!mediaUrl||!/^https?:\/\//i.test(mediaUrl))return triggerToastNotification('ملف الريلز غير متاح للحفظ.','error');
+            try { const response=await fetch(mediaUrl);if(!response.ok)throw new Error(`HTTP ${response.status}`);const blob=await response.blob();if(blob.size>100*1024*1024)throw new Error('TOO_LARGE');saveBlobToDevice(blob,`${String(title||'alwaha-reel').replace(/[^\p{L}\p{N}_-]+/gu,'_').slice(0,70)||'alwaha-reel'}.${(blob.type.split('/')[1]||'mp4').split(';')[0]}`); }
+            catch(error){console.warn('Reel download:',error);try{const a=document.createElement('a');a.href=mediaUrl;a.target='_blank';a.rel='noopener noreferrer';a.download='alwaha-reel';a.click();triggerToastNotification('تعذر التنزيل المباشر؛ فُتح الفيديو في المتصفح لتحفظه من القائمة.','info');}catch(e){triggerToastNotification('تعذر حفظ الفيديو من هذا الرابط.','error');}}
+        }
+async function downloadActiveReel(){if(!activeReelContext.mediaUrl)return triggerToastNotification('اختر ريلز من القائمة أولاً.','info');await downloadReelMedia(activeReelContext.mediaUrl,activeReelContext.title);}
+async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToastNotification('اختر ريلز تملكه أولاً.','info');await editOwnReel(activeReelContext.id);}
+
+
+        const ALWAHA_PUBLIC_CACHE_DB = 'alwaha-public-feed-cache-v1';
+        const ALWAHA_PUBLIC_CACHE_STORE = 'feed';
+        function openAlwahaPublicCacheDb() {
+            return new Promise((resolve,reject)=>{
+                if(!('indexedDB' in window))return resolve(null);
+                const request=indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1);
+                request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(ALWAHA_PUBLIC_CACHE_STORE))db.createObjectStore(ALWAHA_PUBLIC_CACHE_STORE,{keyPath:'key'});};
+                request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('IndexedDB unavailable'));
+            });
+        }
+        async function readAlwahaPublicCache(key) {
+            let db;try{db=await openAlwahaPublicCacheDb();if(!db)return null;return await new Promise(resolve=>{const req=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readonly').objectStore(ALWAHA_PUBLIC_CACHE_STORE).get(key);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);});}catch(e){return null;}finally{try{db?.close();}catch(e){}}
+        }
+        async function writeAlwahaPublicCache(key,value) {
+            let db;try{
+                const serialized=JSON.stringify(value);if(serialized.length>450000)return;
+                db=await openAlwahaPublicCacheDb();if(!db)return;
+                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE);store.put({key,value,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
+                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE),req=store.getAll();req.onsuccess=()=>{const rows=(req.result||[]).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));rows.slice(80).forEach(row=>store.delete(row.key));};tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
+            }catch(e){/* Quota/privacy modes may deny persistence; network remains authoritative. */}finally{try{db?.close();}catch(e){}}
         }
 
         async function supabaseFetch(endpoint, options = {}) {
             const requestMethod = String(options.method || 'GET').toUpperCase();
             const tableName = String(endpoint).split('?')[0];
-            const safePublicTables = new Set(['posts','reels','products','comments','post_like_counts','reel_like_counts']);
+            const safePublicTables = new Set(['posts','reels','products','post_like_counts','reel_like_counts']);
             const apiCache = window.__alwahaPublicReadCache || (window.__alwahaPublicReadCache = new Map());
-            const cacheable = requestMethod === 'GET' && safePublicTables.has(tableName);
+            const query = String(endpoint).split('?')[1] || '';
+            const hasUserFilter = /(?:^|&)(?:id|author_id|seller_id|user_id|follower_id|following_id|receiver_id|sender_id|sold_to)=/.test(query);
+            const isPublicCommentThread = tableName === 'comments' && /(?:^|&)target_id=eq\./.test(query) && /(?:^|&)target_type=eq\./.test(query) && !hasUserFilter;
+            const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread);
             const cacheKey = cacheable ? String(endpoint) : '';
             if (requestMethod !== 'GET') apiCache.clear();
             if (cacheable) {
@@ -1118,15 +1332,30 @@ async function handleReelUploadFromGallery() {
                     const serverMessage = (data && typeof data === 'object') ? (data.message || data.error_description || data.hint || data.details || data.error || '') : String(data || '');
                     window.__alwahaLastApiError = { status: response.status, message: String(serverMessage).slice(0, 240), code: data && typeof data === 'object' ? String(data.code || '') : '' };
                     console.warn('Supabase Status:', response.status, data);
+                    if (cacheable && response.status >= 500) {
+                        const fallback = await readAlwahaPublicCache(cacheKey);
+                        if (fallback && Date.now() - Number(fallback.updatedAt||0) <= 7*24*60*60*1000 && Array.isArray(fallback.value)) return fallback.value;
+                    }
                     return null;
                 }
                 window.__alwahaLastApiError = null;
-                if (cacheable && data !== '') apiCache.set(cacheKey, { expiresAt: Date.now() + 6500, value: data });
+                if (cacheable && data !== '') {
+                    const safeData = tableName === 'products' && Array.isArray(data)
+                      ? data.map(sourceRow => { const row={...sourceRow}; delete row['seller_'+'email']; delete row['sold_'+'to']; return row; })
+                      : data;
+                    apiCache.set(cacheKey, { expiresAt: Date.now() + 6500, value: safeData });
+                    writeAlwahaPublicCache(cacheKey,safeData).catch(()=>{});
+                    return safeData;
+                }
                 return data === '' ? true : data;
             } catch (error) {
                 if (timeoutId) clearTimeout(timeoutId);
                 window.__alwahaLastApiError = { status: 0, message: error?.name === 'AbortError' ? 'انتهت مهلة الاتصال' : 'تعذر الاتصال بالخادم', code: error?.name || 'NETWORK_ERROR' };
                 console.error('Supabase Request Error:', error);
+                if(cacheable) {
+                    const fallback = await readAlwahaPublicCache(cacheKey);
+                    if(fallback && Date.now() - Number(fallback.updatedAt||0) <= 7*24*60*60*1000 && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
+                }
                 return null;
             }
         }
@@ -1176,6 +1405,7 @@ async function handleReelUploadFromGallery() {
         async function uploadFileToStorage(file, folder, {maxBytes=50*1024*1024}={}) {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لرفع الملفات.');
             if (!user || !supabaseClient || !file) return null;
+            if (!Number.isFinite(file.size) || file.size <= 0) { triggerToastNotification('الملف فارغ أو غير صالح. اختر ملفًا آخر.','error'); return null; }
             if (file.size > maxBytes) {
                 triggerToastNotification(`حجم الملف كبير. الحد الأقصى ${Math.round(maxBytes/1024/1024)}MB.`, 'error');
                 return null;
@@ -1186,9 +1416,16 @@ async function handleReelUploadFromGallery() {
             const { error } = await supabaseClient.storage.from('media').upload(path, file, { upsert:false, contentType:file.type || undefined, cacheControl:'31536000' });
             if (error) {
                 console.error('Storage upload:', error);
-                triggerToastNotification(`تعذر رفع الملف: ${formatAuthError(error)}`, 'error');
+                const status=Number(error.statusCode||error.status||0),message=String(error.message||'');
+                let friendly=`تعذر رفع الملف: ${formatAuthError(error)}`;
+                if(status===401||status===403||/row-level security|policy|permission/i.test(message))friendly='رفض الخادم رفع الملف بسبب سياسة التخزين. تأكد أن جلسة الدخول سارية وأن سياسة bucket media تسمح للمستخدم برفع الملفات داخل مجلده فقط.';
+                else if(status===413||/size|too large|exceed/i.test(message))friendly='حجم الملف أكبر من الحد المسموح به في التخزين.';
+                else if(status===0||/network|fetch/i.test(message))friendly='تعذر الوصول إلى التخزين. تحقق من الإنترنت وأعد المحاولة.';
+                triggerToastNotification(friendly, 'error');
+                window.__alwahaLastStorageError={status,message:message.slice(0,200),folder};
                 return null;
             }
+            window.__alwahaLastStorageError=null;
             const { data } = supabaseClient.storage.from('media').getPublicUrl(path);
             return data?.publicUrl || null;
         }
@@ -1904,25 +2141,50 @@ async function renderReelsFeed() {
             const reelsContainer=document.getElementById('reels-container'); if(!reelsContainer) return;
             reelsContainer.innerHTML='<div style="text-align:center;color:#ff0055;padding:20px;font-size:12px;">جاري تحميل الريلز...</div>';
             const [reels,counts]=await Promise.all([supabaseFetch('reels?select=*&order=created_at.desc&limit=50'),supabaseFetch('reel_like_counts?select=reel_id,likes_count')]);
-            if(!Array.isArray(reels)||!reels.length){reelsContainer.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;font-size:12px;">لا توجد ريلز بعد. استخدم إضافة محتوى لرفع أول فيديو.</div>';return;}
+            if(!Array.isArray(reels)) { const e=window.__alwahaLastApiError||{}; reelsContainer.innerHTML=`<div style="text-align:center;color:#ff9ab4;padding:22px;font-size:11px;line-height:1.8;">تعذر تحميل الريلز (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من الاتصال أو أعد المحاولة.')}</div>`;return; }
+            if(!reels.length){reelsContainer.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;font-size:12px;">لا توجد ريلز بعد. استخدم زر الإضافة لتصوير فيديو أو اختياره من الهاتف.</div>';return;}
             const me=await getCurrentAuthUser();
-            const mine=me?await supabaseFetch(`reel_likes?user_id=eq.${encodeURIComponent(me.id)}&select=reel_id`):[];
-            const countMap=new Map((counts||[]).map(x=>[String(x.reel_id),Number(x.likes_count||0)]));
-            const mineSet=new Set((mine||[]).map(x=>String(x.reel_id)));
-            reelsContainer.innerHTML=reels.map(reel=>{
-                const id=String(reel.id), liked=mineSet.has(id), count=countMap.get(id)||0;
-                const ownerActions = me && reel.author_id === me.id
-                    ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnReel('${escapeJs(id)}')">تعديل العنوان</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnReel('${escapeJs(id)}')">حذف الريلز</button></div>`
-                    : '';
-                const media=reel.media_url?`<video src="${escapeHtml(reel.media_url)}" controls playsinline preload="metadata" style="width:100%;max-height:62vh;object-fit:contain;background:#000;border-radius:12px;"></video>`:`<div style="text-align:center;color:#aaa;padding:35px;"><i class="fa-solid fa-circle-play fa-4x" style="color:#ff0055;margin-bottom:10px;"></i></div>`;
-                return `<div class="reel-card" style="position:relative;overflow:hidden;">${media}<div style="padding:10px 4px;"><div style="color:#fff;font-weight:bold;font-size:14px;">${escapeHtml(reel.title||'ريلز')}</div><div style="color:#ffd700;font-size:11px;margin-top:4px;">بواسطة: ${escapeHtml(reel.author_name||'مستخدم')}</div></div>
-                    <div class="reels-floating-tools">
-                        <div class="reels-floating-btn" onclick="toggleFloatingAddMenu()" title="إضافة محتوى"><i class="fa-solid fa-plus" style="color:#00ffff;"></i><span class="reels-btn-label">إضافة</span></div>
-                        <div class="reels-floating-btn ${liked?'liked':''}" id="reel-like-btn-${escapeJs(id)}" onclick="toggleReelLike('${escapeJs(id)}')" title="إعجاب"><i class="fa-solid fa-heart" id="reel-like-icon-${escapeJs(id)}" style="color:${liked?'#ff0055':'#fff'};"></i><span class="reels-btn-label" id="reel-like-count-${escapeJs(id)}">${count}</span></div>
-                        <div class="reels-floating-btn" onclick="openCommentsModal('${escapeJs(id)}','reel')" title="تعليق"><i class="fa-solid fa-comment-dots" style="color:#00ffff;"></i><span class="reels-btn-label">تعليق</span></div>
-                        <div class="reels-floating-btn" onclick="shareReelContent('${escapeJs(reel.title||'ريلز')}', '${escapeJs(reel.media_url||'') }')" title="مشاركة"><i class="fa-solid fa-share-nodes" style="color:#00ff88;"></i><span class="reels-btn-label">مشاركة</span></div>
-                    </div>${ownerActions}</div>`;
+            const [mine,following]=me?await Promise.all([
+                supabaseFetch(`reel_likes?user_id=eq.${encodeURIComponent(me.id)}&select=reel_id`),
+                supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&select=following_id&limit=500`)
+            ]):[[],[]];
+            const countMap=new Map((Array.isArray(counts)?counts:[]).map(x=>[String(x.reel_id),Number(x.likes_count||0)]));
+            const mineSet=new Set((Array.isArray(mine)?mine:[]).map(x=>String(x.reel_id)));
+            const followingSet=new Set((Array.isArray(following)?following:[]).map(x=>String(x.following_id)));
+            reelsContainer.innerHTML=reels.map((reel,index)=>{
+                const id=String(reel.id), authorId=String(reel.author_id||''), liked=mineSet.has(id), count=countMap.get(id)||0, own=!!(me&&authorId===me.id), isFollowing=followingSet.has(authorId);
+                const safeTitle=escapeHtml(reel.title||'ريلز'), safeUrl=escapeHtml(reel.media_url||'');
+                const media=reel.media_url?`<video src="${safeUrl}" controls playsinline preload="${index===0?'metadata':'none'}" style="width:100%;height:100%;max-height:calc(100dvh - 205px);object-fit:contain;background:#000;border-radius:12px;" aria-label="فيديو ${safeTitle}"></video>`:`<div style="text-align:center;color:#aaa;padding:35px;"><i class="fa-solid fa-circle-play fa-4x" style="color:#ff0055;margin-bottom:10px;"></i></div>`;
+                const followBtn=own?'':`<button type="button" class="reels-floating-btn" aria-label="${isFollowing?'إلغاء متابعة':'متابعة'} صاحب الريلز" title="${isFollowing?'إلغاء متابعة':'متابعة'}" onclick="toggleReelFollow('${escapeJs(authorId)}')"><i class="fa-solid ${isFollowing?'fa-user-check':'fa-user-plus'}" style="color:${isFollowing?'#8cffc1':'#fff'}"></i><span class="reels-btn-label">${isFollowing?'متابَع':'متابعة'}</span></button>`;
+                const ownerActions=own?`<div style="position:absolute;bottom:14px;left:12px;z-index:13;display:flex;gap:6px;max-width:calc(100% - 75px);flex-wrap:wrap;"><button type="button" class="btn-action" style="background:#101a2bcc;color:#fff;border:1px solid #ffffff55;padding:7px 9px;border-radius:20px;font-size:10px;" onclick="editOwnReel('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل</button><button type="button" class="btn-action" style="background:#401e2dcc;color:#ffb1c5;border:1px solid #ff739555;padding:7px 9px;border-radius:20px;font-size:10px;" onclick="deleteOwnReel('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف</button></div>`:'';
+                return `<article class="reel-card" data-reel-id="${escapeHtml(id)}" data-reel-title="${safeTitle.replace(/"/g,'&quot;')}" data-reel-media="${safeUrl.replace(/"/g,'&quot;')}" data-reel-author="${escapeHtml(authorId)}" style="position:relative;overflow:hidden;isolation:isolate;">
+                    ${media}
+                    <div style="position:absolute;inset-inline-start:12px;top:12px;z-index:8;max-width:calc(100% - 76px);pointer-events:none;text-shadow:0 2px 8px #000;">
+                      <div style="color:#fff;font-weight:bold;font-size:14px;overflow-wrap:anywhere;">${safeTitle}</div><div style="color:#ffe19a;font-size:10px;margin-top:4px;">بواسطة: ${escapeHtml(reel.author_name||'مستخدم')}</div>
+                    </div>
+                    <div class="reels-floating-tools" aria-label="إجراءات الريلز">
+                      <button type="button" class="reels-floating-btn" aria-label="إضافة محتوى" title="إنشاء أو رفع محتوى" onclick="toggleFloatingAddMenu(undefined,'${escapeJs(id)}')"><i class="fa-solid fa-plus" style="color:#8bf4ff"></i><span class="reels-btn-label">إنشاء</span></button>
+                      <button type="button" class="reels-floating-btn ${liked?'liked':''}" id="reel-like-btn-${escapeJs(id)}" aria-label="إعجاب" title="إعجاب" onclick="toggleReelLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" id="reel-like-icon-${escapeJs(id)}" style="color:${liked?'#ff0055':'#fff'}"></i><span class="reels-count" id="reel-like-count-${escapeJs(id)}">${count}</span></button>
+                      <button type="button" class="reels-floating-btn" aria-label="التعليقات" title="تعليق" onclick="openCommentsModal('${escapeJs(id)}','reel')"><i class="fa-solid fa-comment-dots" style="color:#8bf4ff"></i><span class="reels-btn-label">تعليق</span></button>
+                      ${followBtn}
+                      <button type="button" class="reels-floating-btn" aria-label="مشاركة الريلز" title="مشاركة" onclick="shareReelContent('${escapeJs(reel.title||'ريلز')}','${escapeJs(reel.media_url||'')}')"><i class="fa-solid fa-share-nodes" style="color:#8cffc1"></i><span class="reels-btn-label">مشاركة</span></button>
+                      <button type="button" class="reels-floating-btn" aria-label="حفظ الفيديو" title="حفظ في الهاتف" onclick="downloadReelMedia('${escapeJs(reel.media_url||'')}','${escapeJs(reel.title||'alwaha-reel')}')"><i class="fa-solid fa-download" style="color:#ffe19a"></i><span class="reels-btn-label">حفظ</span></button>
+                      <button type="button" class="reels-floating-btn" aria-label="خيارات الريلز" title="خيارات" onclick="toggleFloatingAddMenu(undefined,'${escapeJs(id)}')"><i class="fa-solid fa-ellipsis" style="color:#fff"></i><span class="reels-btn-label">خيارات</span></button>
+                    </div>${ownerActions}</article>`;
             }).join('');
+        }
+
+async function toggleReelFollow(targetId) {
+            const me=await requireAuthenticatedUser('سجل الدخول أولًا لمتابعة صاحب الريلز.');if(!me)return;
+            if(!targetId||targetId===me.id)return triggerToastNotification('لا يمكنك متابعة حسابك الشخصي.','info');
+            const rows=await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(targetId)}&select=follower_id&limit=1`);
+            if(!Array.isArray(rows))return triggerToastNotification('تعذر التحقق من حالة المتابعة؛ تحقق من الاتصال أو صلاحيات قاعدة البيانات.','error');
+            const result=rows.length
+              ? await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(targetId)}`,{method:'DELETE',prefer:'return=minimal'})
+              : await supabaseFetch('follows',{method:'POST',body:JSON.stringify({follower_id:me.id,following_id:targetId}),prefer:'return=representation'});
+            if(result===null)return triggerToastNotification('تعذر تحديث المتابعة. تحقق من الاتصال وصلاحيات قاعدة البيانات.','error');
+            triggerToastNotification(rows.length?'تم إلغاء متابعة صاحب الريلز.':'تمت متابعة صاحب الريلز.','success');
+            await renderReelsFeed();
         }
 
 async function toggleReelLike(reelId) {
@@ -2576,6 +2838,26 @@ async function renderConversationsList() {
             if(view === 'my-items') renderMyPersonalMarketItems();
         }
 
+async function detectMarketLifecycleSchema() {
+            if(marketLifecycleSchemaReady!==null)return marketLifecycleSchemaReady;
+            const probe=await supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1');
+            marketLifecycleSchemaReady=Array.isArray(probe);
+            return marketLifecycleSchemaReady;
+        }
+        function requestLocationOnce(onSuccess,onError) {
+            if(!navigator.geolocation)return onError?.(new Error('Geolocation unsupported'));
+            navigator.geolocation.getCurrentPosition(position=>onSuccess?.({latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy}),error=>onError?.(error),{enableHighAccuracy:false,timeout:10000,maximumAge:120000});
+        }
+        function setProductLocationFromDevice() {
+            const status=document.getElementById('prod-location-status');if(status)status.textContent='بانتظار موافقتك وقراءة موقع تقريبي…';
+            requestLocationOnce(pos=>{marketProductLatitude=pos.latitude;marketProductLongitude=pos.longitude;if(status)status.textContent='تم تحديد الموقع لهذا الإعلان فقط. يمكنك حذف الإحداثيات بمسحها من إعادة ضبط النموذج.';triggerToastNotification('تم تحديد موقع تقريبي؛ لا يُحفظ إلا عند نشر الإعلان.','success');},error=>{if(status)status.textContent='لم يتم تحديد الموقع. يمكنك كتابة المنطقة يدويًا دون مشاركة إحداثيات.';triggerToastNotification(error?.code===1?'رفضت إذن الموقع؛ يمكنك كتابة المنطقة يدويًا.':'تعذر تحديد الموقع؛ اكتب المنطقة يدويًا.','info');});
+        }
+        function setMarketSearchLocation() {
+            const status=document.getElementById('market-location-status');if(status)status.textContent='بانتظار إذن الموقع…';
+            requestLocationOnce(pos=>{marketSearchLatitude=pos.latitude;marketSearchLongitude=pos.longitude;if(status)status.textContent='تم تحديد موقعك لهذه الجلسة فقط. اختر نطاق البحث ثم حدّث النتائج.';renderProductsList(document.getElementById('market-search-input')?.value||'');},error=>{if(status)status.textContent='تعذر تحديد الموقع. يمكن البحث بالاسم أو كتابة المنطقة في مربع البحث.';triggerToastNotification(error?.code===1?'رفضت إذن الموقع؛ يمكنك البحث النصي بدلًا منه.':'تعذر تحديد الموقع.','info');});
+        }
+        function alwahaDistanceKm(lat1,lon1,lat2,lon2) {const rad=v=>v*Math.PI/180;const dLat=rad(lat2-lat1),dLon=rad(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(rad(lat1))*Math.cos(rad(lat2))*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
 function handleMarketMultiImages() {
             pickFilesFromDevice({accept:'image/*',multiple:true,onFiles:async files=>{
                 const accepted=files.slice(0,6);
@@ -2602,12 +2884,25 @@ async function submitNewProductToMarket() {
                 }
                 imageUrls=uploadedUrls;
             }
+            await detectMarketLifecycleSchema();
             const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||'',image_urls:imageUrls};
+            const locationLabel=document.getElementById('prod-location-label')?.value.trim()||'';
+            if (marketLifecycleSchemaReady === true) {
+                payload.location_label=locationLabel;
+                payload.latitude=Number.isFinite(marketProductLatitude)?marketProductLatitude:null;
+                payload.longitude=Number.isFinite(marketProductLongitude)?marketProductLongitude:null;
+            }
             const isEditing=!!editingMarketProductId;
             const endpoint=isEditing?`products?id=eq.${encodeURIComponent(editingMarketProductId)}&seller_id=eq.${encodeURIComponent(user.id)}`:'products';
-            const result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=representation'});
-            if(result===null||(isEditing&&Array.isArray(result)&&result.length===0))return triggerToastNotification(isEditing?'تعذر تحديث الإعلان؛ تحقق من الملكية والصلاحيات.':'تعذر نشر الإعلان. تحقق من الاتصال والصلاحيات.','error');
-            ['prod-name','prod-price','prod-desc-location'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});
+            const result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=minimal'});
+            if(result===null||(isEditing&&Array.isArray(result)&&result.length===0)){
+                const apiError=window.__alwahaLastApiError||{};
+                let reason=apiError.status===401?'انتهت جلسة الدخول؛ سجّل الدخول مجددًا.':apiError.status===403?'رفضت قاعدة البيانات العملية بسبب صلاحيات نشر/تعديل المنتجات (RLS). يجب التحقق من سياسة products_insert_own وأن seller_id يساوي معرّف المستخدم الحالي.':apiError.status===400?`رفضت قاعدة البيانات بيانات الإعلان: ${apiError.message||'تحقق من الحقول المطلوبة'}`:apiError.status===0?'تعذر الاتصال بالخادم؛ تحقق من الإنترنت ثم أعد المحاولة.':`خطأ الخادم ${apiError.status||'غير معروف'}: ${apiError.message||'راجع سجل Supabase API'}`;
+                return triggerToastNotification(`${isEditing?'تعذر تحديث الإعلان':'تعذر نشر الإعلان'} — ${reason}`,'error');
+            }
+            ['prod-name','prod-price','prod-desc-location','prod-location-label'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});
+            marketProductLatitude=null;marketProductLongitude=null;
+            const productLocationStatus=document.getElementById('prod-location-status');if(productLocationStatus)productLocationStatus.textContent='لن تتم مشاركة موقعك إلا إذا اخترت ذلك.';
             marketMultiFilesArray=[];marketEditingExistingImageUrls=[];editingMarketProductId=null;
             const preview=document.getElementById('prod-images-preview-container');if(preview)preview.innerHTML='';
             const title=document.getElementById('market-sell-title');if(title)title.textContent='إضافة إعلان جديد في السوق';
@@ -2646,46 +2941,72 @@ async function submitNewProductToMarket() {
         async function renderProductsList(searchQuery = '') {
             const container=document.getElementById('market-products-list-container');if(!container)return;
             container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السلع...</div>';
-            const products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&order=created_at.desc');
-            if(!Array.isArray(products)||!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
+            await detectMarketLifecycleSchema();
+            const products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
+            if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
+            if(!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
             const q=String(searchQuery||'').trim().toLowerCase();
-            const filtered=products.filter(prod=>!q||`${prod.title||''} ${prod.category||''} ${prod.description||''}`.toLowerCase().includes(q));
-            if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد نتائج مطابقة للبحث.</div>';return;}
+            const radiusValue=document.getElementById('market-radius-select')?.value||'all';
+            let filtered=products.filter(prod=>(!prod.status||prod.status==='active')&&(!q||`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`.toLowerCase().includes(q)));
+            if(marketSearchLatitude!==null&&marketSearchLongitude!==null&&radiusValue!=='all') {
+                const radius=Number(radiusValue);
+                filtered=filtered.filter(prod=>Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))&&prod.latitude!==null&&prod.longitude!==null&&alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude))<=radius);
+            }
+            if(marketSearchLatitude!==null&&marketSearchLongitude!==null)filtered.sort((a,b)=>{
+                const distance=p=>Number.isFinite(Number(p.latitude))&&Number.isFinite(Number(p.longitude))&&p.latitude!==null&&p.longitude!==null?alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(p.latitude),Number(p.longitude)):Infinity;
+                const delta=distance(a)-distance(b);return Math.abs(delta)>0.05?delta:(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0);
+            });
+            else filtered.sort((a,b)=>(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0));
+            if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:11px;padding:20px;line-height:1.8;">لا توجد نتائج في هذا النطاق. جرّب توسيع النطاق أو حذف البحث.</div>';return;}
             container.innerHTML=filtered.map(prod=>{
               const urls=Array.isArray(prod.image_urls)?prod.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
               if(!urls.length&&typeof prod.image_url==='string'&&/^https?:\/\//i.test(prod.image_url))urls.push(prod.image_url);
+              const distanceLabel=marketSearchLatitude!==null&&marketSearchLongitude!==null&&prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))?`${alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)).toFixed(1)} كم`:'';
               const gallery=urls.length?`<div style="display:grid;grid-template-columns:repeat(${Math.min(3,Math.max(1,urls.length))},1fr);gap:4px;margin-bottom:8px;">${urls.map(url=>`<img src="${escapeHtml(url)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" loading="lazy" alt="">`).join('')}</div>`:'<img src="icon.png" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" loading="lazy" alt="">';
               return `
-                <article data-market-card="true" data-search="${escapeHtml(`${prod.title||''} ${prod.category||''} ${prod.description||''}`)}" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.1);">
+                <article data-market-card="true" data-search="${escapeHtml(`${prod.title||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`)}" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.1);">
                   ${gallery}
                   <div style="font-weight:bold;color:#00ffff;margin-bottom:3px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(prod.title||'منتج')}</div>
                   <div style="color:#ffd700;font-weight:bold;margin-bottom:5px;font-size:14px;">💰 ${escapeHtml(prod.price||'')}</div>
                   <div style="font-size:10px;color:#aaa;margin-bottom:8px;min-height:30px;max-height:46px;overflow:hidden;">${escapeHtml(prod.description||'لا يوجد وصف')}</div>
-                  <div style="font-size:9px;color:#888;margin-bottom:8px;">${escapeHtml(prod.category||'أخرى')}</div>
+                  <div style="font-size:9px;color:#888;margin-bottom:6px;">${escapeHtml(prod.category||'أخرى')}${prod.location_label?` · ${escapeHtml(prod.location_label)}`:''}${distanceLabel?` · على بُعد ${distanceLabel}`:''}</div>
+                  ${prod.promoted_until&&Date.parse(prod.promoted_until)>Date.now()?'<div style="font-size:9px;color:#ffd86b;margin-bottom:7px;">✦ إعلان مروّج</div>':''}
                   <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(prod.id)}')"><i class="fa-solid fa-circle-info"></i> التفاصيل</button>
-                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openTargetUserDirectChat('بائع المنتج: ${escapeJs(prod.title||'المنتج')}','','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> تواصل للشراء</button>
+                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="contactMarketSeller('${escapeJs(prod.title||'المنتج')}','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> هل ما زال متوفرًا؟</button>
                   </div>
                 </article>`;
             }).join('');
         }
         async function openMarketProductDetails(productId) {
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,sold_to,sold_at,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;
             if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
             const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
             if(!urls.length&&typeof product.image_url==='string'&&/^https?:\/\//i.test(product.image_url))urls.push(product.image_url);
             const images=urls.length?`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0;">${urls.map(url=>`<img src="${escapeHtml(url)}" alt="" loading="lazy" style="width:100%;max-height:190px;object-fit:contain;background:#050914;border-radius:10px;">`).join('')}</div>`:'<img src="icon.png" alt="" style="width:100%;max-height:160px;object-fit:contain;margin:12px 0;">';
             const me=await getCurrentAuthUser();
-            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع.</div>':(product.seller_id===me.id?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله من قسم إعلاناتك.</div>':`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="closeMarketProductDetails();openTargetUserDirectChat('بائع المنتج: ${escapeJs(product.title||'المنتج')}','','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> تواصل مع البائع</button>`);
+            let sellerRatingSummary='';
+            if(await detectMarketLifecycleSchema()) {
+                const ratingRows=await supabaseFetch(`marketplace_reviews?seller_id=eq.${encodeURIComponent(product.seller_id)}&select=rating&limit=200`);
+                if(Array.isArray(ratingRows)&&ratingRows.length) {
+                    const average=ratingRows.reduce((sum,row)=>sum+Number(row.rating||0),0)/ratingRows.length;
+                    sellerRatingSummary=`<div style="font-size:11px;color:#ffd86b;margin-bottom:9px;">★ ${average.toFixed(1)} / 5 · ${ratingRows.length} تقييم</div>`;
+                } else if(Array.isArray(ratingRows)) sellerRatingSummary='<div style="font-size:10px;color:#9fb1c8;margin-bottom:9px;">لا توجد تقييمات موثقة بعد.</div>';
+            }
+            const reviewControls=me&&product.status==='sold'&&product.sold_to===me.id?`<div style="margin-top:12px;border:1px solid #8cffc144;padding:11px;border-radius:11px;"><h4 style="margin:0 0 8px;color:#8cffc1;font-size:12px;">قيّم البائع بعد استلام السلعة</h4><label style="font-size:10px;color:#a9bfd2;display:block;margin-bottom:5px;">التقييم من 1 إلى 5 نجوم</label><select id="market-review-rating-${escapeHtml(product.id)}" style="width:100%;background:#101a2b;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;margin-bottom:7px;"><option value="">اختر التقييم</option><option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option><option value="3">★★★ مقبول</option><option value="2">★★ يحتاج تحسين</option><option value="1">★ تجربة سيئة</option></select><textarea id="market-review-text-${escapeHtml(product.id)}" maxlength="1000" rows="3" placeholder="ملاحظاتك (اختياري)" style="width:100%;background:#0b0f19;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;font:inherit;font-size:11px;"></textarea><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#173a2b;color:#8cffc1;padding:10px;border-radius:9px;" onclick="submitMarketplaceReview('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')">إرسال التقييم</button></div>`:'';
+            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
+            const extraReview=reviewControls;
             let modal=document.getElementById('market-product-detail-modal');
             if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay';document.body.appendChild(modal);}
             modal.innerHTML=`<div class="game-modal-card" role="dialog" aria-modal="true" aria-label="تفاصيل المنتج" style="width:min(94vw,520px);max-height:90vh;overflow:auto;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><h3 style="margin:0;color:#8bf4ff;font-size:16px;">تفاصيل المنتج</h3><button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:20px;" onclick="closeMarketProductDetails()" aria-label="إغلاق">×</button></div>
               ${images}<h4 style="margin:8px 0;color:#fff;font-size:17px;">${escapeHtml(product.title||'منتج')}</h4>
               <div style="color:#ffd700;font-size:16px;font-weight:bold;margin-bottom:8px;">${escapeHtml(product.price||'')}</div>
-              <div style="color:#9fb1c8;font-size:11px;margin-bottom:8px;">${escapeHtml(product.category||'أخرى')}</div>
-              <p style="color:#eef4ff;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(product.description||'لا يوجد وصف إضافي.')}</p>${message}
+              ${sellerRatingSummary}
+              <div style="color:#9fb1c8;font-size:11px;margin-bottom:8px;">${escapeHtml(product.category||'أخرى')}${product.location_label?` · ${escapeHtml(product.location_label)}`:''}</div>
+              <p style="color:#eef4ff;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(product.description||'لا يوجد وصف إضافي.')}</p>
+              <div style="border:1px solid #ffd86b44;background:#ffd86b0b;color:#e8d8b1;border-radius:10px;padding:10px;font-size:10px;line-height:1.8;margin:10px 0;">إرشادات السلامة: اتفق على اللقاء في مكان عام ومضاء، افحص السلعة قبل الدفع، لا ترسل رمز تحقق أو بيانات بنكية، ولا تدفع مقدمًا لشخص لا تثق به.</div>${message}${extraReview}
             </div>`;
             modal.style.display='flex';document.body.classList.add('modal-active');modal.onclick=event=>{if(event.target===modal)closeMarketProductDetails();};
         }
@@ -2695,30 +3016,101 @@ async function submitNewProductToMarket() {
             if(!stillOpen)document.body.classList.remove('modal-active');
         }
 
-                /* --- تكملة وتصحيح الدالة التي كانت مفقودة ونصفها مقطوع --- */
+                /* --- وظائف سلسلة البيع الآمنة --- */
+        async function contactMarketSeller(title,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول للتواصل مع البائع.');if(!me)return;
+            if(!sellerId||sellerId===me.id)return triggerToastNotification('هذا إعلانك؛ افتح قسم «سلعي» لإدارته.','info');
+            closeMarketProductDetails();
+            await openTargetUserDirectChat(`بائع المنتج: ${title}`,'',sellerId);
+            const input=document.getElementById('chat-message-input');
+            if(input&&!input.value.trim()) { input.value=`السلام عليكم، هل ما زال المنتج «${String(title||'المنتج').slice(0,120)}» متوفرًا؟`; input.focus({preventScroll:true}); }
+            triggerToastNotification('جهزنا رسالة الاستفسار؛ راجعها ثم اضغط إرسال.','info');
+        }
+        async function callMarketSeller(title,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة.');if(!me)return;
+            if(!sellerId||sellerId===me.id)return triggerToastNotification('لا يمكن الاتصال بحسابك الشخصي.','info');
+            closeMarketProductDetails();
+            await openTargetUserDirectChat(`بائع المنتج: ${title}`,'',sellerId);
+            await initiateVoiceCall('online');
+        }
+        async function updateMarketProductLifecycle(productId, patch, successMessage) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
+            if(!(await detectMarketLifecycleSchema()))return triggerToastNotification('ميزات حالة البيع/الأرشفة/الترويج تحتاج تحديث قاعدة السوق الموجود داخل حزمة الإصلاح. نشر المنتج الأساسي ما زال متاحًا.','error');
+            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,status,promoted_until`,{method:'PATCH',body:JSON.stringify(patch),prefer:'return=representation'});
+            if(result===null||(Array.isArray(result)&&!result.length)) {
+                const err=window.__alwahaLastApiError||{};
+                return triggerToastNotification(err.status===403?'رفضت قاعدة البيانات تعديل الإعلان؛ تحقق من سياسة products_update_own.':`تعذر تحديث حالة الإعلان (${err.status||'اتصال'}): ${err.message||'أعد المحاولة.'}`,'error');
+            }
+            triggerToastNotification(successMessage,'success');await renderMyPersonalMarketItems();await renderProductsList(document.getElementById('market-search-input')?.value||'');
+        }
+        async function markMyProductSold(productId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
+            if(!(await detectMarketLifecycleSchema()))return triggerToastNotification('ميزة «تم البيع» تتطلب تحديث قاعدة السوق الموجود داخل حزمة الإصلاح.','error');
+            const rows=await supabaseFetch(`messages?select=sender_id,receiver_id&or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&limit=500`);
+            const candidates=new Set();(Array.isArray(rows)?rows:[]).forEach(row=>{if(row.sender_id&&row.sender_id!==me.id)candidates.add(String(row.sender_id));if(row.receiver_id&&row.receiver_id!==me.id)candidates.add(String(row.receiver_id));});
+            if(!candidates.size)return triggerToastNotification('لم نجد محادثة سابقة مع المشتري. افتح محادثته من الإعلان أولًا، ثم أعد اختيار «تم البيع».','info');
+            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`users?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
+            const options=Array.isArray(users)?users.filter(user=>candidates.has(String(user.id))):[];
+            if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من المحادثات السابقة.','error');
+            const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'} (@${user.username||'—'})`).join('\n'));
+            if(selection===null)return;
+            const buyer=options[Number(selection)-1];if(!buyer)return triggerToastNotification('الاختيار غير صحيح؛ لم يتم تغيير حالة الإعلان.','error');
+            await updateMarketProductLifecycle(productId,{status:'sold',sold_to:buyer.id,sold_at:new Date().toISOString()},'تم وضع علامة «تم البيع» وربط الإعلان بالمشتري المحدد.');
+        }
+        async function archiveMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'archived',archived_at:new Date().toISOString()},'تمت أرشفة الإعلان؛ لن يظهر للمشترين.'); }
+        async function reactivateMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'active',archived_at:null,sold_at:null,sold_to:null},'تمت إعادة نشر الإعلان.'); }
+        async function promoteMyProduct(productId) { await updateMarketProductLifecycle(productId,{promoted_until:new Date(Date.now()+3*24*60*60*1000).toISOString()},'تم تمييز إعلانك لمدة 3 أيام.'); }
+        async function reportMarketplaceItem(productId,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول للإبلاغ عن إعلان.');if(!me)return;
+            if(sellerId===me.id)return triggerToastNotification('لا يمكنك الإبلاغ عن إعلانك الشخصي.','info');
+            const reason=window.prompt('سبب الإبلاغ (مثل: احتيال، سلعة مزيفة، سعر مضلل):','سلعة أو إعلان مشبوه');if(reason===null)return;
+            if(!reason.trim())return triggerToastNotification('اكتب سبب الإبلاغ قبل الإرسال.','error');
+            const result=await supabaseFetch('marketplace_reports',{method:'POST',body:JSON.stringify({product_id:productId,seller_id:sellerId,reporter_id:me.id,reason:reason.trim().slice(0,1000)}),prefer:'return=representation'});
+            if(result===null)return triggerToastNotification('تعذر إرسال البلاغ. تأكد من تطبيق تحديث قاعدة السوق ثم أعد المحاولة.','error');
+            triggerToastNotification('تم إرسال البلاغ للمراجعة. لا ترسل بيانات حساسة في البلاغ.','success');
+        }
+        async function submitMarketplaceReview(productId,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لتقييم البائع.');if(!me)return;
+            if(me.id===sellerId)return triggerToastNotification('لا يمكنك تقييم حسابك الشخصي.','info');
+            const rating=Number(document.getElementById(`market-review-rating-${CSS.escape(String(productId))}`)?.value||0),review=String(document.getElementById(`market-review-text-${CSS.escape(String(productId))}`)?.value||'').trim();
+            if(!Number.isInteger(rating)||rating<1||rating>5)return triggerToastNotification('اختر تقييمًا من نجمة إلى خمس نجوم.','error');
+            const result=await supabaseFetch('marketplace_reviews',{method:'POST',body:JSON.stringify({product_id:productId,seller_id:sellerId,reviewer_id:me.id,rating,review:review.slice(0,1000)}),prefer:'return=representation'});
+            if(result===null)return triggerToastNotification('تعذر حفظ التقييم. لا يمكن التقييم إلا بعد تعليم الإعلان «تم البيع» وتطبيق تحديث قاعدة السوق.','error');
+            triggerToastNotification('شكرًا لتقييمك.','success');
+        }
 
 async function renderMyPersonalMarketItems() {
             const container=document.getElementById('my-market-items-container');if(!container)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,created_at&order=created_at.desc`);
+            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to,created_at&order=created_at.desc`);
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="color:#ffd700;font-weight:bold;font-size:13px;overflow-wrap:anywhere;">${escapeHtml(product.title||'منتج')}</div><div style="color:#00ff88;font-size:11px;margin-top:4px;">${escapeHtml(product.price||'')}</div><div style="color:#8da2ba;font-size:10px;margin-top:4px;">${escapeHtml(product.category||'أخرى')}</div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="color:#ffd700;font-weight:bold;font-size:13px;overflow-wrap:anywhere;">${escapeHtml(product.title||'منتج')}</div><div style="color:#00ff88;font-size:11px;margin-top:4px;">${escapeHtml(product.price||'')}</div><div style="color:#8da2ba;font-size:10px;margin-top:4px;">${escapeHtml(product.category||'أخرى')}</div><div style="color:${product.status==='sold'?'#8cffc1':product.status==='archived'?'#9fb1c8':'#8bf4ff'};font-size:10px;margin-top:5px;">الحالة: ${product.status==='sold'?'تم البيع':product.status==='archived'?'مؤرشف':'معروض'}</div></div>
                 <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;"><button type="button" class="btn-action" style="background:#8bf4ff;color:#091223;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="editMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-pen"></i> تعديل</button><button type="button" class="btn-action" style="background:#ff0055;color:#fff;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="deleteMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-trash"></i> حذف</button></div>
-              </div><button type="button" class="btn-action" style="width:100%;margin-top:8px;background:#253449;color:#fff;padding:7px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">
+                ${product.status==='archived'?`<button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة نشر</button>`:`<button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="archiveMyProduct('${escapeJs(product.id)}')">أرشفة</button>`}
+                ${product.status==='sold'?`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة عرض</button>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="markMyProductSold('${escapeJs(product.id)}')">تم البيع</button>`}
+                <button type="button" class="btn-action" style="background:#3b2e16;color:#ffd86b;padding:8px;border-radius:7px;font-size:10px;" onclick="promoteMyProduct('${escapeJs(product.id)}')">ترويج 3 أيام</button>
+                <button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
+              </div>
             </div>`).join('');
         }
         async function editMyMarketItem(productId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,title,price,category,description,image_url,image_urls&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
             if(!marketEditingExistingImageUrls.length&&/^https?:\/\//i.test(product.image_url||''))marketEditingExistingImageUrls=[product.image_url];
             document.getElementById('prod-name').value=product.title||'';document.getElementById('prod-price').value=product.price||'';
             document.getElementById('prod-category').value=product.category||'أخرى';document.getElementById('prod-desc-location').value=product.description||'';
+            const locationField=document.getElementById('prod-location-label');if(locationField)locationField.value=product.location_label||'';
+            marketProductLatitude=Number.isFinite(Number(product.latitude))&&product.latitude!==null?Number(product.latitude):null;
+            marketProductLongitude=Number.isFinite(Number(product.longitude))&&product.longitude!==null?Number(product.longitude):null;
+            const locationStatus=document.getElementById('prod-location-status');if(locationStatus)locationStatus.textContent=marketProductLatitude!==null?'للإعلان إحداثيات محفوظة.':'لم يتم حفظ إحداثيات لهذا الإعلان.';
             const title=document.getElementById('market-sell-title');if(title)title.textContent='تعديل إعلانك';
             const submit=document.getElementById('market-submit-product-btn');if(submit)submit.textContent='حفظ التعديلات';
             const cancel=document.getElementById('market-cancel-edit-btn');if(cancel)cancel.style.display='block';
@@ -2728,7 +3120,8 @@ async function renderMyPersonalMarketItems() {
             triggerToastNotification('عدّل البيانات ثم احفظ؛ رفع صور جديدة سيستبدل صور الإعلان الحالية.','info');
         }
         function cancelEditMyMarketItem() {
-            editingMarketProductId=null;marketEditingExistingImageUrls=[];marketMultiFilesArray=[];
+            editingMarketProductId=null;marketEditingExistingImageUrls=[];marketMultiFilesArray=[];marketProductLatitude=null;marketProductLongitude=null;
+            const locationField=document.getElementById('prod-location-label');if(locationField)locationField.value='';
             ['prod-name','prod-price','prod-desc-location'].forEach(id=>{const field=document.getElementById(id);if(field)field.value='';});
             const preview=document.getElementById('prod-images-preview-container');if(preview)preview.innerHTML='';
             const title=document.getElementById('market-sell-title');if(title)title.textContent='إضافة إعلان جديد في السوق';
@@ -2738,7 +3131,7 @@ async function renderMyPersonalMarketItems() {
         async function deleteMyMarketItem(prodId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً.');if(!user)return;
             if(!window.confirm('هل أنت متأكد من حذف هذا الإعلان؟'))return;
-            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
+            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id`,{method:'DELETE',prefer:'return=representation'});
             if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف الإعلان؛ تحقق من ملكية الإعلان والصلاحيات.','error');
             triggerToastNotification('تم حذف إعلانك بنجاح.','success');await renderMyPersonalMarketItems();await renderProductsList();
         }
@@ -2885,8 +3278,10 @@ function triggerAnimeAiConverterFilter() {
 
         function closeProfessionalCameraView() {
             const camModal = document.getElementById('pro-camera-modal');
+            if (reelRecorder && reelRecorder.state !== 'inactive') { try { reelRecorder.stop(); } catch (error) { console.warn(error); } }
             if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-            cameraStream = null;
+            if (reelRecordingStream && reelRecordingStream !== cameraStream) reelRecordingStream.getTracks().forEach(t => t.stop());
+            cameraStream = null; reelRecordingStream = null;
             if (camModal) camModal.style.display = 'none';
             document.body.classList.remove('modal-active');
         }
@@ -2921,26 +3316,33 @@ function triggerAnimeAiConverterFilter() {
             closeProfessionalCameraView();
         }
 
-        function showExitModalFallback() {
-            const modal = document.getElementById('exit-modal-confirmation');
-            if (!modal) return;
-            history.pushState({ alwahaGuard: true }, '', location.href);
-            modal.style.display = 'flex';
-            modal.setAttribute('aria-hidden', 'false');
+        function showExitConfirmationModal() {
+            const modal=document.getElementById('exit-modal-confirmation');if(!modal)return;
+            if(!exitModalHistoryGuarded){try{history.pushState({alwahaExitGuard:true},'',location.href);exitModalHistoryGuarded=true;}catch(error){}}
+            modal.style.display='flex';modal.setAttribute('aria-hidden','false');document.body.classList.add('alwaha-exit-confirm-open');
+            const card=modal.querySelector('.exit-modal-card');if(card){card.scrollTop=0;}
+            requestAnimationFrame(()=>modal.querySelector('button')?.focus({preventScroll:true}));
         }
+        function showExitModalFallback() { showExitConfirmationModal(); }
         function closeExitConfirmationModal() {
-            const modal = document.getElementById('exit-modal-confirmation');
-            if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
+            const modal=document.getElementById('exit-modal-confirmation');
+            if(modal){modal.style.display='none';modal.setAttribute('aria-hidden','true');}
+            document.body.classList.remove('alwaha-exit-confirm-open');
+            exitModalHistoryGuarded=false;
         }
-        function confirmExitApp() {
+        async function confirmExitApp() {
             closeExitConfirmationModal();
             try {
+                if (typeof window.alwahaExitNativeApp === 'function') {
+                    await window.alwahaExitNativeApp();
+                    return;
+                }
                 if (typeof window.navigator.app?.exitApp === 'function') {
                     window.navigator.app.exitApp();
                     return;
                 }
-            } catch (e) {}
-            triggerToastNotification('المتصفح يمنع إغلاق التبويب برمجياً. استخدم زر الخروج في نظام التشغيل.', 'info');
+            } catch (error) { console.warn('[Alwaha-Pro] Native app exit failed:', error); }
+            triggerToastNotification('لا يدعم هذا المتصفح إغلاق التطبيق برمجيًا؛ يمكنك الخروج بزر النظام.', 'info');
         }
 
         async function initializeRealtimeCallInbox() {
@@ -3142,11 +3544,12 @@ function triggerAnimeAiConverterFilter() {
                 return;
             }
             if (current !== 'home-section') { showSection('home-section', null, {fromBack:true}); return; }
-            if (exit) { exit.style.display='flex'; exit.setAttribute('aria-hidden','false'); }
+            if (exit) showExitConfirmationModal();
         }
         window.navigateBack = navigateBack;
 
         function handlePopState() {
+            exitModalHistoryGuarded=false;
             try { history.pushState({alwahaGuard:true}, '', location.href); } catch (e) {}
             navigateBack();
         }
@@ -3319,6 +3722,21 @@ function triggerAnimeAiConverterFilter() {
         async function requestFriendFromProfile(targetId){await sendFriendRequest(targetId);await openPublicUserProfile(targetId);}
         async function respondProfileFriendRequest(requestId,status,targetId){await respondFriendRequest(requestId,status);await openPublicUserProfile(targetId);}
 
+        function showAlwahaPrivacyPolicy() {
+            const notice=document.getElementById('alwaha-privacy-notice');if(!notice)return;
+            notice.style.display='flex';notice.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');
+        }
+        function acknowledgeAlwahaPrivacyNotice() {
+            try { localStorage.setItem('alwaha_privacy_notice_ack_v1','2026-10-24'); } catch(error) {}
+            const notice=document.getElementById('alwaha-privacy-notice');if(notice){notice.style.display='none';notice.setAttribute('aria-hidden','true');}
+            document.body.classList.remove('modal-active');
+            try { privacyNoticePreviousFocus?.focus?.({preventScroll:true}); } catch(error) {}
+        }
+        function showAlwahaPrivacyNoticeIfNeeded() {
+            let acknowledged=false;try{acknowledged=localStorage.getItem('alwaha_privacy_notice_ack_v1')==='2026-10-24';}catch(error){}
+            if(!acknowledged){const notice=document.getElementById('alwaha-privacy-notice');if(notice){privacyNoticePreviousFocus=document.activeElement;notice.style.display='flex';notice.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');}}
+        }
+
         document.addEventListener('DOMContentLoaded',()=>{
             const gender=document.getElementById('reg-gender');
             const registerAvatar=document.getElementById('reg-avatar-preview');
@@ -3327,6 +3745,8 @@ function triggerAnimeAiConverterFilter() {
             const phone=document.getElementById('verification-phone-input');
             if(phone&&!phone.value)phone.value=localStorage.getItem('alwaha_profile_phone')||'';
             syncUiWithLoadedProfileData();
+            showAlwahaPrivacyNoticeIfNeeded();
+            const radius=document.getElementById('market-radius-select');if(radius)radius.addEventListener('change',()=>renderProductsList(document.getElementById('market-search-input')?.value||''));
         });
 
     </script>
