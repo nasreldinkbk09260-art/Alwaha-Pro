@@ -423,6 +423,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 (()=>{if(window.__alwaha288Atmosphere)return;window.__alwaha288Atmosphere=true;const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-stars"></div><div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);let scheduled=false;const move=e=>{if(document.body.classList.contains('theme-nature')||document.body.classList.contains('theme-tech')||document.body.classList.contains('theme-soft'))return;const t=e.touches?.[0]||e;document.documentElement.style.setProperty('--alwaha-pointer-x',Math.max(0,Math.min(100,t.clientX/innerWidth*100))+'%');document.documentElement.style.setProperty('--alwaha-pointer-y',Math.max(0,Math.min(100,t.clientY/innerHeight*100))+'%');document.documentElement.style.setProperty('--alwaha-wave-shift',((t.clientX/innerWidth)-.5)*32+'px');};document.addEventListener('pointermove',move,{passive:true});document.addEventListener('touchmove',move,{passive:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();
 </script>
 
+    <script defer src="./alwaha-native-back-handler.js"></script>
 </head>
 <body>
 
@@ -855,6 +856,28 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
             <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#38bdf8; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="switchCameraLens()"><i class="fa-solid fa-repeat"></i> تبديل الكاميرا</button>
         </div>
         <canvas id="camera-capture-canvas" style="display:none;"></canvas>
+    </div>
+
+    <!-- نافذة تفاصيل المنشور والتحرير المضمن -->
+    <div id="home-post-details-modal" class="comments-modal-box" role="dialog" aria-modal="true" aria-labelledby="home-post-details-title" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,255,255,.2);padding-bottom:10px;margin-bottom:14px;gap:12px;">
+            <h3 id="home-post-details-title" style="color:#00ffff;margin:0;font-size:15px;overflow-wrap:anywhere;">تفاصيل المنشور</h3>
+            <button type="button" class="btn-action" aria-label="إغلاق تفاصيل المنشور" style="background:transparent;color:#fff;font-size:18px;min-width:40px;min-height:40px;" onclick="closeHomePostDetails()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="home-post-details-content"></div>
+        <form id="home-post-edit-form" style="display:none;margin-top:12px;" onsubmit="saveEditedHomePost(event)">
+            <label for="home-post-edit-text" style="display:block;color:#9fb1c8;font-size:12px;margin-bottom:7px;">نص المنشور</label>
+            <textarea id="home-post-edit-text" rows="7" maxlength="20000" class="keyboard-target" style="display:block;width:100%;min-height:150px;resize:vertical;background:#0b0f19;color:#fff;border:1px solid rgba(0,255,255,.45);border-radius:10px;padding:12px;font:inherit;line-height:1.7;" placeholder="اكتب نص المنشور هنا..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+                <button type="submit" id="home-post-edit-save-btn" class="btn-action" style="flex:1;background:#00ff88;color:#07111b;padding:10px;border-radius:9px;font-weight:bold;">حفظ التعديلات</button>
+                <button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:10px;border-radius:9px;" onclick="cancelHomePostEdit()">إلغاء</button>
+            </div>
+        </form>
+        <div id="home-post-details-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+            <button type="button" id="home-post-edit-btn" class="btn-action" style="display:none;flex:1;min-width:120px;background:#253449;color:#fff;padding:10px;border-radius:9px;" onclick="startHomePostEdit()"><i class="fa-solid fa-pen"></i> تعديل المنشور</button>
+            <button type="button" id="home-post-comments-btn" class="btn-action" style="flex:1;min-width:120px;background:#073b4c;color:#fff;padding:10px;border-radius:9px;" onclick="openCommentsForActiveHomePost()"><i class="fa-solid fa-comments"></i> التعليقات</button>
+            <button type="button" id="home-post-delete-btn" class="btn-action" style="display:none;flex:1;min-width:120px;background:#6b2338;color:#fff;padding:10px;border-radius:9px;" onclick="deleteActiveHomePost()"><i class="fa-solid fa-trash"></i> حذف المنشور</button>
+        </div>
     </div>
 
     <!-- نافذة التعليقات الفرعية -->
@@ -1699,6 +1722,7 @@ async function renderHomePostsFeed() {
                 supabaseFetch('posts?select=*&order=created_at.desc&limit=100'),
                 supabaseFetch('post_like_counts?select=post_id,likes_count')
             ]);
+            window.__alwahaHomePosts = new Map((Array.isArray(posts) ? posts : []).map(post => [String(post.id), post]));
             if(!Array.isArray(posts) || !posts.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>';return;}
             const me=await getCurrentAuthUser();
             const mine=me ? await supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`) : [];
@@ -1710,7 +1734,7 @@ async function renderHomePostsFeed() {
                     ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل المنشور</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف المنشور</button></div>`
                     : '';
                 const imageMarkup=post.image_url?`<img src="${escapeHtml(post.image_url)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:8px 0;" loading="lazy" alt="">`:'';
-                return `<div style="border-right:3px solid ${post.post_type==='تقني'?'#00ffff':'#ff00ff'};background:rgba(0,0,0,.3);padding:15px;border-radius:8px;margin-bottom:15px;">
+                return `<div role="article" tabindex="0" aria-label="منشور ${escapeHtml(post.author_name||'مستخدم')}" onclick="handleHomePostCardActivation('${escapeJs(id)}',event)" onkeydown="handleHomePostCardKeydown('${escapeJs(id)}',event)" style="border-right:3px solid ${post.post_type==='تقني'?'#00ffff':'#ff00ff'};background:rgba(0,0,0,.3);padding:15px;border-radius:8px;margin-bottom:15px;cursor:pointer;">
                     <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span style="color:#ffd700;font-weight:bold;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.author_name||'مستخدم')}</span><span style="background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;font-size:10px;color:#aaa;">${escapeHtml(post.post_type||'عام')}</span></div>
                     <p style="font-size:13px;line-height:1.4;color:#fff;white-space:pre-wrap;">${escapeHtml(post.content||'')}</p>${imageMarkup}
                     <div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;">
@@ -1743,22 +1767,135 @@ async function togglePostLike(id) {
  renderHomePostsFeed();
         }
 
+        function handleHomePostCardActivation(postId, event) {
+            if (event?.target?.closest?.('button,a,input,textarea,select,label,[data-post-action]')) return;
+            openHomePostDetails(postId);
+        }
+
+        function handleHomePostCardKeydown(postId, event) {
+            if (!event || event.target !== event.currentTarget || !['Enter',' '].includes(event.key)) return;
+            event.preventDefault();
+            openHomePostDetails(postId);
+        }
+
+        async function openHomePostDetails(postId) {
+            const modal=document.getElementById('home-post-details-modal');
+            const body=document.getElementById('home-post-details-content');
+            if(!modal||!body)return;
+            let post=window.__alwahaHomePosts?.get(String(postId));
+            if(!post){
+                const rows=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&select=*&limit=1`);
+                post=Array.isArray(rows)?rows[0]:null;
+            }
+            if(!post)return triggerToastNotification('تعذر فتح المنشور أو أنه لم يعد متاحاً.','error');
+            window.__alwahaActiveHomePostId=String(post.id);
+            window.__alwahaHomePosts=window.__alwahaHomePosts||new Map();
+            window.__alwahaHomePosts.set(String(post.id),post);
+            const title=document.getElementById('home-post-details-title');
+            if(title)title.textContent=post.author_name||'منشور';
+            const imageUrl=typeof post.image_url==='string' && /^(https?:\/\/|\/)/i.test(post.image_url) ? post.image_url : '';
+            body.innerHTML=`<div style="color:#9fb1c8;font-size:11px;margin-bottom:10px;">${escapeHtml(post.post_type||'عام')}${post.created_at?` · ${escapeHtml(new Date(post.created_at).toLocaleString('ar-EG'))}`:''}</div><p style="font-size:14px;line-height:1.8;color:#fff;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(post.content||'')}</p>${imageUrl?`<img src="${escapeHtml(imageUrl)}" alt="صورة المنشور" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:10px;margin:10px 0;background:#090d15;">`:''}`;
+            const user=await getCurrentAuthUser();
+            const owner=!!(user && String(post.author_id)===String(user.id));
+            const editBtn=document.getElementById('home-post-edit-btn');
+            const deleteBtn=document.getElementById('home-post-delete-btn');
+            const actions=document.getElementById('home-post-details-actions');
+            const form=document.getElementById('home-post-edit-form');
+            if(editBtn)editBtn.style.display=owner?'inline-flex':'none';
+            if(deleteBtn)deleteBtn.style.display=owner?'inline-flex':'none';
+            if(actions)actions.style.display='flex';
+            if(form)form.style.display='none';
+            body.style.display='block';
+            modal.style.display='block';
+            document.body.classList.add('modal-active');
+        }
+
+        function startHomePostEdit() {
+            const post=window.__alwahaHomePosts?.get(String(window.__alwahaActiveHomePostId||''));
+            if(!post)return triggerToastNotification('أعد فتح المنشور ثم حاول تعديله.','error');
+            const textarea=document.getElementById('home-post-edit-text');
+            const body=document.getElementById('home-post-details-content');
+            const form=document.getElementById('home-post-edit-form');
+            const actions=document.getElementById('home-post-details-actions');
+            if(!textarea||!form)return;
+            textarea.value=String(post.content||'');
+            if(body)body.style.display='none';
+            if(actions)actions.style.display='none';
+            form.style.display='block';
+            setTimeout(()=>{textarea.focus();textarea.setSelectionRange(textarea.value.length,textarea.value.length);},50);
+        }
+
+        function cancelHomePostEdit() {
+            const form=document.getElementById('home-post-edit-form');
+            const body=document.getElementById('home-post-details-content');
+            const actions=document.getElementById('home-post-details-actions');
+            if(form)form.style.display='none';
+            if(body)body.style.display='block';
+            if(actions)actions.style.display='flex';
+        }
+
+        async function saveEditedHomePost(event) {
+            event?.preventDefault?.();
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل منشور.');if(!user)return;
+            const postId=String(window.__alwahaActiveHomePostId||'');
+            const cached=window.__alwahaHomePosts?.get(postId);
+            if(!postId||!cached||String(cached.author_id)!==String(user.id))return triggerToastNotification('لا تملك صلاحية تعديل هذا المنشور.','error');
+            const textarea=document.getElementById('home-post-edit-text');
+            const nextContent=String(textarea?.value||'').trim();
+            if(!nextContent&&!cached.image_url)return triggerToastNotification('أضف نصاً أو صورة قبل الحفظ.','error');
+            const saveButton=document.getElementById('home-post-edit-save-btn');
+            if(saveButton){saveButton.disabled=true;saveButton.textContent='جارٍ الحفظ...';}
+            try {
+                const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({content:nextContent||'📷 صورة'}),prefer:'return=representation'});
+                if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر تعديل المنشور. تحقق من الاتصال وصلاحيات الحساب.','error');
+                const updated={...cached,content:nextContent||'📷 صورة'};
+                if(Array.isArray(result)&&result[0])Object.assign(updated,result[0]);
+                window.__alwahaHomePosts.set(postId,updated);
+                triggerToastNotification('تم حفظ تعديلات المنشور.','success');
+                await renderHomePostsFeed();
+                await openHomePostDetails(postId);
+            } finally {
+                if(saveButton){saveButton.disabled=false;saveButton.textContent='حفظ التعديلات';}
+            }
+        }
+
+        function closeHomePostDetails() {
+            const modal=document.getElementById('home-post-details-modal');
+            if(modal)modal.style.display='none';
+            cancelHomePostEdit();
+            const otherOpen=['comments-modal-box','pro-camera-modal','voice-call-modal','active-chat-box'].some(id=>{const el=document.getElementById(id);return el&&el.style.display!=='none'&&getComputedStyle(el).display!=='none';});
+            if(!otherOpen)document.body.classList.remove('modal-active');
+        }
+
+        function openCommentsForActiveHomePost() {
+            const postId=String(window.__alwahaActiveHomePostId||'');
+            if(!postId)return;
+            closeHomePostDetails();
+            openCommentsModal(postId,'post');
+        }
+
+        async function deleteActiveHomePost() {
+            const postId=String(window.__alwahaActiveHomePostId||'');
+            if(!postId)return;
+            await deleteOwnHomePost(postId);
+        }
+
         async function editOwnHomePost(postId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل منشور.');if(!user)return;
-            const rows=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}&select=id,content,image_url&limit=1`);
-            const post=Array.isArray(rows)?rows[0]:null;if(!post)return triggerToastNotification('لم يتم العثور على منشور تملكه.','error');
-            const nextContent=window.prompt('عدّل نص المنشور:',post.content||'');if(nextContent===null)return;
-            if(!nextContent.trim()&&!post.image_url)return triggerToastNotification('أضف نصاً أو صورة قبل الحفظ.','error');
-            const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({content:nextContent.trim()||'📷 صورة'}),prefer:'return=representation'});
-            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر تعديل المنشور.','error');
-            triggerToastNotification('تم تعديل المنشور.','success');renderHomePostsFeed();
+            const rows=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}&select=*&limit=1`);
+            const post=Array.isArray(rows)?rows[0]:null;
+            if(!post)return triggerToastNotification('لم يتم العثور على منشور تملكه.','error');
+            window.__alwahaHomePosts=window.__alwahaHomePosts||new Map();
+            window.__alwahaHomePosts.set(String(post.id),post);
+            await openHomePostDetails(postId);
+            startHomePostEdit();
         }
         async function deleteOwnHomePost(postId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
             if(!window.confirm('هل تريد حذف هذا المنشور نهائياً؟'))return;
             const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
             if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور.','error');
-            triggerToastNotification('تم حذف المنشور.','success');renderHomePostsFeed();
+            triggerToastNotification('تم حذف المنشور.','success');closeHomePostDetails();await renderHomePostsFeed();
         }
 
         /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
@@ -2852,7 +2989,7 @@ function triggerAnimeAiConverterFilter() {
             const alwahaHandleSystemBack = () => { if (typeof navigateBack === 'function') navigateBack(); };
             document.addEventListener('backbutton', alwahaHandleSystemBack, false);
             window.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); alwahaHandleSystemBack(); } });
-            try { const appPlugin = window.Capacitor?.Plugins?.App; if (appPlugin?.addListener) appPlugin.addListener('backButton', alwahaHandleSystemBack); } catch (error) { console.info('Native App back listener unavailable; web history fallback remains enabled.'); }
+            // Android hardware back is registered by the bundled @capacitor/app handler.
             bindCallControls();
             updateCallUi('idle');
 
@@ -2979,6 +3116,7 @@ function triggerAnimeAiConverterFilter() {
                 document.body.classList.remove('modal-active');
                 return;
             }
+            if (alwahaIsVisible(document.getElementById('home-post-details-modal'))) { closeHomePostDetails(); return; }
             if (alwahaIsVisible(document.getElementById('comments-modal-box'))) { closeCommentsModal(); return; }
             if (alwahaIsVisible(document.getElementById('pro-camera-modal'))) { closeProfessionalCameraView(); return; }
             if (alwahaIsVisible(document.getElementById('voice-call-modal'))) {
@@ -3006,6 +3144,8 @@ function triggerAnimeAiConverterFilter() {
             if (current !== 'home-section') { showSection('home-section', null, {fromBack:true}); return; }
             if (exit) { exit.style.display='flex'; exit.setAttribute('aria-hidden','false'); }
         }
+        window.navigateBack = navigateBack;
+
         function handlePopState() {
             try { history.pushState({alwahaGuard:true}, '', location.href); } catch (e) {}
             navigateBack();

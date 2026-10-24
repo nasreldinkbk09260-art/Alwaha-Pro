@@ -4,8 +4,15 @@ const fail = (message) => { console.error('FAIL:', message); process.exitCode = 
 const read = (file) => { const full=path.join(process.cwd(),file); if(!fs.existsSync(full)){fail(`Missing required file: ${file}`);return '';} return fs.readFileSync(full,'utf8'); };
 const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('package.json')||'{}'), cap=JSON.parse(read('capacitor.config.json')||'{}'), lock=JSON.parse(read('package-lock.json')||'{}'), manifest=JSON.parse(read('manifest.json')||'{}');
 const polish=read('production-polish.js');
+const sw=read('sw.js');
+const buildWeb=read('scripts/build-web.mjs');
+const nativeBack=read('scripts/native-back-handler.mjs');
 for(const id of ['home-section','market-section','free-section','chat-section','reels-section','games-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
-for(const handler of ['publishNewHomePost','editOwnHomePost','deleteOwnHomePost','renderReelsFeed','editOwnReel','deleteOwnReel','submitNewProductToMarket','editMyMarketItem','deleteMyMarketItem','openMarketProductDetails','handleNewUserRegistrationSubmit','executeUserLoginAuth','savePrivacyProfileUpdates','changeAppTheme']){if(!new RegExp(`(?:async\\s+)?function\\s+${handler}\\s*\\(`).test(html))fail(`Missing app handler: ${handler}`);}
+for(const handler of ['publishNewHomePost','editOwnHomePost','deleteOwnHomePost','openHomePostDetails','handleHomePostCardActivation','handleHomePostCardKeydown','startHomePostEdit','saveEditedHomePost','closeHomePostDetails','openCommentsForActiveHomePost','renderReelsFeed','editOwnReel','deleteOwnReel','submitNewProductToMarket','editMyMarketItem','deleteMyMarketItem','openMarketProductDetails','handleNewUserRegistrationSubmit','executeUserLoginAuth','savePrivacyProfileUpdates','changeAppTheme']){if(!new RegExp(`(?:async\\s+)?function\\s+${handler}\\s*\\(`).test(html))fail(`Missing app handler: ${handler}`);}
+if(!html.includes('id="home-post-details-modal"')||!html.includes('id="home-post-edit-text"'))fail('Home post details/edit modal fields missing.');
+if(!html.includes('window.__alwahaHomePosts = new Map')||!html.includes('saveEditedHomePost(event)'))fail('Home post open/edit state wiring is incomplete.');
+if(/window\.prompt\('عدّل نص المنشور:/.test(html))fail('Legacy empty/unreliable post edit prompt remains.');
+if(!html.includes('handleHomePostCardKeydown'))fail('Keyboard activation for post cards missing.');
 if(!html.includes('لوحة الإدارة — طلبات التوثيق'))fail('Admin verification dashboard missing.');
 if(!html.includes('لا توجد طلبات توثيق معلقة حالياً.'))fail('Admin empty state missing.');
 if(!html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.','error');"))fail('Admin review authorization guard missing.');
@@ -35,5 +42,13 @@ for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vend
 for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-aurora.webp','assets/backgrounds/bg-underwater.webp','assets/backgrounds/bg-moonlit.webp'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.1 media asset: '+asset);
 for(const helper of ['setAlwahaLanguage','setAlwahaDataSaver','setAlwahaReducedMotion','setAlwahaRingtoneChoice'])if(!fs.readFileSync(path.join(process.cwd(),'production-polish.js'),'utf8').includes('window.'+helper))fail('Missing settings handler: '+helper);
 if(!fs.readFileSync(path.join(process.cwd(),'games.js'),'utf8').includes('p_expected_game_id'))fail('Missing wrong-game room join guard.');
+if (!pkg.dependencies?.['@capacitor/app']) fail('Missing Android native back plugin: @capacitor/app.');
+if (!pkg.devDependencies?.['esbuild']) fail('Missing web build dependency: esbuild.');
+if (!html.includes('./alwaha-native-back-handler.js')) fail('Native back handler script tag missing.');
+if (!buildWeb.includes("path.join(root, 'scripts', 'native-back-handler.mjs')") || !buildWeb.includes("outfile: path.join(dist, 'alwaha-native-back-handler.js')") || !buildWeb.includes("if (!fs.existsSync(path.join(dist, 'alwaha-native-back-handler.js')))") ) fail('Native back handler is not integrated into the web build.');
+if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler is not precached by the service worker.');
+if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
+
+if (process.exitCode) throw new Error('Alwaha-Pro release preflight failed.');
 console.log('Alwaha-Pro 3.0.1 release preflight checks passed.');
 console.log('Static checks do not replace Supabase integration tests or two-device call tests.');

@@ -60,6 +60,7 @@ jobs:
           test -s package.json
           test -s capacitor.config.json
           test -s scripts/build-web.mjs
+          test -s scripts/native-back-handler.mjs
           test -s games.js
           test -s production-polish.js
           test -s assets/sounds/saffron_tide.mp3
@@ -145,6 +146,7 @@ jobs:
           test -s dist/sw.js
           test -s dist/icon.png
           test -s dist/production-polish.js
+          test -s dist/alwaha-native-back-handler.js
           test -s dist/assets/sounds/saffron_tide.mp3
           test -s dist/assets/sounds/marimba_bloom.mp3
           test -s dist/assets/backgrounds/bg-nebula.webp

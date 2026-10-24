@@ -23,6 +23,8 @@ const lock = json("package-lock.json");
 const manifest = json("manifest.json");
 const html = read("index.html");
 const sw = read("sw.js");
+const buildWeb = read("scripts/build-web.mjs");
+const nativeBack = read("scripts/native-back-handler.mjs");
 const workflow = read(".github/workflows/build-apk-aab-release.yml");
 
 if (pkg.version === "3.0.1") pass("package version is 3.0.1");
@@ -40,7 +42,7 @@ if (/<title>Alwaha-Pro 3\.0\.1<\/title>/i.test(html) &&
   pass("HTML title and currentAppVersion match 3.0.1");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.1-mobile-performance['"]/.test(sw))
+if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.1-post-details-20261024['"]/.test(sw))
   pass("service worker uses the 3.0.1 cache namespace");
 else fail("service worker cache namespace mismatch");
 
@@ -91,6 +93,16 @@ if (
 } else {
   fail("service-worker cleanup must target only the app's ./sw.js registration");
 }
+
+if (
+  pkg.dependencies?.["@capacitor/app"] &&
+  pkg.devDependencies?.["esbuild"] &&
+  html.includes("./alwaha-native-back-handler.js") &&
+  sw.includes("'./alwaha-native-back-handler.js'") &&
+  buildWeb.includes("alwaha-native-back-handler.js") &&
+  nativeBack.includes("App.addListener('backButton'")
+) pass("Android back handler is bundled and precached");
+else fail("Android back handler integration is incomplete");
 
 console.log("\n===== STORAGE USAGE INVENTORY (read-only) =====");
 const files = ["index.html", "sw.js"];

@@ -1,0 +1,15 @@
+import { App } from '@capacitor/app';
+
+function handleAndroidBack() {
+  if (typeof window.navigateBack === 'function') {
+    window.navigateBack();
+  } else {
+    console.warn('[Alwaha-Pro] navigateBack is not available yet.');
+  }
+}
+
+if (window.Capacitor?.getPlatform?.() === 'android') {
+  App.addListener('backButton', handleAndroidBack)
+    .then(() => console.info('[Alwaha-Pro] Android back-button handler registered.'))
+    .catch((error) => console.warn('[Alwaha-Pro] Could not register Android back handler:', error));
+}
