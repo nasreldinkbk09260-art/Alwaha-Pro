@@ -534,9 +534,14 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
                     <div style="font-size:10px; color:#aaa;">احصل على تجربة أسرع بدون فتح المتصفح</div>
                 </div>
             </div>
-            <button id="install-app-btn-main" class="btn-action" style="background:#00ff88; color:#000; padding:8px 14px; border-radius:20px; font-size:11px;" onclick="promptAppInstallation()">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button id="install-app-btn-main" class="btn-action" style="display:none;background:#00ff88;color:#000;padding:8px 14px;border-radius:20px;font-size:11px;" onclick="promptAppInstallation()">
                 <i class="fa-solid fa-download"></i> تثبيت الآن
-            </button>
+              </button>
+              <button id="share-app-btn-main" class="btn-action" style="display:none;background:#24364b;color:#fff;padding:8px 12px;border-radius:20px;font-size:11px;" onclick="shareAlwahaApp()">
+                <i class="fa-solid fa-share-nodes"></i> مشاركة التطبيق
+              </button>
+            </div>
         </div>
 
         <div id="internal-notification-center" style="display:none; background:rgba(20,20,30,0.95); border:1px solid #00ffff; border-radius:10px; margin-bottom:15px; overflow:hidden;"></div>
@@ -993,12 +998,30 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
         })();
 
         let deferredPrompt;
+        function isAlwahaInstalledContext() {
+            return Boolean(window.Capacitor?.isNativePlatform?.()) || window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+        function refreshAlwahaInstallShareActions() {
+            const banner=document.getElementById('main-install-banner');
+            const install=document.getElementById('install-app-btn-main');
+            const share=document.getElementById('share-app-btn-main');
+            const installed=isAlwahaInstalledContext();
+            if(install) install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
+            if(share) share.style.display=installed?'inline-flex':'none';
+            if(banner) banner.style.display=(!installed && deferredPrompt)?'flex':'none';
+        }
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            const banner = document.getElementById('main-install-banner');
-            if (banner) banner.style.display = 'flex';
+            refreshAlwahaInstallShareActions();
         });
+        window.addEventListener('appinstalled', () => { deferredPrompt=null; refreshAlwahaInstallShareActions(); });
+        window.addEventListener('DOMContentLoaded', refreshAlwahaInstallShareActions, {once:true});
+        async function shareAlwahaApp() {
+            const shareData={title:'Alwaha-Pro',text:'جرّب تطبيق Alwaha-Pro',url:window.location.href};
+            try { if(navigator.share) await navigator.share(shareData); else if(navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareData.url); triggerToastNotification('تم نسخ رابط التطبيق للمشاركة.','success'); } else triggerToastNotification('استخدم قائمة المتصفح لمشاركة رابط التطبيق.','info'); }
+            catch(error) { if(error?.name!=='AbortError') triggerToastNotification('تعذرت المشاركة الآن؛ حاول من قائمة النظام.','info'); }
+        }
 
         function promptAppInstallation() {
             if (deferredPrompt) {
@@ -2885,16 +2908,26 @@ async function submitNewProductToMarket() {
                 imageUrls=uploadedUrls;
             }
             await detectMarketLifecycleSchema();
-            const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||'',image_urls:imageUrls};
+            // Keep the core marketplace compatible with older production schemas.
+            // Optional lifecycle/gallery columns are only sent when the schema probe succeeds.
+            const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||''};
             const locationLabel=document.getElementById('prod-location-label')?.value.trim()||'';
             if (marketLifecycleSchemaReady === true) {
+                payload.image_urls=imageUrls;
                 payload.location_label=locationLabel;
                 payload.latitude=Number.isFinite(marketProductLatitude)?marketProductLatitude:null;
                 payload.longitude=Number.isFinite(marketProductLongitude)?marketProductLongitude:null;
             }
             const isEditing=!!editingMarketProductId;
             const endpoint=isEditing?`products?id=eq.${encodeURIComponent(editingMarketProductId)}&seller_id=eq.${encodeURIComponent(user.id)}`:'products';
-            const result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=minimal'});
+            let result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=minimal'});
+            // Some deployed databases have the base products table but not optional columns.
+            // Retry once with core fields only for schema/column errors; never bypass RLS/auth.
+            const firstError=window.__alwahaLastApiError||{};
+            if(result===null && marketLifecycleSchemaReady===true && firstError.status===400 && /column|schema cache|does not exist|unknown field/i.test(firstError.message||'')) {
+                const corePayload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||''};
+                result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(corePayload),prefer:'return=minimal'});
+            }
             if(result===null||(isEditing&&Array.isArray(result)&&result.length===0)){
                 const apiError=window.__alwahaLastApiError||{};
                 let reason=apiError.status===401?'انتهت جلسة الدخول؛ سجّل الدخول مجددًا.':apiError.status===403?'رفضت قاعدة البيانات العملية بسبب صلاحيات نشر/تعديل المنتجات (RLS). يجب التحقق من سياسة products_insert_own وأن seller_id يساوي معرّف المستخدم الحالي.':apiError.status===400?`رفضت قاعدة البيانات بيانات الإعلان: ${apiError.message||'تحقق من الحقول المطلوبة'}`:apiError.status===0?'تعذر الاتصال بالخادم؛ تحقق من الإنترنت ثم أعد المحاولة.':`خطأ الخادم ${apiError.status||'غير معروف'}: ${apiError.message||'راجع سجل Supabase API'}`;
@@ -2942,7 +2975,13 @@ async function submitNewProductToMarket() {
             const container=document.getElementById('market-products-list-container');if(!container)return;
             container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السلع...</div>';
             await detectMarketLifecycleSchema();
-            const products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
+            let products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
+            // Backward compatibility: if optional columns/migrations are absent, load legacy products.
+            const queryError=window.__alwahaLastApiError||{};
+            if(!Array.isArray(products) && (queryError.status===400 || queryError.status===404)) {
+                products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc&limit=120');
+                if(Array.isArray(products)) products=products.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:p.status||'active'}));
+            }
             if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
             if(!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
             const q=String(searchQuery||'').trim().toLowerCase();
