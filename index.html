@@ -463,9 +463,7 @@ body.alwaha-reduced-motion #alwaha-touch-atmosphere *{animation:none!important}
 /* Keep interactive UI above the decorative atmosphere. */
 body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </style>
-<script id="alwaha-2-8-8-touch-wallpaper-script">
-(()=>{if(window.__alwaha288Atmosphere)return;window.__alwaha288Atmosphere=true;const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-stars"></div><div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);let scheduled=false;const move=e=>{if(document.body.classList.contains('theme-nature')||document.body.classList.contains('theme-tech')||document.body.classList.contains('theme-soft'))return;const t=e.touches?.[0]||e;document.documentElement.style.setProperty('--alwaha-pointer-x',Math.max(0,Math.min(100,t.clientX/innerWidth*100))+'%');document.documentElement.style.setProperty('--alwaha-pointer-y',Math.max(0,Math.min(100,t.clientY/innerHeight*100))+'%');document.documentElement.style.setProperty('--alwaha-wave-shift',((t.clientX/innerWidth)-.5)*32+'px');};document.addEventListener('pointermove',move,{passive:true});document.addEventListener('touchmove',move,{passive:true});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();
-</script>
+<script id="alwaha-2-8-8-touch-wallpaper-script">(()=>{const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();</script>
 
     <script defer src="./alwaha-native-back-handler.js"></script>
 <style id="alwaha-mobile-performance-final">
@@ -474,6 +472,34 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
   .reels-floating-btn, .floating-options-menu { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 }
 </style>
+<style id="alwaha-burgundy-velvet-background">
+body:not(.theme-nature):not(.theme-tech):not(.theme-soft){
+ background-color:#10050b!important;
+ background-image:radial-gradient(ellipse at 18% 4%,rgba(112,24,54,.36),transparent 46%),radial-gradient(ellipse at 86% 58%,rgba(48,8,28,.36),transparent 52%),linear-gradient(145deg,#080509 0%,#210b16 46%,#10060c 100%)!important;
+ background-attachment:scroll!important;background-size:cover!important
+}
+#alwaha-touch-atmosphere{opacity:.42!important}
+#alwaha-touch-atmosphere .alwaha-stars{display:none!important}
+#alwaha-touch-atmosphere .alwaha-wave,#alwaha-touch-atmosphere .alwaha-wave.wave-two{
+ border:0!important;box-shadow:none!important;filter:blur(22px);height:34%;bottom:-16%;
+ background:radial-gradient(ellipse at 50% 0%,rgba(123,30,65,.15),rgba(54,8,28,.06) 48%,transparent 74%);
+ transform:none!important;animation:none!important
+}
+#alwaha-touch-atmosphere .alwaha-wave.wave-two{bottom:-21%;background:radial-gradient(ellipse at 65% 0%,rgba(95,25,51,.10),rgba(20,5,13,.05) 52%,transparent 76%)}
+@media(prefers-reduced-motion:reduce){#alwaha-touch-atmosphere *{animation:none!important;transition:none!important}}
+</style>
+<style id="alwaha-safe-modal-layout">
+*,*::before,*::after{box-sizing:border-box}
+.game-modal-overlay,.modal-overlay,.sub-profile-view-box{max-width:100vw}
+.game-modal-overlay{padding:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+.game-modal-card{width:min(94vw,560px);max-width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);overflow:auto;overscroll-behavior:contain;margin:auto}
+#active-chat-box,#comments-modal-box,#voice-call-modal,#home-post-details-modal{max-width:100vw;max-height:100dvh;overflow:auto;overscroll-behavior:contain}
+.sub-profile-view-box{width:100%;max-height:calc(100dvh - 110px);overflow-y:auto;overscroll-behavior:contain}
+button,input,select,textarea{max-width:100%}
+img,video,canvas{max-width:100%}
+@media(max-width:360px){.game-modal-card{width:96vw;padding:12px!important}.game-modal-card button{min-width:0;overflow-wrap:anywhere}}
+</style>
+
 </head>
 <body>
 
@@ -1290,6 +1316,10 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         const ALWAHA_PUBLIC_CACHE_DB = 'alwaha-public-feed-cache-v1';
         const ALWAHA_PUBLIC_CACHE_STORE = 'feed';
+        const ALWAHA_PUBLIC_CACHE_MEMORY_TTL = 20000;
+        const ALWAHA_PUBLIC_CACHE_REFRESH_GAP = 20000;
+        window.__alwahaPublicRefreshStarted ||= new Map();
+
         function openAlwahaPublicCacheDb() {
             return new Promise((resolve,reject)=>{
                 if(!('indexedDB' in window))return resolve(null);
@@ -1303,15 +1333,41 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         }
         async function writeAlwahaPublicCache(key,value) {
             let db;try{
-                const serialized=JSON.stringify(value);if(serialized.length>450000)return;
+                const serialized=JSON.stringify(value);if(serialized.length>650000)return;
                 db=await openAlwahaPublicCacheDb();if(!db)return;
-                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE);store.put({key,value,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
-                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE),req=store.getAll();req.onsuccess=()=>{const rows=(req.result||[]).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));rows.slice(80).forEach(row=>store.delete(row.key));};tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
-            }catch(e){/* Quota/privacy modes may deny persistence; network remains authoritative. */}finally{try{db?.close();}catch(e){}}
+                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite');tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE).put({key,value,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
+                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE),req=store.getAll();req.onsuccess=()=>{const rows=(req.result||[]).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));rows.slice(120).forEach(row=>store.delete(row.key));};tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
+            }catch(e){/* Some WebViews deny persistence; keep the in-memory/network path available. */}finally{try{db?.close();}catch(e){}}
+        }
+        const ALWAHA_PUBLIC_CACHE_FIELDS = {
+            posts: ['id','author_id','author_name','post_type','content','image_url','created_at'],
+            reels: ['id','author_id','title','author_name','media_url','thumbnail_url','created_at','status','visibility'],
+            products: ['id','seller_id','title','price','category','description','image_url','image_urls','created_at','status','location_label','latitude','longitude','promoted_until'],
+            post_like_counts: ['post_id','likes_count'],
+            reel_like_counts: ['reel_id','likes_count'],
+            comments: ['id','target_id','target_type','user_id','author_name','content','created_at','parent_id','reply_to_id']
+        };
+        function sanitizeAlwahaPublicCacheRows(tableName,data) {
+            if(!Array.isArray(data))return data;
+            const fields=ALWAHA_PUBLIC_CACHE_FIELDS[tableName];
+            if(!fields)return data;
+            return data.map(source=>{
+                const row={};
+                for(const field of fields)if(Object.prototype.hasOwnProperty.call(source||{},field))row[field]=source[field];
+                return row;
+            });
+        }
+        function queueAlwahaPublicRefresh(endpoint,options,cacheKey) {
+            if(navigator.onLine===false)return;
+            const now=Date.now(),started=window.__alwahaPublicRefreshStarted;
+            if(now-(started.get(cacheKey)||0)<ALWAHA_PUBLIC_CACHE_REFRESH_GAP)return;
+            started.set(cacheKey,now);
+            Promise.resolve().then(()=>supabaseFetch(endpoint,{...options,__alwahaBackgroundRefresh:true})).catch(()=>{});
         }
 
         async function supabaseFetch(endpoint, options = {}) {
-            const requestMethod = String(options.method || 'GET').toUpperCase();
+            const {__alwahaBackgroundRefresh=false,...fetchOptions}=options;
+            const requestMethod = String(fetchOptions.method || 'GET').toUpperCase();
             const tableName = String(endpoint).split('?')[0];
             const safePublicTables = new Set(['posts','reels','products','post_like_counts','reel_like_counts']);
             const apiCache = window.__alwahaPublicReadCache || (window.__alwahaPublicReadCache = new Map());
@@ -1321,11 +1377,24 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread);
             const cacheKey = cacheable ? String(endpoint) : '';
             if (requestMethod !== 'GET') apiCache.clear();
-            if (cacheable) {
-                const cached = apiCache.get(cacheKey);
-                if (cached && cached.expiresAt > Date.now()) return JSON.parse(JSON.stringify(cached.value));
-                if (cached) apiCache.delete(cacheKey);
+
+            // Offline-first: show the last public feed snapshot immediately, then refresh quietly.
+            if(cacheable && !__alwahaBackgroundRefresh) {
+                const now=Date.now();
+                const memory=apiCache.get(cacheKey);
+                if(memory && Array.isArray(memory.value)) {
+                    if(memory.expiresAt<=now)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    return JSON.parse(JSON.stringify(memory.value));
+                }
+                const persisted=await readAlwahaPublicCache(cacheKey);
+                if(persisted && Array.isArray(persisted.value)) {
+                    const value=JSON.parse(JSON.stringify(persisted.value));
+                    apiCache.set(cacheKey,{expiresAt:now+ALWAHA_PUBLIC_CACHE_MEMORY_TTL,value});
+                    if(now-Number(persisted.updatedAt||0)>=ALWAHA_PUBLIC_CACHE_MEMORY_TTL)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    return value;
+                }
             }
+
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             let accessToken = SUPABASE_KEY;
             try {
@@ -1336,16 +1405,17 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
-                "Prefer": options.prefer || "return=representation"
+                "Prefer": fetchOptions.prefer || "return=representation"
             };
             let controller = null;
             let timeoutId = null;
+            const previousCached=cacheable?apiCache.get(cacheKey)?.value:null;
             try {
                 controller = new AbortController();
-                timeoutId = setTimeout(() => controller.abort(), 12000);
+                timeoutId = setTimeout(() => controller.abort(), 8000);
                 const response = await fetch(url, {
-                    ...options,
-                    headers: { ...headers, ...(options.headers || {}) },
+                    ...fetchOptions,
+                    headers: { ...headers, ...(fetchOptions.headers || {}) },
                     signal: controller.signal
                 });
                 if (timeoutId) clearTimeout(timeoutId);
@@ -1354,35 +1424,49 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 if (!response.ok) {
                     const serverMessage = (data && typeof data === 'object') ? (data.message || data.error_description || data.hint || data.details || data.error || '') : String(data || '');
                     window.__alwahaLastApiError = { status: response.status, message: String(serverMessage).slice(0, 240), code: data && typeof data === 'object' ? String(data.code || '') : '' };
-                    console.warn('Supabase Status:', response.status, data);
-                    if (cacheable && response.status >= 500) {
+                    if(!__alwahaBackgroundRefresh)console.warn('Supabase Status:', response.status, data);
+                    if (cacheable && !__alwahaBackgroundRefresh) {
                         const fallback = await readAlwahaPublicCache(cacheKey);
-                        if (fallback && Date.now() - Number(fallback.updatedAt||0) <= 7*24*60*60*1000 && Array.isArray(fallback.value)) return fallback.value;
+                        if (fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                     }
                     return null;
                 }
                 window.__alwahaLastApiError = null;
                 if (cacheable && data !== '') {
-                    const safeData = tableName === 'products' && Array.isArray(data)
-                      ? data.map(sourceRow => { const row={...sourceRow}; delete row['seller_'+'email']; delete row['sold_'+'to']; return row; })
-                      : data;
-                    apiCache.set(cacheKey, { expiresAt: Date.now() + 6500, value: safeData });
+                    const safeData = sanitizeAlwahaPublicCacheRows(tableName,data);
+                    apiCache.set(cacheKey, { expiresAt: Date.now() + ALWAHA_PUBLIC_CACHE_MEMORY_TTL, value: safeData });
                     writeAlwahaPublicCache(cacheKey,safeData).catch(()=>{});
-                    return safeData;
+                    if(__alwahaBackgroundRefresh && JSON.stringify(previousCached)!==JSON.stringify(safeData)) {
+                        window.dispatchEvent(new CustomEvent('alwaha:public-cache-updated',{detail:{tableName,endpoint}}));
+                    }
+                    return JSON.parse(JSON.stringify(safeData));
                 }
                 return data === '' ? true : data;
             } catch (error) {
                 if (timeoutId) clearTimeout(timeoutId);
                 window.__alwahaLastApiError = { status: 0, message: error?.name === 'AbortError' ? 'انتهت مهلة الاتصال' : 'تعذر الاتصال بالخادم', code: error?.name || 'NETWORK_ERROR' };
-                console.error('Supabase Request Error:', error);
+                if(!__alwahaBackgroundRefresh)console.warn('Supabase Request Error:', error);
                 if(cacheable) {
                     const fallback = await readAlwahaPublicCache(cacheKey);
-                    if(fallback && Date.now() - Number(fallback.updatedAt||0) <= 7*24*60*60*1000 && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
+                    if(fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                 }
                 return null;
             }
         }
 
+        window.addEventListener('alwaha:public-cache-updated',event=>{
+            const table=event?.detail?.tableName;
+            setTimeout(()=>{
+                if((table==='posts'||table==='post_like_counts')&&document.querySelector('#home-section.active-section'))renderHomePostsFeed();
+                if((table==='reels'||table==='reel_like_counts')&&document.querySelector('#reels-section.active-section'))renderReelsFeed();
+                if(table==='products'&&document.querySelector('#market-section.active-section'))renderProductsList(document.getElementById('market-search-input')?.value||'');
+            },0);
+        });
+        window.addEventListener('online',()=>{
+            if(document.querySelector('#home-section.active-section'))renderHomePostsFeed();
+            if(document.querySelector('#reels-section.active-section'))renderReelsFeed();
+            if(document.querySelector('#market-section.active-section'))renderProductsList(document.getElementById('market-search-input')?.value||'');
+        });
 
         function dataUrlToFile(dataUrl, filename = 'upload.jpg') {
             const [meta, body] = String(dataUrl || '').split(',');
@@ -1642,12 +1726,13 @@ async function toggleInternalNotificationCenter() {
             if (!me) return;
             center.style.display = 'block';
             center.innerHTML = '<div style="padding:14px;text-align:center;color:#00ffff;font-size:12px;">جاري تحميل التنبيهات...</div>';
-            const rows = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`);
-            if (!Array.isArray(rows)) {
-                center.innerHTML = '<div style="padding:14px;color:#ffb8dd;font-size:11px;text-align:center;">تعذر تحميل الإشعارات. حاول مرة أخرى.</div>';
-                return;
-            }
-            const parts = rows.length ? rows.map(n => {
+            const [rows, pendingFriendRequests] = await Promise.all([
+                supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`),
+                supabaseFetch(`friend_requests?target_id=eq.${encodeURIComponent(me.id)}&status=eq.pending&select=id,requester_id,created_at&order=created_at.desc&limit=30`)
+            ]);
+            const notificationRows=Array.isArray(rows)?rows:[];
+            if (!Array.isArray(rows)) console.warn('Notification rows unavailable; still displaying pending friend requests.',window.__alwahaLastApiError||{});
+            const parts = notificationRows.length ? notificationRows.map(n => {
                 let payload = {};
                 try { payload = JSON.parse(n.body || '{}'); } catch(e) {}
                 const actions = n.type === 'friend_request'
@@ -1660,6 +1745,13 @@ async function toggleInternalNotificationCenter() {
                     <div style="color:#ddd;font-size:10px;margin-top:4px;line-height:1.6;">${escapeHtml(n.type === 'friend_request' ? (payload.requester_name ? `أرسل لك ${payload.requester_name} طلب صداقة.` : 'أرسل لك أحد المستخدمين طلب صداقة.') : (n.type === 'message' ? 'لديك رسالة جديدة.' : (n.type === 'follow' ? ((payload.follower_name || 'عضو في الواحة') + ' بدأ بمتابعتك.') : (n.body || ''))))}</div>${actions}</div>`;
             }).join('') : '<div style="padding:14px;color:#aaa;font-size:11px;text-align:center;">لا توجد إشعارات حالياً.</div>';
 
+            let directFriendRequestHtml='';
+            if(Array.isArray(pendingFriendRequests)&&pendingFriendRequests.length){
+                const requesterIds=[...new Set(pendingFriendRequests.map(r=>r.requester_id).filter(Boolean))];
+                const requesterQuery=requesterIds.length?await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`):[];
+                const requesterMap=new Map((Array.isArray(requesterQuery)?requesterQuery:[]).map(u=>[String(u.id),u]));
+                directFriendRequestHtml=`<section aria-label="طلبات الصداقة المعلقة" style="padding:8px 10px;background:rgba(115,30,63,.18);border-bottom:1px solid rgba(210,90,130,.22);"><div style="font-size:12px;font-weight:700;color:#f3aec6;padding:4px 0 8px;">طلبات صداقة بانتظار ردك (${pendingFriendRequests.length})</div>${pendingFriendRequests.map(r=>{const u=requesterMap.get(String(r.requester_id))||{};const name=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';return `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);"><img src="${escapeHtml(u.avatar_url||'icon.png')}" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%;"><div style="flex:1;min-width:0;color:#eee;font-size:11px;">${escapeHtml(name)}<div style="color:#999;font-size:9px;margin-top:3px;">${escapeHtml(r.created_at?new Date(r.created_at).toLocaleString('ar-EG'):'طلب صداقة')}</div></div><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#00b978;color:#07140f;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#5b2435;color:#fff;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>`;}).join('')}</section>`;
+            }
             const profile = await getCurrentProfile();
             let adminHtml = '';
             if (profile?.is_admin) {
@@ -1688,8 +1780,8 @@ async function toggleInternalNotificationCenter() {
                     ${pendingCards}
                 </section>`;
             }
-            center.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><span>🔔 الإشعارات</span><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:5px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button></div>${parts}${adminHtml}`;
-            await markNotificationsReadSilently(rows.filter(x => !x.is_read).map(x => x.id));
+            center.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><span>🔔 الإشعارات</span><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:5px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button></div>${directFriendRequestHtml}${parts}${adminHtml}`;
+            await markNotificationsReadSilently(notificationRows.filter(x => !x.is_read).map(x => x.id));
         }
 
         async function subscribeToNotifications() {
@@ -1975,9 +2067,13 @@ async function publishNewHomePost() {
             callStartedAt = 0;
         }
 
-async function renderHomePostsFeed() {
+async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
+            let timer;try{return await Promise.race([promise,new Promise(resolve=>{timer=setTimeout(()=>resolve(fallback),milliseconds);})]);}finally{clearTimeout(timer);}
+        }
+
+        async function renderHomePostsFeed() {
             const container=document.getElementById('home-posts-feed-container'); if(!container) return;
-            container.innerHTML='<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري جلب المنشورات...</div>';
+            if(!container.querySelector('[role="article"]'))container.innerHTML='<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري تحديث المنشورات في الخلفية...</div>';
             const [posts, counts] = await Promise.all([
                 supabaseFetch('posts?select=*&order=created_at.desc&limit=100'),
                 supabaseFetch('post_like_counts?select=post_id,likes_count')
@@ -1985,7 +2081,7 @@ async function renderHomePostsFeed() {
             window.__alwahaHomePosts = new Map((Array.isArray(posts) ? posts : []).map(post => [String(post.id), post]));
             if(!Array.isArray(posts) || !posts.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>';return;}
             const me=await getCurrentAuthUser();
-            const mine=me ? await supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`) : [];
+            const mine=me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`),1200,[]) : [];
             const countMap=new Map((counts||[]).map(x=>[String(x.post_id),Number(x.likes_count||0)]));
             const mineSet=new Set((mine||[]).map(x=>String(x.post_id)));
             container.innerHTML=posts.map(post=>{
@@ -2162,15 +2258,15 @@ async function togglePostLike(id) {
 
 async function renderReelsFeed() {
             const reelsContainer=document.getElementById('reels-container'); if(!reelsContainer) return;
-            reelsContainer.innerHTML='<div style="text-align:center;color:#ff0055;padding:20px;font-size:12px;">جاري تحميل الريلز...</div>';
+            if(!reelsContainer.querySelector('.reel-card'))reelsContainer.innerHTML='<div style="text-align:center;color:#ff0055;padding:20px;font-size:12px;">جاري تحديث الريلز في الخلفية...</div>';
             const [reels,counts]=await Promise.all([supabaseFetch('reels?select=*&order=created_at.desc&limit=50'),supabaseFetch('reel_like_counts?select=reel_id,likes_count')]);
             if(!Array.isArray(reels)) { const e=window.__alwahaLastApiError||{}; reelsContainer.innerHTML=`<div style="text-align:center;color:#ff9ab4;padding:22px;font-size:11px;line-height:1.8;">تعذر تحميل الريلز (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من الاتصال أو أعد المحاولة.')}</div>`;return; }
             if(!reels.length){reelsContainer.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;font-size:12px;">لا توجد ريلز بعد. استخدم زر الإضافة لتصوير فيديو أو اختياره من الهاتف.</div>';return;}
             const me=await getCurrentAuthUser();
-            const [mine,following]=me?await Promise.all([
+            const [mine,following]=me?await alwahaUiDeadline(Promise.all([
                 supabaseFetch(`reel_likes?user_id=eq.${encodeURIComponent(me.id)}&select=reel_id`),
                 supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&select=following_id&limit=500`)
-            ]):[[],[]];
+            ]),1200,[[],[]]):[[],[]];
             const countMap=new Map((Array.isArray(counts)?counts:[]).map(x=>[String(x.reel_id),Number(x.likes_count||0)]));
             const mineSet=new Set((Array.isArray(mine)?mine:[]).map(x=>String(x.reel_id)));
             const followingSet=new Set((Array.isArray(following)?following:[]).map(x=>String(x.following_id)));
@@ -2313,16 +2409,17 @@ async function loadAllRegisteredUsersList() {
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري تحميل دليل المستخدمين...</div>';
             const [users,requests]=await Promise.all([
                 supabaseFetch('user_directory?select=*&limit=100'),
-                supabaseFetch(`friend_requests?or=(requester_id.eq.${encodeURIComponent(me.id)},target_id.eq.${encodeURIComponent(me.id)})&select=id,requester_id,target_id,status`)
+                supabaseFetch(`friend_requests?or=(requester_id.eq.${encodeURIComponent(me.id)},target_id.eq.${encodeURIComponent(me.id)})&select=id,requester_id,target_id,status,created_at&order=created_at.desc&limit=500`)
             ]);
             if(!Array.isArray(users)){container.innerHTML='<div style="text-align:center;color:#ff0055;font-size:12px;padding:10px;">تعذر تحميل دليل المستخدمين.</div>';return;}
-            const map=new Map((requests||[]).map(r=>[r.requester_id===me.id?r.target_id:r.requester_id,r]));
+            const map=new Map();for(const r of (requests||[]).slice().sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))){const other=r.requester_id===me.id?r.target_id:r.requester_id;if(!map.has(other))map.set(other,r);}
             const filtered=users.filter(u=>u.id!==me.id);
             if(!filtered.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:10px;">لا يوجد مستخدمون متاحون حالياً.</div>';return;}
             container.innerHTML=filtered.map(u=>{
                 const req=map.get(u.id); const avatar=u.avatar_url||'icon.png'; const fullName=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';
                 let friendBtn=`<button class="btn-action" style="padding:6px 10px;font-size:10px;background:#00ff88;color:#000;border-radius:18px;" onclick="sendFriendRequest('${escapeJs(u.id)}')"><i class="fa-solid fa-user-plus"></i></button>`;
-                if(req?.status==='pending') friendBtn=`<button class="btn-action" style="padding:6px 10px;font-size:10px;background:#555;color:#fff;border-radius:18px;" disabled>قيد الانتظار</button>`;
+                if(req?.status==='pending'&&req.target_id===me.id) friendBtn=`<div style="display:flex;gap:4px;flex-wrap:wrap;"><button type="button" class="btn-action" style="padding:6px 8px;font-size:10px;background:#00b978;color:#07140f;border-radius:16px;" onclick="respondFriendRequest('${escapeJs(req.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 8px;font-size:10px;background:#5b2435;color:#fff;border-radius:16px;" onclick="respondFriendRequest('${escapeJs(req.id)}','rejected')">رفض</button></div>`;
+                else if(req?.status==='pending') friendBtn=`<button class="btn-action" style="padding:6px 10px;font-size:10px;background:#555;color:#fff;border-radius:18px;" disabled>بانتظار القبول</button>`;
                 else if(req?.status==='accepted') friendBtn=`<span style="color:#00ff88;font-size:10px;">أصدقاء</span>`;
                 return `<div class="profile-menu-btn" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);padding:10px;border-radius:8px;gap:8px;"><div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="${escapeHtml(avatar)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #00ffff;"><div style="min-width:0;"><div style="font-weight:bold;color:#00ff88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(fullName)} ${u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:12px;"></i>':''}</div><div style="font-size:10px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.identifier||'البريد مخفي')}</div></div></div><div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">${friendBtn}<button class="btn-action" style="padding:6px 12px;font-size:11px;background:#00ffff;color:#000;border-radius:20px;" onclick="openTargetUserDirectChat('${escapeJs(fullName)}','${escapeJs(u.identifier||'')}','${escapeJs(u.id)}')"><i class="fa-solid fa-paper-plane"></i></button></div></div>`;
             }).join('');
@@ -2333,16 +2430,16 @@ async function loadAllRegisteredUsersList() {
             const rows=await supabaseFetch('friend_requests?or=(and(requester_id.eq.'+encodeURIComponent(user.id)+',target_id.eq.'+encodeURIComponent(targetId)+'),and(requester_id.eq.'+encodeURIComponent(targetId)+',target_id.eq.'+encodeURIComponent(user.id)+'))&select=id,requester_id,target_id,status&order=created_at.desc&limit=1');
             if(!Array.isArray(rows))return triggerToastNotification('تعذر التحقق من طلب الصداقة.','error');
             if(rows.length){const r=rows[0];if(r.status==='accepted')return triggerToastNotification('أنتما بالفعل صديقان.','info');if(r.status==='pending'&&r.target_id===user.id){await respondFriendRequest(r.id,'accepted');return;}if(r.status==='pending')return triggerToastNotification('طلب الصداقة قيد الانتظار بالفعل.','info');return triggerToastNotification('يوجد طلب سابق بحالة '+r.status+'. راجع مركز الإشعارات.','info');}
-            const result=await supabaseFetch('friend_requests',{method:'POST',body:JSON.stringify({requester_id:user.id,target_id:targetId,status:'pending'})});if(!result)return triggerToastNotification('تعذر إرسال طلب الصداقة.','error');triggerToastNotification('تم إرسال طلب الصداقة.','success');loadAllRegisteredUsersList();
+            const result=await supabaseFetch('friend_requests',{method:'POST',body:JSON.stringify({requester_id:user.id,target_id:targetId,status:'pending'})});if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر إرسال طلب الصداقة. تحقق من الاتصال أو وجود طلب سابق.','error');triggerToastNotification('تم إرسال طلب الصداقة.','success');loadAllRegisteredUsersList();
         }
 
                 async function respondFriendRequest(requestId,status) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً.'); if(!user)return;
             if(!['accepted','rejected'].includes(status))return;
             const result=await supabaseFetch(`friend_requests?id=eq.${encodeURIComponent(requestId)}&target_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({status}),prefer:'return=representation'});
-            if(!result)return triggerToastNotification('تعذر تحديث طلب الصداقة.','error');
+            if(!Array.isArray(result)||!result.length)return triggerToastNotification('لم يتغير الطلب؛ ربما تمت معالجته بالفعل أو أن الطلب لا يخص حسابك.','error');
             triggerToastNotification(status==='accepted'?'تم قبول طلب الصداقة.':'تم رفض طلب الصداقة.','success');
-            await renderInternalNotificationCenter();
+            await Promise.all([renderInternalNotificationCenter(),loadAllRegisteredUsersList()]);
         }
 
         async function reviewVerificationRequest(requestId,status) {
@@ -2439,11 +2536,18 @@ async function loadAllRegisteredUsersList() {
             currentChatUserId = '';
         }
 
+        async function hasAcceptedAlwahaFriendship(targetId) {
+            const me=await getCurrentAuthUser();if(!me||!targetId||targetId===me.id)return false;
+            const rows=await supabaseFetch('friend_requests?status=eq.accepted&or=(and(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(targetId)+'),and(requester_id.eq.'+encodeURIComponent(targetId)+',target_id.eq.'+encodeURIComponent(me.id)+'))&select=id&limit=1');
+            return Array.isArray(rows)&&rows.length>0;
+        }
+
         async function sendLiveChatMessageFromUI() {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
             if (!user) return;
             const input = document.getElementById('chat-message-input');
             if(!input || !input.value.trim() || !currentChatUserId) return triggerToastNotification('اختر مستخدماً أولاً.', 'error');
+            if(!(await hasAcceptedAlwahaFriendship(currentChatUserId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل الرسائل.','info');
             const result = await supabaseFetch('messages', {
                 method:'POST',
                 body:JSON.stringify({ sender_id:user.id, receiver_id:currentChatUserId, message:input.value.trim() })
@@ -2546,7 +2650,7 @@ async function renderConversationsList() {
                     }
                 };
             }
-            async waitForIceGathering(timeoutMs = 3500) {
+            async waitForIceGathering(timeoutMs = 1500) {
                 if (!this.peerConnection || this.peerConnection.iceGatheringState === 'complete') return;
                 await new Promise(resolve => {
                     let done = false;
@@ -2647,6 +2751,7 @@ async function renderConversationsList() {
                 if(!this.myId||this.inboxChannel)return;
                 const name=`call-inbox-${sanitizeChannelPart(this.myId)}`,channel=this.client.channel(name);this.inboxChannel=channel;
                 channel.on('broadcast',{event:'webrtc-incoming'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingOffer(payload).catch(err=>console.warn(err));});
+                channel.on('broadcast',{event:'webrtc-call-result'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingCallResult(payload).catch(err=>console.warn(err));});
                 try{await this.subscribeChannel(channel)}catch(error){this.inboxChannel=null;try{await this.client.removeChannel(channel)}catch(e){}throw error;}
             }
             async createRoom(peerId, sessionId) {
@@ -2692,6 +2797,7 @@ async function renderConversationsList() {
 
             async startOutgoing(peerId, mode = 'online') {
                 const authUser=await getCurrentAuthUser();if(!authUser)throw new Error('سجّل الدخول أولًا لإجراء مكالمة.');this.myId=authUser.id;
+                if(!(await hasAcceptedAlwahaFriendship(peerId)))throw new Error('لا يمكن الاتصال قبل قبول طلب الصداقة.');
                 this.mode = mode;
                 this.peerId = peerId;
                 await this.ensureInbox();
@@ -2718,9 +2824,29 @@ async function renderConversationsList() {
                 });
                 return true;
             }
+            async sendCallResult(to, sessionId, status) {
+                if(!this.client||!to)return;
+                const channel=this.client.channel(`call-inbox-${sanitizeChannelPart(to)}`);
+                try {
+                    await this.subscribeChannel(channel);
+                    await channel.send({type:'broadcast',event:'webrtc-call-result',payload:{to,from:this.myId,sessionId,status}});
+                } finally { try { await this.client.removeChannel(channel); } catch(e) {} }
+            }
+            async handleIncomingCallResult(payload) {
+                if(!payload||payload.status!=='rejected'||!this.sessionId||payload.sessionId!==this.sessionId)return;
+                await this.end(false);
+                updateCallUi('idle');
+                setCallModal(false);
+                triggerToastNotification('تعذر بدء المكالمة: يجب أن يقبل الطرف الآخر طلب الصداقة أولاً.','info');
+            }
             async handleIncomingOffer(payload) {
                 if (this.call) return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
+                if(!(await hasAcceptedAlwahaFriendship(payload.from))) {
+                    await this.sendCallResult(payload.from,payload.sessionId,'rejected').catch(()=>{});
+                    console.info('Incoming call ignored: accepted friendship is required.');
+                    return;
+                }
                 playAlwahaCallRingtone(false);
                 this.peerId = payload.from;
                 this.roomId = payload.roomId;
@@ -2806,6 +2932,7 @@ async function renderConversationsList() {
             const targetId = currentChatUserId || '';
             if (!targetId) return triggerToastNotification('افتح محادثة مستخدم حقيقي من دليل المستخدمين حتى يمكن بدء المكالمة.', 'error');
             if (targetId === user.id) return triggerToastNotification('لا يمكن إجراء مكالمة مع الحساب نفسه.', 'error');
+            if(!(await hasAcceptedAlwahaFriendship(targetId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.','info');
             setCallModal(true);
             updateCallUi('outgoing', {
                 target: currentChatUser || targetId,
@@ -2863,8 +2990,12 @@ async function renderConversationsList() {
 
 async function detectMarketLifecycleSchema() {
             if(marketLifecycleSchemaReady!==null)return marketLifecycleSchemaReady;
-            const probe=await supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1');
-            marketLifecycleSchemaReady=Array.isArray(probe);
+            // Do not block the product grid on a separate schema probe; the real listing query
+            // verifies these optional columns and updates the state when it succeeds.
+            marketLifecycleSchemaReady=false;
+            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1')
+              .then(probe=>{if(Array.isArray(probe))marketLifecycleSchemaReady=true;})
+              .catch(()=>{});
             return marketLifecycleSchemaReady;
         }
         function requestLocationOnce(onSuccess,onError) {
@@ -2973,7 +3104,7 @@ async function submitNewProductToMarket() {
 
         async function renderProductsList(searchQuery = '') {
             const container=document.getElementById('market-products-list-container');if(!container)return;
-            container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السلع...</div>';
+            if(!container.querySelector('[data-market-card]'))container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السوق في الخلفية...</div>';
             await detectMarketLifecycleSchema();
             let products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
             // Backward compatibility: if optional columns/migrations are absent, load legacy products.
@@ -2983,6 +3114,7 @@ async function submitNewProductToMarket() {
                 if(Array.isArray(products)) products=products.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:p.status||'active'}));
             }
             if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
+            marketLifecycleSchemaReady=true;
             if(!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
             const q=String(searchQuery||'').trim().toLowerCase();
             const radiusValue=document.getElementById('market-radius-select')?.value||'all';
@@ -3412,7 +3544,18 @@ function triggerAnimeAiConverterFilter() {
         }
 
 
-        async function getAlwahaIceServers(){const fallback=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];try{const {data,error}=await supabaseClient.functions.invoke('call-config',{body:{}});if(!error&&Array.isArray(data?.iceServers)&&data.iceServers.length)return data.iceServers;}catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}return fallback;}
+        async function getAlwahaIceServers(){
+            const fallback=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+            const cached=window.__alwahaIceServersCache;if(cached&&cached.expiresAt>Date.now())return cached.value;
+            if(!supabaseClient?.functions?.invoke)return fallback;
+            let timer;
+            try{
+                const configPromise=supabaseClient.functions.invoke('call-config',{body:{}});
+                const result=await Promise.race([configPromise,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),2200);})]);
+                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};return result.data.iceServers;}
+            }catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}finally{clearTimeout(timer);}
+            return fallback;
+        }
         function wireAlwahaSignupCountryPicker(){const select=document.getElementById('reg-country-code'),custom=document.getElementById('reg-country-code-custom');if(!select||!custom)return;const update=()=>{const manual=select.value==='custom';custom.style.display=manual?'block':'none';if(!manual)custom.value='';};select.addEventListener('change',update);update();}
 
         // تهيئة كل المكونات بعد جاهزية DOM

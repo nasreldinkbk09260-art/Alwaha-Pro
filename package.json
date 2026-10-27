@@ -10,7 +10,8 @@
     "cap:sync": "npx cap sync",
     "audit:release": "node scripts/release-preflight.mjs",
     "prebuild": "node scripts/vendor-assets.mjs",
-    "audit:performance": "node scripts/performance-audit.mjs"
+    "audit:performance": "node scripts/performance-audit.mjs",
+    "audit:field-repair": "node scripts/field-repair-audit.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.1-market-reels-privacy-20261024';
+const CACHE_NAME = 'alwaha-pro-v3.0.1-offline-first-20261027';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -85,6 +85,28 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+  // Cache public Supabase images only; never cache signed URLs, API results, or private objects.
+  const publicStorageOrigin = 'https://kjuixjdtqwcsnxefftrt.supabase.co';
+  const isPublicStorageImage = url.origin === publicStorageOrigin &&
+    url.pathname.startsWith('/storage/v1/object/public/') &&
+    /\.(?:png|jpe?g|webp|gif|svg|avif)$/i.test(url.pathname) &&
+    !/[?&](?:token|access_token|refresh_token|signature|sig|expires|x-amz-credential)=/i.test(url.search);
+  if (isPublicStorageImage) {
+    event.respondWith((async()=>{
+      const cache=await caches.open(CACHE_NAME);
+      const cached=await cache.match(request);
+      const network=fetch(request).then(async response=>{
+        const type=response.headers.get('content-type')||'';
+        const size=Number(response.headers.get('content-length')||0);
+        if(response.ok && /^image\//i.test(type) && (size>0 && size<=8*1024*1024)) {
+          try { await cache.put(request,response.clone()); const keys=await cache.keys(); const media=keys.filter(k=>new URL(k.url).origin===publicStorageOrigin&&new URL(k.url).pathname.startsWith('/storage/v1/object/public/')); for(const old of media.slice(0,Math.max(0,media.length-160)))await cache.delete(old); } catch(e) {}
+        }
+        return response;
+      }).catch(()=>cached);
+      return cached||network;
+    })());
+    return;
+  }
   if (url.origin !== self.location.origin) return;
   if (request.headers.has('Authorization')) return;
   if (/[?&](?:token|access_token|refresh_token|signature|sig|expires|x-amz-credential)=/i.test(url.search)) return;
