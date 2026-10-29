@@ -2614,7 +2614,16 @@ async function renderConversationsList() {
                     }
                 };
                 this.peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) this.signaling.send({ type: 'candidate', candidate: event.candidate });
+                    if (!event.candidate) return;
+                    Promise.resolve(this.signaling.send({ type: 'candidate', candidate: event.candidate }))
+                        .catch(error => console.warn('[Alwaha Call] ICE candidate signaling failed:', error));
+                };
+                this.peerConnection.oniceconnectionstatechange = () => {
+                    const pc = this.peerConnection;
+                    if (!pc || this.closed) return;
+                    console.info('[Alwaha Call] ICE state:', pc.iceConnectionState,
+                        'gathering:', pc.iceGatheringState, 'connection:', pc.connectionState);
+                    if (pc.iceConnectionState === 'failed') this.onState('failed');
                 };
                 this.peerConnection.onconnectionstatechange = () => {
                     const pc = this.peerConnection;
@@ -2650,14 +2659,24 @@ async function renderConversationsList() {
                     }
                 };
             }
-            async waitForIceGathering(timeoutMs = 1500) {
-                if (!this.peerConnection || this.peerConnection.iceGatheringState === 'complete') return;
-                await new Promise(resolve => {
+            async waitForIceGathering(timeoutMs = 10000) {
+                const pc = this.peerConnection;
+                if (!pc || pc.iceGatheringState === 'complete') return true;
+                return new Promise(resolve => {
                     let done = false;
-                    const finish = () => { if (done) return; done = true; clearTimeout(timer); this.peerConnection.removeEventListener('icegatheringstatechange', check); resolve(); };
-                    const check = () => { if (this.peerConnection.iceGatheringState === 'complete') finish(); };
-                    const timer = setTimeout(finish, timeoutMs);
-                    this.peerConnection.addEventListener('icegatheringstatechange', check);
+                    let timer;
+                    const finish = (complete) => {
+                        if (done) return;
+                        done = true;
+                        clearTimeout(timer);
+                        pc.removeEventListener('icegatheringstatechange', check);
+                        resolve(!!complete || pc.iceGatheringState === 'complete');
+                    };
+                    const check = () => {
+                        if (pc.iceGatheringState === 'complete') finish(true);
+                    };
+                    timer = setTimeout(() => finish(false), timeoutMs);
+                    pc.addEventListener('icegatheringstatechange', check);
                     check();
                 });
             }
@@ -2665,19 +2684,23 @@ async function renderConversationsList() {
                 await this.initPeerConnection();
                 const offer = await this.peerConnection.createOffer({ offerToReceiveAudio: true });
                 await this.peerConnection.setLocalDescription(offer);
-                await this.waitForIceGathering();
-                this.signaling.send({ type: 'offer', offer: this.peerConnection.localDescription || offer });
+                const complete = await this.waitForIceGathering();
+                if (!complete) console.warn('[Alwaha Call] ICE gathering timed out; continuing with trickled candidates.');
+                // The manager sends the initial offer through the recipient inbox.
+                // Room broadcasts carry answer/candidate/end signals after both peers join.
+                return this.peerConnection.localDescription || offer;
             }
             async acceptIncoming(offer) {
                 await this.initPeerConnection();
                 await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
                 for (const c of this.pendingCandidates.splice(0)) {
-                    try { await this.peerConnection.addIceCandidate(c); } catch (e) {}
+                    try { await this.peerConnection.addIceCandidate(c); } catch (e) { console.warn('[Alwaha Call] Queued ICE candidate rejected:', e); }
                 }
                 const answer = await this.peerConnection.createAnswer();
                 await this.peerConnection.setLocalDescription(answer);
-                await this.waitForIceGathering();
-                this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
+                const complete = await this.waitForIceGathering();
+                if (!complete) console.warn('[Alwaha Call] ICE answer gathering timed out; continuing with trickled candidates.');
+                await this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
             }
             async handleSignal(data) {
                 if (!data || this.closed) return;
@@ -2710,7 +2733,7 @@ async function renderConversationsList() {
                 this.closed = true;
                 if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
                 this.disconnectTimer = null;
-                if (notifyRemote) this.signaling.send({ type: 'end' });
+                if (notifyRemote) Promise.resolve(this.signaling.send({ type: 'end' })).catch(error => console.warn('[Alwaha Call] Could not send end signal:', error));
                 this.localStream?.getTracks?.().forEach(track => track.stop());
                 this.localStream = null;
                 try { this.peerConnection?.close(); } catch (e) {}
@@ -2738,18 +2761,34 @@ async function renderConversationsList() {
             async subscribeChannel(channel) {
                 return new Promise((resolve, reject) => {
                     let settled = false;
-                    channel.subscribe(status => {
-                        if (status === 'SUBSCRIBED' && !settled) { settled = true; resolve(); }
-                        if (['CHANNEL_ERROR','TIMED_OUT'].includes(status) && !settled) { settled = true; reject(new Error(status)); }
+                    let timer;
+                    const finish = (error) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(timer);
+                        if (error) reject(error); else resolve();
+                    };
+                    timer = setTimeout(() => finish(new Error('انتهت مهلة الاشتراك في قناة المكالمات.')), 12000);
+                    channel.subscribe((status, error) => {
+                        if (status === 'SUBSCRIBED') finish();
+                        else if (['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)) {
+                            finish(new Error(`تعذر الاشتراك في قناة المكالمات (${error?.message || status}).`));
+                        }
                     });
                 });
             }
             async ensureInbox() {
                 if (!this.client) return;
+                try {
+                    const { data: { session } } = await this.client.auth.getSession();
+                    if (session?.access_token) await this.client.realtime.setAuth(session.access_token);
+                } catch (error) {
+                    console.warn('[Alwaha Call] Could not refresh Realtime auth before inbox subscription:', error);
+                }
                 const authUser=await getCurrentAuthUser(),nextId=authUser?.id||null;
                 if(this.myId!==nextId){if(this.inboxChannel){try{await this.client.removeChannel(this.inboxChannel)}catch(e){}this.inboxChannel=null;}this.myId=nextId;}
                 if(!this.myId||this.inboxChannel)return;
-                const name=`call-inbox-${sanitizeChannelPart(this.myId)}`,channel=this.client.channel(name);this.inboxChannel=channel;
+                const name=`call-inbox-${sanitizeChannelPart(this.myId)}`,channel=this.client.channel(name,{config:{private:true}});this.inboxChannel=channel;
                 channel.on('broadcast',{event:'webrtc-incoming'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingOffer(payload).catch(err=>console.warn(err));});
                 channel.on('broadcast',{event:'webrtc-call-result'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingCallResult(payload).catch(err=>console.warn(err));});
                 try{await this.subscribeChannel(channel)}catch(error){this.inboxChannel=null;try{await this.client.removeChannel(channel)}catch(e){}throw error;}
@@ -2765,7 +2804,7 @@ async function renderConversationsList() {
                     try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
                     this.roomChannel = null;
                 }
-                const channel = this.client.channel(`call-${this.roomId}`);
+                const channel = this.client.channel(`call-${this.roomId}`, { config: { private: true } });
                 this.roomChannel = channel;
                 channel.on('broadcast', { event: 'webrtc-signal' }, ({ payload }) => {
                     if (!payload || payload.sessionId !== this.sessionId) return;
@@ -2774,22 +2813,32 @@ async function renderConversationsList() {
                     if (this.call) this.call.handleSignal(payload);
                     else this.pendingRoomSignals.push(payload);
                 });
-                await this.subscribeChannel(channel);
+                try {
+                    await this.subscribeChannel(channel);
+                } catch (error) {
+                    if (this.roomChannel === channel) this.roomChannel = null;
+                    try { await this.client.removeChannel(channel); } catch (cleanupError) {}
+                    throw error;
+                }
             }
             sendRoom(payload) {
-                if (!this.roomChannel) return;
-                this.roomChannel.send({
+                if (!this.roomChannel) return Promise.reject(new Error('قناة المكالمات غير جاهزة.'));
+                return this.roomChannel.send({
                     type: 'broadcast',
                     event: 'webrtc-signal',
                     payload: { ...payload, from: this.myId, to: this.peerId, sessionId: this.sessionId }
-                }).catch(() => {});
+                }).then(status => {
+                    if (status !== 'ok') throw new Error(`فشل إرسال إشارة المكالمة عبر Realtime (${status}).`);
+                    return status;
+                });
             }
             async sendToPeerInbox(payload) {
                 if (!this.client) throw new Error('تعذر تهيئة Supabase Realtime.');
-                const channel = this.client.channel(`call-inbox-${sanitizeChannelPart(payload.to)}`);
+                const channel = this.client.channel(`call-inbox-${sanitizeChannelPart(payload.to)}`, { config: { private: true } });
                 await this.subscribeChannel(channel);
                 try {
-                    await channel.send({ type:'broadcast', event:'webrtc-incoming', payload });
+                    const status = await channel.send({ type:'broadcast', event:'webrtc-incoming', payload });
+                    if (status !== 'ok') throw new Error(`فشل إرسال تنبيه المكالمة (${status}).`);
                 } finally {
                     try { await this.client.removeChannel(channel); } catch (e) {}
                 }
@@ -2826,10 +2875,11 @@ async function renderConversationsList() {
             }
             async sendCallResult(to, sessionId, status) {
                 if(!this.client||!to)return;
-                const channel=this.client.channel(`call-inbox-${sanitizeChannelPart(to)}`);
+                const channel=this.client.channel(`call-inbox-${sanitizeChannelPart(to)}`, { config: { private: true } });
                 try {
                     await this.subscribeChannel(channel);
-                    await channel.send({type:'broadcast',event:'webrtc-call-result',payload:{to,from:this.myId,sessionId,status}});
+                    const sendStatus = await channel.send({type:'broadcast',event:'webrtc-call-result',payload:{to,from:this.myId,sessionId,status}});
+                    if (sendStatus !== 'ok') throw new Error(`فشل إرسال نتيجة المكالمة (${sendStatus}).`);
                 } finally { try { await this.client.removeChannel(channel); } catch(e) {} }
             }
             async handleIncomingCallResult(payload) {
@@ -2854,7 +2904,16 @@ async function renderConversationsList() {
                 this.pendingIncoming = payload;
                 currentChatUserIdentifier = payload.from || '';
                 currentChatUser = payload.displayName || payload.from || 'مستخدم';
-                try { await this.createRoom(payload.from, payload.sessionId); } catch (e) { console.warn(e); }
+                try {
+                    await this.createRoom(payload.from, payload.sessionId);
+                } catch (error) {
+                    console.warn('[Alwaha Call] Could not subscribe to private call room:', error);
+                    await this.sendCallResult(payload.from, payload.sessionId, 'rejected').catch(() => {});
+                    this.pendingIncoming = null;
+                    stopAlwahaCallRingtone();
+                    triggerToastNotification('تعذر تهيئة قناة المكالمة الآمنة. تحقق من اتصال الإنترنت ثم أعد المحاولة.', 'error');
+                    return;
+                }
                 const peerName = payload.displayName || payload.from || 'مستخدم';
                 setCallModal(true);
                 updateCallUi('incoming', {
@@ -2884,12 +2943,13 @@ async function renderConversationsList() {
                 }
                 updateCallUi('connecting', { target: currentChatUser || payload.displayName || payload.from, text:'جاري الاتصال...' });
             }
-            rejectIncoming() {
+            async rejectIncoming() {
                 stopAlwahaCallRingtone();
                 const payload = this.pendingIncoming;
                 this.pendingIncoming = null;
                 if (payload && this.roomChannel) {
-                    this.sendRoom({ type:'end' });
+                    try { await this.sendRoom({ type:'end' }); }
+                    catch (error) { console.warn('[Alwaha Call] Could not signal call rejection:', error); }
                 }
             }
             async handleCallState(state) {
@@ -2944,11 +3004,16 @@ async function renderConversationsList() {
                 await activeCallManager.startOutgoing(targetId, type);
                 updateCallUi('connecting', { target: currentChatUser || targetId, text:'بانتظار الطرف الآخر...' });
             } catch (error) {
-                console.error(error);
+                console.error('[Alwaha Call] Outgoing call failed:', error);
                 await activeCallManager?.end(false);
                 updateCallUi('idle');
                 setCallModal(false);
-                triggerToastNotification(error?.message || 'تعذر بدء المكالمة. تحقق من صلاحية الميكروفون والاتصال.', 'error');
+                const message = error?.name === 'NotAllowedError'
+                    ? 'تم رفض إذن الميكروفون. اسمح به من إعدادات Android ثم أعد المحاولة.'
+                    : error?.name === 'NotFoundError'
+                        ? 'لم يتم العثور على ميكروفون متاح على هذا الجهاز.'
+                        : error?.message || 'تعذر بدء المكالمة. تحقق من إذن الميكروفون والاتصال.';
+                triggerToastNotification(message, 'error');
             }
         }
 
@@ -2957,13 +3022,20 @@ async function renderConversationsList() {
             try {
                 await activeCallManager.acceptIncoming();
             } catch (error) {
-                triggerToastNotification('تعذر قبول المكالمة. تحقق من صلاحية الميكروفون.', 'error');
+                console.error('[Alwaha Call] Accept incoming call failed:', error);
                 await activeCallManager.end(false);
                 updateCallUi('idle');
+                setCallModal(false);
+                const message = error?.name === 'NotAllowedError'
+                    ? 'تم رفض إذن الميكروفون. اسمح به من إعدادات Android ثم أعد المحاولة.'
+                    : error?.name === 'NotFoundError'
+                        ? 'لم يتم العثور على ميكروفون متاح على هذا الجهاز.'
+                        : error?.message || 'تعذر قبول المكالمة. تحقق من إذن الميكروفون والاتصال.';
+                triggerToastNotification(message, 'error');
             }
         }
         async function rejectIncomingCall() {
-            try { activeCallManager?.rejectIncoming(); } catch (e) {}
+            try { await activeCallManager?.rejectIncoming(); } catch (e) { console.warn(e); }
             await activeCallManager?.end(false);
             updateCallUi('idle');
             setCallModal(false);
@@ -2993,7 +3065,7 @@ async function detectMarketLifecycleSchema() {
             // Do not block the product grid on a separate schema probe; the real listing query
             // verifies these optional columns and updates the state when it succeeds.
             marketLifecycleSchemaReady=false;
-            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1')
+            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until&limit=1')
               .then(probe=>{if(Array.isArray(probe))marketLifecycleSchemaReady=true;})
               .catch(()=>{});
             return marketLifecycleSchemaReady;
@@ -3150,7 +3222,7 @@ async function submitNewProductToMarket() {
             }).join('');
         }
         async function openMarketProductDetails(productId) {
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,sold_to,sold_at,location_label,latitude,longitude,promoted_until&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;
             if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
             const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3165,7 +3237,16 @@ async function submitNewProductToMarket() {
                     sellerRatingSummary=`<div style="font-size:11px;color:#ffd86b;margin-bottom:9px;">★ ${average.toFixed(1)} / 5 · ${ratingRows.length} تقييم</div>`;
                 } else if(Array.isArray(ratingRows)) sellerRatingSummary='<div style="font-size:10px;color:#9fb1c8;margin-bottom:9px;">لا توجد تقييمات موثقة بعد.</div>';
             }
-            const reviewControls=me&&product.status==='sold'&&product.sold_to===me.id?`<div style="margin-top:12px;border:1px solid #8cffc144;padding:11px;border-radius:11px;"><h4 style="margin:0 0 8px;color:#8cffc1;font-size:12px;">قيّم البائع بعد استلام السلعة</h4><label style="font-size:10px;color:#a9bfd2;display:block;margin-bottom:5px;">التقييم من 1 إلى 5 نجوم</label><select id="market-review-rating-${escapeHtml(product.id)}" style="width:100%;background:#101a2b;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;margin-bottom:7px;"><option value="">اختر التقييم</option><option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option><option value="3">★★★ مقبول</option><option value="2">★★ يحتاج تحسين</option><option value="1">★ تجربة سيئة</option></select><textarea id="market-review-text-${escapeHtml(product.id)}" maxlength="1000" rows="3" placeholder="ملاحظاتك (اختياري)" style="width:100%;background:#0b0f19;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;font:inherit;font-size:11px;"></textarea><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#173a2b;color:#8cffc1;padding:10px;border-radius:9px;" onclick="submitMarketplaceReview('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')">إرسال التقييم</button></div>`:'';
+            let canReview=false;
+            if(me && product.status==='sold' && product.seller_id!==me.id && typeof supabaseClient?.rpc==='function') {
+                try {
+                    const {data,error}=await supabaseClient.rpc('can_review_marketplace_product',{
+                        p_product_id:Number(product.id),p_seller_id:product.seller_id
+                    });
+                    canReview=!error && data===true;
+                } catch(error) { console.warn('[Alwaha Market] Review eligibility check failed:',error); }
+            }
+            const reviewControls=canReview?`<div style="margin-top:12px;border:1px solid #8cffc144;padding:11px;border-radius:11px;"><h4 style="margin:0 0 8px;color:#8cffc1;font-size:12px;">قيّم البائع بعد استلام السلعة</h4><label style="font-size:10px;color:#a9bfd2;display:block;margin-bottom:5px;">التقييم من 1 إلى 5 نجوم</label><select id="market-review-rating-${escapeHtml(product.id)}" style="width:100%;background:#101a2b;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;margin-bottom:7px;"><option value="">اختر التقييم</option><option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option><option value="3">★★★ مقبول</option><option value="2">★★ يحتاج تحسين</option><option value="1">★ تجربة سيئة</option></select><textarea id="market-review-text-${escapeHtml(product.id)}" maxlength="1000" rows="3" placeholder="ملاحظاتك (اختياري)" style="width:100%;background:#0b0f19;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;font:inherit;font-size:11px;"></textarea><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#173a2b;color:#8cffc1;padding:10px;border-radius:9px;" onclick="submitMarketplaceReview('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')">إرسال التقييم</button></div>`:'';
             const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
             const extraReview=reviewControls;
             let modal=document.getElementById('market-product-detail-modal');
@@ -3220,7 +3301,7 @@ async function submitNewProductToMarket() {
             const rows=await supabaseFetch(`messages?select=sender_id,receiver_id&or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&limit=500`);
             const candidates=new Set();(Array.isArray(rows)?rows:[]).forEach(row=>{if(row.sender_id&&row.sender_id!==me.id)candidates.add(String(row.sender_id));if(row.receiver_id&&row.receiver_id!==me.id)candidates.add(String(row.receiver_id));});
             if(!candidates.size)return triggerToastNotification('لم نجد محادثة سابقة مع المشتري. افتح محادثته من الإعلان أولًا، ثم أعد اختيار «تم البيع».','info');
-            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`users?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
+            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`public_profiles?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
             const options=Array.isArray(users)?users.filter(user=>candidates.has(String(user.id))):[];
             if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من المحادثات السابقة.','error');
             const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'} (@${user.username||'—'})`).join('\n'));
@@ -3254,7 +3335,7 @@ async function renderMyPersonalMarketItems() {
             const container=document.getElementById('my-market-items-container');if(!container)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to,created_at&order=created_at.desc`);
+            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
@@ -3271,7 +3352,7 @@ async function renderMyPersonalMarketItems() {
         }
         async function editMyMarketItem(productId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3552,7 +3633,16 @@ function triggerAnimeAiConverterFilter() {
             try{
                 const configPromise=supabaseClient.functions.invoke('call-config',{body:{}});
                 const result=await Promise.race([configPromise,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),2200);})]);
-                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};return result.data.iceServers;}
+                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){
+                    const turnConfigured = result.data.turnConfigured === true || result.data.iceServers.some(server => {
+                        const urls = Array.isArray(server?.urls) ? server.urls : [server?.urls];
+                        return urls.some(url => typeof url === 'string' && /^turns?:/i.test(url));
+                    });
+                    window.__alwahaCallNetworkStatus = { turnConfigured, checkedAt: Date.now() };
+                    if (!turnConfigured) console.warn('[Alwaha Call] TURN is not configured; some mobile/carrier networks may not establish WebRTC audio.');
+                    window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};
+                    return result.data.iceServers;
+                }
             }catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}finally{clearTimeout(timer);}
             return fallback;
         }
