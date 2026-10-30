@@ -2757,6 +2757,8 @@ async function renderConversationsList() {
                 this.mode = 'online';
                 this.pendingIncoming = null;
                 this.pendingRoomSignals = [];
+                this.pendingRoomSignalsToSend = [];
+                this.roomPeerReady = false;
             }
             async subscribeChannel(channel) {
                 return new Promise((resolve, reject) => {
@@ -2810,6 +2812,11 @@ async function renderConversationsList() {
                     if (!payload || payload.sessionId !== this.sessionId) return;
                     if (payload.to && payload.to !== this.myId) return;
                     if (payload.from && payload.from === this.myId) return;
+                    if (payload.type === 'ready') {
+                        this.roomPeerReady = true;
+                        this.flushPendingRoomSignals().catch(error => console.warn('[Alwaha Call] Could not flush queued ICE candidates:', error));
+                        return;
+                    }
                     if (this.call) this.call.handleSignal(payload);
                     else this.pendingRoomSignals.push(payload);
                 });
@@ -2821,16 +2828,34 @@ async function renderConversationsList() {
                     throw error;
                 }
             }
-            sendRoom(payload) {
-                if (!this.roomChannel) return Promise.reject(new Error('قناة المكالمات غير جاهزة.'));
-                return this.roomChannel.send({
+            async flushPendingRoomSignals() {
+                if (!this.roomPeerReady || !this.roomChannel) return;
+                const queue = this.pendingRoomSignalsToSend.splice(0);
+                for (let i = 0; i < queue.length; i++) {
+                    try {
+                        await this.publishRoom(queue[i]);
+                    } catch (error) {
+                        this.pendingRoomSignalsToSend.unshift(...queue.slice(i));
+                        throw error;
+                    }
+                }
+            }
+            async publishRoom(payload) {
+                if (!this.roomChannel) throw new Error('قناة المكالمات غير جاهزة.');
+                const status = await this.roomChannel.send({
                     type: 'broadcast',
                     event: 'webrtc-signal',
                     payload: { ...payload, from: this.myId, to: this.peerId, sessionId: this.sessionId }
-                }).then(status => {
-                    if (status !== 'ok') throw new Error(`فشل إرسال إشارة المكالمة عبر Realtime (${status}).`);
-                    return status;
                 });
+                if (status !== 'ok') throw new Error(`فشل إرسال إشارة المكالمة عبر Realtime (${status}).`);
+                return status;
+            }
+            sendRoom(payload) {
+                if (payload?.type === 'candidate' && !this.roomPeerReady) {
+                    this.pendingRoomSignalsToSend.push(payload);
+                    return Promise.resolve('queued');
+                }
+                return this.publishRoom(payload);
             }
             async sendToPeerInbox(payload) {
                 if (!this.client) throw new Error('تعذر تهيئة Supabase Realtime.');
@@ -2852,6 +2877,8 @@ async function renderConversationsList() {
                 await this.ensureInbox();
                 if(!this.myId)throw new Error('تعذر تحديد حسابك لإجراء المكالمة.');
                 const sessionId = crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+                this.roomPeerReady = false;
+                this.pendingRoomSignalsToSend = [];
                 await this.createRoom(peerId, sessionId);
                 const localAudio = document.getElementById('localAudio');
                 const remoteAudio = document.getElementById('remoteAudio');
@@ -2906,6 +2933,8 @@ async function renderConversationsList() {
                 currentChatUser = payload.displayName || payload.from || 'مستخدم';
                 try {
                     await this.createRoom(payload.from, payload.sessionId);
+                    this.roomPeerReady = true;
+                    await this.sendRoom({ type: 'ready' });
                 } catch (error) {
                     console.warn('[Alwaha Call] Could not subscribe to private call room:', error);
                     await this.sendCallResult(payload.from, payload.sessionId, 'rejected').catch(() => {});
@@ -2975,6 +3004,8 @@ async function renderConversationsList() {
                 this.call = null;
                 this.pendingIncoming = null;
                 this.pendingRoomSignals = [];
+                this.pendingRoomSignalsToSend = [];
+                this.roomPeerReady = false;
                 if (this.roomChannel && this.client) {
                     try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
                 }
@@ -3002,7 +3033,11 @@ async function renderConversationsList() {
             try {
                 if (!activeCallManager) activeCallManager = new CallSignalingManager();
                 await activeCallManager.startOutgoing(targetId, type);
-                updateCallUi('connecting', { target: currentChatUser || targetId, text:'بانتظار الطرف الآخر...' });
+                const networkStatus = window.__alwahaCallNetworkStatus;
+                const connectingText = networkStatus?.turnConfigured === false
+                    ? 'بانتظار الطرف الآخر... تنبيه: TURN غير مهيأ أو لم يستجب؛ قد تفشل المكالمة عبر بعض الشبكات.'
+                    : 'بانتظار الطرف الآخر...';
+                updateCallUi('connecting', { target: currentChatUser || targetId, text: connectingText });
             } catch (error) {
                 console.error('[Alwaha Call] Outgoing call failed:', error);
                 await activeCallManager?.end(false);
@@ -3632,7 +3667,17 @@ function triggerAnimeAiConverterFilter() {
             let timer;
             try{
                 const configPromise=supabaseClient.functions.invoke('call-config',{body:{}});
-                const result=await Promise.race([configPromise,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),2200);})]);
+                const result=await Promise.race([configPromise,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),6500);})]);
+                if (!result) {
+                    window.__alwahaCallNetworkStatus = { turnConfigured: false, checkedAt: Date.now(), error: 'timeout' };
+                    console.warn('[Alwaha Call] call-config timed out; using STUN-only fallback. TURN may be required on this network.');
+                    return fallback;
+                }
+                if (result.error) {
+                    window.__alwahaCallNetworkStatus = { turnConfigured: false, checkedAt: Date.now(), error: 'invoke_failed' };
+                    console.warn('[Alwaha Call] call-config failed; using STUN-only fallback:', result.error.message || result.error);
+                    return fallback;
+                }
                 if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){
                     const turnConfigured = result.data.turnConfigured === true || result.data.iceServers.some(server => {
                         const urls = Array.isArray(server?.urls) ? server.urls : [server?.urls];

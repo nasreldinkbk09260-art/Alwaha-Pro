@@ -10,3 +10,8 @@ android/keystore.properties
 android/release-key.jks
 .DS_Store
 npm-debug.log*
+
+# Local recovery copies are not release source files.
+index.html.before-*
+index.html.backup-*
+index.html.backup.*
