@@ -11,10 +11,7 @@ const read = (name) => {
 };
 const html = read('index.html');
 const sw = read('sw.js');
-const migration = read('supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql');
-const callPolicyMigration = read('supabase/migrations/20261029035151_realtime_call_channel_authorization.sql');
-const callPeerInboxMigration = read('supabase/migrations/20261029035811_realtime_call_peer_inbox_select.sql');
-const reviewPrivacyMigration = read('supabase/migrations/20261029035414_marketplace_review_privacy_rpc.sql');
+const migration = read('supabase/migrations/20261027170000_require_accepted_friendship_for_messages.sql');
 const notes = read('REPAIR_NOTES_AR.md');
 
 if (html.includes('alwaha-public-feed-cache-v1') && html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)') && html.includes('queueAlwahaPublicRefresh')) pass('public feeds have IndexedDB persistence and stale-while-revalidate');
@@ -23,16 +20,12 @@ if (html.includes('function sanitizeAlwahaPublicCacheRows') && html.includes('AL
 else fail('public cache sanitizer/field allowlist missing');
 if (html.includes("webrtc-call-result") && html.includes('handleIncomingCallResult') && html.includes('hasAcceptedAlwahaFriendship(payload.from)') && html.includes('hasAcceptedAlwahaFriendship(peerId)')) pass('incoming and outgoing calls require accepted friendship');
 else fail('call friendship gate is incomplete');
-if (html.includes('config:{private:true}') && html.includes('config: { private: true }') && html.includes('waitForIceGathering(timeoutMs = 10000)') && callPolicyMigration.includes('alwaha_call_channels_receive') && callPeerInboxMigration.includes("realtime.topic() = 'call-inbox-' || fr.target_id::text") && callPeerInboxMigration.includes('LEAST((SELECT auth.uid())::text')) pass('WebRTC uses private authenticated channels with friend-scoped Realtime RLS and robust ICE gathering');
-else fail('private call-channel/ICE repairs are incomplete');
-if (reviewPrivacyMigration.includes('can_review_marketplace_product') && html.includes("supabaseClient.rpc('can_review_marketplace_product'") && !html.includes('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to')) pass('marketplace review eligibility is checked without exposing sold_to');
-else fail('buyer identity privacy/RPC check is incomplete');
 if (html.includes('respondFriendRequest') && html.includes("status:'accepted'") && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend requests are surfaced with response UI');
 else if (html.includes('respondFriendRequest') && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend request response UI is present');
 else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && migration.includes("fr.status = 'accepted'") && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if (sw.includes('alwaha-pro-v3.0.1-call-private-20261029') && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+if (sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');

@@ -500,6 +500,33 @@ img,video,canvas{max-width:100%}
 @media(max-width:360px){.game-modal-card{width:96vw;padding:12px!important}.game-modal-card button{min-width:0;overflow-wrap:anywhere}}
 </style>
 
+
+<style id="alwaha-chat-call-redesign">
+.alwaha-chat-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0 12px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.12)}
+.alwaha-chat-identity{display:flex;align-items:center;gap:9px;min-width:0;flex:1}
+.alwaha-chat-back{width:36px;height:36px;border-radius:50%;background:#ffffff0b;color:#fff;border:1px solid #ffffff20;flex:0 0 auto}
+.alwaha-chat-presence{font-size:9px;color:#9fb1c8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alwaha-chat-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.alwaha-chat-icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1px solid #ffffff2b;background:#ffffff0b;color:#bdefff;font-size:14px}
+.alwaha-chat-icon-btn.audio{color:#75f0b4;border-color:#75f0b455}
+.alwaha-chat-icon-btn.nearby{color:#91eaff;border-color:#91eaff55}
+.alwaha-chat-icon-btn.video{color:#d3b5ff;border-color:#d3b5ff55}
+.alwaha-chat-icon-btn.more{color:#d7e5f4}
+.alwaha-chat-more-menu{position:absolute;top:62px;inset-inline-end:12px;z-index:1000002;width:min(82vw,285px);padding:7px;border:1px solid #8bf4ff55;border-radius:15px;background:#0b1728f5;box-shadow:0 12px 34px #0009;display:flex;flex-direction:column;gap:5px}
+.alwaha-chat-more-menu[hidden]{display:none}
+.alwaha-chat-more-menu button{border:0;border-radius:10px;background:#ffffff09;color:#eaf8ff;text-align:right;padding:11px;font:700 11px Cairo,sans-serif;display:flex;align-items:center;gap:9px;min-height:42px}
+.alwaha-chat-more-menu button i{color:#8bf4ff;width:18px;text-align:center}
+.alwaha-chat-composer{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));inset-inline:12px;display:flex;align-items:center;gap:8px;padding:7px;border:1px solid #ffffff1e;border-radius:24px;background:#0b1728f2;box-shadow:0 8px 24px #0008}
+.alwaha-chat-composer input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff;padding:9px 11px;font:12px Cairo,sans-serif}
+.alwaha-chat-composer button{width:40px;height:40px;flex:0 0 auto;border-radius:50%;background:#67e8f9;color:#09212a}
+.alwaha-call-video-stage{position:relative;width:min(100%,520px);aspect-ratio:9/13;max-height:54dvh;border-radius:18px;overflow:hidden;background:#02060c;border:1px solid #8bf4ff44;margin:12px auto}
+.alwaha-call-video-stage #remoteVideo{width:100%;height:100%;object-fit:cover;background:#02060c}
+.alwaha-call-video-stage .local-preview{position:absolute;top:10px;inset-inline-end:10px;width:28%;max-height:30%;aspect-ratio:3/4;object-fit:cover;border:1px solid #ffffff99;border-radius:12px;background:#101827;box-shadow:0 5px 16px #0009}
+#voice-call-modal video{display:block}
+#active-chat-box{padding: max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom)) !important}
+@media(max-width:360px){.alwaha-chat-icon-btn{width:32px;height:32px;font-size:12px}.alwaha-chat-actions{gap:3px}.alwaha-chat-header{gap:5px}}
+</style>
+
 </head>
 <body>
 
@@ -585,8 +612,8 @@ img,video,canvas{max-width:100%}
             </div>
         </div>
 
-        <div id="home-posts-feed-container">
-            <div style="text-align:center; color:#38bdf8; font-size:12px; padding:20px;">جاري جلب المنشورات...</div>
+        <div id="home-posts-feed-container" aria-live="polite" aria-busy="true">
+            <div class="alwaha-feed-loading" role="status" style="text-align:center;color:#38bdf8;font-size:12px;padding:20px;">جاري تحديث المنشورات...</div>
         </div>
     </section>
 
@@ -692,22 +719,31 @@ img,video,canvas{max-width:100%}
 
     <!-- نافذة الدردشة المباشرة -->
     <div id="active-chat-box">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeActiveChatWindow()"><i class="fa-solid fa-arrow-right"></i></button>
-                <span id="current-chat-name" style="font-weight:bold; color:#00ffff; font-size:14px;">المستخدم</span>
+        <div class="alwaha-chat-header">
+            <div class="alwaha-chat-identity">
+                <button type="button" class="btn-action alwaha-chat-back" onclick="closeActiveChatWindow()" aria-label="رجوع للمحادثات"><i class="fa-solid fa-arrow-right"></i></button>
+                <div style="min-width:0;">
+                    <div id="current-chat-name" style="font-weight:800;color:#e8fbff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">المستخدم</div>
+                    <div id="current-chat-presence" class="alwaha-chat-presence">حالة الاتصال تظهر عند بدء الاتصال</div>
+                </div>
             </div>
-            <div style="display:flex; gap:12px;">
-                <button class="btn-action" style="background:transparent; color:#00ff88; font-size:16px;" onclick="initiateVoiceCall('online')"><i class="fa-solid fa-phone"></i></button>
-                <button type="button" class="btn-action" disabled aria-disabled="true" title="مكالمات البلوتوث قيد التطوير" style="background:transparent;color:#718198;font-size:12px;opacity:.68;cursor:not-allowed;" aria-label="مكالمات بلوتوث قيد التطوير"><i class="fa-brands fa-bluetooth-b"></i><span style="font-size:9px;display:block;">بلوتوث لاحقاً</span></button>
+            <div class="alwaha-chat-actions" role="group" aria-label="خيارات الاتصال">
+                <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn nearby" onclick="openAlwahaLocalNetworkPanel()" aria-label="الشبكة الحرة للأصدقاء القريبين" title="الشبكة الحرة"><i class="fa-solid fa-wifi"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn video" onclick="initiateVideoCall()" aria-label="مكالمة فيديو خفيفة" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
         </div>
-        <div id="chat-messages-container" style="height: calc(100vh - 150px); overflow-y: auto; padding: 10px; display: flex; flex-direction: column;"></div>
-        <div style="display:flex; gap:8px; align-items:center; position:absolute; bottom:15px; left:15px; right:15px;">
-            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:20px; color:#fff; font-size:12px; outline:none;">
-            <button class="btn-action" style="background:#00ffff; color:#000; width:40px; height:40px; border-radius:50%; display:flex; justify-content:center; align-items:center;" onclick="sendLiveChatMessageFromUI()">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
+        <div id="chat-more-menu" class="alwaha-chat-more-menu" hidden>
+            <button type="button" onclick="openCurrentChatProfile()"><i class="fa-solid fa-user"></i> عرض الملف الشخصي</button>
+            <button type="button" onclick="loadDirectMessages();toggleChatMoreMenu(false)"><i class="fa-solid fa-rotate"></i> تحديث الرسائل</button>
+            <button type="button" onclick="shareCurrentChat()"><i class="fa-solid fa-share-nodes"></i> مشاركة ملخص المحادثة</button>
+            <button type="button" onclick="showChatPrivacyInfo()"><i class="fa-solid fa-shield-halved"></i> معلومات الأمان والخصوصية</button>
+        </div>
+        <div id="chat-messages-container" style="height:calc(100dvh - 180px);overflow-y:auto;padding:10px 4px 76px;display:flex;flex-direction:column;overscroll-behavior:contain;"></div>
+        <div class="alwaha-chat-composer">
+            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off">
+            <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -720,11 +756,17 @@ img,video,canvas{max-width:100%}
         <p id="call-method-indicator" style="color:#aaa; font-size:12px; margin:0 0 10px;">جاري الاتصال...</p>
         <div id="call-state-pill" class="call-state-pill">جاهز</div>
         <div id="call-timer" style="color:#00ff88; font-size:16px; font-weight:bold; margin:12px 0 8px;">00:00</div>
+        <div id="call-video-stage" class="alwaha-call-video-stage" style="display:none;">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay muted playsinline class="local-preview"></video>
+        </div>
         <div class="chat-call-controls">
             <button id="startCallBtn" class="btn-call"><i class="fa-solid fa-phone"></i> بدء مكالمة</button>
             <button id="acceptCallBtn" class="btn-accept" style="display:none;"><i class="fa-solid fa-phone"></i> قبول</button>
             <button id="declineCallBtn" class="btn-decline" style="display:none;"><i class="fa-solid fa-phone-slash"></i> رفض</button>
             <button id="muteBtn" class="btn-mute" style="display:none;"><i class="fa-solid fa-microphone"></i> كتم الصوت</button>
+            <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
+            <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
@@ -2036,6 +2078,9 @@ async function publishNewHomePost() {
             const declineBtn = document.getElementById('declineCallBtn');
             const muteBtn = document.getElementById('muteBtn');
             const endBtn = document.getElementById('endCallBtn');
+            const cameraMuteBtn = document.getElementById('cameraMuteBtn');
+            const cameraSwitchBtn = document.getElementById('cameraSwitchBtn');
+            const videoStage = document.getElementById('call-video-stage');
             const icon = document.getElementById('call-main-icon');
             const target = document.getElementById('call-target-user');
             const callTimer = document.getElementById('call-timer');
@@ -2048,6 +2093,10 @@ async function publishNewHomePost() {
             if (declineBtn) declineBtn.style.display = state === 'incoming' ? 'inline-block' : 'none';
             if (muteBtn) muteBtn.style.display = state === 'connected' ? 'inline-block' : 'none';
             if (endBtn) endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none';
+            const isVideo = activeCallManager?.mediaType === 'video' && ['outgoing','connecting','connected'].includes(state);
+            if (videoStage) videoStage.style.display = isVideo ? 'block' : 'none';
+            if (cameraMuteBtn) cameraMuteBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
+            if (cameraSwitchBtn) cameraSwitchBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
             if (state === 'idle') {
                 if (callTimer) callTimer.textContent = '00:00';
             }
@@ -2071,34 +2120,81 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
             let timer;try{return await Promise.race([promise,new Promise(resolve=>{timer=setTimeout(()=>resolve(fallback),milliseconds);})]);}finally{clearTimeout(timer);}
         }
 
+        let alwahaHomeFeedRequestId = 0;
+        function renderHomeFeedProblem(container, message) {
+            if (!container) return;
+            const existing = container.querySelector('[role="article"]');
+            const error = window.__alwahaLastApiError || {};
+            const status = Number(error.status || 0);
+            const offline = navigator.onLine === false;
+            const heading = offline ? 'لا يوجد اتصال بالإنترنت' : (status === 401 || status === 403 ? 'الخادم رفض طلب المنشورات' : 'تعذر جلب المنشورات');
+            container.setAttribute('aria-busy', 'false');
+            const detail = message || (offline ? 'أعد تشغيل البيانات أو اتصل بشبكة Wi-Fi ثم حاول مجددًا.' : 'تعذر الوصول إلى خدمة المنشورات. تحقق من الاتصال ثم أعد المحاولة.');
+            const card = `<div class="alwaha-feed-error" role="status" aria-live="polite" style="margin:12px 0;padding:14px;border:1px solid #ffb45466;border-radius:14px;background:#241b2433;text-align:center;color:#f4d9c1;">
+                <div style="font-weight:800;font-size:13px;">${escapeHtml(heading)}</div>
+                <div style="font-size:11px;line-height:1.7;color:#c5b5b5;margin:6px 0;">${escapeHtml(detail)}</div>
+                ${status ? `<div style="font-size:10px;color:#a8b5c7;margin-bottom:8px;">رمز الاستجابة: ${status}</div>` : ''}
+                <button type="button" class="btn-action" onclick="renderHomePostsFeed()" style="min-height:40px;padding:8px 18px;border-radius:20px;background:#67e8f9;color:#08212a;font-weight:800;">إعادة المحاولة</button>
+            </div>`;
+            if (existing) {
+                let statusBox = container.querySelector('.alwaha-feed-error');
+                if (!statusBox) container.insertAdjacentHTML('afterbegin', card);
+                else statusBox.outerHTML = card;
+            } else {
+                container.innerHTML = card;
+            }
+        }
+
         async function renderHomePostsFeed() {
-            const container=document.getElementById('home-posts-feed-container'); if(!container) return;
-            if(!container.querySelector('[role="article"]'))container.innerHTML='<div style="text-align:center;color:#38bdf8;font-size:12px;padding:10px;">جاري تحديث المنشورات في الخلفية...</div>';
-            const [posts, counts] = await Promise.all([
-                supabaseFetch('posts?select=*&order=created_at.desc&limit=100'),
-                supabaseFetch('post_like_counts?select=post_id,likes_count')
-            ]);
-            window.__alwahaHomePosts = new Map((Array.isArray(posts) ? posts : []).map(post => [String(post.id), post]));
-            if(!Array.isArray(posts) || !posts.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً.</div>';return;}
-            const me=await getCurrentAuthUser();
-            const mine=me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`),1200,[]) : [];
-            const countMap=new Map((counts||[]).map(x=>[String(x.post_id),Number(x.likes_count||0)]));
-            const mineSet=new Set((mine||[]).map(x=>String(x.post_id)));
-            container.innerHTML=posts.map(post=>{
-                const id=String(post.id), liked=mineSet.has(id), count=countMap.get(id)||0;
-                const ownerActions = me && post.author_id === me.id
-                    ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل المنشور</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف المنشور</button></div>`
-                    : '';
-                const imageMarkup=post.image_url?`<img src="${escapeHtml(post.image_url)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:8px 0;" loading="lazy" alt="">`:'';
-                return `<div role="article" tabindex="0" aria-label="منشور ${escapeHtml(post.author_name||'مستخدم')}" onclick="handleHomePostCardActivation('${escapeJs(id)}',event)" onkeydown="handleHomePostCardKeydown('${escapeJs(id)}',event)" style="border-right:3px solid ${post.post_type==='تقني'?'#00ffff':'#ff00ff'};background:rgba(0,0,0,.3);padding:15px;border-radius:8px;margin-bottom:15px;cursor:pointer;">
-                    <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span style="color:#ffd700;font-weight:bold;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.author_name||'مستخدم')}</span><span style="background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;font-size:10px;color:#aaa;">${escapeHtml(post.post_type||'عام')}</span></div>
-                    <p style="font-size:13px;line-height:1.4;color:#fff;white-space:pre-wrap;">${escapeHtml(post.content||'')}</p>${imageMarkup}
-                    <div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;">
-                        <button class="btn-action ${liked?'liked':''}" style="background:transparent;color:${liked?'#ff0055':'#fff'};padding:4px 8px;font-size:12px;flex:1;" id="like-btn-${escapeJs(id)}" onclick="togglePostLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${escapeJs(id)}">${count}</span>)</button>
-                        <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
-                        <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="shareTextContent('منشور Alwaha-Pro','${escapeJs((post.content||'').slice(0,160))}')"><i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة</button>
-                    </div>${ownerActions}</div>`;
-            }).join('');
+            const container = document.getElementById('home-posts-feed-container');
+            if (!container) return;
+            const requestId = ++alwahaHomeFeedRequestId;
+            container.setAttribute('aria-busy', 'true');
+            const hasArticles = !!container.querySelector('[role="article"]');
+            if (!hasArticles && !container.querySelector('.alwaha-feed-loading')) {
+                container.innerHTML = '<div class="alwaha-feed-loading" role="status" aria-live="polite" style="text-align:center;color:#38bdf8;font-size:12px;padding:12px;">جاري تحديث المنشورات...</div>';
+            }
+            try {
+                const [posts, counts] = await Promise.all([
+                    supabaseFetch('posts?select=*&order=created_at.desc&limit=100'),
+                    supabaseFetch('post_like_counts?select=post_id,likes_count')
+                ]);
+                if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
+                if (!Array.isArray(posts)) {
+                    renderHomeFeedProblem(container);
+                    return;
+                }
+                window.__alwahaHomePosts = new Map(posts.map(post => [String(post.id), post]));
+                if (!posts.length) {
+                    container.setAttribute('aria-busy', 'false');
+                    container.innerHTML = '<div role="status" aria-live="polite" style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً. اسحب للتحديث أو أعد المحاولة لاحقاً.</div>';
+                    return;
+                }
+                const me = await getCurrentAuthUser();
+                if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
+                const mine = me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`), 1200, []) : [];
+                if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
+                const countMap = new Map((Array.isArray(counts) ? counts : []).map(x => [String(x.post_id), Number(x.likes_count || 0)]));
+                const mineSet = new Set((Array.isArray(mine) ? mine : []).map(x => String(x.post_id)));
+                container.setAttribute('aria-busy', 'false');
+                container.innerHTML = posts.map(post => {
+                    const id = String(post.id), liked = mineSet.has(id), count = countMap.get(id) || 0;
+                    const ownerActions = me && post.author_id === me.id
+                        ? `<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="editOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل المنشور</button><button type="button" class="btn-action" style="flex:1;background:#6b2338;color:#fff;padding:7px;border-radius:7px;font-size:10px;" onclick="deleteOwnHomePost('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف المنشور</button></div>` : '';
+                    const imageMarkup = post.image_url ? `<img src="${escapeHtml(post.image_url)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:8px;margin:8px 0;" loading="lazy" alt="">` : '';
+                    return `<div role="article" tabindex="0" aria-label="منشور ${escapeHtml(post.author_name || 'مستخدم')}" onclick="handleHomePostCardActivation('${escapeJs(id)}',event)" onkeydown="handleHomePostCardKeydown('${escapeJs(id)}',event)" style="border-right:3px solid ${post.post_type === 'تقني' ? '#00ffff' : '#ff00ff'};background:rgba(0,0,0,.3);padding:15px;border-radius:8px;margin-bottom:15px;cursor:pointer;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span style="color:#ffd700;font-weight:bold;"><i class="fa-solid fa-user-circle"></i> ${escapeHtml(post.author_name || 'مستخدم')}</span><span style="background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;font-size:10px;color:#aaa;">${escapeHtml(post.post_type || 'عام')}</span></div>
+                        <p style="font-size:13px;line-height:1.4;color:#fff;white-space:pre-wrap;">${escapeHtml(post.content || '')}</p>${imageMarkup}
+                        <div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;">
+                            <button class="btn-action ${liked ? 'liked' : ''}" style="background:transparent;color:${liked ? '#ff0055' : '#fff'};padding:4px 8px;font-size:12px;flex:1;" id="like-btn-${escapeJs(id)}" onclick="togglePostLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${escapeJs(id)}">${count}</span>)</button>
+                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
+                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="shareTextContent('منشور Alwaha-Pro','${escapeJs((post.content || '').slice(0,160))}')"><i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة</button>
+                        </div>${ownerActions}</div>`;
+                }).join('');
+            } catch (error) {
+                console.error('[Alwaha Feed] Render failed:', error);
+                if (requestId === alwahaHomeFeedRequestId && container.isConnected) renderHomeFeedProblem(container, 'حدث خطأ أثناء تجهيز المنشورات على الجهاز. أعد المحاولة.');
+            }
         }
 
         async function shareTextContent(title, text) {
@@ -2581,10 +2677,15 @@ async function renderConversationsList() {
         }
 
         class VoiceCall {
-            constructor({ signaling, localAudioEl, remoteAudioEl, onState }) {
+            constructor({ signaling, localAudioEl, remoteAudioEl, localVideoEl = null, remoteVideoEl = null, mediaType = 'audio', onState }) {
                 this.signaling = signaling;
                 this.localAudio = localAudioEl;
                 this.remoteAudio = remoteAudioEl;
+                this.localVideo = localVideoEl;
+                this.remoteVideo = remoteVideoEl;
+                this.mediaType = mediaType === 'video' ? 'video' : 'audio';
+                this.cameraEnabled = true;
+                this.cameraFacingMode = 'user';
                 this.onState = onState || (() => {});
                 this.peerConnection = null;
                 this.localStream = null;
@@ -2603,27 +2704,33 @@ async function renderConversationsList() {
                 if (this.peerConnection) return;
                 if (!navigator.mediaDevices?.getUserMedia) throw new Error('الميكروفون غير متاح في هذا السياق.');
                 this.peerConnection = new RTCPeerConnection({ iceServers: await getAlwahaIceServers() });
-                this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                this.localAudio.srcObject = this.localStream;
+                const videoConstraints = this.mediaType === 'video' ? {
+                    facingMode: { ideal: this.cameraFacingMode },
+                    width: { ideal: 640, max: 640 },
+                    height: { ideal: 360, max: 360 },
+                    frameRate: { ideal: 20, max: 24 }
+                } : false;
+                this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: videoConstraints });
+                if (this.localAudio) this.localAudio.srcObject = this.localStream;
+                if (this.localVideo && this.mediaType === 'video') {
+                    this.localVideo.srcObject = this.localStream;
+                    this.localVideo.play?.().catch(() => {});
+                }
                 this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
                 this.peerConnection.ontrack = (event) => {
                     const stream = event.streams?.[0];
                     if (stream) {
-                        this.remoteAudio.srcObject = stream;
-                        this.remoteAudio.play?.().catch(() => {});
+                        if (this.remoteAudio) { this.remoteAudio.srcObject = stream; this.remoteAudio.play?.().catch(() => {}); }
+                        if (this.remoteVideo && this.mediaType === 'video') {
+                            this.remoteVideo.srcObject = stream;
+                            this.remoteVideo.play?.().catch(() => {});
+                        }
                     }
                 };
                 this.peerConnection.onicecandidate = (event) => {
                     if (!event.candidate) return;
                     Promise.resolve(this.signaling.send({ type: 'candidate', candidate: event.candidate }))
                         .catch(error => console.warn('[Alwaha Call] ICE candidate signaling failed:', error));
-                };
-                this.peerConnection.oniceconnectionstatechange = () => {
-                    const pc = this.peerConnection;
-                    if (!pc || this.closed) return;
-                    console.info('[Alwaha Call] ICE state:', pc.iceConnectionState,
-                        'gathering:', pc.iceGatheringState, 'connection:', pc.connectionState);
-                    if (pc.iceConnectionState === 'failed') this.onState('failed');
                 };
                 this.peerConnection.onconnectionstatechange = () => {
                     const pc = this.peerConnection;
@@ -2663,18 +2770,15 @@ async function renderConversationsList() {
                 const pc = this.peerConnection;
                 if (!pc || pc.iceGatheringState === 'complete') return true;
                 return new Promise(resolve => {
-                    let done = false;
-                    let timer;
-                    const finish = (complete) => {
+                    let done = false, timer;
+                    const finish = complete => {
                         if (done) return;
                         done = true;
                         clearTimeout(timer);
                         pc.removeEventListener('icegatheringstatechange', check);
                         resolve(!!complete || pc.iceGatheringState === 'complete');
                     };
-                    const check = () => {
-                        if (pc.iceGatheringState === 'complete') finish(true);
-                    };
+                    const check = () => { if (pc.iceGatheringState === 'complete') finish(true); };
                     timer = setTimeout(() => finish(false), timeoutMs);
                     pc.addEventListener('icegatheringstatechange', check);
                     check();
@@ -2682,25 +2786,23 @@ async function renderConversationsList() {
             }
             async startOutgoing() {
                 await this.initPeerConnection();
-                const offer = await this.peerConnection.createOffer({ offerToReceiveAudio: true });
+                const offer = await this.peerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: this.mediaType === 'video' });
                 await this.peerConnection.setLocalDescription(offer);
-                const complete = await this.waitForIceGathering();
-                if (!complete) console.warn('[Alwaha Call] ICE gathering timed out; continuing with trickled candidates.');
-                // The manager sends the initial offer through the recipient inbox.
-                // Room broadcasts carry answer/candidate/end signals after both peers join.
-                return this.peerConnection.localDescription || offer;
+                const gathered = await this.waitForIceGathering();
+                if (!gathered) console.warn('[Alwaha Call] ICE gathering timed out; continuing with queued trickle candidates.');
+                this.signaling.send({ type: 'offer', offer: this.peerConnection.localDescription || offer });
             }
             async acceptIncoming(offer) {
                 await this.initPeerConnection();
                 await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
                 for (const c of this.pendingCandidates.splice(0)) {
-                    try { await this.peerConnection.addIceCandidate(c); } catch (e) { console.warn('[Alwaha Call] Queued ICE candidate rejected:', e); }
+                    try { await this.peerConnection.addIceCandidate(c); } catch (e) {}
                 }
                 const answer = await this.peerConnection.createAnswer();
                 await this.peerConnection.setLocalDescription(answer);
-                const complete = await this.waitForIceGathering();
-                if (!complete) console.warn('[Alwaha Call] ICE answer gathering timed out; continuing with trickled candidates.');
-                await this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
+                const gathered = await this.waitForIceGathering();
+                if (!gathered) console.warn('[Alwaha Call] ICE gathering timed out while answering; queued candidates will continue.');
+                this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
             }
             async handleSignal(data) {
                 if (!data || this.closed) return;
@@ -2729,18 +2831,46 @@ async function renderConversationsList() {
                 track.enabled = !this.isMuted;
                 return this.isMuted;
             }
+            toggleCamera() {
+                const track = this.localStream?.getVideoTracks?.()[0];
+                if (!track) return this.cameraEnabled;
+                this.cameraEnabled = !this.cameraEnabled;
+                track.enabled = this.cameraEnabled;
+                return this.cameraEnabled;
+            }
+            async switchCamera() {
+                if (this.mediaType !== 'video' || !this.peerConnection || !navigator.mediaDevices?.getUserMedia) throw new Error('الكاميرا غير متاحة.');
+                const nextMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+                const replacementStream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: { facingMode: { exact: nextMode }, width: { ideal: 640, max: 640 }, height: { ideal: 360, max: 360 }, frameRate: { ideal: 20, max: 24 } }
+                });
+                const replacement = replacementStream.getVideoTracks()[0];
+                const oldTrack = this.localStream?.getVideoTracks?.()[0];
+                const sender = this.peerConnection.getSenders().find(item => item.track?.kind === 'video');
+                if (!replacement || !sender) { replacement?.stop(); throw new Error('تعذر تبديل الكاميرا على هذا الجهاز.'); }
+                await sender.replaceTrack(replacement);
+                if (oldTrack) { this.localStream.removeTrack(oldTrack); oldTrack.stop(); }
+                this.localStream.addTrack(replacement);
+                this.cameraFacingMode = nextMode;
+                if (this.localVideo) { this.localVideo.srcObject = this.localStream; this.localVideo.play?.().catch(() => {}); }
+                return nextMode;
+            }
             endCall(notifyRemote = true) {
                 this.closed = true;
                 if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
                 this.disconnectTimer = null;
-                if (notifyRemote) Promise.resolve(this.signaling.send({ type: 'end' })).catch(error => console.warn('[Alwaha Call] Could not send end signal:', error));
+                if (notifyRemote) this.signaling.send({ type: 'end' });
                 this.localStream?.getTracks?.().forEach(track => track.stop());
                 this.localStream = null;
                 try { this.peerConnection?.close(); } catch (e) {}
                 this.peerConnection = null;
                 if (this.localAudio) this.localAudio.srcObject = null;
                 if (this.remoteAudio) this.remoteAudio.srcObject = null;
+                if (this.localVideo) this.localVideo.srcObject = null;
+                if (this.remoteVideo) this.remoteVideo.srcObject = null;
                 this.isMuted = false;
+                this.cameraEnabled = true;
             }
         }
 
@@ -2759,12 +2889,12 @@ async function renderConversationsList() {
                 this.pendingRoomSignals = [];
                 this.pendingRoomSignalsToSend = [];
                 this.roomPeerReady = false;
+                this.mediaType = 'audio';
             }
             async subscribeChannel(channel) {
                 return new Promise((resolve, reject) => {
-                    let settled = false;
-                    let timer;
-                    const finish = (error) => {
+                    let settled = false, timer;
+                    const finish = error => {
                         if (settled) return;
                         settled = true;
                         clearTimeout(timer);
@@ -2773,9 +2903,7 @@ async function renderConversationsList() {
                     timer = setTimeout(() => finish(new Error('انتهت مهلة الاشتراك في قناة المكالمات.')), 12000);
                     channel.subscribe((status, error) => {
                         if (status === 'SUBSCRIBED') finish();
-                        else if (['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)) {
-                            finish(new Error(`تعذر الاشتراك في قناة المكالمات (${error?.message || status}).`));
-                        }
+                        else if (['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)) finish(new Error(`تعذر الاشتراك في قناة المكالمات (${error?.message || status}).`));
                     });
                 });
             }
@@ -2832,19 +2960,14 @@ async function renderConversationsList() {
                 if (!this.roomPeerReady || !this.roomChannel) return;
                 const queue = this.pendingRoomSignalsToSend.splice(0);
                 for (let i = 0; i < queue.length; i++) {
-                    try {
-                        await this.publishRoom(queue[i]);
-                    } catch (error) {
-                        this.pendingRoomSignalsToSend.unshift(...queue.slice(i));
-                        throw error;
-                    }
+                    try { await this.publishRoom(queue[i]); }
+                    catch (error) { this.pendingRoomSignalsToSend.unshift(...queue.slice(i)); throw error; }
                 }
             }
             async publishRoom(payload) {
                 if (!this.roomChannel) throw new Error('قناة المكالمات غير جاهزة.');
                 const status = await this.roomChannel.send({
-                    type: 'broadcast',
-                    event: 'webrtc-signal',
+                    type: 'broadcast', event: 'webrtc-signal',
                     payload: { ...payload, from: this.myId, to: this.peerId, sessionId: this.sessionId }
                 });
                 if (status !== 'ok') throw new Error(`فشل إرسال إشارة المكالمة عبر Realtime (${status}).`);
@@ -2869,23 +2992,26 @@ async function renderConversationsList() {
                 }
             }
 
-            async startOutgoing(peerId, mode = 'online') {
+            async startOutgoing(peerId, mode = 'online', mediaType = 'audio') {
                 const authUser=await getCurrentAuthUser();if(!authUser)throw new Error('سجّل الدخول أولًا لإجراء مكالمة.');this.myId=authUser.id;
                 if(!(await hasAcceptedAlwahaFriendship(peerId)))throw new Error('لا يمكن الاتصال قبل قبول طلب الصداقة.');
                 this.mode = mode;
+                this.mediaType = mediaType === 'video' ? 'video' : 'audio';
+                this.roomPeerReady = false;
+                this.pendingRoomSignalsToSend = [];
                 this.peerId = peerId;
                 await this.ensureInbox();
                 if(!this.myId)throw new Error('تعذر تحديد حسابك لإجراء المكالمة.');
                 const sessionId = crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-                this.roomPeerReady = false;
-                this.pendingRoomSignalsToSend = [];
                 await this.createRoom(peerId, sessionId);
                 const localAudio = document.getElementById('localAudio');
                 const remoteAudio = document.getElementById('remoteAudio');
+                const localVideo = document.getElementById('localVideo');
+                const remoteVideo = document.getElementById('remoteVideo');
                 this.call = new VoiceCall({
                     signaling: { send: payload => this.sendRoom(payload) },
-                    localAudioEl: localAudio,
-                    remoteAudioEl: remoteAudio,
+                    localAudioEl: localAudio, remoteAudioEl: remoteAudio,
+                    localVideoEl: localVideo, remoteVideoEl: remoteVideo, mediaType: this.mediaType,
                     onState: state => this.handleCallState(state)
                 });
                 await this.call.startOutgoing();
@@ -2896,6 +3022,7 @@ async function renderConversationsList() {
                     displayName: localStorage.getItem('alwaha_profile_name') || 'مستخدم Alwaha-Pro',
                     roomId: this.roomId,
                     sessionId: this.sessionId,
+                    mediaType: this.mediaType,
                     offer: this.call.peerConnection.localDescription
                 });
                 return true;
@@ -2928,6 +3055,7 @@ async function renderConversationsList() {
                 this.peerId = payload.from;
                 this.roomId = payload.roomId;
                 this.sessionId = payload.sessionId;
+                this.mediaType = payload.mediaType === 'video' ? 'video' : 'audio';
                 this.pendingIncoming = payload;
                 currentChatUserIdentifier = payload.from || '';
                 currentChatUser = payload.displayName || payload.from || 'مستخدم';
@@ -2935,14 +3063,7 @@ async function renderConversationsList() {
                     await this.createRoom(payload.from, payload.sessionId);
                     this.roomPeerReady = true;
                     await this.sendRoom({ type: 'ready' });
-                } catch (error) {
-                    console.warn('[Alwaha Call] Could not subscribe to private call room:', error);
-                    await this.sendCallResult(payload.from, payload.sessionId, 'rejected').catch(() => {});
-                    this.pendingIncoming = null;
-                    stopAlwahaCallRingtone();
-                    triggerToastNotification('تعذر تهيئة قناة المكالمة الآمنة. تحقق من اتصال الإنترنت ثم أعد المحاولة.', 'error');
-                    return;
-                }
+                } catch (e) { console.warn('[Alwaha Call] Incoming room setup failed:', e); }
                 const peerName = payload.displayName || payload.from || 'مستخدم';
                 setCallModal(true);
                 updateCallUi('incoming', {
@@ -2960,10 +3081,13 @@ async function renderConversationsList() {
                 this.peerId = payload.from;
                 const localAudio = document.getElementById('localAudio');
                 const remoteAudio = document.getElementById('remoteAudio');
+                const localVideo = document.getElementById('localVideo');
+                const remoteVideo = document.getElementById('remoteVideo');
                 this.call = new VoiceCall({
                     signaling: { send: data => this.sendRoom(data) },
-                    localAudioEl: localAudio,
-                    remoteAudioEl: remoteAudio,
+                    localAudioEl: localAudio, remoteAudioEl: remoteAudio,
+                    localVideoEl: localVideo, remoteVideoEl: remoteVideo,
+                    mediaType: payload.mediaType === 'video' ? 'video' : 'audio',
                     onState: state => this.handleCallState(state)
                 });
                 await this.call.acceptIncoming(payload.offer);
@@ -2972,13 +3096,12 @@ async function renderConversationsList() {
                 }
                 updateCallUi('connecting', { target: currentChatUser || payload.displayName || payload.from, text:'جاري الاتصال...' });
             }
-            async rejectIncoming() {
+            rejectIncoming() {
                 stopAlwahaCallRingtone();
                 const payload = this.pendingIncoming;
                 this.pendingIncoming = null;
                 if (payload && this.roomChannel) {
-                    try { await this.sendRoom({ type:'end' }); }
-                    catch (error) { console.warn('[Alwaha Call] Could not signal call rejection:', error); }
+                    this.sendRoom({ type:'end' });
                 }
             }
             async handleCallState(state) {
@@ -3006,6 +3129,7 @@ async function renderConversationsList() {
                 this.pendingRoomSignals = [];
                 this.pendingRoomSignalsToSend = [];
                 this.roomPeerReady = false;
+                this.mediaType = 'audio';
                 if (this.roomChannel && this.client) {
                     try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
                 }
@@ -3016,23 +3140,26 @@ async function renderConversationsList() {
             }
         }
 
-        async function initiateVoiceCall(type) {
-            if (type === 'offline') return triggerToastNotification('المكالمات عبر البلوتوث لم تُنفذ بعد؛ مكالمات النسخة الحالية تعتمد على الإنترنت.', 'info');
-            const user = await requireAuthenticatedUser('سجل الدخول أولاً لإجراء مكالمة صوتية.');
+        async function startAlwahaCall(mode = 'online', mediaType = 'audio') {
+            if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
+            const video = mediaType === 'video';
+            const user = await requireAuthenticatedUser(video ? 'سجّل الدخول لإجراء مكالمة فيديو.' : 'سجّل الدخول أولاً لإجراء مكالمة صوتية.');
             if (!user) return;
             const targetId = currentChatUserId || '';
-            if (!targetId) return triggerToastNotification('افتح محادثة مستخدم حقيقي من دليل المستخدمين حتى يمكن بدء المكالمة.', 'error');
-            if (targetId === user.id) return triggerToastNotification('لا يمكن إجراء مكالمة مع الحساب نفسه.', 'error');
-            if(!(await hasAcceptedAlwahaFriendship(targetId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.','info');
+            if (!targetId) return triggerToastNotification('افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
+            if (targetId === user.id) return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.', 'error');
+            if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
+            if (video && (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection)) return triggerToastNotification('مكالمات الفيديو غير مدعومة في إصدار WebView الحالي.', 'error');
             setCallModal(true);
+            if (!activeCallManager) activeCallManager = new CallSignalingManager();
+            activeCallManager.mediaType = video ? 'video' : 'audio';
             updateCallUi('outgoing', {
                 target: currentChatUser || targetId,
-                text: 'جاري الاتصال...',
-                indicator: type === 'offline' ? '<i class="fa-solid fa-wifi"></i> وضع الاتصال المحلي — الإشارة تحتاج اتصالًا متاحًا' : '<i class="fa-solid fa-phone"></i> اتصال صوتي آمن عبر WebRTC + Supabase Realtime'
+                text: video ? 'جاري بدء مكالمة الفيديو...' : 'جاري الاتصال...',
+                indicator: video ? '<i class="fa-solid fa-video"></i> فيديو خفيف بدقة تصل إلى 640×360' : '<i class="fa-solid fa-phone"></i> اتصال صوتي عبر الإنترنت'
             });
             try {
-                if (!activeCallManager) activeCallManager = new CallSignalingManager();
-                await activeCallManager.startOutgoing(targetId, type);
+                await activeCallManager.startOutgoing(targetId, mode, mediaType);
                 const networkStatus = window.__alwahaCallNetworkStatus;
                 const connectingText = networkStatus?.turnConfigured === false
                     ? 'بانتظار الطرف الآخر... تنبيه: TURN غير مهيأ أو لم يستجب؛ قد تفشل المكالمة عبر بعض الشبكات.'
@@ -3043,13 +3170,26 @@ async function renderConversationsList() {
                 await activeCallManager?.end(false);
                 updateCallUi('idle');
                 setCallModal(false);
-                const message = error?.name === 'NotAllowedError'
-                    ? 'تم رفض إذن الميكروفون. اسمح به من إعدادات Android ثم أعد المحاولة.'
-                    : error?.name === 'NotFoundError'
-                        ? 'لم يتم العثور على ميكروفون متاح على هذا الجهاز.'
-                        : error?.message || 'تعذر بدء المكالمة. تحقق من إذن الميكروفون والاتصال.';
+                const message = video && /camera|video|permission|NotAllowed|NotFound/i.test(String(error?.name || '') + ' ' + String(error?.message || ''))
+                    ? 'تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا والميكروفون ثم أعد المحاولة.'
+                    : (error?.message || 'تعذر بدء المكالمة. تحقق من إذن الميكروفون والاتصال.');
                 triggerToastNotification(message, 'error');
             }
+        }
+        async function initiateVoiceCall(type = 'online') { return startAlwahaCall(type, 'audio'); }
+        async function initiateVideoCall() { return startAlwahaCall('online', 'video'); }
+        function toggleCallCamera() {
+            const enabled = activeCallManager?.call?.toggleCamera?.();
+            const button = document.getElementById('cameraMuteBtn');
+            if (typeof enabled !== 'boolean') return triggerToastNotification('الكاميرا غير متاحة في هذه المكالمة.', 'info');
+            if (button) button.innerHTML = enabled ? '<i class="fa-solid fa-video"></i> إيقاف الكاميرا' : '<i class="fa-solid fa-video-slash"></i> تشغيل الكاميرا';
+            triggerToastNotification(enabled ? 'تم تشغيل الكاميرا.' : 'تم إيقاف الكاميرا.', 'info');
+        }
+        async function switchCallCamera() {
+            try {
+                const mode = await activeCallManager?.call?.switchCamera?.();
+                if (mode) triggerToastNotification(mode === 'user' ? 'تم التبديل إلى الكاميرا الأمامية.' : 'تم التبديل إلى الكاميرا الخلفية.', 'success');
+            } catch (error) { triggerToastNotification(error?.message || 'تعذر تبديل الكاميرا.', 'error'); }
         }
 
         async function acceptIncomingCall() {
@@ -3057,20 +3197,13 @@ async function renderConversationsList() {
             try {
                 await activeCallManager.acceptIncoming();
             } catch (error) {
-                console.error('[Alwaha Call] Accept incoming call failed:', error);
+                triggerToastNotification('تعذر قبول المكالمة. تحقق من صلاحية الميكروفون.', 'error');
                 await activeCallManager.end(false);
                 updateCallUi('idle');
-                setCallModal(false);
-                const message = error?.name === 'NotAllowedError'
-                    ? 'تم رفض إذن الميكروفون. اسمح به من إعدادات Android ثم أعد المحاولة.'
-                    : error?.name === 'NotFoundError'
-                        ? 'لم يتم العثور على ميكروفون متاح على هذا الجهاز.'
-                        : error?.message || 'تعذر قبول المكالمة. تحقق من إذن الميكروفون والاتصال.';
-                triggerToastNotification(message, 'error');
             }
         }
         async function rejectIncomingCall() {
-            try { await activeCallManager?.rejectIncoming(); } catch (e) { console.warn(e); }
+            try { activeCallManager?.rejectIncoming(); } catch (e) {}
             await activeCallManager?.end(false);
             updateCallUi('idle');
             setCallModal(false);
@@ -3100,7 +3233,7 @@ async function detectMarketLifecycleSchema() {
             // Do not block the product grid on a separate schema probe; the real listing query
             // verifies these optional columns and updates the state when it succeeds.
             marketLifecycleSchemaReady=false;
-            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until&limit=1')
+            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1')
               .then(probe=>{if(Array.isArray(probe))marketLifecycleSchemaReady=true;})
               .catch(()=>{});
             return marketLifecycleSchemaReady;
@@ -3257,7 +3390,7 @@ async function submitNewProductToMarket() {
             }).join('');
         }
         async function openMarketProductDetails(productId) {
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,sold_at,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;
             if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
             const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3275,9 +3408,7 @@ async function submitNewProductToMarket() {
             let canReview=false;
             if(me && product.status==='sold' && product.seller_id!==me.id && typeof supabaseClient?.rpc==='function') {
                 try {
-                    const {data,error}=await supabaseClient.rpc('can_review_marketplace_product',{
-                        p_product_id:Number(product.id),p_seller_id:product.seller_id
-                    });
+                    const {data,error}=await supabaseClient.rpc('can_review_marketplace_product',{p_product_id:Number(product.id),p_seller_id:product.seller_id});
                     canReview=!error && data===true;
                 } catch(error) { console.warn('[Alwaha Market] Review eligibility check failed:',error); }
             }
@@ -3336,7 +3467,7 @@ async function submitNewProductToMarket() {
             const rows=await supabaseFetch(`messages?select=sender_id,receiver_id&or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&limit=500`);
             const candidates=new Set();(Array.isArray(rows)?rows:[]).forEach(row=>{if(row.sender_id&&row.sender_id!==me.id)candidates.add(String(row.sender_id));if(row.receiver_id&&row.receiver_id!==me.id)candidates.add(String(row.receiver_id));});
             if(!candidates.size)return triggerToastNotification('لم نجد محادثة سابقة مع المشتري. افتح محادثته من الإعلان أولًا، ثم أعد اختيار «تم البيع».','info');
-            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`public_profiles?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
+            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`users?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
             const options=Array.isArray(users)?users.filter(user=>candidates.has(String(user.id))):[];
             if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من المحادثات السابقة.','error');
             const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'} (@${user.username||'—'})`).join('\n'));
@@ -3370,7 +3501,7 @@ async function renderMyPersonalMarketItems() {
             const container=document.getElementById('my-market-items-container');if(!container)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
+            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to,created_at&order=created_at.desc`);
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
@@ -3387,7 +3518,7 @@ async function renderMyPersonalMarketItems() {
         }
         async function editMyMarketItem(productId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3678,16 +3809,7 @@ function triggerAnimeAiConverterFilter() {
                     console.warn('[Alwaha Call] call-config failed; using STUN-only fallback:', result.error.message || result.error);
                     return fallback;
                 }
-                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){
-                    const turnConfigured = result.data.turnConfigured === true || result.data.iceServers.some(server => {
-                        const urls = Array.isArray(server?.urls) ? server.urls : [server?.urls];
-                        return urls.some(url => typeof url === 'string' && /^turns?:/i.test(url));
-                    });
-                    window.__alwahaCallNetworkStatus = { turnConfigured, checkedAt: Date.now() };
-                    if (!turnConfigured) console.warn('[Alwaha Call] TURN is not configured; some mobile/carrier networks may not establish WebRTC audio.');
-                    window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};
-                    return result.data.iceServers;
-                }
+                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};return result.data.iceServers;}
             }catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}finally{clearTimeout(timer);}
             return fallback;
         }
@@ -4067,80 +4189,41 @@ function triggerAnimeAiConverterFilter() {
         });
 
     </script>
-<script id="alwaha-phase1-local-network-structure">
+<script id="alwaha-chat-tools-and-nearby-network">
 (function () {
   'use strict';
-  if (window.__ALWAHA_PHASE1_LOCAL_NETWORK_V1) return;
-  window.__ALWAHA_PHASE1_LOCAL_NETWORK_V1 = true;
-  const text = (tag, value, className) => { const node = document.createElement(tag); if (className) node.className = className; node.textContent = value; return node; };
+  if (window.__ALWAHA_CHAT_TOOLS_V2) return;
+  window.__ALWAHA_CHAT_TOOLS_V2 = true;
   const style = document.createElement('style');
-  style.id = 'alwaha-phase1-local-network-style';
-  style.textContent = [
-    '#alwaha-local-network-modal{position:fixed;inset:0;z-index:100000001;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,7,18,.92)}',
-    '#alwaha-local-network-modal[aria-hidden="false"]{display:flex}',
-    '#alwaha-local-network-modal .alwaha-ln-card{width:min(100%,520px);max-height:88vh;overflow:auto;border:1px solid #70dff055;border-radius:20px;background:#0e1a2b;color:#edf8ff;padding:16px;box-shadow:0 18px 55px #0009}',
-    '#alwaha-local-network-modal .alwaha-ln-head{display:flex;align-items:center;justify-content:space-between;gap:8px}',
-    '#alwaha-local-network-modal h2{font-size:17px;margin:0 0 8px;color:#8bf4ff}',
-    '#alwaha-local-network-modal p{font-size:12px;line-height:1.85;color:#b4c7db}',
-    '#alwaha-local-network-modal .alwaha-ln-current{border:1px solid #48cba355;background:#48cba311;padding:12px;border-radius:12px;color:#d0fff0;font-size:12px;line-height:1.85;margin:12px 0}',
-    '#alwaha-local-network-modal .alwaha-ln-grid{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}',
-    '#alwaha-local-network-modal button{font:inherit;font-size:12px;font-weight:700;border:1px solid #ffffff20;border-radius:11px;padding:11px;background:#17263b;color:#e8f4ff;cursor:pointer}',
-    '#alwaha-local-network-modal button.primary{background:#67e8f9;color:#09212a;border:0}',
-    '#alwaha-local-network-modal button:disabled{opacity:.55;cursor:not-allowed;border-style:dashed}',
-    '#alwaha-local-network-modal .alwaha-ln-status{display:inline-block;border-radius:20px;padding:4px 9px;background:#38445a;color:#ffe5a3;font-size:10px}',
-    '#alwaha-local-network-modal .alwaha-ln-close{font-size:18px;padding:6px 10px}',
-    '.bottom-nav-bar .nav-item.reels{--orb-a:#ffcae7;--orb-b:#e66cbb;--orb-c:#a04e94;--orb-shadow:#ff84d34f}',
-    '.bottom-nav-bar .nav-item.games-nav{--orb-a:#e0d4ff;--orb-b:#a38be8;--orb-c:#6565ad;--orb-shadow:#bea2ff50}',
-    '.bottom-nav-bar .nav-item.profile-me{--orb-a:#b8edff;--orb-b:#6aa8ed;--orb-c:#4161b2;--orb-shadow:#68b9ff55}',
-    '@media(min-width:460px){#alwaha-local-network-modal .alwaha-ln-grid{grid-template-columns:1fr 1fr}}'
-  ].join('');
+  style.textContent = '#alwaha-local-network-modal{position:fixed;inset:0;z-index:100000001;display:none;align-items:center;justify-content:center;padding:16px;background:#020712ed}#alwaha-local-network-modal[aria-hidden="false"]{display:flex}#alwaha-local-network-modal .ln-card{width:min(100%,480px);max-height:88dvh;overflow:auto;border:1px solid #70dff055;border-radius:20px;background:#0e1a2b;color:#edf8ff;padding:16px;box-shadow:0 18px 55px #0009}#alwaha-local-network-modal h2{font-size:17px;color:#8bf4ff;margin:0 0 8px}#alwaha-local-network-modal p{font-size:12px;line-height:1.9;color:#b4c7db}#alwaha-local-network-modal .ln-status{padding:12px;border:1px solid #ffbd6955;border-radius:12px;background:#ffbd6910;color:#ffe1b5;font-size:12px;line-height:1.9}#alwaha-local-network-modal button{font:700 12px Cairo,sans-serif;border:1px solid #ffffff25;border-radius:11px;padding:11px;background:#17263b;color:#e8f4ff;min-height:42px}#alwaha-local-network-modal button.primary{background:#67e8f9;color:#09212a;border:0}';
   document.head.appendChild(style);
-  const oldFreeNav = document.querySelector('.bottom-nav-bar .nav-item.free-mesh');
-  if (oldFreeNav) oldFreeNav.remove();
-  const headerActions = document.querySelector('#active-chat-box > div:first-child > div:last-child');
-  if (headerActions && !document.getElementById('alwaha-local-network-open')) {
-    const button = document.createElement('button');
-    button.type = 'button'; button.id = 'alwaha-local-network-open'; button.className = 'btn-action';
-    button.setAttribute('aria-label', 'فتح خيارات الشبكة القريبة'); button.title = 'مشاركة الملفات وخطة الشبكة القريبة';
-    button.style.cssText = 'background:transparent;color:#8bf4ff;font-size:12px;min-width:48px;padding:5px 2px;';
-    button.innerHTML = '<i class="fa-solid fa-wifi"></i><span style="font-size:9px;display:block;">الشبكة</span>';
-    const bluetooth = headerActions.querySelector('button[disabled][aria-label*="بلوتوث"]');
-    headerActions.insertBefore(button, bluetooth || null);
-    button.addEventListener('click', () => window.openAlwahaLocalNetworkPanel());
-  }
   const modal = document.createElement('div');
-  modal.id = 'alwaha-local-network-modal'; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-hidden', 'true'); modal.setAttribute('aria-labelledby', 'alwaha-local-network-title');
-  const card = document.createElement('section'); card.className = 'alwaha-ln-card';
-  const head = document.createElement('div'); head.className = 'alwaha-ln-head';
-  const headingWrap = document.createElement('div');
-  const heading = text('h2', 'الشبكة القريبة ومشاركة الملفات'); heading.id = 'alwaha-local-network-title'; headingWrap.appendChild(heading);
-  const subtitle = text('div', 'مركز الوصول الحالي وخطة التطوير', 'alwaha-ln-status'); headingWrap.appendChild(subtitle);
-  const close = text('button', '×', 'alwaha-ln-close'); close.type = 'button'; close.setAttribute('aria-label', 'إغلاق');
-  head.append(headingWrap, close); card.appendChild(head);
-  const current = text('div', 'المتاح حاليًا: فتح قائمة المشاركة القياسية في الهاتف لاختيار تطبيق/وجهة مشاركة. هذا لا يثبت اتصالًا مباشرًا بين جهازين ولا يضمن العمل دون إنترنت.', 'alwaha-ln-current'); card.appendChild(current);
-  const intro = text('p', 'ترتيب التطوير: نبدأ باختبارات الأجهزة القريبة جدًا، ثم نتحقق من الأمان والثبات قبل توسيع النطاق. لا تُرسل ملفات حساسة إلا بعد التحقق من الوجهة في قائمة المشاركة.'); card.appendChild(intro);
-  const active = text('button', 'فتح أدوات مشاركة الملفات المتاحة', 'primary'); active.type = 'button';
-  active.addEventListener('click', () => { closePanel(); if (typeof window.showSection === 'function') window.showSection('free-section', null); else document.getElementById('free-section')?.scrollIntoView(); });
-  card.appendChild(active);
-  const grid = document.createElement('div'); grid.className = 'alwaha-ln-grid';
-  const future = [
-    'رسائل مباشرة بين جهازين قريبين — المرحلة التالية',
-    'إرسال ملفات متعددة بالتوازي مع إظهار التقدم — المرحلة التالية',
-    'مكالمة صوتية محلية عبر قناة ندّية — بعد اختبار الإشارة والأذونات',
-    'تحديد نطاق الاتصال القريب جدًا ثم توسيعه — بعد التحقق الميداني'
-  ];
-  for (const label of future) { const b = text('button', label); b.type = 'button'; b.disabled = true; b.setAttribute('aria-disabled', 'true'); grid.appendChild(b); }
-  card.appendChild(grid);
-  card.appendChild(text('p', 'هذه الأزرار المستقبلية معطلة عمدًا في مرحلة تجهيز الهيكل؛ لا يوجد ادعاء بأن شبكة ندّية محلية أو إرسالًا متوازيًا أو مكالمات محلية قد تم تنفيذها.'));
-  modal.appendChild(card); document.body.appendChild(modal);
-  let lastOpener = null;
-  function closePanel() { modal.setAttribute('aria-hidden', 'true'); document.body.classList.remove('modal-active'); const target = lastOpener || document.getElementById('alwaha-local-network-open'); if (target && target.isConnected) target.focus(); lastOpener = null; }
-  window.openAlwahaLocalNetworkPanel = function openAlwahaLocalNetworkPanel() { lastOpener = document.activeElement; modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('modal-active'); close.focus(); };
-  close.addEventListener('click', closePanel);
-  modal.addEventListener('click', e => { if (e.target === modal) closePanel(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closePanel(); });
-  const backToChat = document.getElementById('alwaha-free-back-to-chat');
-  if (backToChat) backToChat.addEventListener('click', () => { if (typeof window.showSection === 'function') window.showSection('chat-section', document.querySelector('.nav-item.chat')); });
+  modal.id = 'alwaha-local-network-modal';
+  modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-hidden','true');
+  const card = document.createElement('section'); card.className = 'ln-card';
+  const head = document.createElement('div'); head.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px';
+  const title = document.createElement('h2'); title.textContent='الشبكة الحرة للأصدقاء القريبين';
+  const close = document.createElement('button'); close.type='button'; close.textContent='إغلاق'; close.setAttribute('aria-label','إغلاق');
+  head.append(title,close); card.append(head);
+  const status = document.createElement('div'); status.className='ln-status';
+  status.textContent='الاتصال المباشر دون إنترنت عبر Bluetooth أو Wi‑Fi Direct غير مفعّل بعد. هذه النسخة لا تحتوي على خدمة Android أصلية لاكتشاف الأجهزة أو نقل الرسائل محليًا؛ لذلك لن يبدأ التطبيق وضعًا وهميًا ولن يظهر الأصدقاء القريبون على أنهم متصلون.';
+  card.append(status);
+  const unavailable = document.createElement('button'); unavailable.type='button'; unavailable.disabled=true; unavailable.setAttribute('aria-disabled','true'); unavailable.textContent='المكالمات عبر البلوتوث لم تُنفذ بعد'; unavailable.style.cssText='width:100%;min-height:40px;margin:8px 0;padding:8px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff08;color:#9aa8b8;font:700 11px Cairo,sans-serif;opacity:.75;'; card.append(unavailable);
+  const note = document.createElement('p'); note.textContent='بعد إضافة واختبار مكوّن Android الآمن سنفتح هذا الوضع للأصدقاء المقبولين فقط، مع رسائل ومكالمات محلية بحد زمني أولي، وتحكم واضح في الميكروفون والاتصال.'; card.append(note);
+  const share = document.createElement('button'); share.type='button'; share.className='primary'; share.textContent='فتح مشاركة الملفات القياسية في الهاتف';
+  share.addEventListener('click',()=>{closePanel();if(typeof window.showSection==='function')window.showSection('free-section',null);});
+  card.append(share); modal.append(card); document.body.append(modal);
+  let opener=null;
+  function closePanel(){modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-active');if(opener?.isConnected)opener.focus();opener=null;}
+  window.openAlwahaLocalNetworkPanel=function(){opener=document.activeElement;modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');close.focus();};
+  window.toggleChatMoreMenu=function(force){const menu=document.getElementById('chat-more-menu'),button=document.getElementById('chat-more-toggle');if(!menu)return;const open=typeof force==='boolean'?force:menu.hidden;menu.hidden=!open;button?.setAttribute('aria-expanded',String(open));};
+  window.openCurrentChatProfile=function(){window.toggleChatMoreMenu(false);const id=(typeof currentChatUserId!=='undefined'&&currentChatUserId)||window.currentChatUserId||document.getElementById('current-chat-name')?.dataset?.userId;if(id&&typeof window.openPublicUserProfile==='function')window.openPublicUserProfile(id);else if(typeof window.triggerToastNotification==='function')window.triggerToastNotification('لم يتم تحديد حساب الطرف الآخر بعد.','info');};
+  window.shareCurrentChat=async function(){window.toggleChatMoreMenu(false);const root=document.getElementById('chat-messages-container');const text=(root?.innerText||'').trim().slice(-5000);if(!text)return window.triggerToastNotification?.('لا توجد رسائل لمشاركتها.','info');try{if(navigator.share)await navigator.share({title:'محادثة Alwaha-Pro',text});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);window.triggerToastNotification?.('تم نسخ ملخص المحادثة.','success');}else window.triggerToastNotification?.('المشاركة غير مدعومة على هذا الجهاز.','info');}catch(e){if(e?.name!=='AbortError')window.triggerToastNotification?.('تعذرت مشاركة المحادثة.','error');}};
+  window.showChatPrivacyInfo=function(){window.toggleChatMoreMenu(false);window.triggerToastNotification?.('الرسائل متاحة بين الأصدقاء المقبولين فقط. لا تشارك رموز الدخول أو معلوماتك السرية.','info');};
+  close.addEventListener('click',closePanel);modal.addEventListener('click',e=>{if(e.target===modal)closePanel();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal.getAttribute('aria-hidden')==='false')closePanel();else window.toggleChatMoreMenu?.(false);}});
+  const oldFreeNav=document.querySelector('.bottom-nav-bar .nav-item.free-mesh');if(oldFreeNav)oldFreeNav.remove();
+  const oldLocalButton=document.getElementById('alwaha-local-network-open');if(oldLocalButton)oldLocalButton.remove();
 })();
 </script>
 </body>

@@ -132,6 +132,9 @@ jobs:
       - name: Run mobile performance and storage audit
         run: npm run audit:performance
 
+      - name: Run chat and feed regression audit
+        run: npm run audit:chat
+
       - name: Install npm dependencies
         shell: bash
         run: npm ci --no-audit --no-fund

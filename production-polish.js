@@ -223,7 +223,7 @@
     try { stopLayeredRingtone(); } catch (_) {}
   }
   function ringtoneChoice() {
-    // One-time rollout: switch the previous default to Marimba Bloom, then preserve user choice.
+    // One-time rollout: switch the old default to Marimba Bloom, then preserve a manual choice.
     if (safeGet('alwaha_call_ringtone_choice_version') !== '2') {
       safeSet('alwaha_call_ringtone_choice_version', '2');
       safeSet('alwaha_ringtone_choice', 'marimba_bloom');
