@@ -12,7 +12,8 @@
     "prebuild": "node scripts/vendor-assets.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
-    "audit:chat": "node scripts/chat-release-audit.mjs"
+    "audit:chat": "node scripts/chat-release-audit.mjs",
+    "audit:compatibility": "node scripts/compatibility-audit.mjs"
   },
   "engines": {
     "node": ">=22"

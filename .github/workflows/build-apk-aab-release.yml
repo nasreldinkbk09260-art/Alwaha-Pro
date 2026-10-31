@@ -63,6 +63,8 @@ jobs:
           test -s scripts/native-back-handler.mjs
           test -s games.js
           test -s production-polish.js
+          test -s compatibility.js
+          test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
           test -s assets/backgrounds/bg-nebula.webp
@@ -109,6 +111,8 @@ jobs:
           node --check sw.js
           node --check games.js
           node --check production-polish.js
+          node --check compatibility.js
+          find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
           node <<'NODE'
           const fs = require('node:fs');
@@ -135,6 +139,9 @@ jobs:
       - name: Run chat and feed regression audit
         run: npm run audit:chat
 
+      - name: Run Android device compatibility audit
+        run: npm run audit:compatibility
+
       - name: Install npm dependencies
         shell: bash
         run: npm ci --no-audit --no-fund
@@ -149,6 +156,7 @@ jobs:
           test -s dist/sw.js
           test -s dist/icon.png
           test -s dist/production-polish.js
+          test -s dist/compatibility.js
           test -s dist/alwaha-native-back-handler.js
           test -s dist/assets/sounds/saffron_tide.mp3
           test -s dist/assets/sounds/marimba_bloom.mp3

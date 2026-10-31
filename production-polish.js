@@ -95,10 +95,21 @@
   }
 
   const nativeRegister = window.handleNewUserRegistrationSubmit;
+  let registrationInFlight = false;
   if (typeof nativeRegister === 'function') {
     window.handleNewUserRegistrationSubmit = async function (...args) {
+      if (registrationInFlight) return undefined;
       const confirm = $('reg-confirm-password');
+      const form = $('sub-prof-register');
+      const button = form && form.querySelector('button[onclick="handleNewUserRegistrationSubmit()"]');
+      const originalText = button ? button.textContent : '';
+      registrationInFlight = true;
       if (confirm && !confirm.value) confirm.value = $('reg-password')?.value || '';
+      if (button) {
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.innerHTML = '<span class="alwaha-button-spinner" aria-hidden="true"></span><span>جاري إنشاء الحساب...</span>';
+      }
       try {
         return await nativeRegister.apply(this, args);
       } catch (error) {
@@ -107,8 +118,20 @@
         return undefined;
       } finally {
         if (confirm) confirm.value = '';
+        if (button) {
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+          button.textContent = originalText || 'إنشاء الحساب مجانًا';
+        }
+        registrationInFlight = false;
       }
     };
+  }
+  if (!document.getElementById('alwaha-registration-progress-style')) {
+    const style = document.createElement('style');
+    style.id = 'alwaha-registration-progress-style';
+    style.textContent = '.alwaha-button-spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-left-color:transparent;border-radius:50%;vertical-align:middle;margin-inline-end:8px;animation:alwaha-spin .75s linear infinite}@keyframes alwaha-spin{to{transform:rotate(360deg)}}#sub-prof-register button[aria-busy="true"]{opacity:.78;cursor:wait}';
+    document.head.appendChild(style);
   }
 
   // Multi-layer space-inspired ringing: warm chord, glassy arpeggio, soft low pulse and a short echo.

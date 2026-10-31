@@ -24,6 +24,9 @@ const checks = [
   ['feed retry state', 'إعادة المحاولة'],
   ['feed no network state', 'لا يوجد اتصال بالإنترنت'],
   ['feed request race guard', 'alwahaHomeFeedRequestId'],
+  ['feed authentication has a deadline', 'alwahaUiDeadline(getCurrentAuthUser(), 1400, null)'],
+  ['API request timeout covers response body', 'const requestPromise = (async () =>'],
+  ['legacy WebView has AbortController fallback', "typeof AbortController === 'function' ? new AbortController() : null"],
 ];
 let failures=0;
 for(const [label,needle] of checks){if(!html.includes(needle)){console.error('FAIL:',label);failures++;}else console.log('PASS:',label);}

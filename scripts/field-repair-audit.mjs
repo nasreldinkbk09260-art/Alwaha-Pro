@@ -25,7 +25,7 @@ else if (html.includes('respondFriendRequest') && html.includes('طلبات صد
 else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && migration.includes("fr.status = 'accepted'") && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if (sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+if ((sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') || sw.includes('alwaha-pro-v3.0.1-compatibility-20261030')) && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');

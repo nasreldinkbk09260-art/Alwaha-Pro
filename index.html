@@ -20,6 +20,7 @@
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
     <script src="./production-polish.js" defer></script>
+    <script src="./compatibility.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -525,6 +526,24 @@ img,video,canvas{max-width:100%}
 #voice-call-modal video{display:block}
 #active-chat-box{padding: max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom)) !important}
 @media(max-width:360px){.alwaha-chat-icon-btn{width:32px;height:32px;font-size:12px}.alwaha-chat-actions{gap:3px}.alwaha-chat-header{gap:5px}}
+</style>
+
+<style id="alwaha-compatibility-panel-style">
+#alwaha-device-compatibility{margin:10px 0 18px;padding:13px;border:1px solid #8bf4ff36;border-radius:13px;background:linear-gradient(135deg,#8bf4ff0c,#00ff8808);color:#eaf7ff}
+#alwaha-device-compatibility .alwaha-compat-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#alwaha-device-compatibility h4{margin:0;color:#8bf4ff;font-size:13px}
+#alwaha-device-compatibility p{font-size:10px;line-height:1.7;color:#a9bfd2;margin:5px 0}
+#alwaha-device-compatibility #alwaha-compat-score{font-size:22px;color:#8bf4ff;min-width:54px;text-align:center}
+#alwaha-device-compatibility .alwaha-compat-track{height:8px;margin:10px 0;border-radius:20px;background:#ffffff18;overflow:hidden}
+#alwaha-device-compatibility #alwaha-compat-bar{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb454,#00d9b3);transition:width .35s ease}
+#alwaha-device-compatibility #alwaha-compat-status{font-size:10px;color:#b8d9e8;margin:7px 0}
+#alwaha-device-compatibility #alwaha-compat-run{width:100%;min-height:42px;margin-top:7px;border:0;border-radius:10px;background:linear-gradient(110deg,#00d9b3,#83d7ff);color:#071722;font:700 12px Cairo,sans-serif}
+#alwaha-device-compatibility #alwaha-compat-run:disabled{opacity:.65}
+#alwaha-device-compatibility ul{margin:5px 0;padding-inline-start:20px;color:#ffd9b0;font-size:10px;line-height:1.9}
+#alwaha-device-compatibility .alwaha-compat-warning{color:#ffc887}
+#alwaha-device-compatibility .alwaha-compat-footnote{margin-top:8px;color:#8098ad}
+.alwaha-compat-lite *{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.alwaha-compat-lite #alwaha-touch-atmosphere,.alwaha-compat-lite .alwaha-wave{display:none!important}
 </style>
 
 </head>
@@ -1067,7 +1086,12 @@ img,video,canvas{max-width:100%}
 
         let deferredPrompt;
         function isAlwahaInstalledContext() {
-            return Boolean(window.Capacitor?.isNativePlatform?.()) || window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const cap = window.Capacitor;
+            const nativeCapacitor = !!(cap && ((typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) || (typeof cap.getPlatform === 'function' && ['android','ios'].includes(cap.getPlatform()))));
+            const nativeScheme = window.location && (window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:');
+            const androidWebView = /Android/i.test(navigator.userAgent || '') && /\bwv\b/i.test(navigator.userAgent || '');
+            const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+            return nativeCapacitor || nativeScheme || androidWebView || standalone;
         }
         function refreshAlwahaInstallShareActions() {
             const banner=document.getElementById('main-install-banner');
@@ -1428,7 +1452,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     if(memory.expiresAt<=now)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
                     return JSON.parse(JSON.stringify(memory.value));
                 }
-                const persisted=await readAlwahaPublicCache(cacheKey);
+                const persisted=await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                 if(persisted && Array.isArray(persisted.value)) {
                     const value=JSON.parse(JSON.stringify(persisted.value));
                     apiCache.set(cacheKey,{expiresAt:now+ALWAHA_PUBLIC_CACHE_MEMORY_TTL,value});
@@ -1440,7 +1464,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             let accessToken = SUPABASE_KEY;
             try {
-                const { data } = await supabaseClient?.auth.getSession();
+                const sessionResult = await alwahaUiDeadline(supabaseClient?.auth.getSession(), 1200, null);
+                const data = sessionResult && sessionResult.data;
                 if (data?.session?.access_token) accessToken = data.session.access_token;
             } catch (e) {}
             const headers = {
@@ -1453,22 +1478,38 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             let timeoutId = null;
             const previousCached=cacheable?apiCache.get(cacheKey)?.value:null;
             try {
-                controller = new AbortController();
-                timeoutId = setTimeout(() => controller.abort(), 8000);
-                const response = await fetch(url, {
+                controller = typeof AbortController === 'function' ? new AbortController() : null;
+                const requestOptions = {
                     ...fetchOptions,
-                    headers: { ...headers, ...(fetchOptions.headers || {}) },
-                    signal: controller.signal
-                });
-                if (timeoutId) clearTimeout(timeoutId);
-                const contentType = response.headers.get('content-type') || '';
-                const data = contentType.includes('application/json') ? await response.json() : await response.text();
+                    headers: { ...headers, ...(fetchOptions.headers || {}) }
+                };
+                if (controller) requestOptions.signal = controller.signal;
+                const requestPromise = (async () => {
+                    const response = await fetch(url, requestOptions);
+                    const contentType = response.headers.get('content-type') || '';
+                    const data = contentType.includes('application/json') ? await response.json() : await response.text();
+                    return { response, data };
+                })();
+                const requestResult = await Promise.race([
+                    requestPromise,
+                    new Promise((resolve, reject) => {
+                        timeoutId = setTimeout(() => {
+                            try { if (controller) controller.abort(); } catch (abortError) {}
+                            const timeoutError = new Error('Alwaha request timed out');
+                            timeoutError.name = 'TimeoutError';
+                            reject(timeoutError);
+                        }, 8000);
+                    })
+                ]);
+                if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+                const response = requestResult.response;
+                const data = requestResult.data;
                 if (!response.ok) {
                     const serverMessage = (data && typeof data === 'object') ? (data.message || data.error_description || data.hint || data.details || data.error || '') : String(data || '');
                     window.__alwahaLastApiError = { status: response.status, message: String(serverMessage).slice(0, 240), code: data && typeof data === 'object' ? String(data.code || '') : '' };
                     if(!__alwahaBackgroundRefresh)console.warn('Supabase Status:', response.status, data);
                     if (cacheable && !__alwahaBackgroundRefresh) {
-                        const fallback = await readAlwahaPublicCache(cacheKey);
+                        const fallback = await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                         if (fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                     }
                     return null;
@@ -1489,7 +1530,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 window.__alwahaLastApiError = { status: 0, message: error?.name === 'AbortError' ? 'انتهت مهلة الاتصال' : 'تعذر الاتصال بالخادم', code: error?.name || 'NETWORK_ERROR' };
                 if(!__alwahaBackgroundRefresh)console.warn('Supabase Request Error:', error);
                 if(cacheable) {
-                    const fallback = await readAlwahaPublicCache(cacheKey);
+                    const fallback = await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                     if(fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                 }
                 return null;
@@ -2170,7 +2211,7 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                     container.innerHTML = '<div role="status" aria-live="polite" style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد منشورات حالياً. اسحب للتحديث أو أعد المحاولة لاحقاً.</div>';
                     return;
                 }
-                const me = await getCurrentAuthUser();
+                const me = await alwahaUiDeadline(getCurrentAuthUser(), 1400, null);
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 const mine = me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`), 1200, []) : [];
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
