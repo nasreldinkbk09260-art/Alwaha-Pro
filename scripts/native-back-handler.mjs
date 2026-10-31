@@ -1,4 +1,8 @@
 import { App } from '@capacitor/app';
+import { registerPlugin } from '@capacitor/core';
+
+const AlwahaAudioRoute = registerPlugin('AlwahaAudioRoute');
+window.alwahaAudioRoute = AlwahaAudioRoute;
 
 function handleAndroidBack() {
   if (typeof window.navigateBack === 'function') {

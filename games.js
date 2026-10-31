@@ -20,6 +20,11 @@
     const style = document.createElement('style');
     style.id = 'alwaha-games-v283-style';
     style.textContent = `
+      /* ALWAHA FIELD REPAIR: viewport-safe room dialog and legacy WebView fallback */
+      .game-modal-overlay{position:fixed!important;inset:0!important;width:100%!important;height:100vh!important;z-index:2147482500!important;align-items:center!important;justify-content:center!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:12px!important}
+      #alwaha-multiplayer-room .game-modal-card{width:calc(100vw - 24px)!important;max-width:480px!important;max-height:calc(100vh - 24px)!important;margin:auto!important;overflow-y:auto!important;box-sizing:border-box!important}
+      @supports(height:100dvh){.game-modal-overlay{height:100dvh!important}#alwaha-multiplayer-room .game-modal-card{max-height:calc(100dvh - 24px)!important}}
+
       .mp-game-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:12px 0 20px}
       .mp-game-card{border:1px solid #ffffff20;background:linear-gradient(145deg,#142033,#0c111d);border-radius:16px;padding:14px;min-width:0}
       .mp-game-icon{font-size:34px;margin-bottom:7px}.mp-game-title{font-size:16px;color:#fff;font-weight:900}.mp-game-desc{font-size:11px;line-height:1.8;color:#b7c1d1;min-height:43px;margin:7px 0 11px}
@@ -121,7 +126,7 @@
     let modal = $('alwaha-multiplayer-room');
     if (modal) modal.remove();
     modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay';
-    modal.innerHTML = `<div class="game-modal-card" style="width:min(96vw,480px);max-height:92vh"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button class="mp-action mp-muted" id="mp-room-close">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
+    modal.innerHTML = `<div class="game-modal-card" style="width:calc(100vw - 24px);max-width:480px;max-height:calc(100vh - 24px);margin:auto;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button class="mp-action mp-muted" id="mp-room-close">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
     document.body.appendChild(modal); document.body.classList.add('modal-active');
     $('mp-room-close').onclick = closeRoom;
     modal.addEventListener('click', ev => { if (ev.target === modal) closeRoom(); });

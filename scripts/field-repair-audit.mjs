@@ -25,12 +25,23 @@ else if (html.includes('respondFriendRequest') && html.includes('طلبات صد
 else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && migration.includes("fr.status = 'accepted'") && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if ((sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') || sw.includes('alwaha-pro-v3.0.1-compatibility-20261030')) && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+if ((sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') || sw.includes('alwaha-pro-v3.0.1-compatibility-20261031')) && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');
 if (html.includes("profile?.is_admin") && html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.'")) pass('embedded admin review UI has role guard');
 else fail('embedded admin role guard missing');
+if (!html.includes('toggleFreeMeshShareSystem') && !html.includes('free-mode-toggle-main-btn') && !html.includes('local-share-file-btn')) pass('obsolete local file sharing widget removed');
+else fail('obsolete local file sharing widget remains');
+if (html.includes('speakerRouteBtn') && html.includes('setAlwahaCallSpeaker(false,true)') && html.includes('toggleCallSpeaker')) pass('native call audio defaults to earpiece with optional speaker control');
+else fail('native call audio route controls missing');
+if (html.includes('notification-badge-nav') && html.includes('refreshAlwahaNotificationBadge') && html.includes("table:'friend_requests'")) pass('global unread badge and friend request realtime updates present');
+else fail('global notifications or friend request realtime updates missing');
+if (html.includes('alwaha-notifications-open') && html.includes('alwaha-notification-panel')) pass('global notification viewport overlay present');
+else fail('global notification overlay missing');
+if (html.includes('window.alwahaAudioRoute?.shareApk') && html.includes('share-app-btn-main')) pass('native Android APK sharing is connected to the app share button');
+else fail('native Android APK share action missing');
+
 if (!fs.existsSync('admin-app')) console.log('INFO: standalone admin-app directory is absent from this supplied source bundle; only embedded admin UI could be audited.');
 if (notes.includes('لم يتم التحقق') || notes.includes('لم تُختبر') || notes.includes('لم تتوفر')) pass('repair notes record non-verified items');
 else console.log('WARN: ensure repair notes distinguish static checks from real-device/production tests.');

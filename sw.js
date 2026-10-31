@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.1-compatibility-20261030';
+const CACHE_NAME = 'alwaha-pro-v3.0.1-compatibility-20261031';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

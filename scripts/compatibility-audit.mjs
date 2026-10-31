@@ -25,7 +25,7 @@ for (const [label, condition] of [
   ['native app install banner is suppressed', html.includes('const androidWebView =') && html.includes('nativeCapacitor || nativeScheme || androidWebView')],
   ['build includes compatibility module', build.includes("'compatibility.js'")],
   ['service worker precaches compatibility module', sw.includes("'./compatibility.js'")],
-  ['service worker cache namespace changed', sw.includes('compatibility-20261030')],
+  ['service worker cache namespace changed', sw.includes('compatibility-20261031')],
   ['CI runs compatibility audit', workflow.includes('npm run audit:compatibility')]
 ]) condition ? pass(label) : fail(label);
 const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;

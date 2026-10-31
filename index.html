@@ -117,7 +117,7 @@
         }
         .camera-video-preview { width:100%; height:100%; object-fit:cover; border-radius:10px; background:#000; }
 
-        .game-modal-overlay,.local-share-card { position:fixed; inset:0; z-index:99999990; background:rgba(0,0,0,.88); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:18px; }
+        .game-modal-overlay { position:fixed; inset:0; z-index:99999990; background:rgba(0,0,0,.88); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:18px; }
         .game-modal-card { width:min(96vw,420px); max-height:90vh; overflow:auto; background:#101827; border:1px solid rgba(0,255,255,.5); border-radius:20px; padding:18px; box-shadow:0 0 35px rgba(0,255,255,.2); }
         .memory-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:15px; }
         .memory-card { height:62px; border-radius:12px; border:1px solid rgba(0,255,255,.25); background:rgba(255,255,255,.05); color:transparent; font-size:25px; cursor:pointer; }
@@ -546,6 +546,17 @@ img,video,canvas{max-width:100%}
 .alwaha-compat-lite #alwaha-touch-atmosphere,.alwaha-compat-lite .alwaha-wave{display:none!important}
 </style>
 
+<style>
+/* ALWAHA FIELD REPAIR 2026-10-31 */
+.game-modal-overlay{position:fixed!important;inset:0!important;width:100%!important;height:100vh!important;z-index:2147482500!important;align-items:center!important;justify-content:center!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:12px!important}
+.game-modal-overlay>.game-modal-card{width:calc(100vw - 24px)!important;max-width:520px!important;max-height:calc(100vh - 24px)!important;margin:auto!important;overflow-y:auto!important;box-sizing:border-box!important}
+@supports(height:100dvh){.game-modal-overlay{height:100dvh!important}.game-modal-overlay>.game-modal-card{max-height:calc(100dvh - 24px)!important}}
+#internal-notification-center.alwaha-notifications-open{position:fixed!important;inset:0!important;z-index:2147483000!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;overflow-y:auto!important;overflow-x:hidden!important;margin:0!important;padding:12px!important;background:rgba(2,6,15,.94)!important;border:0!important;border-radius:0!important;box-sizing:border-box!important}
+.alwaha-notification-panel{width:100%;max-width:600px;max-height:calc(100vh - 24px);margin:auto;overflow:auto;background:#141923;border:1px solid #00ffff66;border-radius:16px;box-shadow:0 18px 60px #000b}
+@supports(height:100dvh){.alwaha-notification-panel{max-height:calc(100dvh - 24px)}}
+.alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
+.notification-nav-item{position:relative}
+</style>
 </head>
 <body>
 
@@ -592,9 +603,10 @@ img,video,canvas{max-width:100%}
     <section id="home-section" class="app-section active-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
-            <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ffff; padding:6px 12px; border-radius:20px; font-size:12px;" onclick="toggleInternalNotificationCenter()">
-                <i class="fa-solid fa-bell"></i> التنبيهات
-            </button>
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
+              <button type="button" id="share-app-btn-main" class="btn-action" style="background:#24364b;color:#fff;padding:7px 10px;border-radius:20px;font-size:11px;" onclick="shareAlwahaApp()"><i class="fa-solid fa-share-nodes"></i> مشاركة التطبيق</button>
+              <button class="btn-action" style="background:rgba(255,255,255,0.05);color:#00ffff;padding:6px 12px;border-radius:20px;font-size:12px;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> التنبيهات <span id="notification-badge-home" class="alwaha-notification-badge" style="display:none;position:static;vertical-align:middle;margin-inline-start:4px;"></span></button>
+            </div>
         </div>
 
         <!-- زر تثبيت التطبيق المباشر المُنقول إلى الصفحة الرئيسية -->
@@ -609,9 +621,6 @@ img,video,canvas{max-width:100%}
             <div style="display:flex;gap:6px;align-items:center;">
               <button id="install-app-btn-main" class="btn-action" style="display:none;background:#00ff88;color:#000;padding:8px 14px;border-radius:20px;font-size:11px;" onclick="promptAppInstallation()">
                 <i class="fa-solid fa-download"></i> تثبيت الآن
-              </button>
-              <button id="share-app-btn-main" class="btn-action" style="display:none;background:#24364b;color:#fff;padding:8px 12px;border-radius:20px;font-size:11px;" onclick="shareAlwahaApp()">
-                <i class="fa-solid fa-share-nodes"></i> مشاركة التطبيق
               </button>
             </div>
         </div>
@@ -784,6 +793,7 @@ img,video,canvas{max-width:100%}
             <button id="acceptCallBtn" class="btn-accept" style="display:none;"><i class="fa-solid fa-phone"></i> قبول</button>
             <button id="declineCallBtn" class="btn-decline" style="display:none;"><i class="fa-solid fa-phone-slash"></i> رفض</button>
             <button id="muteBtn" class="btn-mute" style="display:none;"><i class="fa-solid fa-microphone"></i> كتم الصوت</button>
+            <button id="speakerRouteBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleCallSpeaker()" aria-pressed="false"><i class="fa-solid fa-ear-listen"></i> تشغيل مكبر الصوت</button>
             <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
             <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
@@ -977,16 +987,6 @@ img,video,canvas{max-width:100%}
         <p style="font-size:10px;color:#8296ad;line-height:1.7;margin-top:10px;">لن تُقبل الصورة الافتراضية بدل الصورة الحقيقية في طلب التوثيق. لا ترفع مستند هوية حساس قبل تخصيص مساحة تخزين خاصة له.</p>
     </div>
 
-    <!-- 5. قسم وضع المشاركة الحرة -->
-    <section id="free-section" class="app-section">
-        <button type="button" id="alwaha-free-back-to-chat" class="btn-action" style="width:100%;margin-bottom:12px;background:#17263b;color:#b8f5ff;border:1px solid #8bf4ff44;padding:10px;border-radius:10px;font-size:12px;" onclick="showSection('chat-section', document.querySelector('.nav-item.chat'))"><i class="fa-solid fa-arrow-right"></i> العودة إلى الدردشة</button>
-        <h2 style="font-size:18px; color:#00ff88; margin-bottom:15px;"><i class="fa-solid fa-share-nodes"></i> مشاركة الملفات عبر نظام الهاتف</h2>
-        <button id="free-mode-toggle-main-btn" class="btn-action" style="width:100%; background:linear-gradient(90deg, #ff0055, #ff6b6b); color:#fff; padding:15px; border-radius:12px; font-size:14px; margin-bottom:15px;" onclick="toggleFreeMeshShareSystem()">
-            <i class="fa-solid fa-share-nodes"></i> عرض خيارات مشاركة الملفات
-        </button>
-        <div id="radar-live-results" style="display:none;"></div>
-    </section>
-
     <!-- 6. قسم الألعاب المكتمل -->
     <section id="games-section" class="app-section">
         <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> ألعاب Alwaha-Pro</h2>
@@ -1069,6 +1069,7 @@ img,video,canvas{max-width:100%}
         <button type="button" class="nav-item reels" aria-label="الريلز" onclick="showSection('reels-section', this)"><i class="fa-solid fa-clapperboard"></i><span>ريلز</span></button>
         <button type="button" class="nav-item games-nav" aria-label="الألعاب" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
         <button type="button" class="nav-item profile-me" aria-label="حسابي" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>حسابي</span></button>
+        <button type="button" class="nav-item notification-nav-item" aria-label="التنبيهات" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i><span>تنبيهات</span><span id="notification-badge-nav" class="alwaha-notification-badge" style="display:none;"></span></button>
     </nav>
 
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
@@ -1099,7 +1100,7 @@ img,video,canvas{max-width:100%}
             const share=document.getElementById('share-app-btn-main');
             const installed=isAlwahaInstalledContext();
             if(install) install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
-            if(share) share.style.display=installed?'inline-flex':'none';
+            if(share) share.style.display='inline-flex';
             if(banner) banner.style.display=(!installed && deferredPrompt)?'flex':'none';
         }
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -1111,8 +1112,21 @@ img,video,canvas{max-width:100%}
         window.addEventListener('DOMContentLoaded', refreshAlwahaInstallShareActions, {once:true});
         async function shareAlwahaApp() {
             const shareData={title:'Alwaha-Pro',text:'جرّب تطبيق Alwaha-Pro',url:window.location.href};
-            try { if(navigator.share) await navigator.share(shareData); else if(navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareData.url); triggerToastNotification('تم نسخ رابط التطبيق للمشاركة.','success'); } else triggerToastNotification('استخدم قائمة المتصفح لمشاركة رابط التطبيق.','info'); }
-            catch(error) { if(error?.name!=='AbortError') triggerToastNotification('تعذرت المشاركة الآن؛ حاول من قائمة النظام.','info'); }
+            try {
+                if (typeof isAlwahaNativeAndroid === 'function' && isAlwahaNativeAndroid()) {
+                    if (!window.alwahaAudioRoute?.shareApk) { triggerToastNotification('ميزة مشاركة ملف التطبيق غير جاهزة في هذه النسخة.', 'error'); return; }
+                    await window.alwahaAudioRoute.shareApk();
+                    return;
+                }
+                if (navigator.share) { await navigator.share(shareData); return; }
+                if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareData.url); triggerToastNotification('تم نسخ رابط التطبيق. أرسله عبر أي تطبيق مراسلة.', 'success'); return; }
+                window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:', shareData.url);
+            } catch(error) {
+                if (error?.name !== 'AbortError') {
+                    console.warn('[Alwaha Share] App sharing failed:', error);
+                    triggerToastNotification('تعذرت مشاركة التطبيق من هذا الجهاز.', 'error');
+                }
+            }
         }
 
         function promptAppInstallation() {
@@ -1175,7 +1189,6 @@ img,video,canvas{max-width:100%}
         let localUploadedProductBase64 = "";
         let localUploadedAvatarBase64 = "";
         let marketMultiImagesArray = [];
-        let meshShareActive = false;
         let audioMuted = localStorage.getItem('alwaha_audio_muted') === 'true' || false;
         let currentChatUser = "";
         let currentChatUserIdentifier = "";
@@ -1784,21 +1797,33 @@ function handleRegisterAvatarPick() {
         function playLuxuriousNotificationSound(kind = 'notification') { playAlwahaInboundSound(kind); }
 
 async function toggleInternalNotificationCenter() {
-            const center = document.getElementById('internal-notification-center');
-            if (!center) return;
-            if (center.style.display === 'block') { center.style.display = 'none'; return; }
+            const center=document.getElementById('internal-notification-center');if(!center)return;
+            if(center.classList.contains('alwaha-notifications-open')){center.classList.remove('alwaha-notifications-open');center.style.display='none';document.body.classList.remove('modal-active');return;}
+            if(center.parentElement!==document.body)document.body.appendChild(center);
+            center.classList.add('alwaha-notifications-open');center.style.display='flex';document.body.classList.add('modal-active');
             await renderInternalNotificationCenter();
+        }
+        async function refreshAlwahaNotificationBadge(){
+            const badges=[document.getElementById('notification-badge-home'),document.getElementById('notification-badge-nav')];
+            const me=await getCurrentAuthUser();
+            if(!me){badges.forEach(el=>{if(el){el.textContent='';el.style.display='none';}});return 0;}
+            const rows=await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false&select=id&limit=100`);
+            const count=Array.isArray(rows)?rows.length:0;
+            badges.forEach(el=>{if(!el)return;el.textContent=count>99?'99+':String(count);el.style.display=count?'inline-block':'none';el.setAttribute('aria-label',count+' إشعار غير مقروء');});
+            return count;
         }
 
         async function markNotificationsReadSilently(ids) {
             if (!ids?.length) return;
             const me = await getCurrentAuthUser(); if (!me) return;
             await supabaseFetch(`notifications?id=in.(${ids.map(encodeURIComponent).join(',')})&recipient_id=eq.${encodeURIComponent(me.id)}`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
+            await refreshAlwahaNotificationBadge();
         }
         async function markAllNotificationsRead() {
             const me = await requireAuthenticatedUser('سجل الدخول أولاً.'); if (!me) return;
             const result = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
             if (result === null) return triggerToastNotification('تعذر تحديث الإشعارات.', 'error');
+            await refreshAlwahaNotificationBadge();
             await renderInternalNotificationCenter();
         }
 
@@ -1807,8 +1832,11 @@ async function toggleInternalNotificationCenter() {
             if (!center) return;
             const me = await requireAuthenticatedUser('سجل الدخول أولاً لعرض التنبيهات.');
             if (!me) return;
-            center.style.display = 'block';
-            center.innerHTML = '<div style="padding:14px;text-align:center;color:#00ffff;font-size:12px;">جاري تحميل التنبيهات...</div>';
+            if(center.parentElement!==document.body)document.body.appendChild(center);
+            center.classList.add('alwaha-notifications-open');
+            center.style.display = 'flex';
+            document.body.classList.add('modal-active');
+            center.innerHTML = '<div class="alwaha-notification-panel"><div style="padding:14px;text-align:center;color:#00ffff;font-size:12px;">جاري تحميل التنبيهات...</div></div>';
             const [rows, pendingFriendRequests] = await Promise.all([
                 supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`),
                 supabaseFetch(`friend_requests?target_id=eq.${encodeURIComponent(me.id)}&status=eq.pending&select=id,requester_id,created_at&order=created_at.desc&limit=30`)
@@ -1863,7 +1891,7 @@ async function toggleInternalNotificationCenter() {
                     ${pendingCards}
                 </section>`;
             }
-            center.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><span>🔔 الإشعارات</span><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:5px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button></div>${directFriendRequestHtml}${parts}${adminHtml}`;
+            center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
             await markNotificationsReadSilently(notificationRows.filter(x => !x.is_read).map(x => x.id));
         }
 
@@ -1871,12 +1899,26 @@ async function toggleInternalNotificationCenter() {
             const me = await getCurrentAuthUser();
             if (!me || !supabaseClient) return;
             if (notificationChannel) { try { await supabaseClient.removeChannel(notificationChannel); } catch(e){} notificationChannel=null; }
-            notificationChannel = supabaseClient.channel(`notifications-${me.id}`).on('postgres_changes', {event:'INSERT', schema:'public', table:'notifications', filter:`recipient_id=eq.${me.id}`}, payload => {
-                if (payload?.new?.type !== 'message') playAlwahaInboundSound('notification');
-                triggerToastNotification(payload?.new?.title || 'لديك إشعار جديد.', 'info');
-                const center=document.getElementById('internal-notification-center'); if (center?.style.display==='block') renderInternalNotificationCenter();
+            const channel=supabaseClient.channel(`notifications-${me.id}`);
+            channel.on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`recipient_id=eq.${me.id}`},payload=>{
+                if(payload?.new?.type!=='message')playAlwahaInboundSound('notification');
+                triggerToastNotification(payload?.new?.title||'لديك إشعار جديد.','info');
+                refreshAlwahaNotificationBadge();
+                const center=document.getElementById('internal-notification-center');if(center?.classList.contains('alwaha-notifications-open'))renderInternalNotificationCenter();
             });
-            await new Promise(resolve=>notificationChannel.subscribe(()=>resolve()));
+            channel.on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_requests',filter:`target_id=eq.${me.id}`},()=>{
+                triggerToastNotification('وصلك طلب صداقة جديد. افتح التنبيهات للقبول أو الرفض.','info');
+                refreshAlwahaNotificationBadge();
+                const center=document.getElementById('internal-notification-center');if(center?.classList.contains('alwaha-notifications-open'))renderInternalNotificationCenter();
+            });
+            notificationChannel=channel;
+            await new Promise((resolve,reject)=>{
+                let settled=false,timer=null;
+                const finish=error=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);error?reject(error):resolve();};
+                timer=setTimeout(()=>finish(new Error('انتهت مهلة الاشتراك في التنبيهات.')),12000);
+                channel.subscribe((status,error)=>{if(status==='SUBSCRIBED')finish();else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status))finish(error||new Error('تعذر الاشتراك في التنبيهات: '+status));});
+            }).catch(error=>{console.warn('[Alwaha Notifications] Realtime subscription failed:',error);try{supabaseClient.removeChannel(channel);}catch(_){}if(notificationChannel===channel)notificationChannel=null;});
+            await refreshAlwahaNotificationBadge();
         }
 
         function showSection(id, element) {
@@ -2111,6 +2153,13 @@ async function publishNewHomePost() {
             modal.style.display = open ? 'flex' : 'none';
             document.body.classList.toggle('modal-active', !!open);
         }
+        let alwahaCallSpeakerOn=false;
+        function isAlwahaNativeAndroid(){const cap=window.Capacitor;return !!(cap&&(cap.getPlatform?.()==='android'||(cap.isNativePlatform?.()&&/Android/i.test(navigator.userAgent||''))));}
+        function updateCallSpeakerButton(){const b=document.getElementById('speakerRouteBtn');if(!b)return;b.innerHTML=alwahaCallSpeakerOn?'<i class="fa-solid fa-volume-high"></i> إيقاف مكبر الصوت':'<i class="fa-solid fa-ear-listen"></i> تشغيل مكبر الصوت';b.setAttribute('aria-pressed',alwahaCallSpeakerOn?'true':'false');}
+        async function setAlwahaCallSpeaker(enabled,silent=false){if(!isAlwahaNativeAndroid()||!window.alwahaAudioRoute?.setRoute){if(!silent)triggerToastNotification('التحكم بمسار الصوت متاح في نسخة Android المثبتة فقط.','info');return false;}try{await window.alwahaAudioRoute.setRoute({speaker:!!enabled});alwahaCallSpeakerOn=!!enabled;updateCallSpeakerButton();if(!silent)triggerToastNotification(alwahaCallSpeakerOn?'تم تحويل الصوت إلى مكبر الهاتف.':'تم تحويل الصوت إلى سماعة المكالمات.','success');return true;}catch(error){console.warn('[Alwaha Audio] route change failed:',error);if(!silent)triggerToastNotification('تعذر تغيير مسار الصوت على هذا الجهاز.','error');return false;}}
+        async function toggleCallSpeaker(){await setAlwahaCallSpeaker(!alwahaCallSpeakerOn,false);}
+        async function resetAlwahaCallAudioRoute(){alwahaCallSpeakerOn=false;updateCallSpeakerButton();try{if(isAlwahaNativeAndroid()&&window.alwahaAudioRoute?.resetRoute)await window.alwahaAudioRoute.resetRoute();}catch(error){console.warn('[Alwaha Audio] route reset failed:',error);}}
+
         function updateCallUi(state, meta = {}) {
             const stateEl = document.getElementById('call-state-pill');
             const indicator = document.getElementById('call-method-indicator');
@@ -2118,6 +2167,7 @@ async function publishNewHomePost() {
             const acceptBtn = document.getElementById('acceptCallBtn');
             const declineBtn = document.getElementById('declineCallBtn');
             const muteBtn = document.getElementById('muteBtn');
+            const speakerBtn = document.getElementById('speakerRouteBtn');
             const endBtn = document.getElementById('endCallBtn');
             const cameraMuteBtn = document.getElementById('cameraMuteBtn');
             const cameraSwitchBtn = document.getElementById('cameraSwitchBtn');
@@ -2133,6 +2183,7 @@ async function publishNewHomePost() {
             if (acceptBtn) acceptBtn.style.display = state === 'incoming' ? 'inline-block' : 'none';
             if (declineBtn) declineBtn.style.display = state === 'incoming' ? 'inline-block' : 'none';
             if (muteBtn) muteBtn.style.display = state === 'connected' ? 'inline-block' : 'none';
+            if (speakerBtn) speakerBtn.style.display = state === 'connected' && isAlwahaNativeAndroid() ? 'inline-block' : 'none';
             if (endBtn) endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none';
             const isVideo = activeCallManager?.mediaType === 'video' && ['outgoing','connecting','connected'].includes(state);
             if (videoStage) videoStage.style.display = isVideo ? 'block' : 'none';
@@ -2752,6 +2803,7 @@ async function renderConversationsList() {
                     frameRate: { ideal: 20, max: 24 }
                 } : false;
                 this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: videoConstraints });
+                if(typeof setAlwahaCallSpeaker==='function')await setAlwahaCallSpeaker(false,true);
                 if (this.localAudio) this.localAudio.srcObject = this.localStream;
                 if (this.localVideo && this.mediaType === 'video') {
                     this.localVideo.srcObject = this.localStream;
@@ -3171,6 +3223,7 @@ async function renderConversationsList() {
                 this.pendingRoomSignalsToSend = [];
                 this.roomPeerReady = false;
                 this.mediaType = 'audio';
+                await resetAlwahaCallAudioRoute();
                 if (this.roomChannel && this.client) {
                     try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
                 }
@@ -3650,16 +3703,7 @@ async function launchGameEngine(gameTitle) {
                 const questions=[['أين توجد حماية البطارية؟',['PMIC','Mic','Speaker'],'PMIC'],['ما القطعة المسؤولة عن الصوت؟',['Speaker','RAM','GPU'],'Speaker'],['ما القطعة التي تحفظ البيانات مؤقتاً؟',['RAM','Charging Port','Antenna'],'RAM'],['ما الجزء الخاص بالشحن السلكي؟',['Charging Port','Camera','Flash'],'Charging Port']];let q=0,score=0,start=performance.now();const next=()=>{if(q>=questions.length){finish(score,`أنهيت التحدي في ${((performance.now()-start)/1000).toFixed(1)} ثانية.`);return;}const [question,opts,answer]=questions[q];stage.innerHTML=`<div style="color:#fff;font-size:13px;margin:15px 0;">${question}</div>`+opts.map(o=>`<button class="choice-btn" data-v="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('');stage.querySelectorAll('.choice-btn').forEach(b=>b.onclick=()=>{if(b.dataset.v===answer)score+=25;q++;next();});};next();}
         }
 
-        /* --- مشاركة الملفات عبر واجهة المشاركة القياسية للهاتف --- */
-
-function toggleFreeMeshShareSystem() {
-            meshShareActive=!meshShareActive;
-            const btn=document.getElementById('free-mode-toggle-main-btn'); const results=document.getElementById('radar-live-results');
-            if(meshShareActive){
-                if(btn)btn.innerHTML='<i class="fa-solid fa-eye-slash"></i> إخفاء خيارات المشاركة';
-                if(results){results.style.display='block';results.innerHTML=`<div class="local-share-card" style="position:static;background:rgba(0,255,136,.05);backdrop-filter:none;display:block;padding:15px;"><div style="color:#00ff88;font-size:12px;font-weight:bold;">مشاركة الملفات عبر الهاتف جاهزة</div><div style="color:#aaa;font-size:10px;line-height:1.7;margin:7px 0 12px;">اختَر ملفاً لفتح قائمة المشاركة التي يوفرها نظام الهاتف. قد تحتاج الوجهة المختارة إلى اتصال أو تطبيق متوافق؛ هذه ليست شبكة ندّية مباشرة داخل Alwaha-Pro.</div><button class="btn-action" id="local-share-file-btn" style="width:100%;background:#00ff88;color:#000;padding:10px;border-radius:10px;font-size:12px;"><i class="fa-solid fa-file-arrow-up"></i> اختيار ملف ومشاركته</button></div>`;document.getElementById('local-share-file-btn').onclick=()=>pickFilesFromDevice({accept:'*/*',multiple:false,onFiles:async files=>{const file=files[0];if(!file)return;try{if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:'مشاركة Alwaha-Pro',files:[file]});}else if(navigator.share){await navigator.share({title:'مشاركة Alwaha-Pro',text:file.name});}else{const url=URL.createObjectURL(file);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);triggerToastNotification('تم تجهيز الملف للمشاركة/الحفظ.','success');}}catch(e){}}});}
-            }else{if(btn)btn.innerHTML='<i class="fa-solid fa-share-nodes"></i> عرض خيارات المشاركة';if(results){results.style.display='none';results.innerHTML='';}}
-        }
+        /* Legacy file-picker sharing removed; use the supported chat sharing controls. */
 
         /* --- وظائف الكاميرا الذكية والفلاتر --- */
         function openProfessionalCameraViewLegacy() {
@@ -3825,7 +3869,7 @@ function triggerAnimeAiConverterFilter() {
         }
 
         function runAlwahaSelfTest() {
-            const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','toggleFreeMeshShareSystem','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
+            const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
             else console.info('Alwaha-Pro 3.0.1 self-test: OK', getAlwahaCapabilityStatus());
@@ -3858,12 +3902,15 @@ function triggerAnimeAiConverterFilter() {
 
         // تهيئة كل المكونات بعد جاهزية DOM
         window.addEventListener('DOMContentLoaded', async () => {
+            const notificationCenter=document.getElementById('internal-notification-center');
+            if(notificationCenter&&notificationCenter.parentElement!==document.body)document.body.appendChild(notificationCenter);
             let savedTheme = 'default';
             try { savedTheme = localStorage.getItem('alwaha_theme') || 'default'; } catch (error) {}
             changeAppTheme(savedTheme, false);
             const ringtoneToggle=document.getElementById('alwaha-call-ringtone-enabled');if(ringtoneToggle)ringtoneToggle.checked=localStorage.getItem('alwaha_call_ringtone_enabled')!=='false';
             wireAlwahaSignupCountryPicker();
             runAlwahaSelfTest();
+            refreshAlwahaNotificationBadge();
             registerAlwahaServiceWorker();
             history.replaceState({ alwahaGuard: true }, '', location.href);
             history.pushState({ alwahaGuard: true }, '', location.href);
@@ -4006,7 +4053,7 @@ function triggerAnimeAiConverterFilter() {
                 else { document.getElementById('voice-call-modal').style.display = 'none'; document.body.classList.remove('modal-active'); }
                 return;
             }
-            for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay','.local-share-card']) {
+            for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay']) {
                 const box = document.querySelector(selector);
                 if (!alwahaIsVisible(box)) continue;
                 box.style.display = 'none';
@@ -4251,9 +4298,7 @@ function triggerAnimeAiConverterFilter() {
   card.append(status);
   const unavailable = document.createElement('button'); unavailable.type='button'; unavailable.disabled=true; unavailable.setAttribute('aria-disabled','true'); unavailable.textContent='المكالمات عبر البلوتوث لم تُنفذ بعد'; unavailable.style.cssText='width:100%;min-height:40px;margin:8px 0;padding:8px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff08;color:#9aa8b8;font:700 11px Cairo,sans-serif;opacity:.75;'; card.append(unavailable);
   const note = document.createElement('p'); note.textContent='بعد إضافة واختبار مكوّن Android الآمن سنفتح هذا الوضع للأصدقاء المقبولين فقط، مع رسائل ومكالمات محلية بحد زمني أولي، وتحكم واضح في الميكروفون والاتصال.'; card.append(note);
-  const share = document.createElement('button'); share.type='button'; share.className='primary'; share.textContent='فتح مشاركة الملفات القياسية في الهاتف';
-  share.addEventListener('click',()=>{closePanel();if(typeof window.showSection==='function')window.showSection('free-section',null);});
-  card.append(share); modal.append(card); document.body.append(modal);
+  modal.append(card); document.body.append(modal);
   let opener=null;
   function closePanel(){modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-active');if(opener?.isConnected)opener.focus();opener=null;}
   window.openAlwahaLocalNetworkPanel=function(){opener=document.activeElement;modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');close.focus();};

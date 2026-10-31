@@ -142,6 +142,9 @@ jobs:
       - name: Run Android device compatibility audit
         run: npm run audit:compatibility
 
+      - name: Run native call and field UI audit
+        run: npm run audit:native-call-ui
+
       - name: Install npm dependencies
         shell: bash
         run: npm ci --no-audit --no-fund
@@ -178,6 +181,68 @@ jobs:
           test -s android/app/build.gradle
           test -s android/app/src/main/AndroidManifest.xml
           test -s android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Register Alwaha native call audio routing plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+          activities = list(Path('android/app/src/main/java').rglob('MainActivity.java'))
+          if len(activities) != 1:
+              raise SystemExit(f'Expected exactly one MainActivity.java, found {len(activities)}.')
+          activity = activities[0]
+          source = activity.read_text(encoding='utf-8')
+          package_match = re.search(r'^package\s+([A-Za-z0-9_.]+);', source, re.M)
+          if not package_match:
+              raise SystemExit('Could not determine MainActivity package.')
+          template = Path('scripts/android/AlwahaAudioRoutePlugin.java').read_text(encoding='utf-8')
+          (activity.parent / 'AlwahaAudioRoutePlugin.java').write_text(template.replace('__ALWAHA_PACKAGE__', package_match.group(1)), encoding='utf-8')
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest = manifest_path.read_text(encoding='utf-8')
+          provider_marker = 'android:authorities="${applicationId}.alwaha-fileprovider"'
+          if provider_marker not in manifest:
+              provider = """
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.alwaha-fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/alwaha_file_paths" />
+                  </provider>
+              """
+              manifest, count = re.subn(r'</application>', provider + '\n    </application>', manifest, count=1)
+              if count != 1:
+                  raise SystemExit('Could not insert secure FileProvider into AndroidManifest.xml.')
+              manifest_path.write_text(manifest, encoding='utf-8')
+          xml_dir = Path('android/app/src/main/res/xml')
+          xml_dir.mkdir(parents=True, exist_ok=True)
+          (xml_dir / 'alwaha_file_paths.xml').write_text("""<?xml version="1.0" encoding="utf-8"?>
+          <paths xmlns:android="http://schemas.android.com/apk/res/android">
+              <cache-path name="shared_apk" path="shared-apk/" />
+          </paths>
+          """, encoding='utf-8')
+          if 'registerPlugin(AlwahaAudioRoutePlugin.class)' not in source:
+              if 'import android.os.Bundle;' not in source:
+                  source = source.replace(package_match.group(0), package_match.group(0) + '\n\nimport android.os.Bundle;', 1)
+              cls = re.search(r'public\s+class\s+MainActivity\s+extends\s+BridgeActivity\s*\{', source)
+              if not cls:
+                  raise SystemExit('Unexpected MainActivity structure; refusing plugin registration.')
+              body = cls.end()
+              on_create = re.search(r'@Override\s+public\s+void\s+onCreate\s*\(\s*Bundle\s+savedInstanceState\s*\)\s*\{', source[body:])
+              if on_create:
+                  pos = body + on_create.end()
+                  if not re.search(r'\bsuper\.onCreate\s*\(\s*savedInstanceState\s*\)\s*;', source[pos:]):
+                      raise SystemExit('MainActivity onCreate lacks super.onCreate.')
+                  source = source[:pos] + '\n        registerPlugin(AlwahaAudioRoutePlugin.class);' + source[pos:]
+              else:
+                  method = '\n        @Override\n        public void onCreate(Bundle savedInstanceState) {\n            registerPlugin(AlwahaAudioRoutePlugin.class);\n            super.onCreate(savedInstanceState);\n        }\n'
+                  source = source[:body] + method + source[body:]
+              activity.write_text(source, encoding='utf-8')
+          print('Registered AlwahaAudioRoutePlugin:', activity)
+          PY
+
 
       - name: Apply required Android permissions
         shell: bash
