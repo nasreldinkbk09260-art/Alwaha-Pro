@@ -16,7 +16,7 @@ INSERT INTO auth.users(id) VALUES('90000000-0000-0000-0000-000000000001') ON CON
 SET ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','90000000-0000-0000-0000-000000000001',false);
 INSERT INTO public.products(id,seller_id,title,price,seller_email)
-VALUES(987654321,'خصوصية البائع','100','private@example.invalid');
+VALUES(987654321,'90000000-0000-0000-0000-000000000001','خصوصية البائع','100','private@example.invalid');
 RESET ROLE;
 DO $data$
 BEGIN
