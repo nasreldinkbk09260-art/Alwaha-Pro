@@ -104,6 +104,7 @@ SECURITY INVOKER
 SET search_path TO ''
 AS $function$
 BEGIN
+  -- Trusted worker may archive an expired warranty.
   IF current_user IN ('postgres','service_role')
      AND OLD.status='active'
      AND NEW.status='archived'
@@ -113,6 +114,16 @@ BEGIN
      AND (to_jsonb(NEW)-'status') IS NOT DISTINCT FROM (to_jsonb(OLD)-'status') THEN
     RETURN NEW;
   END IF;
+
+  -- Trusted worker may stamp the one-time retention notice only.
+  IF current_user IN ('postgres','service_role')
+     AND OLD.retention_notice_sent_at IS NULL
+     AND NEW.retention_notice_sent_at IS NOT NULL
+     AND (to_jsonb(NEW)-'retention_notice_sent_at') IS NOT DISTINCT FROM
+         (to_jsonb(OLD)-'retention_notice_sent_at') THEN
+    RETURN NEW;
+  END IF;
+
   IF auth.uid() IS DISTINCT FROM OLD.buyer_id
      OR OLD.buyer_confirmed_at IS NOT NULL
      OR NEW.buyer_confirmed_at IS NULL
