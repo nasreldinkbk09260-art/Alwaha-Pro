@@ -4,7 +4,7 @@ INSERT INTO auth.users(id) VALUES
  ('92000000-0000-0000-0000-000000000002')
 ON CONFLICT DO NOTHING;
 INSERT INTO public.products(id,seller_id,title,price,description,seller_email)
-VALUES(987654322,'لقطة محادثة سوق','125','وصف الإعلان','private@example.invalid');
+VALUES(987654322,'91000000-0000-0000-0000-000000000001','لقطة محادثة سوق','125','وصف الإعلان','private@example.invalid');
 SET ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','92000000-0000-0000-0000-000000000002',false);
 INSERT INTO public.market_conversations(product_id,buyer_id,seller_id)
