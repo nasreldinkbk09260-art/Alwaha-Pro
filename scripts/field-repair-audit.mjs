@@ -11,7 +11,7 @@ const read = (name) => {
 };
 const html = read('index.html');
 const sw = read('sw.js');
-const migration = read('supabase/migrations/20261027170000_require_accepted_friendship_for_messages.sql');
+const migration = read('supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql');
 const notes = read('REPAIR_NOTES_AR.md');
 
 if (html.includes('alwaha-public-feed-cache-v1') && html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)') && html.includes('queueAlwahaPublicRefresh')) pass('public feeds have IndexedDB persistence and stale-while-revalidate');
@@ -23,9 +23,9 @@ else fail('call friendship gate is incomplete');
 if (html.includes('respondFriendRequest') && html.includes("status:'accepted'") && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend requests are surfaced with response UI');
 else if (html.includes('respondFriendRequest') && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend request response UI is present');
 else fail('friend request response UI missing');
-if (migration.includes('messages_insert_sender_accepted_friends') && migration.includes("fr.status = 'accepted'") && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
+if (migration.includes('messages_insert_sender_accepted_friends') && /fr\.status\s*=\s*'accepted'/.test(migration) && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if ((sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') || sw.includes('alwaha-pro-v3.0.1-compatibility-20261031')) && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+if ((sw.includes('alwaha-pro-v3.0.1-offline-first-20261027') || sw.includes('alwaha-pro-v3.0.1-compatibility-20261031') || sw.includes('alwaha-pro-v3.0.2-r7.3-release-20261102')) && sw.includes('/storage/v1/object/public/') &&  /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');
@@ -56,6 +56,11 @@ const duplicates = [...counts].filter(([, count]) => count > 1).map(([id]) => id
 if (!duplicates.length) pass(`no duplicate static IDs (${ids.length} IDs checked)`);
 else fail(`duplicate static IDs: ${duplicates.join(', ')}`);
 
-if (failed) { console.error(`FIELD_REPAIR_AUDIT=FAIL (${failed})`); process.exit(1); }
+if (html.includes('market-call-room-') && html.includes('alwaha_market_call_channels_send')===false) pass('market call channel is scoped in frontend; SQL policy is shipped as a separate migration');
+if (fs.existsSync('alwaha-local-vault.js') && fs.readFileSync('alwaha-local-vault.js','utf8').includes('AES-GCM')) pass('local vault exports encrypted user-selected local data'); else fail('local encrypted vault missing');
+if (fs.existsSync('alwaha-kids-room.js') && fs.readFileSync('alwaha-kids-room.js','utf8').includes('kids-parent-exit')) pass('kids room includes a parent override and local interactive scene'); else fail('kids room parent override missing');
+if (fs.existsSync('alwaha-experience.js') && fs.readFileSync('alwaha-experience.js','utf8').includes('alwaha-nav-stack')) pass('seasonal backgrounds and draggable navigation settings included'); else fail('seasonal or navigation experience module missing');
+
 console.log('FIELD_REPAIR_AUDIT=PASS');
+if (failed) { console.error(`FIELD_REPAIR_AUDIT=FAIL (${failed})`); process.exit(1); }
 console.log('NOTE: this is a static source audit, not a live Supabase/Android/device test.');

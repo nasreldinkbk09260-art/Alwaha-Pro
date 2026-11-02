@@ -1,6 +1,6 @@
 {
   "name": "alwaha-pro",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Alwaha-Pro Unified Web and Mobile Application",
   "private": true,
   "main": "index.html",
@@ -14,7 +14,12 @@
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
     "audit:chat": "node scripts/chat-release-audit.mjs",
     "audit:compatibility": "node scripts/compatibility-audit.mjs",
-    "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs"
+    "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs",
+    "audit:ui": "node scripts/ui-handler-audit.mjs",
+    "audit:retention-kids-vault": "node scripts/retention-kids-vault-audit.mjs",
+    "audit:admin": "node scripts/admin-app-audit.mjs",
+    "audit:marketplace-columns": "node scripts/marketplace-column-audit.mjs",
+    "audit:reconciliation": "node scripts/reconciliation-audit.mjs"
   },
   "engines": {
     "node": ">=22"

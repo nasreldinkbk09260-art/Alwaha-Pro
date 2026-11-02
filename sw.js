@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.1-compatibility-20261031';
+const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.3-release-20261102';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,9 @@ const PRECACHE_ASSETS = [
   './games.js',
   './production-polish.js',
   './compatibility.js',
+  './alwaha-local-vault.js',
+  './alwaha-experience.js',
+  './alwaha-kids-room.js',
   './alwaha-native-back-handler.js',
   './assets/chess.min.js',
   './assets/backgrounds/bg-nebula.webp',

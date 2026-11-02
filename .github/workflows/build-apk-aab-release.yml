@@ -13,6 +13,8 @@ on:
       - alwaha-social-ultimate-3.0.0
       - alwaha-social-ultimate-3.0.1
       - alwaha-social-3.0.1-mobile-performance-20261020
+      - alwaha-pro-3.0.2-release-20261102
+      - alwaha-pro-3.0.2-release-r7.3-20261102
   workflow_dispatch:
 
 permissions:
@@ -25,11 +27,50 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '3.0.1'
+  APP_VERSION: '3.0.2'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
+  sql-regression:
+    name: Validate marketplace SQL on disposable PostgreSQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaha_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaha_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: alwaha_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y postgresql-client
+          fi
+          psql --version
+      - name: Run marketplace migration and retention behavior tests
+        shell: bash
+        run: bash scripts/ci-validate-supabase-sql.sh
+
   build-android:
+    needs: sql-regression
     name: Build and verify signed Android APK/AAB
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -61,9 +102,13 @@ jobs:
           test -s capacitor.config.json
           test -s scripts/build-web.mjs
           test -s scripts/native-back-handler.mjs
+          test -s scripts/android/AlwahaAudioRoutePlugin.java
           test -s games.js
           test -s production-polish.js
           test -s compatibility.js
+          test -s alwaha-local-vault.js
+          test -s alwaha-experience.js
+          test -s alwaha-kids-room.js
           test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
@@ -84,15 +129,34 @@ jobs:
           test -s supabase/migrations/20261014195108_game_room_join_rpc_compatibility.sql
           test -s supabase/migrations/20261014195445_friend_request_column_privileges.sql
           test -s supabase/migrations/20261014195540_friend_request_policy_consolidation.sql
+          test -s supabase/migrations/20261014232322_notification_fail_safe.sql
+          test -s supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql
+          test -s supabase/migrations/20261101022015_marketplace_conversation_messaging.sql
+          test -s supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql
+          test -s supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql
+          test -s supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql
+          test -s supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql
+          test -s supabase/migrations/20261102150000_products_seller_email_privacy.sql
+          test -s supabase/tests/20261102150000_products_seller_email_privacy.sql
+          test -s supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql
+          test -s supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql
+          test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
+          test -s supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql
+          test -s supabase/tests/20261102100000_marketplace_retention_behavior.sql
+          test -s supabase/tests/ci-bootstrap.sql
+          test -s scripts/ci-validate-supabase-sql.sh
+          test -s admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql
+          test -s supabase/tests/20261102130000_admin_action_logs_source_recovery.sql
+          test -s supabase/functions/admin-api/index.ts
           test -s supabase/functions/username-auth/index.ts
           test -s supabase/functions/call-config/index.ts
-          grep -Fq 'Alwaha-Pro 3.0.1' index.html
+          grep -Fq 'Alwaha-Pro 3.0.2' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          if (pkg.version !== '3.0.1') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (pkg.version !== '3.0.2') throw new Error(`Unexpected package version: ${pkg.version}`);
           if (manifest.version !== pkg.version) throw new Error(`Manifest version mismatch: ${manifest.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
@@ -112,6 +176,9 @@ jobs:
           node --check games.js
           node --check production-polish.js
           node --check compatibility.js
+          node --check alwaha-local-vault.js
+          node --check alwaha-experience.js
+          node --check alwaha-kids-room.js
           find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
           node <<'NODE'
@@ -145,9 +212,31 @@ jobs:
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
 
+      - name: Run field repair regression audit
+        run: npm run audit:field-repair
+
+      - name: Run UI handler audit
+        run: npm run audit:ui
+
+      - name: Run marketplace column permission audit
+        run: npm run audit:marketplace-columns
+
+      - name: Run cross-release repair reconciliation audit
+        run: npm run audit:reconciliation
+
+      - name: Run retention, kids-room, and backup audit
+        run: npm run audit:retention-kids-vault
+
+      - name: Run standalone admin security audit
+        run: npm run audit:admin
+
       - name: Install npm dependencies
         shell: bash
         run: npm ci --no-audit --no-fund
+
+      - name: Audit dependency vulnerabilities
+        shell: bash
+        run: npm audit --audit-level=high
 
       - name: Build web application
         shell: bash
@@ -325,7 +414,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '3.0.1'
+          VERSION_NAME: '3.0.2'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -528,15 +617,15 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-3.0.1.apk
-          cp "$AAB" release/Alwaha-Pro-3.0.1.aab
-          sha256sum release/Alwaha-Pro-3.0.1.apk release/Alwaha-Pro-3.0.1.aab > release/SHA256SUMS.txt
+          cp "$APK" release/Alwaha-Pro-3.0.2.apk
+          cp "$AAB" release/Alwaha-Pro-3.0.2.aab
+          sha256sum release/Alwaha-Pro-3.0.2.apk release/Alwaha-Pro-3.0.2.aab > release/SHA256SUMS.txt
           echo 'Signed APK and AAB verified successfully.'
 
       - name: Upload APK/AAB artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-3.0.1-build-${{ github.run_number }}
+          name: Alwaha-Pro-3.0.2-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30

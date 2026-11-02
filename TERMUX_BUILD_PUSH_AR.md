@@ -1,41 +1,11 @@
-# أوامر تثبيت الإصلاح والبناء والرفع — Alwaha-Pro 3.0.1
+# الرفع والبناء — R7.3
 
-> الحزمة تستخرج محتويات المشروع فوق مجلد العمل نفسه؛ لا تحذف مجلد المشروع أو `.git`. لا تستخدم `git add -A` لأن المجلد قد يحتوي على نسخ احتياطية أو ملفات لا تخص الإصدار.
+من جذر مجلد المصدر بعد فك الحزمة شغّل مرة واحدة:
 
 ```bash
-set -eu
-ZIP="$HOME/storage/shared/Download/Alwaha-Pro-3.0.1-Repair-Bundle.zip"
-REPO="$HOME/Documents/Alwaha-Pro-3.0.1-worktree-20261020"
-BRANCH="alwaha-social-3.0.1-mobile-performance-20261020"
-
-test -f "$ZIP"
-unzip -o "$ZIP" -d "$HOME/Documents"
-cd "$REPO"
-test "$(git branch --show-current)" = "$BRANCH"
-git diff --check
-
-# تثبيت الحزم المحلية ثم التدقيق والبناء
-npm ci --no-audit --no-fund
-npm run audit:release
-npm run audit:performance
-npm run build
-test -s dist/index.html
-test -s dist/alwaha-native-back-handler.js
-grep -q 'home-post-details-modal' dist/index.html
-grep -q 'اتصال صوتي بالبائع' dist/index.html
-
-# مراجعة الملفات المخصصة فقط، ثم رفعها إلى فرع التطوير الموجود
-git status --short --branch
-git add .github/workflows/build-apk-aab-release.yml \
-  index.html package.json package-lock.json sw.js \
-  scripts/build-web.mjs scripts/performance-audit.mjs \
-  scripts/release-preflight.mjs scripts/native-back-handler.mjs \
-  supabase/migrations/20261024211500_marketplace_lifecycle_reviews.sql \
-  REPAIR_NOTES_AR.md TERMUX_BUILD_PUSH_AR.md
-git diff --cached --check
-git commit -m "Improve reels, exit flow, marketplace and public cache safety"
-git push origin "$BRANCH"
+bash ./TERMUX-PUSH-3.0.2-R7.3-20261102.sh
 ```
 
-## تنبيه إنتاج مهم
-نجاح بناء الويب لا يعني أن ميزات السوق المعتمدة على المخطط الجديد أصبحت مفعّلة على قاعدة الإنتاج. هناك ملفان تاريخيان مفقودان في المستودع (`20261011184718_alwaha_profile_privacy_clean_start.sql` و`20261011184813_verification_request_profile_requirements.sql`) وسير عمل migrations يمنع النشر حتى استعادتهما ومقارنتهما بقاعدة الإنتاج. **لا تشغّل `supabase db push` ولا تنشئ بدائل فارغة.** بعد الرفع، انتظر نجاح GitHub Actions، ثم نزّل مخرجات APK/AAB.
+السكريبت يتحقق من بصمة SHA وهوية التطبيق وحواجز التاريخ، ينشئ فرعاً مستقلاً من commit `f116998da546b05b65d52bf89871de1490dcc920` ويرفع المصدر كاملاً إلى `alwaha-pro-3.0.2-release-r7.3-20261102`. لا يدفع إلى main ولا ينشر موقعاً ولا يطبق migrations ولا يشغّل `supabase db push`.
+
+بعد الرفع يلزم GitHub Actions لعمل SQL regression ثم Web/Android build وتوقيع APK/AAB. لا تعد تشغيل npm audits في Termux؛ سجلات CI هي الدليل التالي.

@@ -1,61 +1,11 @@
-# رفع Alwaha-Pro 2.8.2 من الهاتف
+# الرفع والبناء — R7.3
 
-## 1) ارفع الملفات
+من جذر مجلد المصدر بعد فك الحزمة شغّل مرة واحدة:
 
-انسخ محتويات هذه الحزمة إلى مستودع Alwaha-Pro في GitHub.
+```bash
+bash ./TERMUX-PUSH-3.0.2-R7.3-20261102.sh
+```
 
-لا ترفع `node_modules` ولا `dist` ولا أي ملف مفاتيح Android.
+السكريبت يتحقق من بصمة SHA وهوية التطبيق وحواجز التاريخ، ينشئ فرعاً مستقلاً من commit `f116998da546b05b65d52bf89871de1490dcc920` ويرفع المصدر كاملاً إلى `alwaha-pro-3.0.2-release-r7.3-20261102`. لا يدفع إلى main ولا ينشر موقعاً ولا يطبق migrations ولا يشغّل `supabase db push`.
 
-احتفظ بأيقونتك الحالية `icon.png` في جذر المشروع.
-
-## 2) أضف GitHub Secrets مرة واحدة
-
-من الهاتف:
-
-`Repository → Settings → Secrets and variables → Actions → New repository secret`
-
-أضف:
-
-`SUPABASE_ACCESS_TOKEN`
-
-`SUPABASE_DB_PASSWORD`
-
-`ALWAHA_ADMIN_EMAIL`
-
-ثم أسرار توقيع Android الموجودة لديك إذا كانت مستخدمة في مشروعك:
-
-`ANDROID_KEYSTORE_BASE64`
-
-`ANDROID_KEYSTORE_PASSWORD`
-
-`ANDROID_KEY_ALIAS`
-
-`ANDROID_KEY_PASSWORD`
-
-## 3) بعد ذلك لا تحتاج SQL Editor
-
-كل Push إلى `main` يشغل الـworkflow الذي يطبق migration ويكمل بناء التطبيق.
-
-## 4) استلام التطبيق
-
-بعد نجاح الـworkflow افتح:
-
-`Actions` → أحدث تشغيل → `Artifacts`
-
-أو افتح:
-
-`Releases`
-
-وستجد:
-
-- `Alwaha-Pro-2.8.2.apk`
-- `Alwaha-Pro-2.8.2.aab`
-- `SHA256SUMS.txt`
-
-## 5) لا تغيّر Application ID
-
-الإصدار محفوظ على:
-
-`pro.alwaha.app`
-
-حتى يظل البناء تحديثًا لنفس التطبيق.
+بعد الرفع يلزم GitHub Actions لعمل SQL regression ثم Web/Android build وتوقيع APK/AAB. لا تعد تشغيل npm audits في Termux؛ سجلات CI هي الدليل التالي.

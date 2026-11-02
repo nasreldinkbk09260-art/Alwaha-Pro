@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 3.0.1</title>
+    <title>Alwaha-Pro 3.0.2</title>
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css">
     <!-- خط القاهرة -->
@@ -21,6 +21,9 @@
     <script src="./assets/vendor/supabase/supabase.js"></script>
     <script src="./production-polish.js" defer></script>
     <script src="./compatibility.js" defer></script>
+    <script src="./alwaha-local-vault.js" defer></script>
+    <script src="./alwaha-experience.js" defer></script>
+    <script src="./alwaha-kids-room.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -409,7 +412,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(max-width:360px){.bottom-nav-bar{left:4px!important;right:4px!important;gap:1px!important;padding-left:3px!important;padding-right:3px!important}.bottom-nav-bar .nav-item{font-size:7px}.bottom-nav-bar .nav-item i{width:31px;height:31px;font-size:14px}}
 @keyframes alwahaOrbFloat{0%,100%{translate:0 0}50%{translate:0 -2px}}
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
-/* 3.0.1 mobile performance guard */
+/* 3.0.2 mobile performance guard */
 @media (max-width: 768px), (pointer: coarse) {
   body:before { animation:none!important; filter:none!important; }
   #alwaha-touch-atmosphere .alwaha-stars { animation:none!important; }
@@ -423,7 +426,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 }
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=3.0.1" defer></script>
+    <script src="./games.js?v=3.0.2" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -668,6 +671,21 @@ img,video,canvas{max-width:100%}
             <div id="market-products-list-container" style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px;"></div>
         </div>
 
+        <section id="market-conversations-panel" style="margin:14px 0;padding:12px;border:1px solid rgba(139,244,255,.25);border-radius:16px;background:rgba(5,15,29,.55);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;">
+                <h3 style="margin:0;color:#8bf4ff;font-size:13px;"><i class="fa-solid fa-store"></i> محادثات السوق</h3>
+                <button type="button" class="btn-action" onclick="renderMarketConversationsList()" style="background:#17354a;color:#8bf4ff;padding:7px 11px;border-radius:9px;font-size:10px;">تحديث</button>
+            </div>
+            <div id="market-conversations-container" aria-live="polite"><div style="text-align:center;color:#9fb1c8;font-size:11px;padding:10px;">محادثات البيع والشراء مستقلة عن طلبات الصداقة.</div></div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #8bf4ff22;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                <h4 style="margin:0;color:#a8ffd7;font-size:12px;">سجل المعاملات والضمان</h4>
+                <button type="button" onclick="renderMarketTransactionsList()" class="btn-action" style="background:#173a2b;color:#a8ffd7;padding:6px 10px;border-radius:8px;font-size:10px;">تحديث السجل</button>
+              </div>
+              <div id="market-transactions-container" aria-live="polite"><div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">تظهر هنا تفاصيل المبيعات المتفق عليها والضمان والأرشيف.</div></div>
+            </div>
+        </section>
+
         <div id="market-sell-view" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:12px;">
             <h3 id="market-sell-title" style="font-size:14px; color:#ffd700; margin-top:0;">إضافة إعلان جديد في السوق</h3>
             <div style="margin-bottom:10px;">
@@ -757,7 +775,6 @@ img,video,canvas{max-width:100%}
             </div>
             <div class="alwaha-chat-actions" role="group" aria-label="خيارات الاتصال">
                 <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
-                <button type="button" class="alwaha-chat-icon-btn nearby" onclick="openAlwahaLocalNetworkPanel()" aria-label="الشبكة الحرة للأصدقاء القريبين" title="الشبكة الحرة"><i class="fa-solid fa-wifi"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn video" onclick="initiateVideoCall()" aria-label="مكالمة فيديو خفيفة" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
@@ -796,6 +813,7 @@ img,video,canvas{max-width:100%}
             <button id="speakerRouteBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleCallSpeaker()" aria-pressed="false"><i class="fa-solid fa-ear-listen"></i> تشغيل مكبر الصوت</button>
             <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
             <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
+            <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleAlwahaKidsMode()"><i class="fa-solid fa-wand-magic-sparkles"></i> وضع الأطفال</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
@@ -805,6 +823,11 @@ img,video,canvas{max-width:100%}
 
     <!-- 4. قسم الملف الشخصي -->
     <section id="profile-section" class="app-section">
+        <div id="alwaha-device-suite" style="margin:12px 0 20px;padding:13px;border:1px solid #8bf4ff2b;border-radius:16px;background:linear-gradient(145deg,#0e1a2b,#101725);">
+          <h3 style="margin:0 0 10px;color:#8bf4ff;font-size:14px;">مساحة الواحة وإعدادات التجربة</h3>
+          <div id="alwaha-local-vault-ui"></div>
+          <div id="alwaha-experience-ui" style="margin-top:14px;"></div>
+        </div>
         <div class="profile-card-header-view" style="text-align:center; padding:20px 0;">
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
             <h3 id="profile-name-display" style="margin:0; font-size:16px; color:#fff;">زائر Alwaha-Pro</h3>
@@ -918,18 +941,8 @@ img,video,canvas{max-width:100%}
           </label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-data-saver" type="checkbox"> توفير البيانات والتحميل الكسول للصور</label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
+          <p role="note" aria-disabled="true" style="margin:0;color:#91a4bb;font-size:9px;line-height:1.7;">المكالمات عبر البلوتوث لم تُنفذ بعد؛ المكالمات المتاحة حالياً تستخدم اتصال الإنترنت.</p>
           <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
-        </div>
-        <div style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;">
-          <h4 style="color:#8bf4ff;font-size:12px;margin:0 0 8px;">الاتصال والمشاركة القريبة</h4>
-          <p style="font-size:10px;color:#9fb2cc;line-height:1.8;margin:0 0 10px;">الوصول إلى مشاركة الملفات من الدردشة. الرسائل والملفات المباشرة بين جهازين والمكالمات المحلية ما زالت مرحلة تطوير واختبار.</p>
-          <button type="button" class="btn-action" style="width:100%;background:#17354a;color:#b8f5ff;border:1px solid #8bf4ff55;padding:10px;border-radius:10px;font-size:12px;" onclick="openAlwahaLocalNetworkPanel()"><i class="fa-solid fa-wifi"></i> إعدادات الشبكة القريبة</button>
-          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:9px;">
-            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">إشعارات الرسائل والمكالمات — لاحقًا</button>
-            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">التنزيل التلقائي للوسائط — لاحقًا</button>
-            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">إدارة التخزين — لاحقًا</button>
-            <button type="button" disabled aria-disabled="true" class="btn-action" style="background:#17263b;color:#91a4bb;border:1px dashed #51627a;padding:9px;border-radius:9px;font-size:10px;">نطاق الشبكة — بعد اختبار الأجهزة</button>
-          </div>
         </div>
 <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
         <button class="btn-action" style="width:100%; background:rgba(255,0,85,0.1); color:#ff0055; border:1px solid #ff0055; padding:12px; border-radius:8px; font-size:13px;" onclick="clearAppCacheKeepData()">
@@ -1075,11 +1088,11 @@ img,video,canvas{max-width:100%}
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "3.0.1";
+            const currentAppVersion = "3.0.2";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.1 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.2 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
@@ -1194,10 +1207,15 @@ img,video,canvas{max-width:100%}
         let currentChatUserIdentifier = "";
         let currentChatUserId = "";
         let directMessageChannel = null;
+        let currentMarketConversationId = '';
+        let marketMessageSendInFlight = false;
+        let marketConversationChannel = null;
+        let marketInboxChannel = null;
         let currentActiveCommentPostId = null;
         let callTimerInterval = null;
         let callStartedAt = 0;
         let activeCallManager = null;
+        window.alwahaPlayCallEffect = (kind='tap') => activeCallManager?.call?.playEffect?.(kind) || false;
         let cameraStream = null;
         let currentFacingMode = "user";
 
@@ -1662,6 +1680,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function signOutAlwaha() {
             if (!supabaseClient) return;
+            for (const channel of [marketConversationChannel, marketInboxChannel]) { if (channel) { try { await supabaseClient.removeChannel(channel); } catch (e) {} } }
+            marketConversationChannel = null; marketInboxChannel = null; currentMarketConversationId = '';
             try { await supabaseClient.auth.signOut(); } catch (e) { console.warn(e); }
             await clearLocalProfileCache();
             currentChatUser = '';
@@ -1819,6 +1839,14 @@ async function toggleInternalNotificationCenter() {
             await supabaseFetch(`notifications?id=in.(${ids.map(encodeURIComponent).join(',')})&recipient_id=eq.${encodeURIComponent(me.id)}`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
             await refreshAlwahaNotificationBadge();
         }
+        async function markSingleNotificationRead(notificationId) {
+            const me=await getCurrentAuthUser();if(!me||!notificationId)return;
+            const result=await supabaseFetch(`notifications?id=eq.${encodeURIComponent(notificationId)}&recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
+            if(result===null)return;
+            const card=[...document.querySelectorAll('[data-notification-id]')].find(node=>node.dataset.notificationId===String(notificationId));
+            if(card)card.style.background='transparent';
+            void refreshAlwahaNotificationBadge();
+        }
         async function markAllNotificationsRead() {
             const me = await requireAuthenticatedUser('سجل الدخول أولاً.'); if (!me) return;
             const result = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
@@ -1846,12 +1874,13 @@ async function toggleInternalNotificationCenter() {
             const parts = notificationRows.length ? notificationRows.map(n => {
                 let payload = {};
                 try { payload = JSON.parse(n.body || '{}'); } catch(e) {}
+                const friendRequestId = n.type === 'friend_request' ? String(payload.friend_request_id || '') : '';
                 const actions = n.type === 'friend_request'
-                    ? `<div style="display:flex;gap:6px;margin-top:8px;"><button class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','accepted')">قبول</button><button class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="respondFriendRequest('${escapeJs(payload.friend_request_id || '')}','rejected')">رفض</button></div>`
+                    ? (friendRequestId ? `<div style="display:flex;gap:6px;margin-top:8px;"><button type="button" class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();respondFriendRequest('${escapeJs(friendRequestId)}','accepted')">قبول</button><button type="button" class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();respondFriendRequest('${escapeJs(friendRequestId)}','rejected')">رفض</button></div>` : '<small style="display:block;color:#b7a7ad;margin-top:6px;">طلب الصداقة لم يعد متاحاً؛ حدّث قائمة الطلبات.</small>')
                     : (n.type === 'message'
-                        ? `<button class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>`
+                        ? `<button type="button" class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>`
                         : '');
-                return `<div style="padding:11px;border-bottom:1px solid rgba(255,255,255,.07);background:${n.is_read ? 'transparent':'rgba(0,255,255,.05)'};">
+                return `<div data-notification-id="${escapeJs(n.id)}" ${friendRequestId ? `data-friend-request-id="${escapeJs(friendRequestId)}"` : ''} onclick="markSingleNotificationRead('${escapeJs(n.id)}')" style="padding:11px;border-bottom:1px solid rgba(255,255,255,.07);background:${n.is_read ? 'transparent':'rgba(0,255,255,.05)'};">
                     <div style="display:flex;justify-content:space-between;gap:8px;"><strong style="color:#00ffff;font-size:11px;">${escapeHtml(n.title)}</strong><small style="color:#777;">${new Date(n.created_at).toLocaleString('ar-EG')}</small></div>
                     <div style="color:#ddd;font-size:10px;margin-top:4px;line-height:1.6;">${escapeHtml(n.type === 'friend_request' ? (payload.requester_name ? `أرسل لك ${payload.requester_name} طلب صداقة.` : 'أرسل لك أحد المستخدمين طلب صداقة.') : (n.type === 'message' ? 'لديك رسالة جديدة.' : (n.type === 'follow' ? ((payload.follower_name || 'عضو في الواحة') + ' بدأ بمتابعتك.') : (n.body || ''))))}</div>${actions}</div>`;
             }).join('') : '<div style="padding:14px;color:#aaa;font-size:11px;text-align:center;">لا توجد إشعارات حالياً.</div>';
@@ -1861,7 +1890,7 @@ async function toggleInternalNotificationCenter() {
                 const requesterIds=[...new Set(pendingFriendRequests.map(r=>r.requester_id).filter(Boolean))];
                 const requesterQuery=requesterIds.length?await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`):[];
                 const requesterMap=new Map((Array.isArray(requesterQuery)?requesterQuery:[]).map(u=>[String(u.id),u]));
-                directFriendRequestHtml=`<section aria-label="طلبات الصداقة المعلقة" style="padding:8px 10px;background:rgba(115,30,63,.18);border-bottom:1px solid rgba(210,90,130,.22);"><div style="font-size:12px;font-weight:700;color:#f3aec6;padding:4px 0 8px;">طلبات صداقة بانتظار ردك (${pendingFriendRequests.length})</div>${pendingFriendRequests.map(r=>{const u=requesterMap.get(String(r.requester_id))||{};const name=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';return `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);"><img src="${escapeHtml(u.avatar_url||'icon.png')}" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%;"><div style="flex:1;min-width:0;color:#eee;font-size:11px;">${escapeHtml(name)}<div style="color:#999;font-size:9px;margin-top:3px;">${escapeHtml(r.created_at?new Date(r.created_at).toLocaleString('ar-EG'):'طلب صداقة')}</div></div><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#00b978;color:#07140f;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#5b2435;color:#fff;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>`;}).join('')}</section>`;
+                directFriendRequestHtml=`<section aria-label="طلبات الصداقة المعلقة" style="padding:8px 10px;background:rgba(115,30,63,.18);border-bottom:1px solid rgba(210,90,130,.22);"><div style="font-size:12px;font-weight:700;color:#f3aec6;padding:4px 0 8px;">طلبات صداقة بانتظار ردك (${pendingFriendRequests.length})</div>${pendingFriendRequests.map(r=>{const u=requesterMap.get(String(r.requester_id))||{};const name=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';return `<div data-friend-request-id="${escapeJs(r.id)}" style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);"><img src="${escapeHtml(u.avatar_url||'icon.png')}" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%;"><div style="flex:1;min-width:0;color:#eee;font-size:11px;">${escapeHtml(name)}<div style="color:#999;font-size:9px;margin-top:3px;">${escapeHtml(r.created_at?new Date(r.created_at).toLocaleString('ar-EG'):'طلب صداقة')}</div></div><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#00b978;color:#07140f;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#5b2435;color:#fff;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>`;}).join('')}</section>`;
             }
             const profile = await getCurrentProfile();
             let adminHtml = '';
@@ -1892,7 +1921,7 @@ async function toggleInternalNotificationCenter() {
                 </section>`;
             }
             center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
-            await markNotificationsReadSilently(notificationRows.filter(x => !x.is_read).map(x => x.id));
+
         }
 
         async function subscribeToNotifications() {
@@ -2189,6 +2218,7 @@ async function publishNewHomePost() {
             if (videoStage) videoStage.style.display = isVideo ? 'block' : 'none';
             if (cameraMuteBtn) cameraMuteBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
             if (cameraSwitchBtn) cameraSwitchBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
+            const kidsBtn=document.getElementById('kidsModeBtn');if(kidsBtn)kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none';
             if (state === 'idle') {
                 if (callTimer) callTimer.textContent = '00:00';
             }
@@ -2237,7 +2267,7 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
             }
         }
 
-        async function renderHomePostsFeed() {
+        async function renderHomePostsFeedInternal() {
             const container = document.getElementById('home-posts-feed-container');
             if (!container) return;
             const requestId = ++alwahaHomeFeedRequestId;
@@ -2248,8 +2278,8 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
             }
             try {
                 const [posts, counts] = await Promise.all([
-                    supabaseFetch('posts?select=*&order=created_at.desc&limit=100'),
-                    supabaseFetch('post_like_counts?select=post_id,likes_count')
+                    alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null),
+                    alwahaUiDeadline(supabaseFetch('post_like_counts?select=post_id,likes_count'), 2200, [])
                 ]);
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 if (!Array.isArray(posts)) {
@@ -2287,6 +2317,14 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                 console.error('[Alwaha Feed] Render failed:', error);
                 if (requestId === alwahaHomeFeedRequestId && container.isConnected) renderHomeFeedProblem(container, 'حدث خطأ أثناء تجهيز المنشورات على الجهاز. أعد المحاولة.');
             }
+        }
+
+        async function renderHomePostsFeed() {
+            if (window.__alwahaHomeFeedInFlight) return window.__alwahaHomeFeedInFlight;
+            const task = renderHomePostsFeedInternal();
+            window.__alwahaHomeFeedInFlight = task;
+            try { return await task; }
+            finally { if (window.__alwahaHomeFeedInFlight === task) window.__alwahaHomeFeedInFlight = null; }
         }
 
         async function shareTextContent(title, text) {
@@ -2621,13 +2659,20 @@ async function loadAllRegisteredUsersList() {
             const result=await supabaseFetch('friend_requests',{method:'POST',body:JSON.stringify({requester_id:user.id,target_id:targetId,status:'pending'})});if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر إرسال طلب الصداقة. تحقق من الاتصال أو وجود طلب سابق.','error');triggerToastNotification('تم إرسال طلب الصداقة.','success');loadAllRegisteredUsersList();
         }
 
-                async function respondFriendRequest(requestId,status) {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً.'); if(!user)return;
-            if(!['accepted','rejected'].includes(status))return;
-            const result=await supabaseFetch(`friend_requests?id=eq.${encodeURIComponent(requestId)}&target_id=eq.${encodeURIComponent(user.id)}`,{method:'PATCH',body:JSON.stringify({status}),prefer:'return=representation'});
-            if(!Array.isArray(result)||!result.length)return triggerToastNotification('لم يتغير الطلب؛ ربما تمت معالجته بالفعل أو أن الطلب لا يخص حسابك.','error');
+        async function respondFriendRequest(requestId,status) {
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً.');if(!user)return;
+            if(!requestId||!['accepted','rejected'].includes(status))return;
+            const relatedRows=[...document.querySelectorAll('[data-friend-request-id]')].filter(row=>row.dataset.friendRequestId===String(requestId));
+            const notificationIds=relatedRows.map(row=>row.dataset.notificationId).filter(Boolean);
+            const buttons=[];relatedRows.forEach(row=>row.querySelectorAll('button').forEach(button=>buttons.push(button)));
+            const previous=buttons.map(button=>button.textContent);
+            buttons.forEach(button=>{button.disabled=true;button.textContent='جارٍ التحديث…';});
+            const result=await supabaseFetch(`friend_requests?id=eq.${encodeURIComponent(requestId)}&target_id=eq.${encodeURIComponent(user.id)}&status=eq.pending`,{method:'PATCH',body:JSON.stringify({status}),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length){buttons.forEach((button,index)=>{button.disabled=false;button.textContent=previous[index]||'إعادة المحاولة';});return triggerToastNotification('لم يتغير الطلب؛ ربما تمت معالجته بالفعل أو أن الطلب لا يخص حسابك.','error');}
+            relatedRows.forEach(row=>row.remove());
+            if(notificationIds.length)void markNotificationsReadSilently(notificationIds);else void refreshAlwahaNotificationBadge();
             triggerToastNotification(status==='accepted'?'تم قبول طلب الصداقة.':'تم رفض طلب الصداقة.','success');
-            await Promise.all([renderInternalNotificationCenter(),loadAllRegisteredUsersList()]);
+            void loadAllRegisteredUsersList();
         }
 
         async function reviewVerificationRequest(requestId,status) {
@@ -2755,6 +2800,150 @@ async function loadAllRegisteredUsersList() {
 
         }
 
+async function loadMarketMessages() {
+            const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
+            if(!holder||!me||!currentMarketConversationId)return;
+            holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
+            const rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:16px;font-size:11px;">تعذر تحميل رسائل السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
+            await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';return;}
+            holder.innerHTML=rows.map(row=>{const mine=row.sender_id===me.id;return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:86%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(row.message)}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}).join('');
+            holder.scrollTop=holder.scrollHeight;
+        }
+        async function sendMarketMessage() {
+            if(marketMessageSendInFlight)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لإرسال رسالة للبائع.');if(!me||!currentMarketConversationId)return;
+            const input=document.getElementById('market-chat-input'),message=input?.value?.trim()||'';
+            if(!message)return triggerToastNotification('اكتب رسالتك أولاً.','info');
+            const modal=document.getElementById('market-chat-modal'),button=modal?.querySelector('button[onclick="sendMarketMessage()"]');
+            marketMessageSendInFlight=true;if(button){button.disabled=true;button.textContent='جارٍ الإرسال…';}
+            try{
+                const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify({conversation_id:currentMarketConversationId,sender_id:me.id,message}),prefer:'return=representation'});
+                if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':'تعذر إرسال رسالة السوق؛ احتفظنا بالنص لمحاولة أخرى.','error');return;}
+                if(input)input.value='';
+                triggerToastNotification('تم إرسال رسالتك إلى البائع.','success');
+                // The database insert is the success boundary; refreshes must not hold the send button.
+                void loadMarketMessages();
+                void renderMarketConversationsList();
+            }finally{marketMessageSendInFlight=false;if(button){button.disabled=false;button.textContent='إرسال';}}
+        }
+        async function subscribeToMarketConversation() {
+            if(!supabaseClient||!currentMarketConversationId)return;
+            if(marketConversationChannel){try{await supabaseClient.removeChannel(marketConversationChannel);}catch(e){}marketConversationChannel=null;}
+            const id=currentMarketConversationId;
+            marketConversationChannel=supabaseClient.channel(`market-conversation-${id}`)
+                .on('postgres_changes',{event:'INSERT',schema:'public',table:'market_messages',filter:`conversation_id=eq.${id}`},async()=>{if(currentMarketConversationId===id)await loadMarketMessages();await renderMarketConversationsList();})
+                .subscribe();
+        }
+        async function openMarketConversationChat(conversationId,title,peerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لفتح محادثة السوق.');if(!me||!conversationId)return;
+            const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,buyer_id,seller_id&limit=1`);
+            const c=Array.isArray(rows)?rows[0]:null;
+            if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))return triggerToastNotification('هذه المحادثة غير متاحة لهذا الحساب.','error');
+            currentMarketConversationId=String(c.id);
+            let modal=document.getElementById('market-chat-modal');
+            if(!modal){
+                modal=document.createElement('div');modal.id='market-chat-modal';modal.className='game-modal-overlay';modal.style.zIndex='2147483000';
+                modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="محادثة السوق" style="width:min(96vw,470px);height:min(82dvh,690px);max-height:calc(100dvh - 26px);display:flex;flex-direction:column;overflow:hidden;background:#0c1728;border:1px solid #8bf4ff66;border-radius:20px;padding:13px;box-shadow:0 18px 60px #000b;">
+                    <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
+                    <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
+                    <div style="display:flex;gap:7px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button></div>
+                    <div style="font-size:9px;color:#8294aa;padding:5px 2px 0;">رسائل السوق مستقلة عن طلبات الصداقة ودردشة الأصدقاء.</div></section>`;
+                modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
+            }
+            const titleEl=document.getElementById('market-chat-title');if(titleEl)titleEl.textContent=title||'إعلان السوق';
+            modal.style.display='flex';document.body.classList.add('modal-active');await loadMarketMessages();await subscribeToMarketConversation();
+        }
+        function closeMarketConversationChat() {
+            const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
+            if(marketConversationChannel&&supabaseClient){supabaseClient.removeChannel(marketConversationChannel).catch(()=>{});marketConversationChannel=null;}
+            currentMarketConversationId='';document.body.classList.remove('modal-active');renderMarketConversationsList();
+        }
+        async function subscribeToMarketInbox() {
+            const me=await getCurrentAuthUser();if(!me||!supabaseClient||marketInboxChannel)return;
+            marketInboxChannel=supabaseClient.channel(`market-inbox-${me.id}`)
+                .on('postgres_changes',{event:'*',schema:'public',table:'market_messages'},async payload=>{
+                    if(currentMarketConversationId&&payload?.new?.conversation_id===currentMarketConversationId)await loadMarketMessages();
+                    if(document.getElementById('market-section')?.classList.contains('active-section'))await renderMarketConversationsList();
+                })
+                .on('postgres_changes',{event:'INSERT',schema:'public',table:'market_conversations'},async()=>{if(document.getElementById('market-section')?.classList.contains('active-section'))await renderMarketConversationsList();})
+                .subscribe();
+        }
+        async function renderMarketConversationsList() {
+            const holder=document.getElementById('market-conversations-container');if(!holder)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me)return;
+            holder.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:11px;padding:12px;">جاري تحميل محادثات السوق...</div>';
+            // Keep the base query compatible with production databases before the optional
+            // listing_snapshot / market_transactions migration has been applied.
+            const rows=await supabaseFetch(`market_conversations?select=id,product_id,buyer_id,seller_id,created_at&or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&order=created_at.desc&limit=100`);
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:14px;">تعذر تحميل محادثات السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
+            if(!rows.length){holder.innerHTML='<div style="text-align:center;color:#9fb1c8;font-size:11px;padding:14px;">لا توجد محادثات سوق بعد. افتح إعلاناً واضغط «هل ما زال متوفرًا؟» لبدء محادثة مع البائع.</div>';return;}
+            const ids=rows.map(r=>String(r.id)),productIds=[...new Set(rows.map(r=>r.product_id).filter(v=>v!==null&&v!==undefined).map(String))],peerIds=[...new Set(rows.map(r=>r.buyer_id===me.id?r.seller_id:r.buyer_id))],idFilter=ids.map(encodeURIComponent).join(',');
+            const [products,users,messages,transactions,snapshots]=await Promise.all([
+                productIds.length?supabaseFetch(`products?id=in.(${productIds.map(encodeURIComponent).join(',')})&select=id,title,status`):Promise.resolve([]),
+                peerIds.length?supabaseFetch(`user_directory?id=in.(${peerIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url,username`):Promise.resolve([]),
+                supabaseFetch(`market_messages?conversation_id=in.(${idFilter})&select=id,conversation_id,sender_id,message,created_at,read_at&order=created_at.desc&limit=500`),
+                supabaseFetch(`market_transactions?conversation_id=in.(${idFilter})&select=id,conversation_id,listing_snapshot,guarantee_days,guarantee_expires_at,retention_until,status&order=created_at.desc&limit=100`),
+                supabaseFetch(`market_conversations?id=in.(${idFilter})&select=id,listing_snapshot`)
+            ]);
+            const pm=new Map((Array.isArray(products)?products:[]).map(r=>[String(r.id),r])),um=new Map((Array.isArray(users)?users:[]).map(r=>[String(r.id),r])),txm=new Map((Array.isArray(transactions)?transactions:[]).map(r=>[String(r.conversation_id),r])),sm=new Map((Array.isArray(snapshots)?snapshots:[]).map(r=>[String(r.id),r.listing_snapshot||{}])),latest=new Map(),unread=new Map();
+            (Array.isArray(messages)?messages:[]).forEach(m=>{const id=String(m.conversation_id);if(!latest.has(id))latest.set(id,m);if(m.sender_id!==me.id&&!m.read_at)unread.set(id,(unread.get(id)||0)+1);});
+            holder.innerHTML=rows.map(c=>{
+                const id=String(c.id),peerId=c.buyer_id===me.id?c.seller_id:c.buyer_id,peer=um.get(String(peerId))||{},product=pm.get(String(c.product_id))||{},transaction=txm.get(id),snapshot=transaction?.listing_snapshot||sm.get(id)||{};
+                const name=([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'مستخدم'),last=latest.get(id),preview=last?.message||'بدأت محادثة بخصوص الإعلان',productTitle=product.title||snapshot.title||'إعلان محفوظ بعد الحذف';
+                const badge=unread.get(id)?`<span style="background:#ff5d9e;color:#160915;border-radius:12px;padding:3px 7px;font-size:9px;font-weight:800;">${unread.get(id)} جديدة</span>`:'';
+                return `<button type="button" onclick="openMarketConversationChat('${escapeJs(id)}','${escapeJs(name)} · ${escapeJs(productTitle)}','${escapeJs(peerId)}')" style="width:100%;display:flex;align-items:center;gap:10px;text-align:right;margin:0 0 8px;padding:10px;border:1px solid #8bf4ff26;border-radius:13px;background:#ffffff08;color:#fff;">
+                    <img src="${escapeHtml(peer.avatar_url||'icon.png')}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;">
+                    <span style="min-width:0;flex:1;display:block;"><span style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#8bf4ff;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>${badge}</span><span style="display:block;font-size:10px;color:#ffd86b;margin-top:2px;">${escapeHtml(productTitle)}</span><span style="display:block;font-size:10px;color:#a9b7c9;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</span></span></button>`;
+            }).join('');
+        }
+        async function renderMarketTransactionsList() {
+            const holder=document.getElementById('market-transactions-container');if(!holder)return;
+            const me=await getCurrentAuthUser();if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
+            holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
+            const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من تطبيق ترحيل 3.0.2.</div>`;return;}
+            if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">لا توجد معاملات مسجلة بعد.</div>';return;}
+            holder.innerHTML=rows.map(tx=>{
+                const snap=tx.listing_snapshot||{},warranty=Number(tx.guarantee_days||0),expiry=tx.guarantee_expires_at?new Date(tx.guarantee_expires_at).toLocaleDateString('ar-EG'):'—',retention=tx.retention_until?new Date(tx.retention_until).toLocaleDateString('ar-EG'):'—';
+                const role=tx.buyer_id===me.id?'مشتري':'بائع',confirm=tx.buyer_id===me.id&&!tx.buyer_confirmed_at?`<button type="button" onclick="confirmMarketTransactionReceipt('${escapeJs(tx.id)}')" style="margin-top:8px;background:#173a2b;color:#a8ffd7;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">تأكيد استلام السلعة</button>`:'';
+                return `<article style="padding:10px;margin:0 0 8px;border:1px solid #8bf4ff25;border-radius:12px;background:#ffffff07;">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:11px;color:#8bf4ff;">${escapeHtml(snap.title||'معاملة محفوظة')}</strong><span style="font-size:9px;color:#a8ffd7;">${role} · ${tx.status==='disputed'?'قيد اعتراض — محفوظة':tx.status==='archived'?'مؤرشفة':'نشطة'}</span></div>
+                  <div style="font-size:10px;color:#ffd86b;margin-top:4px;">${escapeHtml(snap.price||'السعر غير مسجل')} · ${escapeHtml(snap.category||'أخرى')}</div>
+                  <div style="font-size:10px;color:#d7e5f5;line-height:1.7;margin-top:5px;white-space:pre-wrap;">${escapeHtml(snap.description||'لا يوجد وصف محفوظ.')}</div>
+                  <div style="font-size:10px;color:#a9bfd2;line-height:1.8;margin-top:6px;">الضمان: ${warranty?`${warranty} يوم — حتى ${expiry}`:'دون ضمان'}<br>الاتفاق: ${escapeHtml(tx.agreement_note||'لم تضاف ملاحظات')}<br>تاريخ العملية: ${new Date(tx.sold_at).toLocaleDateString('ar-EG')}<br>انتهاء مدة الاحتفاظ: ${retention} (يصدر تنبيه قبل/عند الاستحقاق، ثم تُمنح مهلة 7 أيام كاملة بعد الإشعار؛ تُستثنى المعاملات قيد الاعتراض)</div>${confirm}
+                </article>`;
+            }).join('');
+        }
+        async function confirmMarketTransactionReceipt(transactionId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول أولاً.');if(!me)return;
+            if(!window.confirm('تأكيد الاستلام؟ سيُسجل وقت تأكيدك ضمن سجل المعاملة.'))return;
+            const result=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&buyer_confirmed_at=is.null`,{method:'PATCH',body:JSON.stringify({buyer_confirmed_at:new Date().toISOString()}),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تسجيل الاستلام. تحقق من صلاحيات قاعدة البيانات.','error');
+            triggerToastNotification('تم تسجيل استلام السلعة في سجل المعاملة.','success');await renderMarketTransactionsList();
+        }
+
+        async function startMarketSellerChatInternal(productId,title,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول للتواصل مع البائع.');if(!me)return;
+            if(!productId||!sellerId||sellerId===me.id)return triggerToastNotification('هذا إعلانك؛ افتح قسم «سلعي» لإدارته.','info');
+            closeMarketProductDetails();
+            let rows=await supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&buyer_id=eq.${encodeURIComponent(me.id)}&select=id,product_id,buyer_id,seller_id&limit=1`);
+            let conversation=Array.isArray(rows)?rows[0]:null;
+            if(!conversation){
+                const created=await supabaseFetch('market_conversations',{method:'POST',body:JSON.stringify({product_id:Number(productId),buyer_id:me.id,seller_id:sellerId})});
+                conversation=Array.isArray(created)?created[0]:null;
+                if(!conversation){rows=await supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&buyer_id=eq.${encodeURIComponent(me.id)}&select=id,product_id,buyer_id,seller_id&limit=1`);conversation=Array.isArray(rows)?rows[0]:null;}
+            }
+            if(!conversation?.id){const e=window.__alwahaLastApiError||{};return triggerToastNotification(e.status===403?'تعذر بدء المحادثة: الإعلان غير متاح أو لا يطابق البائع.':'تعذر بدء محادثة السوق. تحقق من الاتصال وحالة الإعلان.','error');}
+            const users=await supabaseFetch(`user_directory?id=eq.${encodeURIComponent(sellerId)}&select=id,first_name,last_name,username&limit=1`),peer=Array.isArray(users)?users[0]:null;
+            const name=peer?([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'البائع'):'البائع';
+            await openMarketConversationChat(conversation.id,`بائع الإعلان: ${title||'منتج'} · ${name}`,sellerId);
+            const input=document.getElementById('market-chat-input');if(input&&!input.value.trim()){input.value=`السلام عليكم، هل ما زال المنتج «${String(title||'المنتج').slice(0,120)}» متوفرًا؟`;input.focus({preventScroll:true});}
+            triggerToastNotification('محادثة السوق مستقلة عن طلبات الصداقة. اكتب رسالتك واضغط إرسال.','info');
+            return String(conversation.id);
+        }
+
 async function renderConversationsList() {
             const holder=document.getElementById('conversations-list'); if(!holder)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض المحادثات.'); if(!me)return;
@@ -2781,10 +2970,16 @@ async function renderConversationsList() {
                 this.onState = onState || (() => {});
                 this.peerConnection = null;
                 this.localStream = null;
+                this.effectsContext = null;
+                this.effectsDestination = null;
+                this.effectsTrack = null;
+                this.remoteCombinedStream = null;
                 this.pendingCandidates = [];
                 this.isMuted = false;
                 this.closed = false;
                 this.disconnectTimer = null;
+                this.qualityTimer = null;
+                this.qualityTier = 'balanced';
                 this.rtcConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -2803,6 +2998,21 @@ async function renderConversationsList() {
                     frameRate: { ideal: 20, max: 24 }
                 } : false;
                 this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: videoConstraints });
+                // A separate WebRTC audio track carries room sound effects to the peer without
+                // mixing them into the microphone track or depending on the local speaker.
+                try {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass && typeof this.peerConnection.addTrack === 'function') {
+                        this.effectsContext = new AudioContextClass();
+                        if (typeof this.effectsContext.createMediaStreamDestination === 'function') {
+                            this.effectsDestination = this.effectsContext.createMediaStreamDestination();
+                            this.effectsTrack = this.effectsDestination.stream.getAudioTracks()[0] || null;
+                            if (this.effectsTrack) this.peerConnection.addTrack(this.effectsTrack, this.effectsDestination.stream);
+                        }
+                    }
+                } catch (error) {
+                    console.info('[Alwaha Call] Shared room effects are unavailable on this WebView:', error?.message || error);
+                }
                 if(typeof setAlwahaCallSpeaker==='function')await setAlwahaCallSpeaker(false,true);
                 if (this.localAudio) this.localAudio.srcObject = this.localStream;
                 if (this.localVideo && this.mediaType === 'video') {
@@ -2811,13 +3021,22 @@ async function renderConversationsList() {
                 }
                 this.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.localStream));
                 this.peerConnection.ontrack = (event) => {
-                    const stream = event.streams?.[0];
-                    if (stream) {
-                        if (this.remoteAudio) { this.remoteAudio.srcObject = stream; this.remoteAudio.play?.().catch(() => {}); }
-                        if (this.remoteVideo && this.mediaType === 'video') {
-                            this.remoteVideo.srcObject = stream;
-                            this.remoteVideo.play?.().catch(() => {});
+                    const sourceStream = event.streams?.[0] || null;
+                    const incomingTrack = event.track || sourceStream?.getTracks?.()[0] || null;
+                    // Microphone, camera and shared room-effects arrive as separate WebRTC streams.
+                    // Aggregate their tracks so a later ontrack event cannot replace earlier audio/video.
+                    if (typeof MediaStream === 'function') {
+                        this.remoteCombinedStream = this.remoteCombinedStream || new MediaStream();
+                        if (incomingTrack && !this.remoteCombinedStream.getTracks().some(track => track.id === incomingTrack.id)) {
+                            this.remoteCombinedStream.addTrack(incomingTrack);
                         }
+                    }
+                    const combined = this.remoteCombinedStream || sourceStream;
+                    if (!combined) return;
+                    if (this.remoteAudio) { this.remoteAudio.srcObject = combined; this.remoteAudio.play?.().catch(() => {}); }
+                    if (this.remoteVideo && this.mediaType === 'video') {
+                        this.remoteVideo.srcObject = combined;
+                        this.remoteVideo.play?.().catch(() => {});
                     }
                 };
                 this.peerConnection.onicecandidate = (event) => {
@@ -2834,6 +3053,7 @@ async function renderConversationsList() {
                     if (state === 'connected') {
                         if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
                         this.disconnectTimer = null;
+                        this.startAdaptiveVideoQuality();
                         this.onState('connected');
                         return;
                     }
@@ -2859,6 +3079,33 @@ async function renderConversationsList() {
                     }
                 };
             }
+            startAdaptiveVideoQuality() {
+                if(this.mediaType!=='video'||this.qualityTimer||!this.peerConnection)return;
+                let stableSamples=0;
+                const check=async()=>{
+                    const pc=this.peerConnection;if(this.closed||!pc||pc.connectionState!=='connected')return;
+                    try{
+                        const stats=await pc.getStats();let outbound=null,remoteInbound=null;
+                        stats.forEach(report=>{if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote)outbound=report;if(report.type==='remote-inbound-rtp'&&report.kind==='video')remoteInbound=report;});
+                        const loss=remoteInbound&&Number(remoteInbound.packetsLost)>=0&&Number(remoteInbound.packetsReceived)>=0?Number(remoteInbound.packetsLost)/(Number(remoteInbound.packetsLost)+Number(remoteInbound.packetsReceived)+1):0;
+                        const rtt=Number(remoteInbound?.roundTripTime||0);
+                        let tier='balanced';
+                        if(loss>.06||rtt>.45){tier='low';stableSamples=0;}else if(loss<.02&&rtt<.22){stableSamples++;if(stableSamples>=3)tier='high';}else{stableSamples=0;}
+                        if(tier===this.qualityTier)return;
+                        this.qualityTier=tier;
+                        const sender=pc.getSenders().find(x=>x.track?.kind==='video');
+                        const cfg=tier==='low'?{maxBitrate:220000,maxFramerate:12,width:320,height:180}:tier==='high'?{maxBitrate:850000,maxFramerate:24,width:640,height:360}:{maxBitrate:480000,maxFramerate:18,width:480,height:270};
+                        if(sender?.getParameters&&sender?.setParameters){const params=sender.getParameters();if(!params.encodings||!params.encodings.length)params.encodings=[{}];params.encodings[0].maxBitrate=cfg.maxBitrate;params.encodings[0].maxFramerate=cfg.maxFramerate;await sender.setParameters(params).catch(()=>{});}
+                        const track=this.localStream?.getVideoTracks?.()[0];if(track?.applyConstraints)await track.applyConstraints({width:{ideal:cfg.width},height:{ideal:cfg.height},frameRate:{ideal:cfg.maxFramerate,max:cfg.maxFramerate}}).catch(()=>{});
+                        const label=tier==='low'?'منخفض لتقليل التقطيع':tier==='high'?'عالٍ — الشبكة مستقرة':'متوازن';
+                        const indicator=document.getElementById('call-method-indicator');if(indicator)indicator.textContent='فيديو متكيف: '+label;
+                        window.__alwahaVideoQuality={tier,loss,rtt,at:Date.now()};
+                    }catch(error){console.debug('[Alwaha Video] quality sample skipped',error);}
+                };
+                check();this.qualityTimer=setInterval(check,8000);
+            }
+            stopAdaptiveVideoQuality(){if(this.qualityTimer){clearInterval(this.qualityTimer);this.qualityTimer=null;}}
+
             async waitForIceGathering(timeoutMs = 10000) {
                 const pc = this.peerConnection;
                 if (!pc || pc.iceGatheringState === 'complete') return true;
@@ -2917,6 +3164,33 @@ async function renderConversationsList() {
                     console.warn('WebRTC signaling error', e);
                 }
             }
+            playEffect(kind='tap') {
+                const ctx = this.effectsContext;
+                if (!ctx || this.closed) return false;
+                try {
+                    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+                    const glass = kind === 'glass';
+                    const numeric = typeof kind === 'number' && Number.isFinite(kind);
+                    const base = numeric ? Math.max(120, Math.min(1800, kind)) : (glass ? 760 : (kind === 'pop' ? 820 : kind === 'success' ? 690 : kind === 'lock' ? 560 : 440));
+                    const tones = glass
+                        ? [{ f: 1040, d: .09, v: .035 }, { f: 780, d: .16, v: .03 }, { f: 510, d: .23, v: .025 }, { f: 330, d: .28, v: .018 }]
+                        : [{ f: base, d: numeric ? .18 : .13, v: .024 }];
+                    for (const tone of tones) {
+                        const osc = ctx.createOscillator(), gain = ctx.createGain();
+                        osc.type = glass ? 'triangle' : 'sine';
+                        osc.frequency.setValueAtTime(tone.f, ctx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(Math.max(90, tone.f * (glass ? .42 : .72)), ctx.currentTime + tone.d);
+                        gain.gain.setValueAtTime(.0001, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(tone.v, ctx.currentTime + .012);
+                        gain.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + tone.d);
+                        osc.connect(gain); gain.connect(ctx.destination);
+                        if (this.effectsDestination) gain.connect(this.effectsDestination);
+                        osc.start(); osc.stop(ctx.currentTime + tone.d + .015);
+                        osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (_) {} };
+                    }
+                    return true;
+                } catch (error) { console.debug('[Alwaha Call] Shared sound effect failed:', error); return false; }
+            }
             toggleMute() {
                 const track = this.localStream?.getAudioTracks?.()[0];
                 if (!track) return this.isMuted;
@@ -2951,11 +3225,18 @@ async function renderConversationsList() {
             }
             endCall(notifyRemote = true) {
                 this.closed = true;
+                this.stopAdaptiveVideoQuality();
                 if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
                 this.disconnectTimer = null;
                 if (notifyRemote) this.signaling.send({ type: 'end' });
                 this.localStream?.getTracks?.().forEach(track => track.stop());
                 this.localStream = null;
+                try { this.effectsDestination?.stream?.getTracks?.().forEach(track => track.stop()); } catch (e) {}
+                try { this.effectsContext?.close?.(); } catch (e) {}
+                this.effectsContext = null; this.effectsDestination = null; this.effectsTrack = null;
+                if (this.remoteAudio) this.remoteAudio.srcObject = null;
+                if (this.remoteVideo) this.remoteVideo.srcObject = null;
+                this.remoteCombinedStream = null;
                 try { this.peerConnection?.close(); } catch (e) {}
                 this.peerConnection = null;
                 if (this.localAudio) this.localAudio.srcObject = null;
@@ -2973,6 +3254,8 @@ async function renderConversationsList() {
                 this.myId = null;
                 this.roomChannel = null;
                 this.inboxChannel = null;
+                this.marketInboxChannel = null;
+                this.conversationId = null;
                 this.roomId = null;
                 this.sessionId = null;
                 this.peerId = '';
@@ -3002,52 +3285,44 @@ async function renderConversationsList() {
             }
             async ensureInbox() {
                 if (!this.client) return;
-                try {
-                    const { data: { session } } = await this.client.auth.getSession();
-                    if (session?.access_token) await this.client.realtime.setAuth(session.access_token);
-                } catch (error) {
-                    console.warn('[Alwaha Call] Could not refresh Realtime auth before inbox subscription:', error);
-                }
+                try { const {data:{session}}=await this.client.auth.getSession(); if(session?.access_token)await this.client.realtime.setAuth(session.access_token); }
+                catch(error){console.warn('[Alwaha Call] Realtime auth refresh failed:',error);}
                 const authUser=await getCurrentAuthUser(),nextId=authUser?.id||null;
-                if(this.myId!==nextId){if(this.inboxChannel){try{await this.client.removeChannel(this.inboxChannel)}catch(e){}this.inboxChannel=null;}this.myId=nextId;}
-                if(!this.myId||this.inboxChannel)return;
-                const name=`call-inbox-${sanitizeChannelPart(this.myId)}`,channel=this.client.channel(name,{config:{private:true}});this.inboxChannel=channel;
-                channel.on('broadcast',{event:'webrtc-incoming'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingOffer(payload).catch(err=>console.warn(err));});
-                channel.on('broadcast',{event:'webrtc-call-result'},({payload})=>{if(!payload||payload.to!==this.myId)return;this.handleIncomingCallResult(payload).catch(err=>console.warn(err));});
-                try{await this.subscribeChannel(channel)}catch(error){this.inboxChannel=null;try{await this.client.removeChannel(channel)}catch(e){}throw error;}
+                if(this.myId!==nextId){
+                    for(const key of ['inboxChannel','marketInboxChannel']){const ch=this[key];if(ch){try{await this.client.removeChannel(ch);}catch(e){}this[key]=null;}}
+                    this.myId=nextId;
+                }
+                if(!this.myId)return;
+                if(!this.inboxChannel){
+                    const channel=this.client.channel(`call-inbox-${sanitizeChannelPart(this.myId)}`,{config:{private:true}});this.inboxChannel=channel;
+                    channel.on('broadcast',{event:'webrtc-incoming'},({payload})=>{if(payload?.to===this.myId)this.handleIncomingOffer(payload).catch(err=>console.warn(err));});
+                    channel.on('broadcast',{event:'webrtc-call-result'},({payload})=>{if(payload?.to===this.myId)this.handleIncomingCallResult(payload).catch(err=>console.warn(err));});
+                    try{await this.subscribeChannel(channel);}catch(error){this.inboxChannel=null;try{await this.client.removeChannel(channel);}catch(e){}throw error;}
+                }
+                if(!this.marketInboxChannel){
+                    const channel=this.client.channel(`market-call-inbox-${sanitizeChannelPart(this.myId)}`,{config:{private:true}});this.marketInboxChannel=channel;
+                    channel.on('broadcast',{event:'webrtc-market-incoming'},({payload})=>{if(payload?.to===this.myId&&payload?.mode==='market')this.handleIncomingOffer(payload).catch(err=>console.warn('[Alwaha Market Call]',err));});
+                    try{await this.subscribeChannel(channel);}catch(error){this.marketInboxChannel=null;try{await this.client.removeChannel(channel);}catch(e){}console.info('[Alwaha Market Call] Inbox waits until a market conversation exists:',error?.message||error);}
+                }
             }
-            async createRoom(peerId, sessionId) {
-                if (!this.client) throw new Error('تعذر تهيئة Supabase Realtime.');
-                const nextRoomId = buildCallRoomId(this.myId, peerId);
-                if (this.roomChannel && this.roomId === nextRoomId && this.sessionId === sessionId) return;
-                this.roomId = nextRoomId;
-                this.sessionId = sessionId;
-                this.pendingRoomSignals = [];
-                if (this.roomChannel) {
-                    try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
-                    this.roomChannel = null;
-                }
-                const channel = this.client.channel(`call-${this.roomId}`, { config: { private: true } });
-                this.roomChannel = channel;
-                channel.on('broadcast', { event: 'webrtc-signal' }, ({ payload }) => {
-                    if (!payload || payload.sessionId !== this.sessionId) return;
-                    if (payload.to && payload.to !== this.myId) return;
-                    if (payload.from && payload.from === this.myId) return;
-                    if (payload.type === 'ready') {
-                        this.roomPeerReady = true;
-                        this.flushPendingRoomSignals().catch(error => console.warn('[Alwaha Call] Could not flush queued ICE candidates:', error));
-                        return;
-                    }
-                    if (this.call) this.call.handleSignal(payload);
-                    else this.pendingRoomSignals.push(payload);
+            async createRoom(peerId, sessionId, conversationId = null) {
+                if(!this.client)throw new Error('تعذر تهيئة Supabase Realtime.');
+                this.conversationId=conversationId||null;
+                const marketRoom=!!this.conversationId;
+                const nextRoomId=marketRoom?`market_${sanitizeChannelPart(this.conversationId)}`:buildCallRoomId(this.myId,peerId);
+                if(this.roomChannel&&this.roomId===nextRoomId&&this.sessionId===sessionId)return;
+                this.roomId=nextRoomId;this.sessionId=sessionId;this.pendingRoomSignals=[];
+                if(this.roomChannel){try{await this.client.removeChannel(this.roomChannel);}catch(e){}this.roomChannel=null;}
+                const topic=marketRoom?`market-call-room-${sanitizeChannelPart(this.conversationId)}`:`call-${this.roomId}`;
+                const channel=this.client.channel(topic,{config:{private:true}});this.roomChannel=channel;
+                channel.on('broadcast',{event:'webrtc-signal'},({payload})=>{
+                    if(!payload||payload.sessionId!==this.sessionId)return;
+                    if(payload.to&&payload.to!==this.myId)return;
+                    if(payload.from&&payload.from===this.myId)return;
+                    if(payload.type==='ready'){this.roomPeerReady=true;this.flushPendingRoomSignals().catch(error=>console.warn('[Alwaha Call] ICE queue flush failed:',error));return;}
+                    if(this.call)this.call.handleSignal(payload);else this.pendingRoomSignals.push(payload);
                 });
-                try {
-                    await this.subscribeChannel(channel);
-                } catch (error) {
-                    if (this.roomChannel === channel) this.roomChannel = null;
-                    try { await this.client.removeChannel(channel); } catch (cleanupError) {}
-                    throw error;
-                }
+                try{await this.subscribeChannel(channel);}catch(error){if(this.roomChannel===channel)this.roomChannel=null;try{await this.client.removeChannel(channel);}catch(e){}throw error;}
             }
             async flushPendingRoomSignals() {
                 if (!this.roomPeerReady || !this.roomChannel) return;
@@ -3074,50 +3349,29 @@ async function renderConversationsList() {
                 return this.publishRoom(payload);
             }
             async sendToPeerInbox(payload) {
-                if (!this.client) throw new Error('تعذر تهيئة Supabase Realtime.');
-                const channel = this.client.channel(`call-inbox-${sanitizeChannelPart(payload.to)}`, { config: { private: true } });
-                await this.subscribeChannel(channel);
-                try {
-                    const status = await channel.send({ type:'broadcast', event:'webrtc-incoming', payload });
-                    if (status !== 'ok') throw new Error(`فشل إرسال تنبيه المكالمة (${status}).`);
-                } finally {
-                    try { await this.client.removeChannel(channel); } catch (e) {}
-                }
+                if(!this.client)throw new Error('تعذر تهيئة Supabase Realtime.');
+                const market=payload.mode==='market';
+                const topic=market?`market-call-inbox-${sanitizeChannelPart(payload.to)}`:`call-inbox-${sanitizeChannelPart(payload.to)}`;
+                const channel=this.client.channel(topic,{config:{private:true}});await this.subscribeChannel(channel);
+                try{const status=await channel.send({type:'broadcast',event:market?'webrtc-market-incoming':'webrtc-incoming',payload});if(status!=='ok')throw new Error(`فشل إرسال تنبيه المكالمة (${status}).`);}
+                finally{try{await this.client.removeChannel(channel);}catch(e){}}
             }
 
-            async startOutgoing(peerId, mode = 'online', mediaType = 'audio') {
+            async startOutgoing(peerId, mode='online', mediaType='audio', conversationId=null) {
                 const authUser=await getCurrentAuthUser();if(!authUser)throw new Error('سجّل الدخول أولًا لإجراء مكالمة.');this.myId=authUser.id;
-                if(!(await hasAcceptedAlwahaFriendship(peerId)))throw new Error('لا يمكن الاتصال قبل قبول طلب الصداقة.');
-                this.mode = mode;
-                this.mediaType = mediaType === 'video' ? 'video' : 'audio';
-                this.roomPeerReady = false;
-                this.pendingRoomSignalsToSend = [];
-                this.peerId = peerId;
-                await this.ensureInbox();
-                if(!this.myId)throw new Error('تعذر تحديد حسابك لإجراء المكالمة.');
-                const sessionId = crypto?.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-                await this.createRoom(peerId, sessionId);
-                const localAudio = document.getElementById('localAudio');
-                const remoteAudio = document.getElementById('remoteAudio');
-                const localVideo = document.getElementById('localVideo');
-                const remoteVideo = document.getElementById('remoteVideo');
-                this.call = new VoiceCall({
-                    signaling: { send: payload => this.sendRoom(payload) },
-                    localAudioEl: localAudio, remoteAudioEl: remoteAudio,
-                    localVideoEl: localVideo, remoteVideoEl: remoteVideo, mediaType: this.mediaType,
-                    onState: state => this.handleCallState(state)
-                });
+                const market=mode==='market';
+                if(market){
+                    const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId||'')}&select=id,buyer_id,seller_id&limit=1`),c=Array.isArray(rows)?rows[0]:null;
+                    if(!c||!((c.buyer_id===this.myId&&c.seller_id===peerId)||(c.seller_id===this.myId&&c.buyer_id===peerId)))throw new Error('مكالمة السوق تتطلب محادثة موثقة بين المشتري والبائع.');
+                }else if(!(await hasAcceptedAlwahaFriendship(peerId)))throw new Error('لا يمكن الاتصال قبل قبول طلب الصداقة.');
+                this.mode=mode;this.conversationId=market?conversationId:null;this.mediaType=mediaType==='video'?'video':'audio';this.roomPeerReady=false;this.pendingRoomSignalsToSend=[];this.peerId=peerId;
+                await this.ensureInbox();if(!this.myId)throw new Error('تعذر تحديد حسابك لإجراء المكالمة.');
+                const sessionId=crypto?.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`;
+                await this.createRoom(peerId,sessionId,this.conversationId);
+                const localAudio=document.getElementById('localAudio'),remoteAudio=document.getElementById('remoteAudio'),localVideo=document.getElementById('localVideo'),remoteVideo=document.getElementById('remoteVideo');
+                this.call=new VoiceCall({signaling:{send:payload=>this.sendRoom(payload)},localAudioEl:localAudio,remoteAudioEl:remoteAudio,localVideoEl:localVideo,remoteVideoEl:remoteVideo,mediaType:this.mediaType,onState:state=>this.handleCallState(state)});
                 await this.call.startOutgoing();
-                await this.sendToPeerInbox({
-                    type: 'offer',
-                    to: this.peerId,
-                    from: this.myId,
-                    displayName: localStorage.getItem('alwaha_profile_name') || 'مستخدم Alwaha-Pro',
-                    roomId: this.roomId,
-                    sessionId: this.sessionId,
-                    mediaType: this.mediaType,
-                    offer: this.call.peerConnection.localDescription
-                });
+                await this.sendToPeerInbox({type:'offer',mode:market?'market':'online',conversationId:this.conversationId||undefined,to:this.peerId,from:this.myId,displayName:localStorage.getItem('alwaha_profile_name')||'مستخدم Alwaha-Pro',roomId:this.roomId,sessionId:this.sessionId,mediaType:this.mediaType,offer:this.call.peerConnection.localDescription});
                 return true;
             }
             async sendCallResult(to, sessionId, status) {
@@ -3137,40 +3391,28 @@ async function renderConversationsList() {
                 triggerToastNotification('تعذر بدء المكالمة: يجب أن يقبل الطرف الآخر طلب الصداقة أولاً.','info');
             }
             async handleIncomingOffer(payload) {
-                if (this.call) return;
+                if(this.call||!payload)return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
-                if(!(await hasAcceptedAlwahaFriendship(payload.from))) {
-                    await this.sendCallResult(payload.from,payload.sessionId,'rejected').catch(()=>{});
-                    console.info('Incoming call ignored: accepted friendship is required.');
-                    return;
+                const market=payload.mode==='market'&&!!payload.conversationId;
+                if(market){
+                    const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(payload.conversationId)}&select=id,buyer_id,seller_id&limit=1`),c=Array.isArray(rows)?rows[0]:null;
+                    if(!c||!((c.buyer_id===this.myId&&c.seller_id===payload.from)||(c.seller_id===this.myId&&c.buyer_id===payload.from)))return;
+                    this.conversationId=payload.conversationId;this.mode='market';currentMarketConversationId=payload.conversationId;
+                }else{
+                    if(!(await hasAcceptedAlwahaFriendship(payload.from))){await this.sendCallResult(payload.from,payload.sessionId,'rejected').catch(()=>{});console.info('Incoming friend call ignored: friendship not accepted.');return;}
+                    this.conversationId=null;this.mode='online';
                 }
-                playAlwahaCallRingtone(false);
-                this.peerId = payload.from;
-                this.roomId = payload.roomId;
-                this.sessionId = payload.sessionId;
-                this.mediaType = payload.mediaType === 'video' ? 'video' : 'audio';
-                this.pendingIncoming = payload;
-                currentChatUserIdentifier = payload.from || '';
-                currentChatUser = payload.displayName || payload.from || 'مستخدم';
-                try {
-                    await this.createRoom(payload.from, payload.sessionId);
-                    this.roomPeerReady = true;
-                    await this.sendRoom({ type: 'ready' });
-                } catch (e) { console.warn('[Alwaha Call] Incoming room setup failed:', e); }
-                const peerName = payload.displayName || payload.from || 'مستخدم';
-                setCallModal(true);
-                updateCallUi('incoming', {
-                    target: peerName,
-                    text: 'مكالمة واردة',
-                    indicator: '<i class="fa-solid fa-phone-volume"></i> اتصال وارد عبر WebRTC'
-                });
+                playAlwahaCallRingtone(false);this.peerId=payload.from;this.roomId=payload.roomId;this.sessionId=payload.sessionId;this.mediaType=payload.mediaType==='video'?'video':'audio';this.pendingIncoming=payload;
+                currentChatUserIdentifier=payload.from||'';currentChatUser=payload.displayName||payload.from||'مستخدم';
+                try{await this.createRoom(payload.from,payload.sessionId,market?payload.conversationId:null);this.roomPeerReady=true;await this.sendRoom({type:'ready'});}catch(e){console.warn('[Alwaha Call] Incoming room setup failed:',e);}
+                setCallModal(true);updateCallUi('incoming',{target:payload.displayName||payload.from||'مستخدم',text:market?'مكالمة واردة من السوق':'مكالمة واردة',indicator:market?'<i class="fa-solid fa-store"></i> اتصال سوق موثق دون اشتراط الصداقة':'<i class="fa-solid fa-phone-volume"></i> اتصال وارد عبر WebRTC'});
             }
             async acceptIncoming() {
                 stopAlwahaCallRingtone();
                 if (!this.pendingIncoming) return;
                 const payload = this.pendingIncoming;
                 this.pendingIncoming = null;
-                await this.createRoom(payload.from, payload.sessionId);
+                await this.createRoom(payload.from, payload.sessionId, payload.conversationId||null);
                 this.peerId = payload.from;
                 const localAudio = document.getElementById('localAudio');
                 const remoteAudio = document.getElementById('remoteAudio');
@@ -3199,7 +3441,7 @@ async function renderConversationsList() {
             }
             async handleCallState(state) {
                 if (state === 'connected') {
-                    updateCallUi('connected', { target: currentChatUser || 'المستخدم', text: 'تم الاتصال', indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة' });
+                    updateCallUi('connected', { target: this.mode==='market'?'بائع السوق':(currentChatUser || 'المستخدم'), text: 'تم الاتصال', indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة' });
                     startCallTimer();
                 } else if (state === 'failed') {
                     triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.', 'error');
@@ -3216,6 +3458,7 @@ async function renderConversationsList() {
             async end(notify = true) {
                 stopAlwahaCallRingtone();
                 stopCallTimer();
+                if (typeof window.closeAlwahaKidsMode === 'function') { try { window.closeAlwahaKidsMode(); } catch (error) { console.warn('[Alwaha Kids] safe close failed:', error); } }
                 this.call?.endCall(notify);
                 this.call = null;
                 this.pendingIncoming = null;
@@ -3231,34 +3474,41 @@ async function renderConversationsList() {
                 this.roomId = null;
                 this.sessionId = null;
                 this.peerId = '';
+                this.conversationId = null;
+                this.mode = 'online';
             }
         }
 
-        async function startAlwahaCall(mode = 'online', mediaType = 'audio') {
+        async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
             if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
             const video = mediaType === 'video';
             const user = await requireAuthenticatedUser(video ? 'سجّل الدخول لإجراء مكالمة فيديو.' : 'سجّل الدخول أولاً لإجراء مكالمة صوتية.');
             if (!user) return;
-            const targetId = currentChatUserId || '';
-            if (!targetId) return triggerToastNotification('افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
+            const marketMode=mode==='market';
+            const targetId = marketMode ? (marketPeerId||'') : (currentChatUserId || '');
+            if (!targetId) return triggerToastNotification(marketMode?'تعذر تحديد البائع لمكالمة السوق.':'افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
             if (targetId === user.id) return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.', 'error');
-            if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
+            if (marketMode) {
+                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(marketConversationId||'')}&select=id,buyer_id,seller_id&limit=1`);
+                const c=Array.isArray(rows)?rows[0]:null;
+                if(!c||!((c.buyer_id===user.id&&c.seller_id===targetId)||(c.seller_id===user.id&&c.buyer_id===targetId)))return triggerToastNotification('المكالمة غير مسموحة: لا توجد محادثة سوق موثقة بين الطرفين.', 'error');
+            } else if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
             if (video && (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection)) return triggerToastNotification('مكالمات الفيديو غير مدعومة في إصدار WebView الحالي.', 'error');
             setCallModal(true);
             if (!activeCallManager) activeCallManager = new CallSignalingManager();
             activeCallManager.mediaType = video ? 'video' : 'audio';
             updateCallUi('outgoing', {
-                target: currentChatUser || targetId,
+                target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId),
                 text: video ? 'جاري بدء مكالمة الفيديو...' : 'جاري الاتصال...',
-                indicator: video ? '<i class="fa-solid fa-video"></i> فيديو خفيف بدقة تصل إلى 640×360' : '<i class="fa-solid fa-phone"></i> اتصال صوتي عبر الإنترنت'
+                indicator: marketMode ? '<i class="fa-solid fa-store"></i> اتصال سوق موثق — لا يشترط الصداقة' : (video ? '<i class="fa-solid fa-video"></i> فيديو متكيف يصل إلى 640×360' : '<i class="fa-solid fa-phone"></i> اتصال صوتي عبر الإنترنت')
             });
             try {
-                await activeCallManager.startOutgoing(targetId, mode, mediaType);
+                await activeCallManager.startOutgoing(targetId, mode, mediaType, marketMode?marketConversationId:null);
                 const networkStatus = window.__alwahaCallNetworkStatus;
                 const connectingText = networkStatus?.turnConfigured === false
                     ? 'بانتظار الطرف الآخر... تنبيه: TURN غير مهيأ أو لم يستجب؛ قد تفشل المكالمة عبر بعض الشبكات.'
                     : 'بانتظار الطرف الآخر...';
-                updateCallUi('connecting', { target: currentChatUser || targetId, text: connectingText });
+                updateCallUi('connecting', { target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId), text: connectingText });
             } catch (error) {
                 console.error('[Alwaha Call] Outgoing call failed:', error);
                 await activeCallManager?.end(false);
@@ -3327,7 +3577,7 @@ async function detectMarketLifecycleSchema() {
             // Do not block the product grid on a separate schema probe; the real listing query
             // verifies these optional columns and updates the state when it succeeds.
             marketLifecycleSchemaReady=false;
-            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until,sold_to&limit=1')
+            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until&limit=1')
               .then(probe=>{if(Array.isArray(probe))marketLifecycleSchemaReady=true;})
               .catch(()=>{});
             return marketLifecycleSchemaReady;
@@ -3478,13 +3728,13 @@ async function submitNewProductToMarket() {
                   ${prod.promoted_until&&Date.parse(prod.promoted_until)>Date.now()?'<div style="font-size:9px;color:#ffd86b;margin-bottom:7px;">✦ إعلان مروّج</div>':''}
                   <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(prod.id)}')"><i class="fa-solid fa-circle-info"></i> التفاصيل</button>
-                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="contactMarketSeller('${escapeJs(prod.title||'المنتج')}','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> هل ما زال متوفرًا؟</button>
+                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="contactMarketSeller('${escapeJs(prod.id)}','${escapeJs(prod.title||'المنتج')}','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> هل ما زال متوفرًا؟</button>
                   </div>
                 </article>`;
             }).join('');
         }
         async function openMarketProductDetails(productId) {
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,sold_at,location_label,latitude,longitude,promoted_until&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;
             if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
             const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3507,7 +3757,7 @@ async function submitNewProductToMarket() {
                 } catch(error) { console.warn('[Alwaha Market] Review eligibility check failed:',error); }
             }
             const reviewControls=canReview?`<div style="margin-top:12px;border:1px solid #8cffc144;padding:11px;border-radius:11px;"><h4 style="margin:0 0 8px;color:#8cffc1;font-size:12px;">قيّم البائع بعد استلام السلعة</h4><label style="font-size:10px;color:#a9bfd2;display:block;margin-bottom:5px;">التقييم من 1 إلى 5 نجوم</label><select id="market-review-rating-${escapeHtml(product.id)}" style="width:100%;background:#101a2b;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;margin-bottom:7px;"><option value="">اختر التقييم</option><option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option><option value="3">★★★ مقبول</option><option value="2">★★ يحتاج تحسين</option><option value="1">★ تجربة سيئة</option></select><textarea id="market-review-text-${escapeHtml(product.id)}" maxlength="1000" rows="3" placeholder="ملاحظاتك (اختياري)" style="width:100%;background:#0b0f19;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;font:inherit;font-size:11px;"></textarea><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#173a2b;color:#8cffc1;padding:10px;border-radius:9px;" onclick="submitMarketplaceReview('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')">إرسال التقييم</button></div>`:'';
-            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
+            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
             const extraReview=reviewControls;
             let modal=document.getElementById('market-product-detail-modal');
             if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay';document.body.appendChild(modal);}
@@ -3529,21 +3779,15 @@ async function submitNewProductToMarket() {
         }
 
                 /* --- وظائف سلسلة البيع الآمنة --- */
-        async function contactMarketSeller(title,sellerId) {
-            const me=await requireAuthenticatedUser('سجّل الدخول للتواصل مع البائع.');if(!me)return;
-            if(!sellerId||sellerId===me.id)return triggerToastNotification('هذا إعلانك؛ افتح قسم «سلعي» لإدارته.','info');
-            closeMarketProductDetails();
-            await openTargetUserDirectChat(`بائع المنتج: ${title}`,'',sellerId);
-            const input=document.getElementById('chat-message-input');
-            if(input&&!input.value.trim()) { input.value=`السلام عليكم، هل ما زال المنتج «${String(title||'المنتج').slice(0,120)}» متوفرًا؟`; input.focus({preventScroll:true}); }
-            triggerToastNotification('جهزنا رسالة الاستفسار؛ راجعها ثم اضغط إرسال.','info');
+        async function contactMarketSeller(productId,title,sellerId) {
+            return startMarketSellerChatInternal(productId,title,sellerId);
         }
-        async function callMarketSeller(title,sellerId) {
-            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة.');if(!me)return;
+        async function callMarketSeller(productId,title,sellerId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة مع البائع.');if(!me)return;
             if(!sellerId||sellerId===me.id)return triggerToastNotification('لا يمكن الاتصال بحسابك الشخصي.','info');
-            closeMarketProductDetails();
-            await openTargetUserDirectChat(`بائع المنتج: ${title}`,'',sellerId);
-            await initiateVoiceCall('online');
+            const conversationId=await startMarketSellerChatInternal(productId,title,sellerId);
+            if(!conversationId)return;
+            await startAlwahaCall('market','audio',conversationId,sellerId,`بائع الإعلان: ${title||'منتج'}`);
         }
         async function updateMarketProductLifecycle(productId, patch, successMessage) {
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
@@ -3557,19 +3801,26 @@ async function submitNewProductToMarket() {
         }
         async function markMyProductSold(productId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
-            if(!(await detectMarketLifecycleSchema()))return triggerToastNotification('ميزة «تم البيع» تتطلب تحديث قاعدة السوق الموجود داخل حزمة الإصلاح.','error');
-            const rows=await supabaseFetch(`messages?select=sender_id,receiver_id&or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&limit=500`);
-            const candidates=new Set();(Array.isArray(rows)?rows:[]).forEach(row=>{if(row.sender_id&&row.sender_id!==me.id)candidates.add(String(row.sender_id));if(row.receiver_id&&row.receiver_id!==me.id)candidates.add(String(row.receiver_id));});
-            if(!candidates.size)return triggerToastNotification('لم نجد محادثة سابقة مع المشتري. افتح محادثته من الإعلان أولًا، ثم أعد اختيار «تم البيع».','info');
-            const ids=[...candidates].slice(0,100),users=await supabaseFetch(`users?select=id,first_name,last_name,username&id=in.(${ids.map(id=>encodeURIComponent(id)).join(',')})`);
+            const rows=await supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,buyer_id,seller_id&limit=500`);
+            const candidates=new Map((Array.isArray(rows)?rows:[]).filter(row=>row.buyer_id&&row.id).map(row=>[String(row.buyer_id),row]));
+            if(!candidates.size)return triggerToastNotification('لا توجد محادثة سوق لهذا الإعلان بعد. لا يمكن تسجيل بيع دون محادثة موثقة.', 'info');
+            const ids=[...candidates.keys()].slice(0,100),users=await supabaseFetch(`user_directory?select=id,first_name,last_name,username&id=in.(${ids.map(encodeURIComponent).join(',')})`);
             const options=Array.isArray(users)?users.filter(user=>candidates.has(String(user.id))):[];
-            if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من المحادثات السابقة.','error');
-            const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'} (@${user.username||'—'})`).join('\n'));
+            if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من محادثات الإعلان.','error');
+            const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'}`).join('\n'));
             if(selection===null)return;
-            const buyer=options[Number(selection)-1];if(!buyer)return triggerToastNotification('الاختيار غير صحيح؛ لم يتم تغيير حالة الإعلان.','error');
-            await updateMarketProductLifecycle(productId,{status:'sold',sold_to:buyer.id,sold_at:new Date().toISOString()},'تم وضع علامة «تم البيع» وربط الإعلان بالمشتري المحدد.');
+            const buyer=options[Number(selection)-1];if(!buyer)return triggerToastNotification('الاختيار غير صحيح؛ لم يتم تسجيل البيع.','error');
+            const guaranteeInput=window.prompt('مدة الضمان بالأيام (0 = دون ضمان، حتى 3650 يومًا):','0');if(guaranteeInput===null)return;
+            const guaranteeDays=Number(guaranteeInput);if(!Number.isInteger(guaranteeDays)||guaranteeDays<0||guaranteeDays>3650)return triggerToastNotification('مدة الضمان غير صحيحة.','error');
+            const agreementNote=window.prompt('اكتب شروط الاتفاق المختصرة (اختياري):','')||'';
+            if(!window.confirm(`سيُسجل البيع للمشتري المحدد، مع ${guaranteeDays?`ضمان ${guaranteeDays} يومًا`:'دون ضمان وأرشفة سجل المعاملة لمدة 30 يومًا على الأقل'}. هل تؤكد؟`))return;
+            const conversation=candidates.get(String(buyer.id));
+            const {data,error}=await supabaseClient.rpc('complete_market_sale',{p_product_id:Number(productId),p_buyer_id:buyer.id,p_conversation_id:conversation.id,p_guarantee_days:guaranteeDays,p_agreement_note:agreementNote.slice(0,2000)});
+            if(error||!data){console.warn('[Alwaha Market] complete sale failed:',error);return triggerToastNotification(error?.message||'تعذر تسجيل البيع؛ لم يتم تأكيد إنشاء سجل المعاملة.','error');}
+            triggerToastNotification('تم تسجيل البيع وحفظ لقطة الإعلان والاتفاق والضمان في سجل مستقل.','success');
+            await renderMyPersonalMarketItems();await renderMarketTransactionsList();await renderMarketConversationsList();
         }
-        async function archiveMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'archived',archived_at:new Date().toISOString()},'تمت أرشفة الإعلان؛ لن يظهر للمشترين.'); }
+                async function archiveMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'archived',archived_at:new Date().toISOString()},'تمت أرشفة الإعلان؛ لن يظهر للمشترين.'); }
         async function reactivateMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'active',archived_at:null,sold_at:null,sold_to:null},'تمت إعادة نشر الإعلان.'); }
         async function promoteMyProduct(productId) { await updateMarketProductLifecycle(productId,{promoted_until:new Date(Date.now()+3*24*60*60*1000).toISOString()},'تم تمييز إعلانك لمدة 3 أيام.'); }
         async function reportMarketplaceItem(productId,sellerId) {
@@ -3595,7 +3846,7 @@ async function renderMyPersonalMarketItems() {
             const container=document.getElementById('my-market-items-container');if(!container)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to,created_at&order=created_at.desc`);
+            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
@@ -3604,7 +3855,7 @@ async function renderMyPersonalMarketItems() {
               </div>
               <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">
                 ${product.status==='archived'?`<button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة نشر</button>`:`<button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="archiveMyProduct('${escapeJs(product.id)}')">أرشفة</button>`}
-                ${product.status==='sold'?`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة عرض</button>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="markMyProductSold('${escapeJs(product.id)}')">تم البيع</button>`}
+                ${product.status==='sold'?`<span style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;text-align:center;">بيع مسجل — محفوظ بالضمان</span>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="markMyProductSold('${escapeJs(product.id)}')">تم البيع</button>`}
                 <button type="button" class="btn-action" style="background:#3b2e16;color:#ffd86b;padding:8px;border-radius:7px;font-size:10px;" onclick="promoteMyProduct('${escapeJs(product.id)}')">ترويج 3 أيام</button>
                 <button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
               </div>
@@ -3612,7 +3863,7 @@ async function renderMyPersonalMarketItems() {
         }
         async function editMyMarketItem(productId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,archived_at,sold_at,sold_to&limit=1`);
+            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
@@ -3642,10 +3893,11 @@ async function renderMyPersonalMarketItems() {
         }
         async function deleteMyMarketItem(prodId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً.');if(!user)return;
-            if(!window.confirm('هل أنت متأكد من حذف هذا الإعلان؟'))return;
-            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id`,{method:'DELETE',prefer:'return=representation'});
-            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف الإعلان؛ تحقق من ملكية الإعلان والصلاحيات.','error');
-            triggerToastNotification('تم حذف إعلانك بنجاح.','success');await renderMyPersonalMarketItems();await renderProductsList();
+            if(!window.confirm('سيتم إخفاء الإعلان من السوق وأرشفته. ستظل تفاصيله ومحادثات المشترين محفوظة؛ هل تريد المتابعة؟'))return;
+            const result=await supabaseFetch(`products?id=eq.${encodeURIComponent(prodId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,status`,{method:'PATCH',body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()}),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذرت أرشفة الإعلان؛ لم نحذف بياناته أو محادثاته.','error');
+            triggerToastNotification('تمت أرشفة الإعلان مع الاحتفاظ بمحادثات المشترين.','success');
+            await renderMyPersonalMarketItems();await renderProductsList();
         }
 
         /* --- قسم الألعاب المكتمل التفاعلي --- */
@@ -3872,7 +4124,7 @@ function triggerAnimeAiConverterFilter() {
             const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 3.0.1 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 3.0.2 self-test: OK', getAlwahaCapabilityStatus());
         }
 
 
@@ -3949,6 +4201,7 @@ function triggerAnimeAiConverterFilter() {
             await initializeRealtimeCallInbox();
             await subscribeToNotifications();
             subscribeToDirectMessages();
+            subscribeToMarketInbox();
             syncUiWithLoadedProfileData();
             renderHomePostsFeed();
         });
@@ -3997,7 +4250,7 @@ function triggerAnimeAiConverterFilter() {
 
             window.scrollTo({top:0, behavior:'smooth'});
             if (id === 'home-section' && typeof renderHomePostsFeed==='function') renderHomePostsFeed();
-            if (id === 'market-section') { if(typeof renderProductsList==='function')renderProductsList(); if(typeof renderMyPersonalMarketItems==='function')renderMyPersonalMarketItems(); }
+            if (id === 'market-section') { if(typeof renderProductsList==='function')renderProductsList(); if(typeof renderMyPersonalMarketItems==='function')renderMyPersonalMarketItems(); if(typeof renderMarketConversationsList==='function')renderMarketConversationsList(); if(typeof renderMarketTransactionsList==='function')renderMarketTransactionsList(); if(typeof subscribeToMarketInbox==='function')subscribeToMarketInbox(); if(typeof activeCallManager?.ensureInbox==='function')activeCallManager.ensureInbox().catch(()=>{}); }
             if (id === 'chat-section') { if(typeof collapseChatSubWindows==='function')collapseChatSubWindows(); if(typeof loadAllRegisteredUsersList==='function')loadAllRegisteredUsersList(); if(typeof renderConversationsList==='function')renderConversationsList(); }
             if (id === 'reels-section' && typeof renderReelsFeed==='function') renderReelsFeed();
             if (id === 'games-section' && typeof renderGamesSection==='function') renderGamesSection();
@@ -4277,39 +4530,16 @@ function triggerAnimeAiConverterFilter() {
         });
 
     </script>
-<script id="alwaha-chat-tools-and-nearby-network">
+<script id="alwaha-chat-tools">
 (function () {
   'use strict';
   if (window.__ALWAHA_CHAT_TOOLS_V2) return;
   window.__ALWAHA_CHAT_TOOLS_V2 = true;
-  const style = document.createElement('style');
-  style.textContent = '#alwaha-local-network-modal{position:fixed;inset:0;z-index:100000001;display:none;align-items:center;justify-content:center;padding:16px;background:#020712ed}#alwaha-local-network-modal[aria-hidden="false"]{display:flex}#alwaha-local-network-modal .ln-card{width:min(100%,480px);max-height:88dvh;overflow:auto;border:1px solid #70dff055;border-radius:20px;background:#0e1a2b;color:#edf8ff;padding:16px;box-shadow:0 18px 55px #0009}#alwaha-local-network-modal h2{font-size:17px;color:#8bf4ff;margin:0 0 8px}#alwaha-local-network-modal p{font-size:12px;line-height:1.9;color:#b4c7db}#alwaha-local-network-modal .ln-status{padding:12px;border:1px solid #ffbd6955;border-radius:12px;background:#ffbd6910;color:#ffe1b5;font-size:12px;line-height:1.9}#alwaha-local-network-modal button{font:700 12px Cairo,sans-serif;border:1px solid #ffffff25;border-radius:11px;padding:11px;background:#17263b;color:#e8f4ff;min-height:42px}#alwaha-local-network-modal button.primary{background:#67e8f9;color:#09212a;border:0}';
-  document.head.appendChild(style);
-  const modal = document.createElement('div');
-  modal.id = 'alwaha-local-network-modal';
-  modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-hidden','true');
-  const card = document.createElement('section'); card.className = 'ln-card';
-  const head = document.createElement('div'); head.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px';
-  const title = document.createElement('h2'); title.textContent='الشبكة الحرة للأصدقاء القريبين';
-  const close = document.createElement('button'); close.type='button'; close.textContent='إغلاق'; close.setAttribute('aria-label','إغلاق');
-  head.append(title,close); card.append(head);
-  const status = document.createElement('div'); status.className='ln-status';
-  status.textContent='الاتصال المباشر دون إنترنت عبر Bluetooth أو Wi‑Fi Direct غير مفعّل بعد. هذه النسخة لا تحتوي على خدمة Android أصلية لاكتشاف الأجهزة أو نقل الرسائل محليًا؛ لذلك لن يبدأ التطبيق وضعًا وهميًا ولن يظهر الأصدقاء القريبون على أنهم متصلون.';
-  card.append(status);
-  const unavailable = document.createElement('button'); unavailable.type='button'; unavailable.disabled=true; unavailable.setAttribute('aria-disabled','true'); unavailable.textContent='المكالمات عبر البلوتوث لم تُنفذ بعد'; unavailable.style.cssText='width:100%;min-height:40px;margin:8px 0;padding:8px;border:1px solid #ffffff25;border-radius:10px;background:#ffffff08;color:#9aa8b8;font:700 11px Cairo,sans-serif;opacity:.75;'; card.append(unavailable);
-  const note = document.createElement('p'); note.textContent='بعد إضافة واختبار مكوّن Android الآمن سنفتح هذا الوضع للأصدقاء المقبولين فقط، مع رسائل ومكالمات محلية بحد زمني أولي، وتحكم واضح في الميكروفون والاتصال.'; card.append(note);
-  modal.append(card); document.body.append(modal);
-  let opener=null;
-  function closePanel(){modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-active');if(opener?.isConnected)opener.focus();opener=null;}
-  window.openAlwahaLocalNetworkPanel=function(){opener=document.activeElement;modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');close.focus();};
   window.toggleChatMoreMenu=function(force){const menu=document.getElementById('chat-more-menu'),button=document.getElementById('chat-more-toggle');if(!menu)return;const open=typeof force==='boolean'?force:menu.hidden;menu.hidden=!open;button?.setAttribute('aria-expanded',String(open));};
-  window.openCurrentChatProfile=function(){window.toggleChatMoreMenu(false);const id=(typeof currentChatUserId!=='undefined'&&currentChatUserId)||window.currentChatUserId||document.getElementById('current-chat-name')?.dataset?.userId;if(id&&typeof window.openPublicUserProfile==='function')window.openPublicUserProfile(id);else if(typeof window.triggerToastNotification==='function')window.triggerToastNotification('لم يتم تحديد حساب الطرف الآخر بعد.','info');};
+  window.openCurrentChatProfile=function(){window.toggleChatMoreMenu(false);const id=(typeof currentChatUserId!=='undefined'&&currentChatUserId)||window.currentChatUserId||document.getElementById('current-chat-name')?.dataset?.userId;if(id&&typeof window.openPublicUserProfile==='function')window.openPublicUserProfile(id);else window.triggerToastNotification?.('لم يتم تحديد حساب الطرف الآخر بعد.','info');};
   window.shareCurrentChat=async function(){window.toggleChatMoreMenu(false);const root=document.getElementById('chat-messages-container');const text=(root?.innerText||'').trim().slice(-5000);if(!text)return window.triggerToastNotification?.('لا توجد رسائل لمشاركتها.','info');try{if(navigator.share)await navigator.share({title:'محادثة Alwaha-Pro',text});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);window.triggerToastNotification?.('تم نسخ ملخص المحادثة.','success');}else window.triggerToastNotification?.('المشاركة غير مدعومة على هذا الجهاز.','info');}catch(e){if(e?.name!=='AbortError')window.triggerToastNotification?.('تعذرت مشاركة المحادثة.','error');}};
-  window.showChatPrivacyInfo=function(){window.toggleChatMoreMenu(false);window.triggerToastNotification?.('الرسائل متاحة بين الأصدقاء المقبولين فقط. لا تشارك رموز الدخول أو معلوماتك السرية.','info');};
-  close.addEventListener('click',closePanel);modal.addEventListener('click',e=>{if(e.target===modal)closePanel();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal.getAttribute('aria-hidden')==='false')closePanel();else window.toggleChatMoreMenu?.(false);}});
-  const oldFreeNav=document.querySelector('.bottom-nav-bar .nav-item.free-mesh');if(oldFreeNav)oldFreeNav.remove();
-  const oldLocalButton=document.getElementById('alwaha-local-network-open');if(oldLocalButton)oldLocalButton.remove();
+  window.showChatPrivacyInfo=function(){window.toggleChatMoreMenu(false);window.triggerToastNotification?.('الرسائل الخاصة متاحة بين الأصدقاء المقبولين فقط. محادثات السوق مستقلة بصلاحيات أطراف المعاملة. لا تشارك رموز الدخول أو معلوماتك السرية.','info');};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')window.toggleChatMoreMenu?.(false);});
 })();
 </script>
 </body>

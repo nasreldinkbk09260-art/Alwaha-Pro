@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101a36"><title>إدارة الواحة</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121e31;--line:#26364f;--text:#edf6ff;--muted:#9fb2cc;--cyan:#67e8f9;--gold:#fbbf24;--red:#fecdd3;--green:#a7f3d0}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#142847,var(--bg) 55%);color:var(--text);font-family:system-ui,sans-serif}main{max-width:940px;margin:auto;padding:18px 13px 45px}.brand{display:flex;align-items:center;gap:12px;margin:8px 0 20px}.brand img{width:54px;height:54px;border-radius:15px}.brand h1{font-size:21px;margin:0}.muted{color:var(--muted);font-size:12px;line-height:1.7}.panel,.item,.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px}h2{font-size:17px;margin:0 0 13px}h3{font-size:14px;margin:0 0 8px}label{display:block;color:var(--muted);font-size:12px;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid #344866;border-radius:10px;background:#091321;color:white;font:inherit}button{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.primary{background:var(--cyan);color:#06202a}.secondary{background:#26364f;color:white}.approve{background:#064e3b;color:var(--green)}.reject{background:#4c1524;color:var(--red)}.hidden{display:none!important}.row,.top{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{margin:0}.stat strong{display:block;color:var(--cyan);font-size:25px}.notice{padding:11px;border-radius:10px;background:#182b43;color:#c8e5ff;font-size:12px;line-height:1.7;margin:10px 0}.error{background:#451a26;color:var(--red)}.success{background:#073b32;color:var(--green)}.status{font-size:11px;background:#26364f;padding:5px 8px;border-radius:18px}.item p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.7}.actions{display:flex;gap:8px;margin-top:10px}.actions button{flex:1}.tabs{display:flex;gap:8px;margin-bottom:12px}.tabs button{flex:1}.tabs .active{background:var(--gold);color:#241700}.audit-details{font-size:11px;color:#cbd5e1;white-space:pre-wrap;overflow-wrap:anywhere;background:#091321;border-radius:8px;padding:8px;margin-top:8px}.small{font-size:11px;color:var(--muted)}
+@media(max-width:520px){main{padding-inline:10px}.tabs{flex-wrap:wrap}.tabs button{min-width:29%}.stats{gap:7px}.panel{padding:12px}}
+</style>
+</head>
+<body><main>
+<header class="brand"><img src="icon.png" alt="شعار إدارة الواحة"><div><h1>إدارة الواحة</h1><div class="muted">لوحة إدارية مستقلة • 1.0.0</div></div></header>
+<section id="login" class="panel"><h2>دخول المدير</h2><p class="muted">استخدم حساب المدير. صلاحية الإدارة يتحقق منها الخادم في كل طلب؛ إظهار اللوحة وحده لا يمنح أي صلاحية.</p>
+<form id="loginForm"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required><div style="height:14px"></div><button class="primary" type="submit" style="width:100%">تسجيل الدخول</button></form><div id="loginMsg" class="notice hidden"></div></section>
+<section id="dashboard" class="hidden">
+ <div class="panel"><div class="top"><div><h2>لوحة التحكم</h2><div id="who" class="muted"></div></div><button id="logout" class="secondary">خروج آمن</button></div><div id="msg" class="notice hidden"></div><div class="stats"><div class="stat"><span class="muted">إجمالي الحسابات</span><strong id="usersCount">—</strong></div><div class="stat"><span class="muted">طلبات معلّقة</span><strong id="pendingCount">—</strong></div></div></div>
+ <div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="audit">سجل التدقيق</button></div>
+ <section id="requestsPane" class="panel"><div class="top"><h2>طلبات التوثيق</h2><button id="refreshRequests" class="secondary">تحديث</button></div><div id="requestsList" class="muted">جارٍ التحميل…</div></section>
+ <section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section>
+ <section id="auditPane" class="panel hidden"><div class="top"><h2>سجل الإجراءات الإدارية</h2><button id="refreshAudit" class="secondary">تحديث</button></div><div id="auditList" class="muted">جارٍ التحميل…</div><button id="loadMoreAudit" class="secondary hidden" style="width:100%;margin-top:10px">تحميل سجلات أقدم</button></section>
+</section>
+<p class="muted" style="text-align:center">مفتاح service_role لا يوجد في هذا التطبيق. كل إجراء إداري يمر عبر Edge Function موثقة وتُسجل نتيجته في سجل التدقيق.</p>
+</main>
+<script>
+(()=>{'use strict';
+const URL='https://kjuixjdtqwcsnxefftrt.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0';
+const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}}),$=id=>document.getElementById(id);
+let profile=null,users=[],userSearchTimer=null,usersSequence=0,auditOffset=0,auditHasMore=false;
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt=v=>v?new Date(v).toLocaleString('ar'):'—';
+function message(id,text,kind=''){const e=$(id);e.textContent=text;e.className='notice '+kind;e.classList.remove('hidden')}
+function showLogin(){profile=null;$('login').classList.remove('hidden');$('dashboard').classList.add('hidden')}
+function showDashboard(){ $('login').classList.add('hidden');$('dashboard').classList.remove('hidden') }
+async function adminApi(action,fields={}){
+ const {data,error}=await db.functions.invoke('admin-api',{body:Object.assign({action},fields)});
+ if(error){let detail=error.message||'تعذر الاتصال بخدمة الإدارة.';try{const payload=await error.context?.json();if(payload?.error)detail=payload.error}catch{}throw new Error(detail)}
+ if(data?.error)throw new Error(data.error);return data||{};
+}
+function applySummary(data){$('usersCount').textContent=Number(data.usersCount??0).toLocaleString('ar');$('pendingCount').textContent=Number(data.pendingCount??0).toLocaleString('ar')}
+async function verifyAdmin(session){
+ if(!session?.user?.id){showLogin();return}
+ const summary=await adminApi('summary');profile={id:session.user.id,is_admin:true};$('who').textContent=session.user.email||'مدير معتمد';showDashboard();applySummary(summary);await refresh();
+}
+async function counts(){try{applySummary(await adminApi('summary'))}catch(e){$('usersCount').textContent='—';$('pendingCount').textContent='—';message('msg',e.message||'تعذر تحميل الإحصاءات.','error')}}
+async function requests(){
+ $('requestsList').textContent='جارٍ التحميل…';
+ try{const result=await adminApi('list_verification_requests',{status:'pending',offset:0,limit:100});const rows=Array.isArray(result.requests)?result.requests:[];
+ if(!rows.length){$('requestsList').textContent='لا توجد طلبات توثيق معلّقة.';return}
+ $('requestsList').innerHTML=rows.map(r=>`<article class="item"><div class="top"><h3>طلب #${esc(r.id)}</h3><span class="status">${esc(r.status)}</span></div><div class="muted">معرّف الحساب: ${esc(r.user_id)}<br>التاريخ: ${esc(dt(r.created_at))}</div><p>${esc(r.reason||'لم يُذكر سبب.')}</p><div class="actions"><button class="approve" data-id="${esc(r.id)}" data-status="approved">الموافقة</button><button class="reject" data-id="${esc(r.id)}" data-status="rejected">الرفض</button></div></article>`).join('');
+ }catch(e){$('requestsList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل الطلبات.')}</div>`}
+}
+async function loadUsers(){
+ const sequence=++usersSequence,query=$('search').value.trim();$('usersList').textContent='جارٍ التحميل…';
+ try{const result=await adminApi('list_users',{offset:0,limit:100,query});if(sequence!==usersSequence)return;users=Array.isArray(result.users)?result.users:[];
+ if(!users.length){$('usersList').textContent='لا توجد نتائج.';return}
+ const notice=!query&&result.hasMore?'<div class="notice">تم عرض أول 100 حساب. استخدم البحث لتحديد الحساب المطلوب.</div>':'';
+ $('usersList').innerHTML=notice+users.map(u=>`<article class="item"><div class="top"><h3>${esc(((u.first_name||'')+' '+(u.last_name||'')).trim()||'حساب بلا اسم')}</h3><span class="status">${u.is_admin?'مدير':u.is_verified?'موثّق':'غير موثّق'}</span></div><div class="muted">المعرّف: ${esc(u.identifier||'—')}<br>اسم المستخدم: ${esc(u.username||'—')}<br>تاريخ الإنشاء: ${esc(dt(u.created_at))}</div></article>`).join('');
+ }catch(e){if(sequence!==usersSequence)return;users=[];$('usersList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل الحسابات.')}</div>`}
+}
+async function loadAuditLogs(reset=true){
+ if(reset){auditOffset=0;$('auditList').textContent='جارٍ التحميل…'}
+ try{const result=await adminApi('list_audit_logs',{offset:auditOffset,limit:50});const rows=Array.isArray(result.entries)?result.entries:[];
+ const markup=rows.map(r=>`<article class="item"><div class="top"><h3>${esc(r.action||'إجراء')}</h3><span class="status">${esc(r.outcome||'—')}</span></div><div class="muted">الوقت: ${esc(dt(r.created_at))}<br>المنفذ: ${esc(String(r.actor_user_id||'').slice(0,8)||'—')}…<br>الهدف: ${esc(r.target_id||'—')}</div><div class="audit-details">${esc(JSON.stringify(r.details||{},null,2))}</div></article>`).join('');
+ if(reset)$('auditList').innerHTML=markup||'<div class="muted">لا توجد سجلات بعد.</div>';else $('auditList').insertAdjacentHTML('beforeend',markup);
+ auditOffset+=rows.length;auditHasMore=Boolean(result.hasMore);$('loadMoreAudit').classList.toggle('hidden',!auditHasMore);
+ }catch(e){if(reset)$('auditList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل سجل التدقيق.')}</div>`;message('msg',e.message||'تعذر تحميل سجل التدقيق.','error')}
+}
+async function refresh(){await Promise.all([counts(),requests(),loadUsers(),loadAuditLogs(true)])}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=$('loginForm').querySelector('button');button.disabled=true;try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await verifyAdmin(data.session)}catch(error){await db.auth.signOut();showLogin();message('loginMsg',error.message||'تعذر تسجيل الدخول أو لا توجد صلاحية إدارية.','error')}finally{button.disabled=false}});
+$('logout').addEventListener('click',async()=>{await db.auth.signOut();showLogin()});
+$('refreshRequests').addEventListener('click',requests);$('refreshUsers').addEventListener('click',loadUsers);$('refreshAudit').addEventListener('click',()=>loadAuditLogs(true));$('loadMoreAudit').addEventListener('click',()=>loadAuditLogs(false));
+$('search').addEventListener('input',()=>{clearTimeout(userSearchTimer);userSearchTimer=setTimeout(loadUsers,300)});
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit')}));
+$('requestsList').addEventListener('click',async e=>{const b=e.target.closest('button[data-id]');if(!b)return;if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}const status=b.dataset.status,id=b.dataset.id;if(!confirm(status==='approved'?'الموافقة على التوثيق؟':'رفض طلب التوثيق؟'))return;b.disabled=true;try{await adminApi('review_verification',{id,status});message('msg','تم تسجيل القرار عبر خدمة الإدارة.','success');await refresh()}catch(error){message('msg',error.message||'فشل تحديث طلب التوثيق.','error');b.disabled=false}});
+db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT')showLogin()});
+(async()=>{const {data,error}=await db.auth.getSession();if(error){message('loginMsg','تعذر استعادة الجلسة.','error');return}if(data.session)try{await verifyAdmin(data.session)}catch(error){await db.auth.signOut();showLogin();message('loginMsg',error.message||'تعذر التحقق من صلاحية المدير.','error')}})();
+})();
+</script></body></html>

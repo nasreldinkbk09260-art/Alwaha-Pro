@@ -27,38 +27,38 @@ const buildWeb = read("scripts/build-web.mjs");
 const nativeBack = read("scripts/native-back-handler.mjs");
 const workflow = read(".github/workflows/build-apk-aab-release.yml");
 
-if (pkg.version === "3.0.1") pass("package version is 3.0.1");
+if (pkg.version === "3.0.2") pass("package version is 3.0.2");
 else fail(`package version is ${pkg.version}`);
 
-if (lock.version === "3.0.1" && lock.packages?.[""]?.version === "3.0.1")
-  pass("package-lock root versions match 3.0.1");
+if (lock.version === "3.0.2" && lock.packages?.[""]?.version === "3.0.2")
+  pass("package-lock root versions match 3.0.2");
 else fail("package-lock version mismatch");
 
-if (manifest.version === "3.0.1") pass("manifest version is 3.0.1");
+if (manifest.version === "3.0.2") pass("manifest version is 3.0.2");
 else fail("manifest version mismatch");
 
-if (/<title>Alwaha-Pro 3\.0\.1<\/title>/i.test(html) &&
-    /currentAppVersion\s*=\s*["']3\.0\.1["']/.test(html))
-  pass("HTML title and currentAppVersion match 3.0.1");
+if (/<title>Alwaha-Pro 3\.0\.2<\/title>/i.test(html) &&
+    /currentAppVersion\s*=\s*["']3\.0\.2["']/.test(html))
+  pass("HTML title and currentAppVersion match 3.0.2");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.1-(?:offline-first-20261027|compatibility-20261031)['"]/.test(sw))
-  pass("service worker uses the 3.0.1 cache namespace");
+if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.2-r7\.3-release-20261102['"]/.test(sw))
+  pass("service worker uses the 3.0.2 cache namespace");
 else fail("service worker cache namespace mismatch");
 
-if (html.includes("3.0.1 mobile performance guard") &&
+if (html.includes("3.0.2 mobile performance guard") &&
     /pointer:\s*coarse/.test(html) && /max-width:\s*768px/.test(html))
   pass("mobile performance CSS guard is present");
 else fail("mobile performance CSS guard missing or incomplete");
 
-if (/APP_VERSION:\s*['"]3\.0\.1['"]/.test(workflow) &&
-    /VERSION_NAME:\s*['"]3\.0\.1['"]/.test(workflow))
-  pass("workflow version variables match 3.0.1");
+if (/APP_VERSION:\s*['"]3\.0\.2['"]/.test(workflow) &&
+    /VERSION_NAME:\s*['"]3\.0\.2['"]/.test(workflow))
+  pass("workflow version variables match 3.0.2");
 else fail("workflow version variables mismatch");
 
-if (workflow.includes("Alwaha-Pro-3.0.1.apk") &&
-    workflow.includes("Alwaha-Pro-3.0.1.aab"))
-  pass("workflow output names match 3.0.1");
+if (workflow.includes("Alwaha-Pro-3.0.2.apk") &&
+    workflow.includes("Alwaha-Pro-3.0.2.aab"))
+  pass("workflow output names match 3.0.2");
 else fail("workflow APK/AAB output names mismatch");
 
 if (workflow.includes("npm run audit:performance"))

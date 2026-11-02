@@ -1,0 +1,6 @@
+{
+  "appId": "pro.alwaha.admin",
+  "appName": "إدارة الواحة",
+  "webDir": "dist",
+  "server": {"androidScheme": "https"}
+}
