@@ -45,11 +45,12 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
+    <script src="./alwaha-runtime-guard.js"></script>
     <script src="./production-polish.js" defer></script>
     <script src="./compatibility.js" defer></script>
     <script src="./alwaha-local-vault.js" defer></script>
-    <script src="./alwaha-experience.js?v=3.0.2-r74" defer></script>
-    <script src="./alwaha-modal-shell.js?v=3.0.2-r74" defer></script>
+    <script src="./alwaha-experience.js" defer></script>
+    <script src="./alwaha-modal-shell.js" defer></script>
     <script src="./alwaha-kids-room.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
@@ -4206,57 +4207,67 @@ function triggerAnimeAiConverterFilter() {
         function wireAlwahaSignupCountryPicker(){const select=document.getElementById('reg-country-code'),custom=document.getElementById('reg-country-code-custom');if(!select||!custom)return;const update=()=>{const manual=select.value==='custom';custom.style.display=manual?'block':'none';if(!manual)custom.value='';};select.addEventListener('change',update);update();}
 
         // تهيئة كل المكونات بعد جاهزية DOM
-        window.addEventListener('DOMContentLoaded', async () => {
-            const notificationCenter=document.getElementById('internal-notification-center');
-            if(notificationCenter&&notificationCenter.parentElement!==document.body)document.body.appendChild(notificationCenter);
-            let savedTheme = 'default';
-            try { savedTheme = localStorage.getItem('alwaha_theme') || 'default'; } catch (error) {}
-            changeAppTheme(savedTheme, false);
-            const ringtoneToggle=document.getElementById('alwaha-call-ringtone-enabled');if(ringtoneToggle)ringtoneToggle.checked=localStorage.getItem('alwaha_call_ringtone_enabled')!=='false';
-            wireAlwahaSignupCountryPicker();
-            runAlwahaSelfTest();
-            refreshAlwahaNotificationBadge();
-            registerAlwahaServiceWorker();
-            history.replaceState({ alwahaGuard: true }, '', location.href);
-            history.pushState({ alwahaGuard: true }, '', location.href);
+        window.addEventListener('DOMContentLoaded', () => {
+            const safeStartup = (name, task) => {
+                try { const result = task(); if (result && typeof result.then === 'function') result.catch(error => { console.warn('[Alwaha Startup] ' + name + ':', error); window.AlwahaRuntimeGuard?.record?.('startup-' + name, error); }); return result; }
+                catch (error) { console.warn('[Alwaha Startup] ' + name + ':', error); window.AlwahaRuntimeGuard?.record?.('startup-' + name, error); return null; }
+            };
+            const notificationCenter = document.getElementById('internal-notification-center');
+            if (notificationCenter && notificationCenter.parentElement !== document.body) document.body.appendChild(notificationCenter);
+            let savedTheme = 'default'; try { savedTheme = localStorage.getItem('alwaha_theme') || 'default'; } catch (_) {}
+            safeStartup('theme', () => changeAppTheme(savedTheme, false));
+            const ringtoneToggle = document.getElementById('alwaha-call-ringtone-enabled');
+            if (ringtoneToggle) { try { ringtoneToggle.checked = localStorage.getItem('alwaha_call_ringtone_enabled') !== 'false'; } catch (_) {} }
+            safeStartup('country-picker', wireAlwahaSignupCountryPicker);
+            safeStartup('self-test', runAlwahaSelfTest);
+            safeStartup('notification-badge', refreshAlwahaNotificationBadge);
+            safeStartup('service-worker', registerAlwahaServiceWorker);
+            try { history.replaceState({ alwahaGuard: true }, '', location.href); history.pushState({ alwahaGuard: true }, '', location.href); }
+            catch (error) { console.info('[Alwaha Startup] History guard unavailable:', error?.message || error); }
             window.addEventListener('popstate', handlePopState);
-            const alwahaHandleSystemBack = () => { if (typeof navigateBack === 'function') navigateBack(); };
-            document.addEventListener('backbutton', alwahaHandleSystemBack, false);
-            window.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); alwahaHandleSystemBack(); } });
-            // Android hardware back is registered by the bundled @capacitor/app handler.
-            bindCallControls();
-            updateCallUi('idle');
-
-            if (supabaseClient) {
-                supabaseClient.auth.onAuthStateChange((event, session) => {
-                    if (event === 'SIGNED_OUT') {
-                        window.__alwahaPublicReadCache?.clear();
-                        clearLocalProfileCache().then(() => syncUiWithLoadedProfileData());
-                        if (notificationChannel && supabaseClient) { supabaseClient.removeChannel(notificationChannel).catch(()=>{}); notificationChannel=null; }
-                        if(activeCallManager){activeCallManager.end(false).catch(()=>{});activeCallManager.ensureInbox().catch(()=>{});}stopAlwahaCallRingtone();
-                        return;
-                    }
-                    if (session?.user) {
-                        setTimeout(() => hydrateAuthProfile(session.user).then(() => Promise.all([initializeRealtimeCallInbox(), subscribeToNotifications(), subscribeToDirectMessages()])), 0);
-                    }
-                    if (event === 'PASSWORD_RECOVERY') {
-                        const newPassword = prompt('أدخل كلمة المرور الجديدة (8 أحرف على الأقل):');
-                        if (newPassword && newPassword.length >= 8) {
-                            supabaseClient.auth.updateUser({ password: newPassword }).then(({error}) => {
-                                triggerToastNotification(error ? formatAuthError(error) : 'تم تحديث كلمة المرور بنجاح.', error ? 'error' : 'success');
-                            });
-                        }
-                    }
-                });
-                await hydrateAuthProfile();
-            }
-
-            await initializeRealtimeCallInbox();
-            await subscribeToNotifications();
-            subscribeToDirectMessages();
-            subscribeToMarketInbox();
-            syncUiWithLoadedProfileData();
-            renderHomePostsFeed();
+            const handleSystemBack = () => { if (typeof navigateBack === 'function') navigateBack(); };
+            document.addEventListener('backbutton', handleSystemBack, false);
+            window.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); handleSystemBack(); } });
+            safeStartup('call-controls', bindCallControls);
+            safeStartup('call-ui', () => updateCallUi('idle'));
+            if (supabaseClient) safeStartup('auth-listener', () => supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    window.__alwahaPublicReadCache?.clear();
+                    clearLocalProfileCache().then(() => syncUiWithLoadedProfileData()).catch(error => console.warn('[Alwaha Auth] Cleanup:', error));
+                    if (notificationChannel && supabaseClient) { supabaseClient.removeChannel(notificationChannel).catch(() => {}); notificationChannel = null; }
+                    if (activeCallManager) { activeCallManager.end(false).catch(() => {}); activeCallManager.ensureInbox().catch(() => {}); }
+                    stopAlwahaCallRingtone(); return;
+                }
+                if (session?.user) setTimeout(() => {
+                    safeStartup('auth-profile-refresh', () => hydrateAuthProfile(session.user));
+                    safeStartup('auth-realtime-refresh', () => Promise.allSettled([
+                        alwahaUiDeadline(initializeRealtimeCallInbox(), 2500, null),
+                        alwahaUiDeadline(subscribeToNotifications(), 2500, null),
+                        alwahaUiDeadline(subscribeToDirectMessages(), 2500, null),
+                        alwahaUiDeadline(subscribeToMarketInbox(), 2500, null)
+                    ]));
+                }, 0);
+                if (event === 'PASSWORD_RECOVERY') {
+                    const newPassword = prompt('أدخل كلمة المرور الجديدة (8 أحرف على الأقل):');
+                    if (newPassword && newPassword.length >= 8) supabaseClient.auth.updateUser({ password: newPassword }).then(({ error }) => triggerToastNotification(error ? formatAuthError(error) : 'تم تحديث كلمة المرور بنجاح.', error ? 'error' : 'success'));
+                }
+            }));
+            // Local UI starts immediately; cloud authentication and Realtime run independently.
+            safeStartup('profile-ui', syncUiWithLoadedProfileData);
+            safeStartup('home-feed', renderHomePostsFeed);
+            window.__alwahaCoreBootAt = Date.now();
+            window.dispatchEvent(new CustomEvent('alwaha:core-ready'));
+            setTimeout(() => {
+                const cloudTasks = [];
+                if (supabaseClient) {
+                    cloudTasks.push(alwahaUiDeadline(Promise.resolve(safeStartup('auth-profile', hydrateAuthProfile)).then(() => safeStartup('profile-ui-after-auth', syncUiWithLoadedProfileData)), 3800, null));
+                    cloudTasks.push(alwahaUiDeadline(initializeRealtimeCallInbox(), 2500, null));
+                    cloudTasks.push(alwahaUiDeadline(subscribeToNotifications(), 2500, null));
+                    cloudTasks.push(alwahaUiDeadline(subscribeToDirectMessages(), 2500, null));
+                    cloudTasks.push(alwahaUiDeadline(subscribeToMarketInbox(), 2500, null));
+                }
+                Promise.allSettled(cloudTasks).then(results => { const failed = results.filter(result => result.status === 'rejected'); if (failed.length) console.warn('[Alwaha Startup] Background services had recoverable failures:', failed); }).catch(error => console.warn('[Alwaha Startup] Background task coordinator:', error));
+            }, 0);
         });
 
 

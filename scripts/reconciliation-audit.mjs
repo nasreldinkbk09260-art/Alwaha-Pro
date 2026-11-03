@@ -31,10 +31,10 @@ check('release version 3.0.2 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.2' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.2' && manifest.version === '3.0.2' && /<title>Alwaha-Pro 3\.0\.2<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('R7.4 cache token is new and every cache audit agrees',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.4-release-20261102'") &&
-  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.2-r7\\.4-release-20261102') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.2-r7.4-release-20261102') &&
-  read('scripts/compatibility-audit.mjs').includes('r7.4-release-20261102'));
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.4-runtime-recovery-20261103'") &&
+  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.2-r7\\.4-runtime-recovery-20261103') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.2-r7.4-runtime-recovery-20261103') &&
+  read('scripts/compatibility-audit.mjs').includes('r7.4-runtime-recovery-20261103'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',

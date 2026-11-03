@@ -17,7 +17,7 @@ check('permanent post/reel deletion explains scope and asks the user to preserve
 check('vault restore and local cleanup explain exactly what is replaced or cleared',fs.readFileSync('alwaha-local-vault.js','utf8').includes('ستُستبدل المسودات الحالية فقط')&&fs.readFileSync('alwaha-local-vault.js','utf8').includes('سيتم مسح المسودات المحلية المحفوظة فقط'));
 check('opening/closing notifications does not mark every notification read',/async function toggleInternalNotificationCenter\([\s\S]*?if\(center\.classList\.contains\('alwaha-notifications-open'\)\)[\s\S]*?window\.AlwahaModalShell/.test(html)&&html.includes('function markSingleNotificationRead'));
 check('accepting a request removes only its related request rows and does not wait for user-list refresh',/async function respondFriendRequest\([\s\S]*?await supabaseFetch\(`friend_requests\?id=eq\.[\s\S]*?relatedRows\.forEach\(row=>row\.remove\(\)\)[\s\S]*?void loadAllRegisteredUsersList\(\)/.test(html));
-check('new modal module is included in HTML, web build and service-worker precache',html.includes('alwaha-modal-shell.js?v=3.0.2-r74')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'"));
-check('R7.4 cache version changed',sw.includes('alwaha-pro-v3.0.2-r7.4-release-20261102'));
+check('new modal module is included in HTML, web build and service-worker precache',html.includes('./alwaha-modal-shell.js')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'"));
+check('R7.4 cache version changed',sw.includes('alwaha-pro-v3.0.2-r7.4-runtime-recovery-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 if(fail.length){console.error(`FULLSCREEN_UI_AUDIT=FAIL (${fail.length})`);process.exit(1);}console.log('FULLSCREEN_UI_AUDIT=PASS');

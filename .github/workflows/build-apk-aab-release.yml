@@ -110,6 +110,7 @@ jobs:
           test -s alwaha-local-vault.js
           test -s alwaha-experience.js
           test -s alwaha-kids-room.js
+          test -s alwaha-runtime-guard.js
           test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
@@ -180,6 +181,10 @@ jobs:
           node --check alwaha-local-vault.js
           node --check alwaha-experience.js
           node --check alwaha-kids-room.js
+          node --check alwaha-runtime-guard.js
+          node --check alwaha-modal-shell.js
+          node --check alwaha-experience.js
+          node --check scripts/runtime-boot-audit.mjs
           find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
           node <<'NODE'
@@ -219,6 +224,9 @@ jobs:
       - name: Run UI handler audit
         run: npm run audit:ui
 
+      - name: Run startup/runtime resilience audit
+        run: npm run audit:runtime
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 
@@ -254,6 +262,7 @@ jobs:
           test -s dist/production-polish.js
           test -s dist/compatibility.js
           test -s dist/alwaha-native-back-handler.js
+          test -s dist/alwaha-runtime-guard.js
           test -s dist/assets/sounds/saffron_tide.mp3
           test -s dist/assets/sounds/marimba_bloom.mp3
           test -s dist/assets/backgrounds/bg-nebula.webp

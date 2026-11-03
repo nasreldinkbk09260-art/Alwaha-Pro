@@ -8,7 +8,7 @@ const polish=read('production-polish.js');
 const sw=read('sw.js');
 const buildWeb=read('scripts/build-web.mjs');
 const nativeBack=read('scripts/native-back-handler.mjs');
-const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), kidsRoom=read('alwaha-kids-room.js');
+const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), runtimeGuard=read('alwaha-runtime-guard.js'), kidsRoom=read('alwaha-kids-room.js');
 for(const id of ['home-section','market-section','chat-section','reels-section','games-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
 for(const handler of ['publishNewHomePost','editOwnHomePost','deleteOwnHomePost','openHomePostDetails','handleHomePostCardActivation','handleHomePostCardKeydown','startHomePostEdit','saveEditedHomePost','closeHomePostDetails','openCommentsForActiveHomePost','renderReelsFeed','toggleReelFollow','editOwnReel','deleteOwnReel','submitNewProductToMarket','editMyMarketItem','deleteMyMarketItem','openMarketProductDetails','callMarketSeller','startReelRecording','stopReelRecording','publishRecordedReel','toggleFloatingAddMenu','downloadReelMedia','setProductLocationFromDevice','setMarketSearchLocation','markMyProductSold','archiveMyProduct','reactivateMyProduct','promoteMyProduct','reportMarketplaceItem','submitMarketplaceReview','acknowledgeAlwahaPrivacyNotice','showAlwahaPrivacyPolicy','handleNewUserRegistrationSubmit','executeUserLoginAuth','savePrivacyProfileUpdates','changeAppTheme']){if(!new RegExp(`(?:async\\s+)?function\\s+${handler}\\s*\\(`).test(html))fail(`Missing app handler: ${handler}`);}
 if(!html.includes('id="home-post-details-modal"')||!html.includes('id="home-post-edit-text"'))fail('Home post details/edit modal fields missing.');
@@ -96,7 +96,7 @@ if (!html.includes("supabaseClient.rpc('can_review_marketplace_product'")) fail(
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
 if(!html.includes('market-call-room-')||!html.includes("mode:market?'market':'online'")||!html.includes('complete_market_sale')) fail('3.0.2 market call and transaction workflow are incomplete.');
-if(!html.includes('toggleAlwahaKidsMode')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.2 local experience suite is incomplete.');
+if(!html.includes('toggleAlwahaKidsMode')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')||!html.includes('alwaha-runtime-guard.js')||!runtimeGuard.includes('fallbackNavigate')) fail('3.0.2 local experience/runtime recovery suite is incomplete.');
 if(!fs.existsSync('alwaha-kids-room.js')||!fs.existsSync('alwaha-local-vault.js')||!fs.existsSync('alwaha-experience.js')||!fs.existsSync('alwaha-modal-shell.js')) fail('Missing 3.0.2 local experience modules.');
 const legacyPrivilegesMigration=read('supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql');
 for(const table of ['public.likes','public.profiles','public.ratings']) if(!legacyPrivilegesMigration.includes(table)) fail(`Legacy privilege hardening missing ${table}.`);
