@@ -172,3 +172,16 @@
 - CI #48 هو build R7.3 فقط. لا يوجد حتى الآن CI/Web/APK/AAB verified على SHA R7.4، ولا اختبار جهازين.
 - لا تفعّل حذف السوق/الضمان/مكالمات السوق في الإنتاج قبل مصالحة migrations التاريخية المفقودة، النسخة الاحتياطية، وخطة اختبار/rollback.
 - متطلبات لا تدّعي R7.4 إكمالها: أصول الثيمات الأصلية 600×600 وتحتاج صور HD حقيقية؛ لا يوجد مسار حذف حساب؛ النسخ المحلية لا تشمل ملفات الوسائط الثنائية ولا تعيد كتابة السحابة؛ لا يوجد اختبار ميداني على هاتفين حتى الآن.
+
+---
+
+# ملحق الاستمرارية R7.4.2 — 3 نوفمبر 2026
+
+- آخر أساس مراجع: R7.4.1 على فرع `alwaha-pro-3.0.2-release-r7.4-20261102`، commit `942bb5fc1a32080a07ed9a8cd8dfcf97311778af`.
+- السبب المؤكد للتجمّد: حلقة DOM MutationObserver ↔ syncDock ناتجة عن إعادة كتابة `textContent` بلا تغير. راجع `docs/R7.4.2-RECOVERY-AND-FREEZE-CAUSE-AR.md`.
+- إصلاح الحلقة موجود في `alwaha-experience.js` و`alwaha-modal-shell.js`، واختبارها في `scripts/runtime-boot-audit.mjs`.
+- دمج ثيمات R7.5 المحلية فوق مصدر R7.4.1، لا استعمال حزمة R7.5 القديمة كأساس. الثيم الأساسي يحافظ على الواجهة الأصلية، وتضاف ثيمات الربيع والصيف والخريف والشتاء.
+- ملف الرفع الجديد: `TERMUX-PUSH-3.0.2-R7.4.2-20261103.sh`، وينشئ فرعاً مستقلاً ولا يلمس `main` أو قاعدة الإنتاج.
+- سكربت R7.4 القديم محفوظ في `docs/archive/TERMUX-PUSH-3.0.2-R7.4-20261102.sh` للأرشيف فقط.
+- اختبارات Node/static: تم اجتياز audit:release, performance, field-repair, chat, compatibility, native-call-ui, ui, retention-kids-vault, admin, marketplace-columns, reconciliation, fullscreen-ui, runtime, themes بعد آخر مزامنة. Web/Android build واختبار الجهازين غير منفذة هنا.
+- **لا تحذف التطبيق المثبّت ولا تمسح بياناته.** البناء التالي يجب أن يكون versionCode أعلى من Build 51 وبمفتاح التوقيع نفسه حتى يثبت كتحديث.

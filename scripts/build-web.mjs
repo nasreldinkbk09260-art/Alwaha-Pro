@@ -4,7 +4,7 @@ import { build } from 'esbuild';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
-const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'production-polish.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js'];
+const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'production-polish.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js', 'alwaha-theme-system.css'];
 
 for (const file of required) {
   if (!fs.existsSync(path.join(root, file))) {

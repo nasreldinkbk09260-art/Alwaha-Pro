@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.4-runtime-recovery-20261103';
+const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.4.2-modal-observer-loop-fix-20261103';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const PRECACHE_ASSETS = [
   './alwaha-local-vault.js',
   './alwaha-experience.js',
   './alwaha-modal-shell.js',
+  './alwaha-theme-system.css',
   './alwaha-runtime-guard.js',
   './alwaha-kids-room.js',
   './alwaha-native-back-handler.js',
@@ -18,6 +19,10 @@ const PRECACHE_ASSETS = [
   './assets/backgrounds/bg-aurora.webp',
   './assets/backgrounds/bg-underwater.webp',
   './assets/backgrounds/bg-moonlit.webp',
+  './assets/backgrounds/bg-spring.webp',
+  './assets/backgrounds/bg-summer.webp',
+  './assets/backgrounds/bg-autumn.webp',
+  './assets/backgrounds/bg-winter.webp',
   './assets/vendor/fontawesome/css/all.min.css',
   './assets/vendor/supabase/supabase.js',
   './assets/vendor/cairo/300.css',

@@ -16,6 +16,7 @@ on:
       - alwaha-pro-3.0.2-release-20261102
       - alwaha-pro-3.0.2-release-r7.3-20261102
       - alwaha-pro-3.0.2-release-r7.4-20261102
+      - alwaha-pro-3.0.2-release-r7.4.2-20261103
   workflow_dispatch:
 
 permissions:
@@ -111,6 +112,11 @@ jobs:
           test -s alwaha-experience.js
           test -s alwaha-kids-room.js
           test -s alwaha-runtime-guard.js
+          test -s alwaha-theme-system.css
+          test -s assets/backgrounds/bg-spring.webp
+          test -s assets/backgrounds/bg-summer.webp
+          test -s assets/backgrounds/bg-autumn.webp
+          test -s assets/backgrounds/bg-winter.webp
           test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
@@ -227,6 +233,9 @@ jobs:
       - name: Run startup/runtime resilience audit
         run: npm run audit:runtime
 
+      - name: Run seasonal theme runtime audit
+        run: npm run audit:themes
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 
@@ -263,6 +272,11 @@ jobs:
           test -s dist/compatibility.js
           test -s dist/alwaha-native-back-handler.js
           test -s dist/alwaha-runtime-guard.js
+          test -s dist/alwaha-theme-system.css
+          test -s dist/assets/backgrounds/bg-spring.webp
+          test -s dist/assets/backgrounds/bg-summer.webp
+          test -s dist/assets/backgrounds/bg-autumn.webp
+          test -s dist/assets/backgrounds/bg-winter.webp
           test -s dist/assets/sounds/saffron_tide.mp3
           test -s dist/assets/sounds/marimba_bloom.mp3
           test -s dist/assets/backgrounds/bg-nebula.webp

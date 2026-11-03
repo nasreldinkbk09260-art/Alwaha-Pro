@@ -588,6 +588,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
+    <link rel="stylesheet" href="./alwaha-theme-system.css">
 </head>
 <body>
 
@@ -952,12 +953,14 @@ img,video,canvas{max-width:100%}
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-settings')"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">خلفيات التطبيق والمظهر</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#05081399,#1b214499),url('./assets/backgrounds/bg-nebula.webp') center/cover;color:#d9e8ff;padding:10px;font-size:11px;border:1px solid #91a9ff55;" onclick="changeAppTheme('default')">🌌 فضائي افتراضي</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0f202799,#203a4399),url('./assets/backgrounds/bg-aurora.webp') center/cover;color:#fff;padding:10px;font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0a0a2a88,#0009),url('./assets/backgrounds/bg-underwater.webp') center/cover;color:#00ffff;padding:10px;font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#14141e88,#29364a88),url('./assets/backgrounds/bg-moonlit.webp') center/cover;color:#e2e8f0;border:1px solid #ffffff25;padding:10px;font-size:11px;" onclick="changeAppTheme('soft')">🌙 هادئ</button>
+        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">المظهر الكامل والخلفية الموسمية</h4>
+        <p style="color:#a9bfd2;font-size:10px;line-height:1.8;margin:0 0 10px;">يتغير المشهد والخلفية وألوان البطاقات والنوافذ وعناصر التنقل معاً. المشاهد مضمّنة وتعمل دون إنترنت؛ لنقل اختيارك لجهاز آخر استخدم النسخة الاحتياطية المشفرة. الثيم الأساسي يعيد شكل الواحة الأصلي.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:20px;">
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="default" aria-pressed="false" style="background-image:linear-gradient(155deg,rgba(8,5,11,.25),rgba(22,5,16,.78)),radial-gradient(ellipse at 20% 20%,#79304f,#10070d 70%);" onclick="changeAppTheme('default')"><span>🌌</span><span class="theme-choice-name">الأساسي الأصلي</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="spring" aria-pressed="false" style="background-image:linear-gradient(155deg,#12222b22,#112129a6),url('./assets/backgrounds/bg-spring.webp');" onclick="changeAppTheme('spring')"><span>🌸</span><span class="theme-choice-name">الربيع</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="summer" aria-pressed="false" style="background-image:linear-gradient(155deg,#092b3b22,#092d3ba6),url('./assets/backgrounds/bg-summer.webp');" onclick="changeAppTheme('summer')"><span>☀️</span><span class="theme-choice-name">الصيف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="autumn" aria-pressed="false" style="background-image:linear-gradient(155deg,#2b160d22,#291710aa),url('./assets/backgrounds/bg-autumn.webp');" onclick="changeAppTheme('autumn')"><span>🍂</span><span class="theme-choice-name">الخريف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="winter" aria-pressed="false" style="background-image:linear-gradient(155deg,#0c213522,#0c233db0),url('./assets/backgrounds/bg-winter.webp');" onclick="changeAppTheme('winter')"><span>❄️</span><span class="theme-choice-name">الشتاء</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
         </div>
 
 
@@ -1269,13 +1272,42 @@ img,video,canvas{max-width:100%}
         let notificationChannel = null;
 
         function changeAppTheme(themeName, showToast = true) {
-            const allowedThemes = new Set(['default', 'nature', 'tech', 'soft']);
-            const selectedTheme = allowedThemes.has(themeName) ? themeName : 'default';
-            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft');
+            const legacyThemeMap = { nature: 'spring', tech: 'summer', soft: 'winter' };
+            const requested = String(themeName || 'default').trim().toLowerCase();
+            const normalized = legacyThemeMap[requested] || requested;
+            const allowedThemes = new Set(['default', 'spring', 'summer', 'autumn', 'winter']);
+            const selectedTheme = allowedThemes.has(normalized) ? normalized : 'default';
+            if (!document.body) return selectedTheme;
+            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
             if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
+            document.body.dataset.alwahaTheme = selectedTheme;
+            let backdrop = document.getElementById('alwaha-theme-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'alwaha-theme-backdrop';
+                backdrop.setAttribute('aria-hidden', 'true');
+                document.body.insertBefore(backdrop, document.body.firstChild);
+            }
+            backdrop.dataset.theme = selectedTheme;
+            const themeColors = { default: '#0b0f19', spring: '#18333a', summer: '#073344', autumn: '#291b19', winter: '#102940' };
+            const chrome = document.querySelector('meta[name="theme-color"]');
+            if (chrome) chrome.setAttribute('content', themeColors[selectedTheme] || themeColors.default);
             try { localStorage.setItem('alwaha_theme', selectedTheme); }
             catch (error) { console.warn('Unable to persist theme selection:', error); }
-            if (showToast) triggerToastNotification('تم حفظ المظهر وتفعيله.', 'success');
+            document.querySelectorAll('[data-theme-choice]').forEach(button => {
+                const active = button.dataset.themeChoice === selectedTheme;
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                const state = button.querySelector('.theme-choice-state');
+                if (state) state.textContent = active ? 'المظهر النشط' : 'اضغط للتفعيل';
+            });
+            const label = document.getElementById('alwaha-theme-label');
+            if (label) {
+                const names = { default: 'الأساسي الأصلي', spring: 'الربيع', summer: 'الصيف', autumn: 'الخريف', winter: 'الشتاء' };
+                label.textContent = `الثيم الحالي: ${names[selectedTheme] || names.default}`;
+            }
+            window.dispatchEvent(new CustomEvent('alwaha:themechange', { detail: { theme: selectedTheme } }));
+            if (showToast && typeof triggerToastNotification === 'function') triggerToastNotification('تم حفظ الثيم وتطبيق الخلفية والألوان.', 'success');
+            return selectedTheme;
         }
 
         async function clearAppCacheKeepData() {

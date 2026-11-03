@@ -8,7 +8,7 @@ const polish=read('production-polish.js');
 const sw=read('sw.js');
 const buildWeb=read('scripts/build-web.mjs');
 const nativeBack=read('scripts/native-back-handler.mjs');
-const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), runtimeGuard=read('alwaha-runtime-guard.js'), kidsRoom=read('alwaha-kids-room.js');
+const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), runtimeGuard=read('alwaha-runtime-guard.js'), kidsRoom=read('alwaha-kids-room.js'), themeCss=read('alwaha-theme-system.css');
 for(const id of ['home-section','market-section','chat-section','reels-section','games-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
 for(const handler of ['publishNewHomePost','editOwnHomePost','deleteOwnHomePost','openHomePostDetails','handleHomePostCardActivation','handleHomePostCardKeydown','startHomePostEdit','saveEditedHomePost','closeHomePostDetails','openCommentsForActiveHomePost','renderReelsFeed','toggleReelFollow','editOwnReel','deleteOwnReel','submitNewProductToMarket','editMyMarketItem','deleteMyMarketItem','openMarketProductDetails','callMarketSeller','startReelRecording','stopReelRecording','publishRecordedReel','toggleFloatingAddMenu','downloadReelMedia','setProductLocationFromDevice','setMarketSearchLocation','markMyProductSold','archiveMyProduct','reactivateMyProduct','promoteMyProduct','reportMarketplaceItem','submitMarketplaceReview','acknowledgeAlwahaPrivacyNotice','showAlwahaPrivacyPolicy','handleNewUserRegistrationSubmit','executeUserLoginAuth','savePrivacyProfileUpdates','changeAppTheme']){if(!new RegExp(`(?:async\\s+)?function\\s+${handler}\\s*\\(`).test(html))fail(`Missing app handler: ${handler}`);}
 if(!html.includes('id="home-post-details-modal"')||!html.includes('id="home-post-edit-text"'))fail('Home post details/edit modal fields missing.');
@@ -20,7 +20,9 @@ if(!html.includes('لا توجد طلبات توثيق معلقة حالياً.'
 if(!html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.','error');"))fail('Admin review authorization guard missing.');
 if(html.includes('seller_email'))fail('Frontend must not request or render seller_email.');
 if(!html.includes("savedTheme = localStorage.getItem('alwaha_theme') || 'default'"))fail('Saved theme is not restored on startup.');
-for(const theme of ['default','nature','tech','soft'])if(!html.includes(`changeAppTheme('${theme}')`))fail(`Missing theme selection: ${theme}`);
+for(const theme of ['default','spring','summer','autumn','winter'])if(!html.includes(`changeAppTheme('${theme}')`))fail(`Missing theme selection: ${theme}`);
+if(!html.includes('alwaha-theme-system.css')||!html.includes('alwaha-theme-backdrop')||!themeCss.includes('--wa-accent'))fail('Seasonal theme palette/backdrop integration is incomplete.');
+if(!html.includes('href="./alwaha-theme-system.css"')||!sw.includes("'./alwaha-theme-system.css'"))fail('Seasonal theme CSS must be local and present in the exact precache path.');
 if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
 if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
@@ -45,7 +47,7 @@ if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
 for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vendor/supabase/supabase.js','./assets/vendor/cairo/300.css','./assets/vendor/cairo/400.css','./assets/vendor/cairo/600.css','./assets/vendor/cairo/700.css','./assets/vendor/cairo/900.css'])if(!html.includes(asset))fail('Critical UI dependency is not served locally: '+asset);
-for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-aurora.webp','assets/backgrounds/bg-underwater.webp','assets/backgrounds/bg-moonlit.webp'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.2 media asset: '+asset);
+for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-aurora.webp','assets/backgrounds/bg-underwater.webp','assets/backgrounds/bg-moonlit.webp','assets/backgrounds/bg-spring.webp','assets/backgrounds/bg-summer.webp','assets/backgrounds/bg-autumn.webp','assets/backgrounds/bg-winter.webp'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.2 media asset: '+asset);
 for(const helper of ['setAlwahaLanguage','setAlwahaDataSaver','setAlwahaReducedMotion','setAlwahaRingtoneChoice'])if(!fs.readFileSync(path.join(process.cwd(),'production-polish.js'),'utf8').includes('window.'+helper))fail('Missing settings handler: '+helper);
 if(!fs.readFileSync(path.join(process.cwd(),'games.js'),'utf8').includes('p_expected_game_id'))fail('Missing wrong-game room join guard.');
 if (!pkg.dependencies?.['@capacitor/app']) fail('Missing Android native back plugin: @capacitor/app.');
@@ -114,7 +116,12 @@ if(!workflow.includes('npm run audit:field-repair') || pkg.scripts?.['audit:fiel
 if(!workflow.includes('npm audit --audit-level=high')) fail('Dependency vulnerability audit is not wired into release CI.');
 if(!fs.existsSync('supabase/tests/20261102010000_legacy_client_privileges_hardening.sql') || !fs.existsSync('supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql')) fail('Supabase regression assertion files are missing.');
 if(!fs.existsSync('scripts/marketplace-column-audit.mjs'))fail('scripts/marketplace-column-audit.mjs is missing.');
-if(!fs.readFileSync('TERMUX-PUSH-3.0.2-R7.4-20261102.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java"))fail('native deployment script must preserve scripts/android plugin.');
+if(!fs.readFileSync('TERMUX-PUSH-3.0.2-R7.4.2-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java"))fail('native deployment script must preserve scripts/android plugin.');
+
+for(const asset of ['assets/backgrounds/bg-spring.webp','assets/backgrounds/bg-summer.webp','assets/backgrounds/bg-autumn.webp','assets/backgrounds/bg-winter.webp'])if(!sw.includes(asset.replace(/^/,'./'))&&!sw.includes(asset))fail('Seasonal theme asset is not precached: '+asset);
+if(!buildWeb.includes('alwaha-theme-system.css'))fail('Seasonal theme CSS is not copied into Web build.');
+if(pkg.scripts?.['audit:themes']!=='node scripts/theme-runtime-test.mjs'||!workflow.includes('npm run audit:themes'))fail('Seasonal theme runtime test is not wired into CI.');
 if (process.exitCode) throw new Error('Alwaha-Pro 3.0.2 release preflight failed.');
 console.log('Alwaha-Pro 3.0.2 release preflight checks passed.');
 console.log('Static checks do not replace Supabase integration tests, applying migrations, or two-device call tests.');
+
