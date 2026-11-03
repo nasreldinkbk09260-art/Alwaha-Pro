@@ -1,12 +1,12 @@
-# دليل محتويات R7.3 — Alwaha-Pro 3.0.2
+# دليل محتويات Alwaha-Pro 3.0.2 R7.4
 
-- مصدر التطبيق: `index.html`, `games.js`, `production-polish.js`, `compatibility.js`, `alwaha-kids-room.js`, `alwaha-local-vault.js`, `alwaha-experience.js`, `sw.js`.
-- أصول محلية: vendor bundles/fonts/icons، صوتا الرنين، وأربع خلفيات، chess asset.
-- Android native: `scripts/android/AlwahaAudioRoutePlugin.java` (لا تحذف؛ يجب أن يبقى في شجرة الرفع).
-- Supabase: functions/migrations/tests، بما فيها `20261102170000_marketplace_nonfriend_conversation.sql` الجديدة.
-- CI: Android APK/AAB Build Only، PostgreSQL disposable fixture, release audits, Web build manual-only, Supabase migration-history manual guard.
-- وثائق مرجعية: المفكرة الرئيسية، متتبع المتطلبات، reconciliation، خريطة مصادر الدردشات، closure plan، live Supabase audit، release blockers، QA report، سجل Build #43، وسجل الاستعادة والاستبعادات. الوثائق القديمة نقلت إلى `docs/archive/` مع الاحتفاظ بها.
-- عدد الملفات الحالية داخل المصدر (مع ملف SHA256SUMS): 214 ملفاً؛ لا يحتوي مجلد بناء Android أو dist أو node_modules.
-- سكربت الرفع الوحيد الموصى به: `TERMUX-PUSH-3.0.2-R7.3-20261102.sh`.
+- التطبيق وملفاته: `index.html`, `games.js`, `production-polish.js`, `compatibility.js`, `alwaha-kids-room.js`, `alwaha-local-vault.js`, `alwaha-experience.js`, `alwaha-modal-shell.js`, `sw.js`.
+- الأصول: حزم الطرف الثالث والخطوط والأيقونات، ملفات الصوت المحلية، خلفيات الثيمات الأربع، ومحرك الشطرنج.
+- Android: مصدر `scripts/android/AlwahaAudioRoutePlugin.java` مع الحفاظ على هوية `pro.alwaha.app` و`Alwaha-Pro` و`dist` والأيقونة الأصلية.
+- Supabase: migrations/tests الأصلية وإصلاحات اختبارات CI؛ لا يوجد تطبيق تلقائي على قاعدة الإنتاج.
+- CI: SQL regression PostgreSQL مؤقت، release/performance/UI/fullscreen/marketplace/admin audits، بناء Web وAPK/AAB وتحقق التوقيع.
+- وثائق: المفكرة الرئيسية، مقارنة خط الأساس، خريطة الاستمرارية، تقارير QA، خطة الإغلاق، قائمة الموانع، سجل R7.4، وخطة تجربة الجهازين.
+- الحزمة source-only؛ لا تضم `node_modules/` أو `dist/` أو Android build generated أو ملفات توقيع أو APK/AAB قديمة.
+- سكربت الرفع الوحيد الموصى به: `TERMUX-PUSH-3.0.2-R7.4-20261102.sh`.
 
-**الحزمة source-only:** لا تضم `dist/` أو مجلد Android المولّد أو node_modules أو APK/AAB قديمة. GitHub Actions ينتج artifacts جديدة من SHA R7.3.
+Build #48، إذا احتجته للمقارنة، ناتج R7.3 فقط وليس من شجرة R7.4.

@@ -15,6 +15,7 @@ on:
       - alwaha-social-3.0.1-mobile-performance-20261020
       - alwaha-pro-3.0.2-release-20261102
       - alwaha-pro-3.0.2-release-r7.3-20261102
+      - alwaha-pro-3.0.2-release-r7.4-20261102
   workflow_dispatch:
 
 permissions:
@@ -217,6 +218,9 @@ jobs:
 
       - name: Run UI handler audit
         run: npm run audit:ui
+
+      - name: Run full-screen page and modal isolation audit
+        run: npm run audit:fullscreen-ui
 
       - name: Run marketplace column permission audit
         run: npm run audit:marketplace-columns

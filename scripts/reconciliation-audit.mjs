@@ -30,11 +30,11 @@ function check(label, condition) { condition ? pass(label) : fail(label); }
 check('release version 3.0.2 is consistent across package, lockfile, manifest and title',
   pkg.version === '3.0.2' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.2' && manifest.version === '3.0.2' && /<title>Alwaha-Pro 3\.0\.2<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
-check('R7.3 cache token is new and every cache audit agrees',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.3-release-20261102'") &&
-  /alwaha-pro-v3\\.0\\.2-r7\\.3-release-20261102/.test(read('scripts/performance-audit.mjs')) &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.2-r7.3-release-20261102') &&
-  read('scripts/compatibility-audit.mjs').includes('r7.3-release-20261102'));
+check('R7.4 cache token is new and every cache audit agrees',
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.4-release-20261102'") &&
+  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.2-r7\\.4-release-20261102') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.2-r7.4-release-20261102') &&
+  read('scripts/compatibility-audit.mjs').includes('r7.4-release-20261102'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
@@ -102,24 +102,25 @@ check('kids effect sounds have a distinct WebRTC audio track and bridge to remot
 check('encrypted local backup supports export/import and excludes passwords/session/service keys',
   vault.includes('PBKDF2') && vault.includes('AES-GCM') && vault.includes('async function exportBackup') &&
   vault.includes('async function importBackup') && vault.includes('لا يتضمن كلمات المرور أو رموز الجلسة أو مفاتيح الخدمة'));
-check('four distinct full-viewport seasonal scenes are defined locally with cover sizing',
-  ['summer','winter','autumn','spring'].every(x=>experience.includes(`body[data-alwaha-season=\"${x}\"]`)) &&
-  experience.includes('background-size:cover') && experience.includes('background-attachment:fixed') &&
-  experience.includes('radial-gradient') && experience.includes('linear-gradient'));
-check('seasonal scene movement is low-cost and stops for reduced motion/data saver',
-  experience.includes('alwahaSeasonDrift') && experience.includes('alwahaSeasonHaze') &&
-  experience.includes('body.alwaha-reduced-motion[data-alwaha-season]') &&
-  experience.includes('body.alwaha-data-saver[data-alwaha-season]') && experience.includes('prefers-reduced-motion'));
+check('four full-viewport image-backed themes replace seasons and use supplied local assets',
+  ['bg-nebula.webp','bg-aurora.webp','bg-underwater.webp','bg-moonlit.webp'].every(x=>experience.includes(x)) &&
+  experience.includes('const THEMES=') && experience.includes('body[data-alwaha-theme]') &&
+  experience.includes('background-size:cover') && experience.includes('window.changeAppTheme'));
+check('theme/nav motion and sounds stop for reduced motion or data saver',
+  experience.includes('prefers-reduced-motion: reduce') &&
+  experience.includes("localStorage.getItem('alwaha_data_saver')==='true'") &&
+  experience.includes('body.alwaha-reduced-motion .bottom-nav-bar') &&
+  experience.includes('body.alwaha-data-saver .bottom-nav-bar'));
 check('nav drag has a lightweight comic follower with falling/recovered hat or shoe, distinct sounds and saver guards',
   experience.includes('alwaha-comic-walker') && experience.includes('walker-follow') &&
   experience.includes('walker-gear') && experience.includes('alwahaGearDrop') &&
-  experience.includes('sound(440+Math.abs(a-b)*35)') &&
+  experience.includes('sound(440+Math.min(500,Math.abs(a-b)*45))') &&
   experience.includes("localStorage.getItem('alwaha_data_saver')==='true'"));
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
 // No accidental deployment on push from a test/release branch.
-check('APK/AAB build workflow is wired to R7.3 release branch', workflow.includes('alwaha-pro-3.0.2-release-r7.3-20261102'));
+check('APK/AAB build workflow is wired to R7.4 release branch', workflow.includes('alwaha-pro-3.0.2-release-r7.4-20261102'));
 check('web build workflow is manual build-only and has no deployment job',
   /^on:\s*\n\s*workflow_dispatch:/m.test(pages) && !/^\s*push:/m.test(pages) &&
   !/uses:\s*actions\/deploy-pages|deploy-pages|pages-build-deployment/i.test(pages));
