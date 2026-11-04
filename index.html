@@ -7,6 +7,32 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
     <title>Alwaha-Pro 3.0.2</title>
+
+<style id="alwaha-r75-fullscreen-isolation">
+.alwaha-fullscreen-layer{position:fixed!important;inset:0!important;z-index:2147483200!important;box-sizing:border-box!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100svh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;display:none;align-items:stretch!important;justify-content:stretch!important;background:rgba(3,8,17,.97)!important;overscroll-behavior:contain!important;}
+.alwaha-fullscreen-layer.is-open{display:flex!important;}
+#market-chat-modal{z-index:2147483300!important;}
+#market-chat-modal>section{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:100dvh!important;border:0!important;border-radius:0!important;box-sizing:border-box!important;}
+#market-conversations-page{flex-direction:column!important;background:linear-gradient(155deg,#071522,#081b2c 58%,#091626)!important;padding:0!important;}
+.alwaha-fullscreen-header{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));border-bottom:1px solid #8bf4ff25;background:#081522;}
+.alwaha-fullscreen-header strong{display:block;color:#8bf4ff;font:800 15px Cairo,sans-serif;}
+.alwaha-fullscreen-header small{display:block;color:#9fb6c9;font:10px Cairo,sans-serif;margin-top:3px;}
+.alwaha-fullscreen-header button{background:#ffffff12;color:#fff;border:1px solid #ffffff22;border-radius:10px;padding:8px 13px;font:700 11px Cairo,sans-serif;}
+.alwaha-fullscreen-content{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));}
+#market-conversations-page #market-conversations-panel{display:block!important;width:100%;box-sizing:border-box;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;}
+#market-conversations-page #market-conversations-container{min-height:60px;}
+#market-conversations-page #market-transactions-container{padding-bottom:12px;}
+#alwaha-public-profile-modal{padding:0!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;}
+#alwaha-public-profile-modal>[role=dialog]{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:100dvh!important;margin:0!important;padding:max(22px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))!important;border:0!important;border-radius:0!important;box-sizing:border-box!important;overflow:auto!important;display:flex;flex-direction:column;justify-content:center;}
+#internal-notification-center.alwaha-notifications-open{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-width:none!important;margin:0!important;border:0!important;border-radius:0!important;z-index:2147483250!important;background:rgba(5,12,22,.98)!important;overflow:auto!important;overscroll-behavior:contain!important;}
+#internal-notification-center .alwaha-notification-panel{width:100%!important;max-width:none!important;min-height:100dvh!important;max-height:none!important;border-radius:0!important;box-sizing:border-box!important;padding-bottom:env(safe-area-inset-bottom);}
+.game-modal-overlay{overscroll-behavior:contain!important;touch-action:pan-y;}
+.game-modal-overlay>.game-modal-card{width:100vw!important;max-width:none!important;height:100dvh!important;max-height:none!important;border-radius:0!important;box-sizing:border-box!important;}
+body.modal-active{overflow:hidden!important;overscroll-behavior:none!important;}
+body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!important;pointer-events:none!important;}
+@media(prefers-reduced-motion:reduce){.alwaha-fullscreen-layer,.alwaha-nav-reveal-handle{scroll-behavior:auto!important;transition:none!important;}}
+</style>
+
     <!-- مكتبة الأيقونات FontAwesome -->
     <link rel="stylesheet" href="./assets/vendor/fontawesome/css/all.min.css">
     <!-- خط القاهرة -->
@@ -22,7 +48,8 @@
     <script src="./production-polish.js" defer></script>
     <script src="./compatibility.js" defer></script>
     <script src="./alwaha-local-vault.js" defer></script>
-    <script src="./alwaha-experience.js" defer></script>
+    <script src="./alwaha-experience.js?v=3.0.2-r75" defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.2-r75" defer></script>
     <script src="./alwaha-kids-room.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
@@ -560,6 +587,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.2-r75">
 </head>
 <body>
 
@@ -656,6 +684,7 @@ img,video,canvas{max-width:100%}
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ffff; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('buy')">الشراء</button>
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#ffd700; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('sell')">بيع سلعة</button>
                 <button class="btn-action" style="background:rgba(255,255,255,0.05); color:#00ff88; padding:6px 10px; border-radius:8px; font-size:11px;" onclick="switchMarketSubView('my-items')">سلعي</button>
+                <button type="button" class="btn-action" id="market-conversations-open" onclick="openMarketConversationsPage()" style="background:linear-gradient(135deg,#17354a,#214b54);color:#8bf4ff;padding:6px 10px;border-radius:8px;font-size:11px;border:1px solid #8bf4ff55;"><i class="fa-solid fa-comments"></i> محادثات السوق</button>
             </div>
         </div>
 
@@ -671,7 +700,7 @@ img,video,canvas{max-width:100%}
             <div id="market-products-list-container" style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px;"></div>
         </div>
 
-        <section id="market-conversations-panel" style="margin:14px 0;padding:12px;border:1px solid rgba(139,244,255,.25);border-radius:16px;background:rgba(5,15,29,.55);">
+        <section id="market-conversations-panel" style="display:none;margin:14px 0;padding:12px;border:1px solid rgba(139,244,255,.25);border-radius:16px;background:rgba(5,15,29,.55);">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;">
                 <h3 style="margin:0;color:#8bf4ff;font-size:13px;"><i class="fa-solid fa-store"></i> محادثات السوق</h3>
                 <button type="button" class="btn-action" onclick="renderMarketConversationsList()" style="background:#17354a;color:#8bf4ff;padding:7px 11px;border-radius:9px;font-size:10px;">تحديث</button>
@@ -923,12 +952,14 @@ img,video,canvas{max-width:100%}
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-settings')"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">خلفيات التطبيق والمظهر</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#05081399,#1b214499),url('./assets/backgrounds/bg-nebula.webp') center/cover;color:#d9e8ff;padding:10px;font-size:11px;border:1px solid #91a9ff55;" onclick="changeAppTheme('default')">🌌 فضائي افتراضي</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0f202799,#203a4399),url('./assets/backgrounds/bg-aurora.webp') center/cover;color:#fff;padding:10px;font-size:11px;" onclick="changeAppTheme('nature')">🌿 طبيعة</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#0a0a2a88,#0009),url('./assets/backgrounds/bg-underwater.webp') center/cover;color:#00ffff;padding:10px;font-size:11px;" onclick="changeAppTheme('tech')">💻 تكنولوجيا</button>
-            <button type="button" class="btn-action" style="flex:1 1 42%;background:linear-gradient(135deg,#14141e88,#29364a88),url('./assets/backgrounds/bg-moonlit.webp') center/cover;color:#e2e8f0;border:1px solid #ffffff25;padding:10px;font-size:11px;" onclick="changeAppTheme('soft')">🌙 هادئ</button>
+        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">المظهر الكامل والخلفية الموسمية</h4>
+        <p style="color:#a9bfd2;font-size:10px;line-height:1.8;margin:0 0 10px;">يتغير المشهد والخلفية وألوان البطاقات والنوافذ وعناصر التنقل معاً. المشاهد مضمّنة وتعمل دون إنترنت؛ لنقل اختيارك لجهاز آخر استخدم النسخة الاحتياطية المشفرة. الثيم الأساسي يعيد شكل الواحة الأصلي.</p>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:20px;">
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="default" aria-pressed="false" style="background-image:linear-gradient(155deg,rgba(8,5,11,.25),rgba(22,5,16,.78)),radial-gradient(ellipse at 20% 20%,#79304f,#10070d 70%);" onclick="changeAppTheme('default')"><span>🌌</span><span class="theme-choice-name">الأساسي الأصلي</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="spring" aria-pressed="false" style="background-image:linear-gradient(155deg,#12222b22,#112129a6),url('./assets/backgrounds/bg-spring.webp');" onclick="changeAppTheme('spring')"><span>🌸</span><span class="theme-choice-name">الربيع</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="summer" aria-pressed="false" style="background-image:linear-gradient(155deg,#092b3b22,#092d3ba6),url('./assets/backgrounds/bg-summer.webp');" onclick="changeAppTheme('summer')"><span>☀️</span><span class="theme-choice-name">الصيف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="autumn" aria-pressed="false" style="background-image:linear-gradient(155deg,#2b160d22,#291710aa),url('./assets/backgrounds/bg-autumn.webp');" onclick="changeAppTheme('autumn')"><span>🍂</span><span class="theme-choice-name">الخريف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
+            <button type="button" class="alwaha-theme-choice" data-theme-choice="winter" aria-pressed="false" style="background-image:linear-gradient(155deg,#0c213522,#0c233db0),url('./assets/backgrounds/bg-winter.webp');" onclick="changeAppTheme('winter')"><span>❄️</span><span class="theme-choice-name">الشتاء</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
         </div>
 
 
@@ -1240,13 +1271,42 @@ img,video,canvas{max-width:100%}
         let notificationChannel = null;
 
         function changeAppTheme(themeName, showToast = true) {
-            const allowedThemes = new Set(['default', 'nature', 'tech', 'soft']);
-            const selectedTheme = allowedThemes.has(themeName) ? themeName : 'default';
-            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft');
+            const legacyThemeMap = { nature: 'spring', tech: 'summer', soft: 'winter' };
+            const requested = String(themeName || 'default').trim().toLowerCase();
+            const normalized = legacyThemeMap[requested] || requested;
+            const allowedThemes = new Set(['default', 'spring', 'summer', 'autumn', 'winter']);
+            const selectedTheme = allowedThemes.has(normalized) ? normalized : 'default';
+            if (!document.body) return selectedTheme;
+            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
             if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
+            document.body.dataset.alwahaTheme = selectedTheme;
+            let backdrop = document.getElementById('alwaha-theme-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'alwaha-theme-backdrop';
+                backdrop.setAttribute('aria-hidden', 'true');
+                document.body.insertBefore(backdrop, document.body.firstChild);
+            }
+            backdrop.dataset.theme = selectedTheme;
+            const themeColors = { default: '#10070d', spring: '#18333a', summer: '#073344', autumn: '#291b19', winter: '#102940' };
+            const chrome = document.querySelector('meta[name="theme-color"]');
+            if (chrome) chrome.setAttribute('content', themeColors[selectedTheme] || themeColors.default);
             try { localStorage.setItem('alwaha_theme', selectedTheme); }
             catch (error) { console.warn('Unable to persist theme selection:', error); }
-            if (showToast) triggerToastNotification('تم حفظ المظهر وتفعيله.', 'success');
+            document.querySelectorAll('[data-theme-choice]').forEach(button => {
+                const active = button.dataset.themeChoice === selectedTheme;
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                const state = button.querySelector('.theme-choice-state');
+                if (state) state.textContent = active ? 'المظهر النشط' : 'اضغط للتفعيل';
+            });
+            const label = document.getElementById('alwaha-theme-label');
+            if (label) {
+                const names = { default: 'الأساسي الأصلي', spring: 'الربيع', summer: 'الصيف', autumn: 'الخريف', winter: 'الشتاء' };
+                label.textContent = `الثيم الحالي: ${names[selectedTheme] || names.default}`;
+            }
+            window.dispatchEvent(new CustomEvent('alwaha:themechange', { detail: { theme: selectedTheme } }));
+            if (showToast && typeof triggerToastNotification === 'function') triggerToastNotification('تم حفظ الثيم وتطبيق الخلفية والألوان.', 'success');
+            return selectedTheme;
         }
 
         async function clearAppCacheKeepData() {
@@ -1358,8 +1418,8 @@ async function startReelRecording() {
                 reelRecordingStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:currentFacingMode},audio:true});
                 cameraStream=reelRecordingStream;
                 modal.style.display='block';document.body.classList.add('modal-active');
-                box.innerHTML='<video id="camera-live-video" class="camera-video-preview" autoplay muted playsinline></video><div id="reel-recording-indicator" style="position:absolute;top:18px;right:18px;color:#ff456f;background:#0009;border-radius:9px;padding:6px 10px;font-size:11px;display:none;">● جاري التسجيل</div>';
-                const video=document.getElementById('camera-live-video');if(video)video.srcObject=reelRecordingStream;
+                box.innerHTML='<video data-camera-live-video class="camera-video-preview" autoplay muted playsinline></video><div id="reel-recording-indicator" style="position:absolute;top:18px;right:18px;color:#ff456f;background:#0009;border-radius:9px;padding:6px 10px;font-size:11px;display:none;">● جاري التسجيل</div>';
+                const video=document.querySelector('#camera-view-box video[data-camera-live-video]');if(video)video.srcObject=reelRecordingStream;
                 const mimeType=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'].find(type=>MediaRecorder.isTypeSupported?.(type))||'';
                 reelRecorderChunks=[];pendingRecordedReel=null;
                 reelRecorder=new MediaRecorder(reelRecordingStream,mimeType?{mimeType}:undefined);
@@ -1368,7 +1428,7 @@ async function startReelRecording() {
                 reelRecorder.onstop=()=>{
                     const type=reelRecorder?.mimeType||'video/webm';
                     pendingRecordedReel=new File([new Blob(reelRecorderChunks,{type})],`alwaha-reel-${Date.now()}.${type.includes('mp4')?'mp4':'webm'}`,{type});
-                    const preview=document.getElementById('camera-live-video');
+                    const preview=document.querySelector('#camera-view-box video[data-camera-live-video]');
                     if(preview){preview.srcObject=null;preview.src=URL.createObjectURL(pendingRecordedReel);preview.controls=true;preview.muted=false;preview.play().catch(()=>{});}
                     const indicator=document.getElementById('reel-recording-indicator');if(indicator)indicator.style.display='none';
                     const start=document.getElementById('reel-record-start-btn'),stop=document.getElementById('reel-record-stop-btn'),save=document.getElementById('reel-record-save-btn'),publish=document.getElementById('reel-record-publish-btn');
@@ -1818,7 +1878,7 @@ function handleRegisterAvatarPick() {
 
 async function toggleInternalNotificationCenter() {
             const center=document.getElementById('internal-notification-center');if(!center)return;
-            if(center.classList.contains('alwaha-notifications-open')){center.classList.remove('alwaha-notifications-open');center.style.display='none';document.body.classList.remove('modal-active');return;}
+            if(center.classList.contains('alwaha-notifications-open')){center.classList.remove('alwaha-notifications-open');center.style.display='none';window.AlwahaModalShell?.sync?.();return;}
             if(center.parentElement!==document.body)document.body.appendChild(center);
             center.classList.add('alwaha-notifications-open');center.style.display='flex';document.body.classList.add('modal-active');
             await renderInternalNotificationCenter();
@@ -2474,7 +2534,7 @@ async function togglePostLike(id) {
         }
         async function deleteOwnHomePost(postId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
-            if(!window.confirm('هل تريد حذف هذا المنشور نهائياً؟'))return;
+            if(!window.confirm('سيُحذف هذا المنشور نهائياً من المنصة ولا توجد استعادة من داخل التطبيق. احفظ نسخة من النص والصورة التي تريد الاحتفاظ بها أولاً. لن تُحذف بقية منشوراتك أو إعداداتك المحلية. هل تتابع؟'))return;
             const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
             if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور.','error');
             triggerToastNotification('تم حذف المنشور.','success');closeHomePostDetails();await renderHomePostsFeed();
@@ -2562,7 +2622,7 @@ async function editOwnReel(reelId) {
         }
         async function deleteOwnReel(reelId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف ريلز.');if(!user)return;
-            if(!window.confirm('هل تريد حذف هذا الريلز من المنصة؟'))return;
+            if(!window.confirm('سيُحذف هذا الريلز من المنصة نهائياً. احفظ ملف الفيديو على الهاتف أولاً إذا كنت تريد الاحتفاظ بنسخة منه؛ لا توجد استعادة من داخل التطبيق. لن تتأثر بقية الريلز أو المسودات. هل تتابع؟'))return;
             const result=await supabaseFetch(`reels?id=eq.${encodeURIComponent(reelId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
             if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف الريلز.','error');
             triggerToastNotification('تم حذف الريلز.','success');renderReelsFeed();
@@ -2672,7 +2732,9 @@ async function loadAllRegisteredUsersList() {
             relatedRows.forEach(row=>row.remove());
             if(notificationIds.length)void markNotificationsReadSilently(notificationIds);else void refreshAlwahaNotificationBadge();
             triggerToastNotification(status==='accepted'?'تم قبول طلب الصداقة.':'تم رفض طلب الصداقة.','success');
+            // User-list refresh is deliberately non-blocking; unrelated notification cards remain visible.
             void loadAllRegisteredUsersList();
+            window.AlwahaModalShell?.sync?.();
         }
 
         async function reviewVerificationRequest(requestId,status) {
@@ -2820,7 +2882,7 @@ async function loadMarketMessages() {
             marketMessageSendInFlight=true;if(button){button.disabled=true;button.textContent='جارٍ الإرسال…';}
             try{
                 const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify({conversation_id:currentMarketConversationId,sender_id:me.id,message}),prefer:'return=representation'});
-                if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':'تعذر إرسال رسالة السوق؛ احتفظنا بالنص لمحاولة أخرى.','error');return;}
+                if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':(e.status===0?'انقطع الاتصال؛ بقي النص في خانة الكتابة ويمكن إعادة إرساله.':'تعذر إرسال الرسالة ('+(e.status||'خطأ اتصال')+'). بقي النص في خانة الكتابة.'),'error');return;}
                 if(input)input.value='';
                 triggerToastNotification('تم إرسال رسالتك إلى البائع.','success');
                 // The database insert is the success boundary; refreshes must not hold the send button.
@@ -2836,6 +2898,29 @@ async function loadMarketMessages() {
                 .on('postgres_changes',{event:'INSERT',schema:'public',table:'market_messages',filter:`conversation_id=eq.${id}`},async()=>{if(currentMarketConversationId===id)await loadMarketMessages();await renderMarketConversationsList();})
                 .subscribe();
         }
+        function openMarketConversationsPage() {
+            const panel=document.getElementById('market-conversations-panel');if(!panel)return;
+            let page=document.getElementById('market-conversations-page');
+            if(!page){
+                const placeholder=document.createElement('div');placeholder.id='market-conversations-panel-placeholder';panel.parentNode?.insertBefore(placeholder,panel);
+                page=document.createElement('div');page.id='market-conversations-page';page.className='alwaha-fullscreen-layer';page.setAttribute('role','dialog');page.setAttribute('aria-modal','true');page.setAttribute('aria-label','محادثات السوق');
+                page.innerHTML='<header class="alwaha-fullscreen-header"><div><strong>محادثات السوق</strong><small>تواصل البيع والشراء — مستقل عن الصداقة</small></div><button type="button" class="btn-action" onclick="closeMarketConversationsPage()" aria-label="إغلاق محادثات السوق">إغلاق ×</button></header><main class="alwaha-fullscreen-content" id="market-conversations-page-content"></main>';
+                page.addEventListener('click',event=>{if(event.target===page)closeMarketConversationsPage();});document.body.appendChild(page);
+            }
+            const content=page.querySelector('#market-conversations-page-content');if(panel.parentElement!==content)content.appendChild(panel);
+            panel.style.display='block';page.classList.add('is-open');page.style.display='flex';document.body.classList.add('modal-active');
+            void renderMarketConversationsList();void renderMarketTransactionsList();
+            const close=page.querySelector('button[aria-label="إغلاق محادثات السوق"]');close?.focus({preventScroll:true});
+            window.AlwahaModalShell?.sync?.();
+        }
+        function closeMarketConversationsPage() {
+            const page=document.getElementById('market-conversations-page');if(!page)return;
+            page.classList.remove('is-open');page.style.display='none';
+            const panel=document.getElementById('market-conversations-panel'),placeholder=document.getElementById('market-conversations-panel-placeholder');
+            if(panel&&placeholder&&panel.parentElement!==placeholder.parentElement){placeholder.parentElement.insertBefore(panel,placeholder);panel.style.display='none';}
+            window.AlwahaModalShell?.sync?.();
+        }
+
         async function openMarketConversationChat(conversationId,title,peerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لفتح محادثة السوق.');if(!me||!conversationId)return;
             const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,buyer_id,seller_id&limit=1`);
@@ -2844,8 +2929,8 @@ async function loadMarketMessages() {
             currentMarketConversationId=String(c.id);
             let modal=document.getElementById('market-chat-modal');
             if(!modal){
-                modal=document.createElement('div');modal.id='market-chat-modal';modal.className='game-modal-overlay';modal.style.zIndex='2147483000';
-                modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="محادثة السوق" style="width:min(96vw,470px);height:min(82dvh,690px);max-height:calc(100dvh - 26px);display:flex;flex-direction:column;overflow:hidden;background:#0c1728;border:1px solid #8bf4ff66;border-radius:20px;padding:13px;box-shadow:0 18px 60px #000b;">
+                modal=document.createElement('div');modal.id='market-chat-modal';modal.className='game-modal-overlay alwaha-fullscreen-layer';modal.style.zIndex='2147483200';
+                modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="محادثة السوق" style="box-sizing:border-box;width:100vw;height:100dvh;max-width:none;max-height:none;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#0c1728;border:0;border-radius:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));box-shadow:none;">
                     <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
                     <div style="display:flex;gap:7px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button></div>
@@ -2853,12 +2938,12 @@ async function loadMarketMessages() {
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
             }
             const titleEl=document.getElementById('market-chat-title');if(titleEl)titleEl.textContent=title||'إعلان السوق';
-            modal.style.display='flex';document.body.classList.add('modal-active');await loadMarketMessages();await subscribeToMarketConversation();
+            modal.classList.add('is-open');modal.style.display='flex';document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();await loadMarketMessages();await subscribeToMarketConversation();const input=document.getElementById('market-chat-input');if(input){input.onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMarketMessage();}};input.focus({preventScroll:true});}
         }
         function closeMarketConversationChat() {
             const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
             if(marketConversationChannel&&supabaseClient){supabaseClient.removeChannel(marketConversationChannel).catch(()=>{});marketConversationChannel=null;}
-            currentMarketConversationId='';document.body.classList.remove('modal-active');renderMarketConversationsList();
+            currentMarketConversationId='';window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();
         }
         async function subscribeToMarketInbox() {
             const me=await getCurrentAuthUser();if(!me||!supabaseClient||marketInboxChannel)return;
@@ -3975,13 +4060,13 @@ async function launchGameEngine(gameTitle) {
         }
 
 function triggerFaceBeautyEnhancement() {
-            const video=document.getElementById('camera-live-video'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
+            const video=document.querySelector('#camera-view-box video[data-camera-live-video]'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
             video.style.filter=video.style.filter&&video.style.filter.includes('blur')?'none':'brightness(1.06) saturate(1.18) contrast(.96) blur(.35px)';
             triggerToastNotification(video.style.filter==='none'?'تم إلغاء تجميل الصورة.':'تم تطبيق تحسين تجميلي مباشر على المعاينة.','success');
         }
 
 function triggerAnimeAiConverterFilter() {
-            const video=document.getElementById('camera-live-video'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
+            const video=document.querySelector('#camera-view-box video[data-camera-live-video]'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
             video.style.filter=video.style.filter&&video.style.filter.includes('saturate(1.5)')?'none':'saturate(1.5) contrast(1.18) brightness(1.05)';
             triggerToastNotification(video.style.filter==='none'?'تم إلغاء ستايل الأنمي.':'تم تطبيق ستايل أنمي مباشر على المعاينة.','success');
         }
@@ -4022,8 +4107,8 @@ function triggerAnimeAiConverterFilter() {
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode }, audio: false });
-                box.innerHTML = '<video id="camera-live-video" class="camera-video-preview" autoplay muted playsinline></video>';
-                const video = document.getElementById('camera-live-video');
+                box.innerHTML = '<video data-camera-live-video class="camera-video-preview" autoplay muted playsinline></video>';
+                const video = document.querySelector('#camera-view-box video[data-camera-live-video]');
                 if (video) video.srcObject = cameraStream;
             } catch (error) {
                 box.innerHTML = '<span style="color:#ff0055;font-size:12px;line-height:1.8;"><i class="fa-solid fa-triangle-exclamation"></i><br>تعذر الوصول إلى الكاميرا.<br>تحقق من إذن الكاميرا وHTTPS.</span>';
@@ -4047,7 +4132,7 @@ function triggerAnimeAiConverterFilter() {
         }
 
         function captureCameraFrame() {
-            const video = document.getElementById('camera-live-video');
+            const video = document.querySelector('#camera-view-box video[data-camera-live-video]');
             const canvas = document.getElementById('camera-capture-canvas');
             if (!video || !canvas || !video.videoWidth) return triggerToastNotification('الكاميرا غير جاهزة بعد.', 'info');
             canvas.width = video.videoWidth;
@@ -4245,7 +4330,7 @@ function triggerAnimeAiConverterFilter() {
             if (id !== 'profile-section') {
                 document.querySelectorAll('.sub-profile-view-box').forEach(box => box.style.display = 'none');
                 window.alwahaModalHistory = [];
-                document.body.classList.remove('modal-active');
+                window.AlwahaModalShell?.sync?.();
             }
 
             window.scrollTo({top:0, behavior:'smooth'});
@@ -4306,6 +4391,8 @@ function triggerAnimeAiConverterFilter() {
                 else { document.getElementById('voice-call-modal').style.display = 'none'; document.body.classList.remove('modal-active'); }
                 return;
             }
+            if (alwahaIsVisible(document.getElementById('market-chat-modal'))) { closeMarketConversationChat(); return; }
+            if (alwahaIsVisible(document.getElementById('market-conversations-page'))) { closeMarketConversationsPage(); return; }
             for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay']) {
                 const box = document.querySelector(selector);
                 if (!alwahaIsVisible(box)) continue;

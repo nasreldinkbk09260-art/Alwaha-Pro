@@ -1,12 +1,12 @@
-# دليل محتويات R7.3 — Alwaha-Pro 3.0.2
+# دليل محتويات Alwaha-Pro 3.0.2 R7.5
 
-- مصدر التطبيق: `index.html`, `games.js`, `production-polish.js`, `compatibility.js`, `alwaha-kids-room.js`, `alwaha-local-vault.js`, `alwaha-experience.js`, `sw.js`.
-- أصول محلية: vendor bundles/fonts/icons، صوتا الرنين، وأربع خلفيات، chess asset.
-- Android native: `scripts/android/AlwahaAudioRoutePlugin.java` (لا تحذف؛ يجب أن يبقى في شجرة الرفع).
-- Supabase: functions/migrations/tests، بما فيها `20261102170000_marketplace_nonfriend_conversation.sql` الجديدة.
-- CI: Android APK/AAB Build Only، PostgreSQL disposable fixture, release audits, Web build manual-only, Supabase migration-history manual guard.
-- وثائق مرجعية: المفكرة الرئيسية، متتبع المتطلبات، reconciliation، خريطة مصادر الدردشات، closure plan، live Supabase audit، release blockers، QA report، سجل Build #43، وسجل الاستعادة والاستبعادات. الوثائق القديمة نقلت إلى `docs/archive/` مع الاحتفاظ بها.
-- عدد الملفات الحالية داخل المصدر (مع ملف SHA256SUMS): 214 ملفاً؛ لا يحتوي مجلد بناء Android أو dist أو node_modules.
-- سكربت الرفع الوحيد الموصى به: `TERMUX-PUSH-3.0.2-R7.3-20261102.sh`.
+- التطبيق الأساسي ومكوناته كاملة مع الهوية الأصلية `pro.alwaha.app` / `Alwaha-Pro` / `dist`.
+- خمس مظاهر: الأساسي الأصلي + أربعة مشاهد موسمية محلية `bg-spring/summer/autumn/winter.webp` بنسبة 1200×1920، وملفات SVG المصدر.
+- نظام ثيمات موحد `alwaha-theme-system.css`، وطبقة خلفية، وألوان متوافقة للبطاقات والنوافذ والحقول والتنقل.
+- وحدات عزل النوافذ الكاملة، السوق المستقل، الدردشة، المكالمات، الألعاب، الخزنة المشفرة، غرفة الأطفال، التنقل العائم، والإدارة المضمنة.
+- جميع migrations/tests الأصلية والرقع واختبارات PostgreSQL المؤقتة، دون تطبيقها على قاعدة الإنتاج.
+- CI build-only يشغل SQL fixture وعمليات audit ثم يبني Web/APK/AAB ويحقق التوقيع.
+- سكربت رفع مستقل: `TERMUX-PUSH-3.0.2-R7.5-20261103.sh`.
+- وثائق: خطة الإصدار، سجل R7.5، حالة الاستمرارية، تقرير QA، مقارنة خط الأساس، وخطة اختبار الأجهزة.
 
-**الحزمة source-only:** لا تضم `dist/` أو مجلد Android المولّد أو node_modules أو APK/AAB قديمة. GitHub Actions ينتج artifacts جديدة من SHA R7.3.
+الحزمة مصدر فقط؛ لا تتضمن `node_modules/` أو `dist/` أو ملفات توقيع أو APK/AAB قديمة.

@@ -1,11 +1,12 @@
-# الرفع والبناء — R7.3
+# الرفع والبناء — R7.5
 
-من جذر مجلد المصدر بعد فك الحزمة شغّل مرة واحدة:
+من جذر مجلد المصدر بعد فك الحزمة:
 
 ```bash
-bash ./TERMUX-PUSH-3.0.2-R7.3-20261102.sh
+cd "$HOME/storage/shared/Download/Alwaha-Pro-3.0.2-R7.5-FINAL-20261103" || exit 1
+bash ./TERMUX-PUSH-3.0.2-R7.5-20261103.sh
 ```
 
-السكريبت يتحقق من بصمة SHA وهوية التطبيق وحواجز التاريخ، ينشئ فرعاً مستقلاً من commit `f116998da546b05b65d52bf89871de1490dcc920` ويرفع المصدر كاملاً إلى `alwaha-pro-3.0.2-release-r7.3-20261102`. لا يدفع إلى main ولا ينشر موقعاً ولا يطبق migrations ولا يشغّل `supabase db push`.
+يبني السكربت فرع R7.5 مستقلاً من commit R7.3 `553e1c4`، ويتحقق من SHA وهوية التطبيق والملفات الأساسية، ويرفض استبدال الفرع إن كان موجوداً. لا يدفع إلى `main` ولا ينشر الموقع ولا يطبق migrations ولا يشغّل `supabase db push`.
 
-بعد الرفع يلزم GitHub Actions لعمل SQL regression ثم Web/Android build وتوقيع APK/AAB. لا تعد تشغيل npm audits في Termux؛ سجلات CI هي الدليل التالي.
+بعد الرفع راجع تشغيل GitHub Actions على SHA الجديد لنجاح PostgreSQL regression ثم Web/APK/AAB وتوقيعها. Build #48 السابق يخص R7.3 فقط، ولا يمثل تعديلات R7.5.

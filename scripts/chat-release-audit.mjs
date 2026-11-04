@@ -47,7 +47,7 @@ const checks = [
   ['warranty and archive retention are displayed with a seven-day warning grace', 'مهلة 7 أيام كاملة بعد الإشعار'],
   ['kids mode only shown on connected video call', 'kidsModeBtn'],
   ['local encrypted backup module loaded', 'alwaha-local-vault.js'],
-  ['seasonal themes persist locally', 'localStorage.setItem(SEASON_KEY,season)'],
+  ['image themes persist locally', "localStorage.setItem('alwaha_theme',theme)"],
   ['nav reorder persists', `localStorage.setItem(ORDER_KEY,JSON.stringify(navItems().map(x=>x.getAttribute('aria-label'))))`],
   ['feed retry state', 'إعادة المحاولة'],
   ['feed no network state', 'لا يوجد اتصال بالإنترنت'],
@@ -57,7 +57,7 @@ const checks = [
   ['legacy WebView has AbortController fallback', "typeof AbortController === 'function' ? new AbortController() : null"],
 ];
 let failures=0;
-for(const [label,needle] of checks){const haystack=(label==='seasonal themes persist locally'||label==='nav reorder persists')?experience:html;const ok=typeof needle==='boolean'?needle:haystack.includes(needle);if(!ok){console.error('FAIL:',label);failures++;}else console.log('PASS:',label);}
+for(const [label,needle] of checks){const haystack=(label==='image themes persist locally'||label==='nav reorder persists')?experience:html;const ok=typeof needle==='boolean'?needle:haystack.includes(needle);if(!ok){console.error('FAIL:',label);failures++;}else console.log('PASS:',label);}
 if(!kids.includes('window.toggleAlwahaKidsMode=open')){console.error('FAIL: kids mode exported handler missing');failures++;}else console.log('PASS: kids mode handler exported by bundled module');
 const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi,'');
 const ids=[...staticMarkup.matchAll(/\bid=["']([^"']+)["']/g)].map(m=>m[1]);

@@ -5,7 +5,7 @@ const checks = [
  ['native bridge registers plugin', fs.readFileSync('scripts/native-back-handler.mjs','utf8').includes("registerPlugin('AlwahaAudioRoute')")],
  ['native plugin shares the installed APK securely', fs.readFileSync('scripts/android/AlwahaAudioRoutePlugin.java','utf8').includes('FileProvider.getUriForFile') && fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8').includes('alwaha_file_paths.xml')],
  ['call UI exposes speaker toggle', fs.readFileSync('index.html','utf8').includes('onclick="toggleCallSpeaker()"')],
- ['Termux deploy copy preserves scripts/android native plugin', /rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.3-20261102.sh','utf8')) && fs.readFileSync('TERMUX-PUSH-3.0.2-R7.3-20261102.sh','utf8').includes("target/'scripts/android/AlwahaAudioRoutePlugin.java'")],
+ ['Termux deploy copy preserves scripts/android native plugin', /rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8')) && fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")],
 ];
 let failures=0;
 for (const [label,ok] of checks) { if(ok) console.log('PASS:',label); else { console.error('FAIL:',label); failures++; } }

@@ -42,7 +42,7 @@ if (/<title>Alwaha-Pro 3\.0\.2<\/title>/i.test(html) &&
   pass("HTML title and currentAppVersion match 3.0.2");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.2-r7\.3-release-20261102['"]/.test(sw))
+if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.2-r7\.5-seasonal-themes-20261103['"]/.test(sw))
   pass("service worker uses the 3.0.2 cache namespace");
 else fail("service worker cache namespace mismatch");
 

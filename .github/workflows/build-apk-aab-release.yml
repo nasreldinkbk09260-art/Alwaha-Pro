@@ -15,6 +15,8 @@ on:
       - alwaha-social-3.0.1-mobile-performance-20261020
       - alwaha-pro-3.0.2-release-20261102
       - alwaha-pro-3.0.2-release-r7.3-20261102
+      - alwaha-pro-3.0.2-release-r7.4-20261102
+      - alwaha-pro-3.0.2-release-r7.5-20261103
   workflow_dispatch:
 
 permissions:
@@ -113,9 +115,11 @@ jobs:
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
           test -s assets/backgrounds/bg-nebula.webp
-          test -s assets/backgrounds/bg-aurora.webp
-          test -s assets/backgrounds/bg-underwater.webp
-          test -s assets/backgrounds/bg-moonlit.webp
+          test -s assets/backgrounds/bg-spring.webp
+          test -s assets/backgrounds/bg-summer.webp
+          test -s assets/backgrounds/bg-autumn.webp
+          test -s assets/backgrounds/bg-winter.webp
+          test -s alwaha-theme-system.css
           test -s supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql
           test -s supabase/migrations/20261014192321_username_follows_call_features_20261014090000.sql
           test -s supabase/migrations/20261007082734_20261005000000_fix_like_count_security.sql
@@ -215,8 +219,14 @@ jobs:
       - name: Run field repair regression audit
         run: npm run audit:field-repair
 
+      - name: Run complete theme runtime audit
+        run: npm run audit:themes
+
       - name: Run UI handler audit
         run: npm run audit:ui
+
+      - name: Run full-screen page and modal isolation audit
+        run: npm run audit:fullscreen-ui
 
       - name: Run marketplace column permission audit
         run: npm run audit:marketplace-columns
@@ -253,9 +263,11 @@ jobs:
           test -s dist/assets/sounds/saffron_tide.mp3
           test -s dist/assets/sounds/marimba_bloom.mp3
           test -s dist/assets/backgrounds/bg-nebula.webp
-          test -s dist/assets/backgrounds/bg-aurora.webp
-          test -s dist/assets/backgrounds/bg-underwater.webp
-          test -s dist/assets/backgrounds/bg-moonlit.webp
+          test -s dist/assets/backgrounds/bg-spring.webp
+          test -s dist/assets/backgrounds/bg-summer.webp
+          test -s dist/assets/backgrounds/bg-autumn.webp
+          test -s dist/assets/backgrounds/bg-winter.webp
+          test -s dist/alwaha-theme-system.css
           echo 'Web build validated.'
 
       - name: Create or sync Android project

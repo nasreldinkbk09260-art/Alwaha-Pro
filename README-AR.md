@@ -1,14 +1,38 @@
-# Alwaha-Pro 3.0.2 — R7.3 Release Candidate Source
+# Alwaha-Pro 3.0.2 — R7.5 Release Candidate
 
-R7.3 هي نقطة المصدر الموحدة بعد مصالحة إصلاحات 3.0.1 الأخيرة وتطويرات 3.0.2. ابدأ بقراءة `ALWAHA-PRO-MASTER-NOTEBOOK-AR.md` ثم `docs/CONTINUITY-STATE-20261102-R7.3-AR.md`.
+هذه الحزمة امتداد مباشر لمسار R7.3/R7.4، وليست مشروعاً جديداً. نقطة الأساس البعيدة هي commit `553e1c431a0cfb92112516533b746ba0a2976f4f` على فرع R7.3. تم الاحتفاظ بكل وحدات السوق والدردشة والمكالمات والألعاب والخزنة المحلية وغرفة الأطفال ولوحة الإدارة المضمنة وهوية التطبيق.
 
-- الفرع المستهدف: `alwaha-pro-3.0.2-release-r7.3-20261102`.
-- لا ترفع إلى `main` ولا تشغّل `supabase db push`.
-- استخدم سكربت واحد: `bash ./TERMUX-PUSH-3.0.2-R7.3-20261102.sh` بعد فك الحزمة في Termux.
-- سكربت Termux يتحقق من الملف والهوية ويقوم بالرفع فقط. GitHub Actions يعيد SQL regression والتدقيقات والبناء الموقّع.
-- Web Pages workflow manual build-only. Supabase history guard manual/non-deploying.
+## التغيير الرئيسي R7.5: المظهر الكامل
 
-هذه **Release Candidate Source** وليست إصداراً رسمياً حتى نجاح Actions/SQL والتوقيع واختبار الهاتفين وشبكتين ومصالحة Supabase production.
+- خمسة اختيارات للمظهر: الأساسي الأصلي، الربيع، الصيف، الخريف، الشتاء.
+- الخلفيات الموسمية الأربعة ملفات WebP محلية بنسبة 1200×1920، مع ملفات SVG المصدر.
+- تتغير مع الثيم ألوان السطوح والبطاقات والنوافذ والحقول وشريط التنقل وحدود الأزرار.
+- طبقة الصورة معتمة بدرجة محسوبة للمحافظة على قراءة النصوص.
+- حفظ اختيار الثيم محلياً عبر `alwaha_theme`، مع ترحيل `nature/tech/soft` القديمة إلى الثيمات الجديدة. ملفات المشاهد نفسها مضمّنة بكل تثبيت؛ التفضيل الشخصي ينتقل لجهاز آخر عبر النسخة الاحتياطية المشفرة، وليس عبر مشاركة APK وحده.
+- الصور وCSS ضمن Web build وService Worker precache؛ لا تحتاج إلى تحميل خارجي بعد تثبيت الأصول.
+- اختيار «الأساسي الأصلي» يخفي المشهد ويعيد الشكل الأساسي السابق.
 
+> المشاهد الموسمية رسوم مناظر رقمية أصلية وليست صوراً فوتوغرافية. الأبعاد 1200×1920، وتظل مراجعة التباين والشكل على الأجهزة الفعلية مطلوبة.
 
-خريطة مصادر الدردشات والإصلاحات: `docs/CHAT-CONTINUITY-SOURCE-MAP-R7.3-AR.md` — تشرح ما تمت مقارنته فعلياً وحدود الملفات التي أمكن استعادتها.
+## مكونات محفوظة
+
+`index.html`, `games.js`, `production-polish.js`, `compatibility.js`, `alwaha-local-vault.js`, `alwaha-experience.js`, `alwaha-modal-shell.js`, `alwaha-kids-room.js`, `alwaha-theme-system.css`, `sw.js`, `scripts/android/AlwahaAudioRoutePlugin.java`, migrations/tests وملفات لوحة الإدارة.
+
+هوية التطبيق ثابتة: `pro.alwaha.app` / `Alwaha-Pro` / `dist`، مع إبقاء `icon.png` كما هو. لا يوجد زر للشبكة المحلية.
+
+## رفع مصدر R7.5 وتشغيل CI
+
+بعد فك ZIP داخل Download في Termux:ـ
+
+```bash
+cd "$HOME/storage/shared/Download/Alwaha-Pro-3.0.2-R7.5-FINAL-20261103" || exit 1
+bash ./TERMUX-PUSH-3.0.2-R7.5-20261103.sh
+```
+
+يرفع السكربت فرعاً مستقلاً `alwaha-pro-3.0.2-release-r7.5-20261103` بدءاً من R7.3 `553e1c4`، ويرفض الكتابة فوق فرع موجود. لا يغيّر `main`، ولا ينشر الموقع، ولا ينفذ `supabase db push` أو أي تعديل على قاعدة الإنتاج.
+
+## حالة الاعتماد
+
+اجتازت نسخة المصدر فحوص JavaScript/JSON/Shell، وYAML، ومعرفات HTML، وفحوص release/performance/chat/compatibility/native-call/UI/retention/kids/vault/admin/marketplace/reconciliation/fullscreen، وفحص التشغيل المنطقي للثيمات. **لم يُنفذ بناء Web/Android لهذا المصدر داخل هذه البيئة** لأن اعتماد `esbuild` غير مثبت ولا توجد حزمة اعتماد محلية متاحة. يلزم تشغيل GitHub Actions على فرع R7.5 للحصول على Web/APK/AAB وتحقق التوقيع.
+
+كما أن قاعدة الإنتاج لا تزال تحتاج مصالحة migrations، حماية كلمات المرور المسرّبة، مراجعة وظائف `SECURITY DEFINER`، إضافة الفهرس عبر migration معتمد، واختبار هاتفين وشبكتين. لذلك هذه **حزمة مصدر مرشح إصدار**، وليست إعلاناً بأن النشر الإنتاجي أصبح آمناً/معتمداً بالفعل. راجع `docs/RELEASE-BLOCKERS-AR.md` و`docs/CONTINUITY-STATE-20261103-R7.5-AR.md`.

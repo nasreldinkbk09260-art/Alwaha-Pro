@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const sourceFiles=['index.html','production-polish.js','compatibility.js','games.js','alwaha-experience.js','alwaha-kids-room.js','alwaha-local-vault.js','scripts/native-back-handler.mjs'];
+const sourceFiles=['index.html','production-polish.js','compatibility.js','games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-kids-room.js','alwaha-local-vault.js','scripts/native-back-handler.mjs'];
 const contents=new Map();
 for(const file of sourceFiles){if(!fs.existsSync(file))throw new Error(`Missing UI source ${file}`);contents.set(file,fs.readFileSync(file,'utf8'));}
 const all=[...contents.values()].join('\n');

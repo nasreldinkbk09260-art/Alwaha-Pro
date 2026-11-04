@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const html=fs.readFileSync('index.html','utf8');
+const match=html.match(/^        function changeAppTheme\(themeName, showToast = true\) \{[\s\S]*?^        \}/m);
+if(!match)throw new Error('Could not locate the actual application theme function.');
+
+const stored=new Map();
+const classes=new Set();
+const themeButtons=['default','spring','summer','autumn','winter'].map(id=>({
+  dataset:{themeChoice:id},attrs:{},state:{textContent:'اضغط للتفعيل'},
+  setAttribute(k,v){this.attrs[k]=v;},
+  querySelector(sel){return sel==='.theme-choice-state'?this.state:null;}
+}));
+const meta={content:'#000',setAttribute(k,v){if(k==='content')this.content=v;}};
+let backdrop=null;
+const body={dataset:{},classList:{remove(...xs){xs.forEach(x=>classes.delete(x));},add(x){classes.add(x);}},firstChild:null,insertBefore(node){backdrop=node;}};
+const document={
+ body,
+ getElementById(id){return id==='alwaha-theme-backdrop'?backdrop:null;},
+ createElement(tag){return {tagName:tag.toUpperCase(),dataset:{},attrs:{},setAttribute(k,v){this.attrs[k]=v;}};},
+ querySelector(selector){return selector==='meta[name="theme-color"]'?meta:null;},
+ querySelectorAll(selector){return selector==='[data-theme-choice]'?themeButtons:[];}
+};
+const events=[];
+class FakeCustomEvent{constructor(type,options){this.type=type;this.detail=options?.detail;}}
+const context={document,window:{dispatchEvent(event){events.push(event);}},localStorage:{setItem(k,v){stored.set(k,String(v));},getItem(k){return stored.get(k)||null;}},CustomEvent:FakeCustomEvent,console,Set,String};
+vm.createContext(context);
+vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
+
+const expected={default:'#10070d',spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
+const results=[];
+for(const theme of Object.keys(expected)){
+ const actual=context.changeAppTheme(theme,false);
+ if(actual!==theme)throw new Error(`Theme ${theme} normalized to ${actual}`);
+ if(body.dataset.alwahaTheme!==theme||stored.get('alwaha_theme')!==theme)throw new Error(`Theme ${theme} was not persisted and applied.`);
+ if(meta.content!==expected[theme])throw new Error(`Wrong system chrome colour for ${theme}: ${meta.content}`);
+ if(!backdrop||backdrop.dataset.theme!==theme)throw new Error(`Backdrop missing for ${theme}`);
+ if(theme==='default'&&classes.has('theme-default'))throw new Error('Default theme must preserve original body class appearance.');
+ if(theme!=='default'&&!classes.has(`theme-${theme}`))throw new Error(`Theme body class missing for ${theme}`);
+ if(themeButtons.filter(b=>b.attrs['aria-pressed']==='true').length!==1)throw new Error(`Exactly one theme must be selected for ${theme}`);
+ if(themeButtons.find(b=>b.dataset.themeChoice===theme).state.textContent!=='المظهر النشط')throw new Error(`Active label missing for ${theme}`);
+ results.push(theme);
+}
+for(const [legacy,wanted] of [['nature','spring'],['tech','summer'],['soft','winter']]){
+ const actual=context.changeAppTheme(legacy,false);
+ if(actual!==wanted||stored.get('alwaha_theme')!==wanted)throw new Error(`Legacy ${legacy} was not migrated to ${wanted}`);
+}
+const invalid=context.changeAppTheme('unsupported-theme',false);
+if(invalid!=='default'||stored.get('alwaha_theme')!=='default')throw new Error('Invalid themes must fall back to the unchanged default.');
+if(events.length!==9)throw new Error(`Expected 9 theme-change events; got ${events.length}`);
+console.log(`THEME_RUNTIME_AUDIT=PASS (${results.length} complete themes, 3 legacy migrations, invalid fallback, local persistence, backdrop and system chrome)`);
