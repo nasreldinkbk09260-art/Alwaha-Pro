@@ -60,7 +60,7 @@
   function fromBase64(value){const binary=atob(value);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes;}
   async function exportBackup(){
     const pass=prompt('أنشئ كلمة مرور قوية لملف النسخة الاحتياطية. لن تُحفظ داخل التطبيق.');if(!pass||pass.length<10)return alert('استخدم كلمة مرور من 10 أحرف على الأقل.');if(pass.length>256)return alert('كلمة المرور يجب أن تكون بين 10 و256 حرفاً.');
-    const cloudSnapshot=await collectCloudSnapshot();const localDrafts=(await all()).filter(row=>typeof row?.key==='string'&&row.key.startsWith('draft:'));const payload={format:'alwaha-pro-local-backup',version:1,createdAt:new Date().toISOString(),appVersion:'3.0.2',preferences:preferences(),records:localDrafts,cloudSnapshot};
+    const cloudSnapshot=await collectCloudSnapshot();const localDrafts=(await all()).filter(row=>typeof row?.key==='string'&&row.key.startsWith('draft:'));const payload={format:'alwaha-pro-local-backup',version:1,createdAt:new Date().toISOString(),appVersion:'3.0.3',preferences:preferences(),records:localDrafts,cloudSnapshot};
     const plain=enc.encode(JSON.stringify(payload));if(plain.length>10*1024*1024)return alert('حجم البيانات يتجاوز 10 ميجابايت؛ صدّر أقساماً أقل أو راجع سجل التحذيرات.');
     const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveKey(pass,salt),cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain));
     const file={format:'alwaha-pro-encrypted-backup',version:1,kdf:'PBKDF2-SHA256-310000',cipher:'AES-256-GCM',salt:[...salt],iv:[...iv],sha256:await digest(cipher),dataBase64:toBase64(cipher)};
