@@ -227,7 +227,7 @@
     const button = document.querySelector('button[onclick="previewAlwahaCallRingtone()"]');
     const card = button?.parentElement;
     const note = card ? Array.from(card.children).find((child) => child.tagName === 'DIV') : null;
-    if (note) note.textContent = 'نغمة فضائية أصلية من طبقات لحنية متعددة مع صدى ناعم ونبضات منخفضة. تعمل عند السماح بالصوت أثناء تشغيل التطبيق؛ الرنين بعد إغلاقه تمامًا يحتاج إشعارات واتصالًا أصليين.';
+    if (note) note.textContent = 'اختر بين ملفي Saffron Tide وMarimba Bloom الكاملين المحفوظين محلياً ضمن التطبيق. زر التجربة يشغّل الملف المختار حتى نهايته؛ وتكرار التشغيل يقتصر على رنين المكالمة الواردة. تنبيه النظام عند إغلاق التطبيق بالكامل يحتاج إشعارات أصلية.';
     if (button) button.innerHTML = '<i class="fa-solid fa-music"></i> تجربة النغمة الفضائية';
   }
   enhanceRegistrationForm();
@@ -272,16 +272,15 @@
     try {
       const audio = new Audio(source);
       ringtoneAudio = audio;
-      audio.preload = 'none';
+      audio.preload = 'auto';
       audio.loop = !preview;
       audio.volume = 0.78;
       if (preview) audio.addEventListener('ended', () => { if (ringtoneAudio === audio) { ringtoneAudio = null; if (ringtoneTimeout) clearTimeout(ringtoneTimeout); ringtoneTimeout = null; } }, { once: true });
       await audio.play();
     } catch (error) {
-      console.warn('Supplied ringtone could not play; using the built-in fallback.', error);
+      console.warn('Supplied local ringtone could not play.', error);
       stopRingtoneMedia();
-      try { await playLayeredRingtone(preview); }
-      catch (_) { if (preview && typeof window.triggerToastNotification === 'function') window.triggerToastNotification('لم يبدأ الصوت. ارفع صوت الجهاز ثم اضغط التجربة مرة أخرى.', 'info'); }
+      if (typeof window.triggerToastNotification === 'function') window.triggerToastNotification('تعذر تشغيل ملف النغمة المحلي. تحقق من ملف الصوت ثم أعد المحاولة.', 'error');
     }
   }
   function setRingtoneEnabled(enabled, silent = false) {
