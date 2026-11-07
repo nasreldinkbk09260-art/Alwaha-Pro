@@ -14,6 +14,8 @@ const PRECACHE_ASSETS = [
   './alwaha-theme-system.css',
   './alwaha-native-back-handler.js',
   './assets/chess.min.js',
+  './assets/sounds/saffron_tide.mp3',
+  './assets/sounds/marimba_bloom.mp3',
   './assets/backgrounds/bg-nebula.webp',
   './assets/backgrounds/bg-spring.webp',
   './assets/backgrounds/bg-summer.webp',
