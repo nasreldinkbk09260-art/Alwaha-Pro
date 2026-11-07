@@ -15,6 +15,8 @@
 #market-chat-modal>section{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:100dvh!important;border:0!important;border-radius:0!important;box-sizing:border-box!important;}
 #market-product-detail-modal{padding:0!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;background:rgba(3,8,17,.97)!important;}
 #market-product-detail-modal>.game-modal-card{display:flex!important;flex-direction:column!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;}
+.alwaha-game-page{padding:0!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;}
+.alwaha-game-page>.game-modal-card{display:flex!important;flex-direction:column!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;}
 #market-conversations-page{flex-direction:column!important;background:linear-gradient(155deg,#071522,#081b2c 58%,#091626)!important;padding:0!important;}
 .alwaha-fullscreen-header{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));border-bottom:1px solid #8bf4ff25;background:#081522;}
 .alwaha-fullscreen-header strong{display:block;color:#8bf4ff;font:800 15px Cairo,sans-serif;}
@@ -3968,9 +3970,9 @@ async function launchGameEngine(gameTitle) {
                 'تحدي سرعة الصيانة ⚡':'speed'
             };
             const id=games[gameTitle]||'speed';
-            const overlay=document.createElement('div'); overlay.className='game-modal-overlay';
+            const overlay=document.createElement('div'); overlay.className='game-modal-overlay alwaha-fullscreen-layer alwaha-game-page';
             overlay.innerHTML=`<div class="game-modal-card" id="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;color:#00ffff;font-size:15px;">${escapeHtml(gameTitle)}</h3><button class="btn-action" style="background:transparent;color:#fff;font-size:18px;" onclick="this.closest('.game-modal-overlay').remove();document.body.classList.remove('modal-active');">×</button></div><div id="game-stage"></div></div>`;
-            document.body.appendChild(overlay); document.body.classList.add('modal-active');
+            document.body.appendChild(overlay); overlay.classList.add('is-open'); document.body.classList.add('modal-active');
             const stage=overlay.querySelector('#game-stage');
             const saveScore=async score=>{const user=await getCurrentAuthUser();if(user)await supabaseFetch('game_scores',{method:'POST',body:JSON.stringify({user_id:user.id,game_id:id,score:Math.max(0,Math.round(score))}),prefer:'return=minimal'});};
             const finish=(score,msg)=>{stage.innerHTML=`<div style="text-align:center;padding:35px 10px;"><div style="font-size:28px;color:#00ff88;">${score}</div><div style="color:#fff;font-size:13px;margin:8px 0;">${msg}</div><button class="btn-action" style="background:#00ffff;color:#000;padding:9px 18px;border-radius:20px;font-size:11px;" onclick="this.closest('.game-modal-overlay').remove();document.body.classList.remove('modal-active');">إغلاق</button></div>`;saveScore(score);};
