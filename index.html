@@ -1282,10 +1282,18 @@ img,video,canvas{max-width:100%}
             const allowedThemes = new Set(['default', 'spring', 'summer', 'autumn', 'winter']);
             const selectedTheme = allowedThemes.has(normalized) ? normalized : 'default';
             if (!document.body) return selectedTheme;
-            document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
-            if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
-            if (selectedTheme === 'default') delete document.body.dataset.alwahaTheme;
-            else document.body.dataset.alwahaTheme = selectedTheme;
+
+            const previousTheme = document.body.dataset.alwahaTheme || 'default';
+            const changed = previousTheme !== selectedTheme;
+            // Do not rewrite body classes when the selected theme is already active.
+            // This avoids needless global style recalculation and MutationObserver work.
+            if (changed) {
+                document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
+                if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
+                if (selectedTheme === 'default') delete document.body.dataset.alwahaTheme;
+                else document.body.dataset.alwahaTheme = selectedTheme;
+            }
+
             let backdrop = document.getElementById('alwaha-theme-backdrop');
             if (!backdrop) {
                 backdrop = document.createElement('div');
@@ -1293,25 +1301,36 @@ img,video,canvas{max-width:100%}
                 backdrop.setAttribute('aria-hidden', 'true');
                 document.body.insertBefore(backdrop, document.body.firstChild);
             }
-            backdrop.dataset.theme = selectedTheme;
+            if (backdrop.dataset.theme !== selectedTheme) backdrop.dataset.theme = selectedTheme;
+
             const themeColors = { default: '#10070d', spring: '#18333a', summer: '#073344', autumn: '#291b19', winter: '#102940' };
             const chrome = document.querySelector('meta[name="theme-color"]');
-            if (chrome) chrome.setAttribute('content', themeColors[selectedTheme] || themeColors.default);
-            try { localStorage.setItem('alwaha_theme', selectedTheme); }
-            catch (error) { console.warn('Unable to persist theme selection:', error); }
+            if (chrome && chrome.content !== themeColors[selectedTheme]) chrome.setAttribute('content', themeColors[selectedTheme] || themeColors.default);
+            try {
+                if (localStorage.getItem('alwaha_theme') !== selectedTheme) localStorage.setItem('alwaha_theme', selectedTheme);
+            } catch (error) { console.warn('Unable to persist theme selection:', error); }
+
             document.querySelectorAll('[data-theme-choice]').forEach(button => {
                 const active = button.dataset.themeChoice === selectedTheme;
-                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                const pressed = active ? 'true' : 'false';
+                if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
                 const state = button.querySelector('.theme-choice-state');
-                if (state) state.textContent = active ? 'المظهر النشط' : 'اضغط للتفعيل';
+                const label = active ? 'المظهر النشط' : 'اضغط للتفعيل';
+                if (state && state.textContent !== label) state.textContent = label;
             });
             const label = document.getElementById('alwaha-theme-label');
             if (label) {
                 const names = { default: 'الأساسي الأصلي', spring: 'الربيع', summer: 'الصيف', autumn: 'الخريف', winter: 'الشتاء' };
-                label.textContent = `الثيم الحالي: ${names[selectedTheme] || names.default}`;
+                const nextLabel = `الثيم الحالي: ${names[selectedTheme] || names.default}`;
+                if (label.textContent !== nextLabel) label.textContent = nextLabel;
             }
-            window.dispatchEvent(new CustomEvent('alwaha:themechange', { detail: { theme: selectedTheme } }));
-            if (showToast && typeof triggerToastNotification === 'function') triggerToastNotification('تم حفظ الثيم وتطبيق الخلفية والألوان.', 'success');
+
+            // Dispatch once per actual change (and once for the initial theme application).
+            if (changed || window.__alwahaAppliedTheme !== selectedTheme) {
+                window.__alwahaAppliedTheme = selectedTheme;
+                window.dispatchEvent(new CustomEvent('alwaha:themechange', { detail: { theme: selectedTheme } }));
+            }
+            if (showToast) triggerToastNotification('تم حفظ الثيم وتطبيق الخلفية والألوان.', 'success');
             return selectedTheme;
         }
 

@@ -9,6 +9,7 @@ if(!match)throw new Error('Could not locate the actual application theme functio
 
 const stored=new Map();
 const classes=new Set();
+let classMutations=0;
 const themeButtons=['default','spring','summer','autumn','winter'].map(id=>({
   dataset:{themeChoice:id},attrs:{},state:{textContent:'اضغط للتفعيل'},
   setAttribute(k,v){this.attrs[k]=v;},
@@ -16,7 +17,7 @@ const themeButtons=['default','spring','summer','autumn','winter'].map(id=>({
 }));
 const meta={content:'#000',setAttribute(k,v){if(k==='content')this.content=v;}};
 let backdrop=null;
-const body={dataset:{},classList:{remove(...xs){xs.forEach(x=>classes.delete(x));},add(x){classes.add(x);}},firstChild:null,insertBefore(node){backdrop=node;}};
+const body={dataset:{},classList:{remove(...xs){classMutations++;xs.forEach(x=>classes.delete(x));},add(x){classMutations++;classes.add(x);}},firstChild:null,insertBefore(node){backdrop=node;}};
 const document={
  body,
  getElementById(id){return id==='alwaha-theme-backdrop'?backdrop:null;},
@@ -62,6 +63,9 @@ for(const theme of Object.keys(expected)){
  if(themeButtons.find(b=>b.dataset.themeChoice===theme).state.textContent!=='المظهر النشط')throw new Error(`Active label missing for ${theme}`);
  results.push(theme);
 }
+const stableEventCount=events.length,stableClassMutationCount=classMutations;
+context.changeAppTheme('winter',false);
+if(events.length!==stableEventCount||classMutations!==stableClassMutationCount)throw new Error('Re-selecting the active theme must not dispatch or rewrite body theme classes.');
 for(const [legacy,wanted] of [['nature','spring'],['tech','summer'],['soft','winter']]){
  const actual=context.changeAppTheme(legacy,false);
  if(actual!==wanted||stored.get('alwaha_theme')!==wanted)throw new Error(`Legacy ${legacy} was not migrated to ${wanted}`);
