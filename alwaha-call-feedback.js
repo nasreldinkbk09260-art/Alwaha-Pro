@@ -14,13 +14,14 @@
  let context=null,repeatTimer=null,scheduled=new Set(),activeKind=null;
  function isMuted(){try{return localStorage.getItem('alwaha_audio_muted')==='true';}catch(_){return false;}}
  function getContext(){
-  if(isMuted())return null;
+  
   const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
   try{if(!context||context.state==='closed')context=new C();if(context.state==='suspended')context.resume().catch(()=>{});return context;}
   catch(error){console.debug('[Alwaha Call Feedback] Audio unavailable:',error);return null;}
  }
  function prime(){const ctx=getContext();if(!ctx)return Promise.resolve(false);try{return Promise.resolve(ctx.resume?.()).then(()=>true).catch(()=>false);}catch(_){return Promise.resolve(false);}}
  function tone(freqs,duration,volume){
+   if(isMuted())return false;
   const ctx=getContext();if(!ctx||!Array.isArray(freqs)||!freqs.length)return false;
   try{
    const start=ctx.currentTime+.02,master=ctx.createGain();master.gain.value=1;master.connect(ctx.destination);

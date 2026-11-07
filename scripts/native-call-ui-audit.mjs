@@ -13,6 +13,9 @@ const checks=[
  ['unauthorized market calls return an unavailable outcome',html.includes("sendCallResult(payload.from,payload.sessionId,'unavailable')")],
  ['declined, busy, no-answer and unavailable states are represented', ['declined','busy','no-answer','unavailable'].every(x=>html.includes(x))],
  ['caller and callee have bounded no-answer timers',html.includes('scheduleCallTimeout(this.sessionId,35000)')&&html.includes('scheduleCallTimeout(payload.sessionId,30000,payload)')],
+ ['market call results use a separate market inbox channel and result event',html.includes('webrtc-market-call-result')&&html.includes('market-call-inbox-')&&html.includes('const market=mode')],
+ ['busy, no-answer and unavailable outcomes preserve market routing',html.includes("'busy',payload.mode==='market'?'market':'online'")&&html.includes("'no-answer',this.mode")&&html.includes("'unavailable','market'")],
+ ['call results validate recipient, peer and session identity',html.includes('payload.to!==this.myId||payload.from!==this.peerId')&&html.includes('payload.sessionId!==this.sessionId')],
  ['call termination clears call feedback and timeout',html.includes('AlwahaCallFeedback?.stop()')&&html.includes('clearCallTimeout()')],
  ['Termux deploy copy preserves native audio plugin',/rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8'))&&fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")]
 ];

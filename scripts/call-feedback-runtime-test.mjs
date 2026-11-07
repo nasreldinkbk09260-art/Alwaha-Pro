@@ -19,5 +19,5 @@ assert.equal(api.start('busy'),true);assert.equal(api.diagnostics().activeKind,'
 api.stop();assert.equal(intervals.size,0);
 assert.equal(api.play('connected'),true);await new Promise(r=>setTimeout(r,200));assert.ok(started>=2);
 for(const kind of ['declined','no-answer','unavailable','failed','ended'])assert.equal(api.play(kind),true);
-storage.set('alwaha_audio_muted','true');assert.equal(api.start('ringback'),false);assert.equal(api.play('connected'),false);assert.equal(intervals.size,0);api.stop();
+storage.set('alwaha_audio_muted','true');const beforeMutedPrime=started;assert.equal(await api.prime(),true,'silent audio context can still be primed while muted');assert.equal(started,beforeMutedPrime,'priming while muted emits no sound');assert.equal(api.start('ringback'),false);assert.equal(api.play('connected'),false);assert.equal(intervals.size,0);api.stop();
 console.log('CALL_FEEDBACK_RUNTIME_AUDIT=PASS');

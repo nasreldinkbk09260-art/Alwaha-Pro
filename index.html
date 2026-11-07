@@ -3325,7 +3325,7 @@ async function renderConversationsList() {
                 this.clearCallTimeout();const seconds=Math.round(delay/1000);
                 this.callTimeout=setTimeout(async()=>{
                     if(this.sessionId!==sessionId)return;
-                    if(incomingPayload){if(this.pendingIncoming?.sessionId!==sessionId)return;await this.sendCallResult(incomingPayload.from,sessionId,'no-answer').catch(()=>{});await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
+                    if(incomingPayload){if(this.pendingIncoming?.sessionId!==sessionId)return;await this.sendCallResult(incomingPayload.from,sessionId,'no-answer',this.mode).catch(()=>{});await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
                     else{if(!this.call)return;await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
                     const target=currentChatUser||incomingPayload?.displayName||'المستخدم';await this.end(false);
                     updateCallUi('idle',{target,text:incomingPayload?'مكالمة فائتة — لم يتم الرد':'لم يتم الرد على المكالمة',indicator:'انتهت مهلة انتظار الرد بعد '+seconds+' ثانية.'});
@@ -3367,6 +3367,7 @@ async function renderConversationsList() {
                 if(!this.marketInboxChannel){
                     const channel=this.client.channel(`market-call-inbox-${sanitizeChannelPart(this.myId)}`,{config:{private:true}});this.marketInboxChannel=channel;
                     channel.on('broadcast',{event:'webrtc-market-incoming'},({payload})=>{if(payload?.to===this.myId&&payload?.mode==='market')this.handleIncomingOffer(payload).catch(err=>console.warn('[Alwaha Market Call]',err));});
+                    channel.on('broadcast',{event:'webrtc-market-call-result'},({payload})=>{if(payload?.to===this.myId)this.handleIncomingCallResult(payload).catch(err=>console.warn('[Alwaha Market Call Result]',err));});
                     try{await this.subscribeChannel(channel);}catch(error){this.marketInboxChannel=null;try{await this.client.removeChannel(channel);}catch(e){}console.info('[Alwaha Market Call] Inbox waits until a market conversation exists:',error?.message||error);}
                 }
             }
@@ -3442,17 +3443,20 @@ async function renderConversationsList() {
                 window.AlwahaCallFeedback?.start('ringback');this.scheduleCallTimeout(this.sessionId,35000);
                 return true;
             }
-            async sendCallResult(to, sessionId, status) {
+            async sendCallResult(to, sessionId, status, mode='online') {
                 if(!this.client||!to)return;
-                const channel=this.client.channel(`call-inbox-${sanitizeChannelPart(to)}`, { config: { private: true } });
+                const market=mode==='market';
+                const topic=market?`market-call-inbox-${sanitizeChannelPart(to)}`:`call-inbox-${sanitizeChannelPart(to)}`;
+                const event=market?'webrtc-market-call-result':'webrtc-call-result';
+                const channel=this.client.channel(topic,{config:{private:true}});
                 try {
                     await this.subscribeChannel(channel);
-                    const sendStatus = await channel.send({type:'broadcast',event:'webrtc-call-result',payload:{to,from:this.myId,sessionId,status}});
-                    if (sendStatus !== 'ok') throw new Error(`فشل إرسال نتيجة المكالمة (${sendStatus}).`);
+                    const sendStatus=await channel.send({type:'broadcast',event,payload:{to,from:this.myId,sessionId,status,mode:market?'market':'online'}});
+                    if(sendStatus!=='ok')throw new Error(`فشل إرسال نتيجة المكالمة (${sendStatus}).`);
                 } finally { try { await this.client.removeChannel(channel); } catch(e) {} }
             }
             async handleIncomingCallResult(payload) {
-                if(!payload||!this.sessionId||payload.sessionId!==this.sessionId)return;
+                if(!payload||payload.to!==this.myId||payload.from!==this.peerId||!this.sessionId||payload.sessionId!==this.sessionId)return;
                 const states={rejected:{text:'لا يمكن الاتصال قبل قبول طلب الصداقة.',indicator:'المستخدم غير متاح للمكالمات قبل قبول الصداقة.',tone:'unavailable'},declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
                 const result=states[payload.status];if(!result)return;const target=currentChatUser||'المستخدم';
                 await this.end(false);updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
@@ -3477,11 +3481,11 @@ async function renderConversationsList() {
                 if(!payload)return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
                 if(this.pendingIncoming?.sessionId===payload.sessionId)return;
-                if(this.call||this.pendingIncoming||this.sessionId){await this.sendCallResult(payload.from,payload.sessionId,'busy').catch(error=>console.warn('[Alwaha Call] Busy response failed:',error));return;}
+                if(this.call||this.pendingIncoming||this.sessionId){await this.sendCallResult(payload.from,payload.sessionId,'busy',payload.mode==='market'?'market':'online').catch(error=>console.warn('[Alwaha Call] Busy response failed:',error));return;}
                 const market=payload.mode==='market'&&!!payload.conversationId;
                 if(market){
                     const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(payload.conversationId)}&select=id,buyer_id,seller_id&limit=1`),c=Array.isArray(rows)?rows[0]:null;
-                    if(!c||!((c.buyer_id===this.myId&&c.seller_id===payload.from)||(c.seller_id===this.myId&&c.buyer_id===payload.from))){await this.sendCallResult(payload.from,payload.sessionId,'unavailable').catch(()=>{});return;}
+                    if(!c||!((c.buyer_id===this.myId&&c.seller_id===payload.from)||(c.seller_id===this.myId&&c.buyer_id===payload.from))){await this.sendCallResult(payload.from,payload.sessionId,'unavailable','market').catch(()=>{});return;}
                     this.conversationId=payload.conversationId;this.mode='market';currentMarketConversationId=payload.conversationId;
                 }else{
                     if(!(await hasAcceptedAlwahaFriendship(payload.from))){await this.sendCallResult(payload.from,payload.sessionId,'rejected').catch(()=>{});console.info('Incoming friend call ignored: friendship not accepted.');return;}
