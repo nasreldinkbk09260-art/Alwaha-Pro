@@ -1408,7 +1408,112 @@ async function handleImagePostFromGallery() {
             }});
         }
 
-async function startReelRecording() {
+function previewHomePostImage() {
+            pickFilesFromDevice({
+                accept:'image/*',
+                multiple:false,
+                onFiles:async files=>{
+                    const original=files?.[0];
+                    if(!original)return;
+                    if(!String(original.type||'').startsWith('image/')){
+                        triggerToastNotification('اختر ملف صورة صالحًا.','error');
+                        return;
+                    }
+                    if(original.size>20*1024*1024){
+                        triggerToastNotification('حجم الصورة الأصلية كبير جدًا؛ اختر صورة أصغر من 20MB.','error');
+                        return;
+                    }
+                    try{
+                        const compressed=await compressImageFile(original,1400,.82);
+                        if(!compressed||!Number.isFinite(compressed.size)||compressed.size<=0){
+                            triggerToastNotification('تعذر تجهيز الصورة للمنشور.','error');
+                            return;
+                        }
+                        if(compressed.size>8*1024*1024){
+                            triggerToastNotification('تعذر ضغط الصورة إلى الحجم المسموح (8MB). اختر صورة أصغر.','error');
+                            return;
+                        }
+                        const dataUrl=await new Promise((resolve,reject)=>{
+                            const reader=new FileReader();
+                            reader.onload=()=>resolve(reader.result);
+                            reader.onerror=()=>reject(reader.error||new Error('Image preview read failed'));
+                            reader.readAsDataURL(compressed);
+                        });
+                        const preview=document.getElementById('home-post-image-preview');
+                        if(!preview)throw new Error('Home post preview element is missing.');
+                        pendingHomePostFile=compressed;
+                        pendingHomePostDataUrl=String(dataUrl||'');
+                        preview.src=pendingHomePostDataUrl;
+                        preview.style.display='block';
+                        triggerToastNotification('تم تجهيز الصورة محليًا. أضف تعليقك ثم انشر المنشور.','success');
+                    }catch(error){
+                        console.warn('[Alwaha Home Post] Image preview failed:',error);
+                        triggerToastNotification('تعذر تجهيز الصورة للمعاينة. لم يتم حذف مسودتك الحالية.','error');
+                    }
+                }
+            });
+        }
+
+        async function publishNewHomePost() {
+            if(window.__alwahaHomePostInFlight)return;
+            const user=await requireAuthenticatedUser('سجّل الدخول أولاً لنشر منشور.');
+            if(!user)return;
+            const textEl=document.getElementById('home-post-textarea');
+            const previewEl=document.getElementById('home-post-image-preview');
+            const content=String(textEl?.value||'').trim();
+            const imageFile=pendingHomePostFile;
+            if(!content&&!imageFile){
+                triggerToastNotification('اكتب محتوى المنشور أو أضف صورة.','error');
+                return;
+            }
+            if(imageFile&&(!String(imageFile.type||'').startsWith('image/')||!Number.isFinite(imageFile.size)||imageFile.size<=0||imageFile.size>8*1024*1024)){
+                triggerToastNotification('الصورة غير صالحة أو تجاوزت حد 8MB. اخترها مرة أخرى.','error');
+                return;
+            }
+            const publishButton=document.querySelector('button[onclick="publishNewHomePost()"]');
+            window.__alwahaHomePostInFlight=true;
+            if(publishButton){publishButton.disabled=true;publishButton.setAttribute('aria-busy','true');publishButton.dataset.originalLabel=publishButton.textContent||'نشر';publishButton.textContent='جاري النشر…';}
+            try{
+                let imageUrl=null;
+                if(imageFile){
+                    imageUrl=await uploadFileToStorage(imageFile,'posts',{maxBytes:8*1024*1024});
+                    if(!imageUrl)return;
+                }
+                const profile=await getCurrentProfile();
+                const authorName=(`${profile?.first_name||user.user_metadata?.first_name||''} ${profile?.last_name||user.user_metadata?.last_name||''}`.trim()||'مستخدم');
+                const payload={
+                    author_id:user.id,
+                    author_name:authorName,
+                    content:content||'📷 صورة',
+                    post_type:'عام',
+                    image_url:imageUrl
+                };
+                const result=await supabaseFetch('posts',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+                if(!result){
+                    triggerToastNotification('تعذر نشر المنشور. بقي النص والصورة في المسودة لإعادة المحاولة.','error');
+                    return;
+                }
+                if(textEl)textEl.value='';
+                pendingHomePostFile=null;
+                pendingHomePostDataUrl='';
+                if(previewEl){previewEl.removeAttribute('src');previewEl.style.display='none';}
+                triggerToastNotification('تم نشر المنشور بنجاح.','success');
+                void renderHomePostsFeed();
+            }catch(error){
+                console.warn('[Alwaha Home Post] Publish failed:',error);
+                triggerToastNotification('حدث خطأ أثناء النشر. بقيت المسودة الحالية؛ حاول مرة أخرى.','error');
+            }finally{
+                window.__alwahaHomePostInFlight=false;
+                if(publishButton){
+                    publishButton.disabled=false;
+                    publishButton.removeAttribute('aria-busy');
+                    publishButton.textContent=publishButton.dataset.originalLabel||'نشر';
+                    delete publishButton.dataset.originalLabel;
+                }
+            }
+        }
+
+        async function startReelRecording() {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتسجيل ونشر فيديو.');if(!user)return;
             if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')return triggerToastNotification('تسجيل الفيديو غير مدعوم في هذا الجهاز أو إصدار Android. اختر فيديو من المعرض بدلاً منه.','error');
             const modal=document.getElementById('pro-camera-modal'),box=document.getElementById('camera-view-box');
