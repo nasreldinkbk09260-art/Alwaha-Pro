@@ -29,13 +29,13 @@ check('modal observation is coalesced and duplicate navigation observer is remov
 check('3.0.3 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.3-final-20261107')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 
-const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*\\(/g)].map(match=>match[1]);
+const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*[(]/g)].map(match=>match[1]);
 check('index page has no shadowed duplicate function definitions',new Set(functionNames).size===functionNames.length);
 const navStart=html.indexOf('<nav class="bottom-nav-bar"'),navEnd=navStart>=0?html.indexOf('</nav>',navStart):-1;
 const navMarkup=navStart>=0&&navEnd>navStart?html.slice(navStart,navEnd):'';
 const sectionTags=html.match(/<section[^>]*>/g)||[];
 const appSectionIds=sectionTags.filter(tag=>tag.includes('app-section')).map(tag=>tag.match(/id=["']([^"']+)["']/)?.[1]).filter(Boolean);
-const navTargets=[...navMarkup.matchAll(/showSection\\('([^']+)'/g)].map(match=>match[1]);
+const navTargets=[...navMarkup.matchAll(/showSection[(]'([^']+)'/g)].map(match=>match[1]);
 check('all six main navigation buttons target real app sections',navTargets.length===6&&navTargets.every(id=>appSectionIds.includes(id))&&new Set(navTargets).size===6);
 check('profile subpages fill the dynamic viewport and respect Android safe areas',html.includes('.sub-profile-view-box{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;')&&html.includes('env(safe-area-inset-bottom))!important;padding'));
 check('full-screen overlay shell uses fixed viewport bounds and internal scrolling',html.includes('.alwaha-fullscreen-layer{position:fixed!important;inset:0!important;')&&html.includes('height:100dvh!important;min-height:100svh!important;max-width:none!important;max-height:none!important;overflow:hidden!important'));
