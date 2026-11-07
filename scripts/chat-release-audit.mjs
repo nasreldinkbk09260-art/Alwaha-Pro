@@ -47,6 +47,13 @@ const checks = [
   ['warranty and archive retention are displayed with a seven-day warning grace', 'مهلة 7 أيام كاملة بعد الإشعار'],
   ['kids mode only shown on connected video call', 'kidsModeBtn'],
   ['local encrypted backup module loaded', 'alwaha-local-vault.js'],
+  ['home image picker compresses images before preview', 'compressImageFile(original,1400,.82)'],
+  ['home image preview is read locally before any network upload', "reader.readAsDataURL(compressed)"],
+  ['home post publishing uploads image to the media bucket and stores its URL', "uploadFileToStorage(imageFile,'posts',{maxBytes:8*1024*1024})"],
+  ['home post publishing writes an authenticated posts row', "supabaseFetch('posts',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'})"],
+  ['home post draft remains available after upload or publish failure', 'بقيت المسودة الحالية'],
+  ['home post publish prevents duplicate requests', 'window.__alwahaHomePostInFlight=true'],
+
   ['image themes persist locally', "safeSet('alwaha_theme',theme)"],
   ['floating navigation group position persists', 'safeSet(FREE_POSITION_KEY,JSON.stringify({x:point.x,y:point.y,orientation:pos}))'],
   ['feed retry state', 'إعادة المحاولة'],
