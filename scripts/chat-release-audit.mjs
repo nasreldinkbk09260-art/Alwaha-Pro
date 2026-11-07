@@ -53,6 +53,10 @@ const checks = [
   ['home post publishing writes an authenticated posts row', "supabaseFetch('posts',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'})"],
   ['home post draft remains available after upload or publish failure', 'بقيت المسودة الحالية'],
   ['home post publish prevents duplicate requests', 'window.__alwahaHomePostInFlight=true'],
+  ['camera beauty effect only claims live light/softness filtering', "brightness(1.06) saturate(1.18) contrast(.96) blur(.35px)"],
+  ['camera artistic filter is an actual preview color filter, not AI conversion', "saturate(1.5) contrast(1.18) brightness(1.05)"],
+  ['camera still capture applies the active preview filter to the saved image', 'ctx.filter = appliedFilter'],
+
 
   ['image themes persist locally', "safeSet('alwaha_theme',theme)"],
   ['floating navigation group position persists', 'safeSet(FREE_POSITION_KEY,JSON.stringify({x:point.x,y:point.y,orientation:pos}))'],
