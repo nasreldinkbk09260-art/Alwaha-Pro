@@ -1059,8 +1059,8 @@ img,video,canvas{max-width:100%}
             <span style="color:#00ffff; font-size:12px;"><i class="fa-solid fa-video fa-2x"></i><br><br>جاري تهيئة الكاميرا المباشرة...</span>
         </div>
         <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
-            <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#00ff88; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerFaceBeautyEnhancement()"><i class="fa-solid fa-wand-magic-sparkles"></i> تجميل الوجه</button>
-            <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#ffd700; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerAnimeAiConverterFilter()"><i class="fa-solid fa-user-ninja"></i> فلتر أنمي</button>
+            <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#00ff88; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerFaceBeautyEnhancement()" aria-label="تحسين الإضاءة والنعومة" title="تأثير مباشر للمعاينة والصورة"><i class="fa-solid fa-wand-magic-sparkles"></i> تحسين الإضاءة والنعومة</button>
+            <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#ffd700; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="triggerAnimeAiConverterFilter()" aria-label="فلتر ألوان فني" title="فلتر ألوان مباشر، وليس تحويل ذكاء اصطناعي"><i class="fa-solid fa-user-ninja"></i> فلتر ألوان فني</button>
             <button class="btn-action" style="background:rgba(255,255,255,0.1); color:#00ffff; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="captureCameraFrame()"><i class="fa-solid fa-camera-retro"></i> التقاط</button>
             <button type="button" class="btn-action" style="background:rgba(255,255,255,0.1); color:#38bdf8; padding:9px 12px; border-radius:8px; font-size:11px;" onclick="switchCameraLens()"><i class="fa-solid fa-repeat"></i> تبديل الكاميرا</button>
             <button type="button" id="reel-record-start-btn" class="btn-action" style="background:rgba(255,0,85,.16);color:#ff9ab4;border:1px solid #ff0055;padding:9px 12px;border-radius:8px;font-size:11px;" onclick="startReelRecording()"><i class="fa-solid fa-circle"></i> تسجيل فيديو</button>
@@ -4004,13 +4004,13 @@ async function launchGameEngine(gameTitle) {
 function triggerFaceBeautyEnhancement() {
             const video=document.querySelector('#camera-view-box video[data-camera-live-video]'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
             video.style.filter=video.style.filter&&video.style.filter.includes('blur')?'none':'brightness(1.06) saturate(1.18) contrast(.96) blur(.35px)';
-            triggerToastNotification(video.style.filter==='none'?'تم إلغاء تجميل الصورة.':'تم تطبيق تحسين تجميلي مباشر على المعاينة.','success');
+            triggerToastNotification(video.style.filter==='none'?'تم إلغاء تحسين الإضاءة والنعومة.':'تم تطبيق تحسين الإضاءة والنعومة على المعاينة. ويُنقل الفلتر إلى الصورة عند التقاطها.','success');
         }
 
 function triggerAnimeAiConverterFilter() {
             const video=document.querySelector('#camera-view-box video[data-camera-live-video]'); if(!video)return triggerToastNotification('افتح الكاميرا أولاً.','info');
             video.style.filter=video.style.filter&&video.style.filter.includes('saturate(1.5)')?'none':'saturate(1.5) contrast(1.18) brightness(1.05)';
-            triggerToastNotification(video.style.filter==='none'?'تم إلغاء ستايل الأنمي.':'تم تطبيق ستايل أنمي مباشر على المعاينة.','success');
+            triggerToastNotification(video.style.filter==='none'?'تم إلغاء فلتر الألوان.':'تم تطبيق فلتر ألوان مباشر على معاينة الكاميرا. يؤثر أيضاً في الصورة الملتقطة.','success');
         }
 
         /* تهيئة العرض الابتدائي عند تحميل الصفحة */
