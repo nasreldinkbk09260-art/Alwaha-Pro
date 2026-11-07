@@ -1313,7 +1313,7 @@ img,video,canvas{max-width:100%}
             document.querySelectorAll('[data-theme-choice]').forEach(button => {
                 const active = button.dataset.themeChoice === selectedTheme;
                 const pressed = active ? 'true' : 'false';
-                if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
+                if (button.getAttribute?.('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
                 const state = button.querySelector('.theme-choice-state');
                 const label = active ? 'المظهر النشط' : 'اضغط للتفعيل';
                 if (state && state.textContent !== label) state.textContent = label;
