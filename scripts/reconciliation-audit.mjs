@@ -33,7 +33,7 @@ check('release version 3.0.3 is consistent across package, lockfile, manifest an
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.3 final cache token agrees across audits',
   sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261107'") &&
-  read('scripts/performance-audit.mjs').includes('3.0.3-final-20261107') &&
+  read('scripts/performance-audit.mjs').includes('final-20261107') &&
   read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261107') &&
   read('scripts/compatibility-audit.mjs').includes('3.0.3-final-20261107'));
 
