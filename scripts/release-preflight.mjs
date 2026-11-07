@@ -58,7 +58,8 @@ if (!buildWeb.includes("path.join(root, 'scripts', 'native-back-handler.mjs')") 
 if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler is not precached by the service worker.');
 if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.3 local experience modules are not precached.');
 if (!sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard is not precached.');
-if (!html.includes('./alwaha-runtime-guard.js?v=3.0.3-final-20261107')) fail('Runtime resilience guard is not loaded by index.html.');
+if (!html.includes('src="./alwaha-runtime-guard.js"') || html.includes('alwaha-runtime-guard.js?v=')) fail('Runtime resilience guard must use the exact precached local path.');
+for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js']) if (!html.includes('src="./'+asset+'"') || html.includes(asset+'?v=')) fail('Offline script URL does not match its service-worker precache entry: '+asset);
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
 if (!workflow.includes('npm run audit:runtime') || pkg.scripts?.['audit:runtime'] !== 'node scripts/runtime-boot-audit.mjs') fail('Startup/runtime audit is not wired into release CI.');
