@@ -10,12 +10,14 @@
   for(const el of [...previousInert.keys()])if(!desired.has(el))setIsolated(el,false);for(const el of desired)setIsolated(el,true);
   if(active){document.body.classList.add('modal-active');active.setAttribute('aria-modal','true');if(!active.hasAttribute('tabindex'))active.setAttribute('tabindex','-1');if(changed){const target=focusables()[0]||active;requestAnimationFrame(()=>{if(active===top&&target.isConnected){try{target.focus({preventScroll:true});}catch{}}});}}
   else{document.body.classList.remove('modal-active');if(focusBefore?.isConnected&&typeof focusBefore.focus==='function'){try{focusBefore.focus({preventScroll:true});}catch{}}focusBefore=null;}
-  window.AlwahaExperience?.syncDock?.();
+  if(changed)window.AlwahaExperience?.syncDock?.();
  }
  function focusables(){return active?[...active.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(visible):[];}
  document.addEventListener('focusin',event=>{if(!active||active.contains(event.target))return;const navAllowed=document.body.classList.contains('alwaha-nav-over-modal')&&(event.target.id==='alwaha-nav-reveal-handle'||!!event.target.closest('.bottom-nav-bar.alwaha-nav-over-modal'));if(navAllowed)return;const first=focusables()[0];(first||active).focus?.({preventScroll:true});},true);
  document.addEventListener('keydown',event=>{if(!active)return;if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(typeof window.navigateBack==='function')window.navigateBack();return;}if(event.key!=='Tab')return;const items=focusables();if(!items.length){event.preventDefault();active.focus();return;}const first=items[0],last=items[items.length-1];if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}},true);
- const observer=new MutationObserver(sync);
+ let syncScheduled=false;
+ function scheduleSync(){if(syncScheduled)return;syncScheduled=true;const enqueue=window.requestAnimationFrame||((callback)=>window.setTimeout(callback,16));enqueue(()=>{syncScheduled=false;sync();});}
+ const observer=new MutationObserver(scheduleSync);
  function start(){observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden','aria-hidden']});sync();}
  window.AlwahaModalShell={sync,getActive:()=>active};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
