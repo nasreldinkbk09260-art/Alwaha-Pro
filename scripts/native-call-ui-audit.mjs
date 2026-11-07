@@ -10,7 +10,7 @@ const checks=[
  ['outgoing call starts a local ringback tone',html.includes("AlwahaCallFeedback?.start('ringback')")],
  ['generic call ends normalize to remote-ended while preserving explicit outcomes',html.includes("const endState=['declined','busy','no-answer','unavailable'].includes(data.reason)?data.reason:'remote-ended'")&&html.includes("reason:'declined'")],
  ['cancel before answer immediately stops the incoming ring and closes pending state',html.includes("payload.type==='end'&&this.pendingIncoming?.sessionId===payload.sessionId")&&html.includes('handlePendingIncomingEnd(payload)')],
- ['unauthorized market calls return an unavailable outcome',html.includes("sendCallResult(payload.from,payload.sessionId,'unavailable')")],
+ ['unauthorized market calls return an unavailable outcome through the market inbox',html.includes("sendCallResult(payload.from,payload.sessionId,'unavailable','market')")],
  ['declined, busy, no-answer and unavailable states are represented', ['declined','busy','no-answer','unavailable'].every(x=>html.includes(x))],
  ['caller and callee have bounded no-answer timers',html.includes('scheduleCallTimeout(this.sessionId,35000)')&&html.includes('scheduleCallTimeout(payload.sessionId,30000,payload)')],
  ['market call results use a separate market inbox channel and result event',html.includes('webrtc-market-call-result')&&html.includes('market-call-inbox-')&&html.includes('const market=mode')],
