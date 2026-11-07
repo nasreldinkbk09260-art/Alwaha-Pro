@@ -2012,119 +2012,17 @@ async function toggleInternalNotificationCenter() {
             await refreshAlwahaNotificationBadge();
         }
 
-        function showSection(id, element) {
-            document.querySelectorAll('.app-section').forEach(s => { s.style.display = 'none'; s.classList.remove('active-section'); });
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        
 
-            const targetSec = document.getElementById(id);
-            if(targetSec) { targetSec.style.display = 'block'; targetSec.classList.add('active-section'); }
-            if(element) element.classList.add('active');
+        
 
-            if(id !== 'profile-section') {
-                document.querySelectorAll('.sub-profile-view-box').forEach(box => { box.style.display = 'none'; });
-                document.body.classList.remove('modal-active');
-            }
+        
 
+        
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        
 
-            if(id === 'home-section') renderHomePostsFeed();
-            if(id === 'market-section') { renderProductsList(); renderMyPersonalMarketItems(); }
-            if(id === 'chat-section') { collapseChatSubWindows(); loadAllRegisteredUsersList(); renderConversationsList(); }
-            if(id === 'reels-section') renderReelsFeed();
-            if(id === 'games-section') renderGamesSection();
-        }
-
-        function openSubProfileView(id) {
-            const view = document.getElementById(id);
-            if (view) { view.style.display = 'block'; document.body.classList.add('modal-active'); }
-        }
-
-        function closeSubProfileView(id) {
-            const view = document.getElementById(id);
-            if (view) { view.style.display = 'none'; document.body.classList.remove('modal-active'); }
-        }
-
-        function syncUiWithLoadedProfileData() {
-            const name = localStorage.getItem('alwaha_profile_name') || 'غير مسجل الدخول';
-            const email = localStorage.getItem('alwaha_profile_email') || 'سجل الدخول لعرض الحساب';
-            const avatar = localStorage.getItem('alwaha_profile_avatar') || 'icon.png';
-            const nameEl = document.getElementById('profile-name-display');
-            const emailEl = document.getElementById('profile-email-display');
-            const avatarEl = document.getElementById('profile-avatar-display');
-            if (nameEl) nameEl.innerText = name;
-            if (emailEl) emailEl.innerText = email;
-            if (avatarEl) avatarEl.src = avatar;
-            const logoutButton = document.getElementById('alwaha-logout-button');
-            if (logoutButton) logoutButton.style.display = localStorage.getItem('alwaha_auth_user_id') ? 'block' : 'none';
-            const emailChk=document.getElementById('privacy-hide-email-chk');
-            const phoneChk=document.getElementById('privacy-hide-phone-chk');
-            if(emailChk || phoneChk){ getCurrentProfile().then(p=>{ if(!p)return; if(emailChk)emailChk.checked=!!p.hide_email; if(phoneChk)phoneChk.checked=!!p.hide_phone; }); }
-        }
-
-        async function handleNewUserRegistrationSubmit() {
-            if (!supabaseClient) return triggerToastNotification('خدمة المصادقة غير متاحة حالياً.', 'error');
-            const firstName = document.getElementById('reg-first-name')?.value.trim();
-            const lastName = document.getElementById('reg-last-name')?.value.trim();
-            const email = document.getElementById('reg-identifier')?.value.trim().toLowerCase();
-            const password = document.getElementById('reg-password')?.value;
-            const confirmPassword = document.getElementById('reg-confirm-password')?.value;
-            const gender = document.getElementById('reg-gender')?.value || 'ذكر';
-            const birthdate = document.getElementById('reg-birthdate')?.value;
-
-            if (!firstName || !lastName || !email || !password || !birthdate) {
-                return triggerToastNotification('يرجى إكمال البيانات وتحديد تاريخ الميلاد والبريد الإلكتروني.', 'error');
-            }
-            if (!/^\S+@\S+\.\S+$/.test(email)) {
-                return triggerToastNotification('اكتب بريداً إلكترونياً صحيحاً لأن الحساب أصبح مرتبطاً بـSupabase Auth.', 'error');
-            }
-            if (password.length < 8) return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.', 'error');
-            if (password !== confirmPassword) return triggerToastNotification('كلمتا المرور غير متطابقتين.', 'error');
-
-            const { data, error } = await supabaseClient.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        first_name: firstName,
-                        last_name: lastName,
-                        gender,
-                        birthdate,
-                        avatar_url: null,
-                        hide_email: false,
-                        hide_phone: true
-                    }
-                }
-            });
-
-            if (error) return triggerToastNotification(formatAuthError(error), 'error');
-            localUploadedAvatarBase64 = '';
-
-            if (data?.session) {
-                await hydrateAuthProfile(data.user);
-                triggerToastNotification(`🎉 تم إنشاء الحساب وتسجيل الدخول بنجاح!`, 'success');
-                closeSubProfileView('sub-prof-register');
-            } else {
-                triggerToastNotification('تم إنشاء الحساب. افتح رسالة التأكيد في بريدك الإلكتروني ثم سجّل الدخول.', 'success');
-                closeSubProfileView('sub-prof-register');
-            }
-        }
-
-        async function executeUserLoginAuth() {
-            if (!supabaseClient) return triggerToastNotification('خدمة المصادقة غير متاحة حالياً.', 'error');
-            const loginId = document.getElementById('login-id')?.value.trim().toLowerCase();
-            const loginPass = document.getElementById('login-password')?.value;
-            if (!loginId || !loginPass) return triggerToastNotification('يرجى كتابة البريد الإلكتروني وكلمة المرور.', 'error');
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({ email: loginId, password: loginPass });
-            if (error) return triggerToastNotification(formatAuthError(error), 'error');
-
-            await hydrateAuthProfile(data.user);
-            triggerToastNotification(`مرحباً بك مجدداً ${data.user?.user_metadata?.first_name || 'بك'}!`, 'success');
-            closeSubProfileView('sub-prof-login');
-            syncUiWithLoadedProfileData();
-            await Promise.all([initializeRealtimeCallInbox(), subscribeToNotifications(), subscribeToDirectMessages()]);
-        }
+        
 
         async function linkPhoneForAccountRecovery() {
             const email = document.getElementById('recovery-phone-input')?.value.trim().toLowerCase();
@@ -2160,50 +2058,7 @@ async function toggleInternalNotificationCenter() {
             closeSubProfileView('sub-prof-privacy');
         }
 
-        async function submitAccountVerificationRequest() {
-            const user = await requireAuthenticatedUser('سجل الدخول أولاً لطلب التوثيق.');
-            if (!user) return;
-            const reqReason = document.getElementById('verification-reason-input')?.value.trim();
-            if (!reqReason) return triggerToastNotification('اكتب سبب التوثيق أولاً.', 'error');
-            const result = await supabaseFetch('verification_requests', {
-                method:'POST',
-                body:JSON.stringify({ user_id:user.id, reason:reqReason })
-            });
-            if (!result) return triggerToastNotification('تعذر إرسال طلب التوثيق.', 'error');
-            document.getElementById('verification-reason-input').value = '';
-            triggerToastNotification('تم إرسال الطلب للإدارة بنجاح.', 'success');
-            closeSubProfileView('sub-prof-verify');
-        }
-
-function previewHomePostImage() {
-            pickFilesFromDevice({accept:'image/*', multiple:false, onFiles: async files => {
-                const file=files[0]; if(!file) return;
-                pendingHomePostFile=await compressImageFile(file,1400,.82);
-                pendingHomePostDataUrl=await new Promise(resolve=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.readAsDataURL(pendingHomePostFile);});
-                const preview=document.getElementById('home-post-image-preview');
-                if(preview){preview.src=pendingHomePostDataUrl;preview.style.display='block';}
-            }});
-        }
-
-async function publishNewHomePost() {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لنشر منشور.'); if(!user) return;
-            const textEl=document.getElementById('home-post-textarea');
-            const previewEl=document.getElementById('home-post-image-preview');
-            if(!textEl?.value.trim() && !pendingHomePostFile) return triggerToastNotification('اكتب محتوى المنشور أو أضف صورة.', 'error');
-            let imageUrl=null;
-            if(pendingHomePostFile){
-                imageUrl=await uploadFileToStorage(pendingHomePostFile,'posts',{maxBytes:8*1024*1024});
-                if(!imageUrl) return;
-            }
-            const profile=await getCurrentProfile();
-            const payload={author_id:user.id,author_name:`${profile?.first_name||user.user_metadata?.first_name||''} ${profile?.last_name||user.user_metadata?.last_name||''}`.trim()||'مستخدم',content:textEl.value.trim()||'📷 صورة',post_type:'عام',image_url:imageUrl};
-            const result=await supabaseFetch('posts',{method:'POST',body:JSON.stringify(payload)});
-            if(!result) return triggerToastNotification('تعذر نشر المنشور.', 'error');
-            textEl.value=''; pendingHomePostFile=null; pendingHomePostDataUrl='';
-            if(previewEl){previewEl.style.display='none';previewEl.src='';}
-            triggerToastNotification('تم نشر المنشور بنجاح.', 'success');
-            renderHomePostsFeed();
-        }
+        
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>'"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[ch]));
@@ -2691,27 +2546,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             document.body.classList.remove('modal-active');
         }
 
-async function loadAllRegisteredUsersList() {
-            const container=document.getElementById('all-users-list'); if(!container)return;
-            const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض دليل المستخدمين.'); if(!me)return;
-            container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري تحميل دليل المستخدمين...</div>';
-            const [users,requests]=await Promise.all([
-                supabaseFetch('user_directory?select=*&limit=100'),
-                supabaseFetch(`friend_requests?or=(requester_id.eq.${encodeURIComponent(me.id)},target_id.eq.${encodeURIComponent(me.id)})&select=id,requester_id,target_id,status,created_at&order=created_at.desc&limit=500`)
-            ]);
-            if(!Array.isArray(users)){container.innerHTML='<div style="text-align:center;color:#ff0055;font-size:12px;padding:10px;">تعذر تحميل دليل المستخدمين.</div>';return;}
-            const map=new Map();for(const r of (requests||[]).slice().sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))){const other=r.requester_id===me.id?r.target_id:r.requester_id;if(!map.has(other))map.set(other,r);}
-            const filtered=users.filter(u=>u.id!==me.id);
-            if(!filtered.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:10px;">لا يوجد مستخدمون متاحون حالياً.</div>';return;}
-            container.innerHTML=filtered.map(u=>{
-                const req=map.get(u.id); const avatar=u.avatar_url||'icon.png'; const fullName=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';
-                let friendBtn=`<button class="btn-action" style="padding:6px 10px;font-size:10px;background:#00ff88;color:#000;border-radius:18px;" onclick="sendFriendRequest('${escapeJs(u.id)}')"><i class="fa-solid fa-user-plus"></i></button>`;
-                if(req?.status==='pending'&&req.target_id===me.id) friendBtn=`<div style="display:flex;gap:4px;flex-wrap:wrap;"><button type="button" class="btn-action" style="padding:6px 8px;font-size:10px;background:#00b978;color:#07140f;border-radius:16px;" onclick="respondFriendRequest('${escapeJs(req.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 8px;font-size:10px;background:#5b2435;color:#fff;border-radius:16px;" onclick="respondFriendRequest('${escapeJs(req.id)}','rejected')">رفض</button></div>`;
-                else if(req?.status==='pending') friendBtn=`<button class="btn-action" style="padding:6px 10px;font-size:10px;background:#555;color:#fff;border-radius:18px;" disabled>بانتظار القبول</button>`;
-                else if(req?.status==='accepted') friendBtn=`<span style="color:#00ff88;font-size:10px;">أصدقاء</span>`;
-                return `<div class="profile-menu-btn" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);padding:10px;border-radius:8px;gap:8px;"><div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="${escapeHtml(avatar)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #00ffff;"><div style="min-width:0;"><div style="font-weight:bold;color:#00ff88;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(fullName)} ${u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:12px;"></i>':''}</div><div style="font-size:10px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(u.identifier||'البريد مخفي')}</div></div></div><div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">${friendBtn}<button class="btn-action" style="padding:6px 12px;font-size:11px;background:#00ffff;color:#000;border-radius:20px;" onclick="openTargetUserDirectChat('${escapeJs(fullName)}','${escapeJs(u.identifier||'')}','${escapeJs(u.id)}')"><i class="fa-solid fa-paper-plane"></i></button></div></div>`;
-            }).join('');
-        }
+
 
         async function sendFriendRequest(targetId){
             const user=await requireAuthenticatedUser('سجل الدخول أولًا.');if(!user)return;if(!targetId||targetId===user.id)return;
@@ -4604,25 +4439,50 @@ function triggerAnimeAiConverterFilter() {
             closeSubProfileView('sub-prof-verify');
         }
         async function loadAllRegisteredUsersList() {
-            const container=document.getElementById('all-users-list'); if(!container) return;
-            const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض دليل المستخدمين.'); if(!me) return;
+            const container=document.getElementById('all-users-list');
+            if(!container)return;
+            const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض دليل المستخدمين.');
+            if(!me)return;
             container.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:12px;padding:12px;">جاري تحميل أعضاء الواحة...</div>';
+            const query='friend_requests?or=(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(me.id)+')&select=id,requester_id,target_id,status,created_at&order=created_at.desc&limit=500';
             const [users,requests]=await Promise.all([
-                supabaseFetch('user_directory?select=id,first_name,last_name,avatar_url,is_verified,created_at,gender&limit=100'),
-                supabaseFetch('friend_requests?or=(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(me.id)+')&select=id,requester_id,target_id,status')
+                supabaseFetch('user_directory?select=id,first_name,last_name,username,avatar_url,is_verified,created_at,gender&limit=100'),
+                supabaseFetch(query)
             ]);
-            if(!Array.isArray(users)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل دليل المستخدمين.</div>';return;}
-            const map=new Map((requests||[]).map(r=>[r.requester_id===me.id?r.target_id:r.requester_id,r]));
-            const list=users.filter(u=>u.id!==me.id);
-            if(!list.length){container.innerHTML='<div style="text-align:center;color:#a9bfd2;padding:18px;">لا يوجد أعضاء آخرون حالياً.</div>';return;}
-            container.innerHTML=list.map(u=>{
-                const req=map.get(u.id);
-                const avatar=u.avatar_url||getDefaultAvatar(u.gender);
-                const name=([u.first_name||'',u.last_name||''].join(' ').trim()||'مستخدم');
-                let friendBtn=`<button class="btn-action" style="padding:7px 10px;background:#a8ffd7;color:#102033;border-radius:18px;" onclick="sendFriendRequest('${escapeJs(u.id)}')"><i class="fa-solid fa-user-plus"></i></button>`;
-                if(req?.status==='pending') friendBtn='<span style="color:#ffe7a3;font-size:10px;">قيد الانتظار</span>';
-                else if(req?.status==='accepted') friendBtn='<span style="color:#a8ffd7;font-size:10px;">أصدقاء</span>';
-                return `<div class="profile-menu-btn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:#ffffff0b;padding:11px;border:1px solid #b8e7ff20;border-radius:14px;gap:8px;"><div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="${escapeHtml(avatar)}" alt="الصورة الشخصية" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff55;"><div style="min-width:0;"><div style="font-weight:bold;color:#e8fbff;">${escapeHtml(name)} ${u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#8bf4ff;"></i>':''}</div><div style="font-size:10px;color:#92a8c0;">عضو في الواحة · بيانات التواصل خاصة</div></div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">${friendBtn}<button class="btn-action" style="padding:7px 11px;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#102033;border-radius:20px;" onclick="openTargetUserDirectChat('${escapeJs(name)}','','${escapeJs(u.id)}')"><i class="fa-solid fa-paper-plane"></i></button><button class="btn-action" title="عرض الملف الشخصي" style="padding:7px 10px;background:rgba(255,255,255,.08);color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:20px;" onclick="openPublicUserProfile('${escapeJs(u.id)}')"><i class="fa-solid fa-user"></i></button></div></div>`;
+            if(!Array.isArray(users)){
+                container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل دليل المستخدمين. تحقق من الاتصال ثم أعد المحاولة.</div>';
+                return;
+            }
+            if(!Array.isArray(requests)){
+                container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل حالات طلبات الصداقة. أعد المحاولة.</div>';
+                return;
+            }
+            const map=new Map();
+            for(const request of requests){
+                const other=request.requester_id===me.id?request.target_id:request.requester_id;
+                if(other&&!map.has(other))map.set(other,request);
+            }
+            const list=users.filter(user=>user.id!==me.id);
+            if(!list.length){
+                container.innerHTML='<div style="text-align:center;color:#a9bfd2;padding:18px;">لا يوجد أعضاء آخرون حالياً.</div>';
+                return;
+            }
+            container.innerHTML=list.map(user=>{
+                const request=map.get(user.id);
+                const avatar=user.avatar_url||getDefaultAvatar(user.gender||'ذكر');
+                const name=([user.first_name||'',user.last_name||''].join(' ').trim()||'مستخدم');
+                let friendControl='<button type="button" class="btn-action" aria-label="إرسال طلب صداقة إلى '+escapeHtml(name)+'" style="padding:7px 10px;background:#a8ffd7;color:#102033;border-radius:18px;" onclick="sendFriendRequest(\''+escapeJs(user.id)+'\')"><i class="fa-solid fa-user-plus"></i></button>';
+                if(request?.status==='pending'&&request.target_id===me.id){
+                    friendControl='<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;"><button type="button" class="btn-action" aria-label="قبول طلب صداقة من '+escapeHtml(name)+'" style="padding:7px 9px;background:#a8ffd7;color:#102033;border-radius:16px;" onclick="respondFriendRequest(\''+escapeJs(request.id)+'\',\'accepted\')">قبول</button><button type="button" class="btn-action" aria-label="رفض طلب صداقة من '+escapeHtml(name)+'" style="padding:7px 9px;background:#5b2435;color:#fff;border-radius:16px;" onclick="respondFriendRequest(\''+escapeJs(request.id)+'\',\'rejected\')">رفض</button></div>';
+                }else if(request?.status==='pending'){
+                    friendControl='<span style="color:#ffe7a3;font-size:10px;" aria-label="طلب الصداقة قيد الانتظار">قيد الانتظار</span>';
+                }else if(request?.status==='accepted'){
+                    friendControl='<span style="color:#a8ffd7;font-size:10px;" aria-label="أصدقاء">أصدقاء</span>';
+                }
+                const username=user.username?'<div style="font-size:10px;color:#92a8c0;">@'+escapeHtml(user.username)+'</div>':'';
+                return '<div class="profile-menu-btn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:#ffffff0b;padding:11px;border:1px solid #b8e7ff20;border-radius:14px;gap:8px;">'+
+                    '<div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="'+escapeHtml(avatar)+'" alt="الصورة الشخصية" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff55;"><div style="min-width:0;"><div style="font-weight:bold;color:#e8fbff;">'+escapeHtml(name)+' '+(user.is_verified?'<i class="fa-solid fa-circle-check" style="color:#8bf4ff;"></i>':'')+'</div>'+username+'<div style="font-size:10px;color:#92a8c0;">بيانات التواصل خاصة</div></div></div>'+
+                    '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;">'+friendControl+'<button type="button" class="btn-action" aria-label="مراسلة '+escapeHtml(name)+'" style="padding:7px 11px;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#102033;border-radius:20px;" onclick="openTargetUserDirectChat(\''+escapeJs(name)+'\',\'\',\''+escapeJs(user.id)+'\')"><i class="fa-solid fa-paper-plane"></i></button><button type="button" class="btn-action" title="عرض الملف الشخصي" aria-label="عرض ملف '+escapeHtml(name)+' الشخصي" style="padding:7px 10px;background:rgba(255,255,255,.08);color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:20px;" onclick="openPublicUserProfile(\''+escapeJs(user.id)+'\')"><i class="fa-solid fa-user"></i></button></div></div>';
             }).join('');
         }
 
