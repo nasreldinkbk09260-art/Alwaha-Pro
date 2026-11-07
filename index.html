@@ -1280,7 +1280,8 @@ img,video,canvas{max-width:100%}
             if (!document.body) return selectedTheme;
             document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
             if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
-            document.body.dataset.alwahaTheme = selectedTheme;
+            if (selectedTheme === 'default') delete document.body.dataset.alwahaTheme;
+            else document.body.dataset.alwahaTheme = selectedTheme;
             let backdrop = document.getElementById('alwaha-theme-backdrop');
             if (!backdrop) {
                 backdrop = document.createElement('div');
