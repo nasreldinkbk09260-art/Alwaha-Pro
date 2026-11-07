@@ -8,8 +8,8 @@
  function sync(){const layers=candidates(),top=layers.length?layers[layers.length-1]:null;let changed=false;if(top!==active){if(!active&&top)focusBefore=document.activeElement;active=top;changed=true;}
   const desired=new Set();if(active){let branch=active;while(branch&&branch!==document.body){const parent=branch.parentElement;if(!parent)break;[...parent.children].forEach(sibling=>{if(sibling!==branch&&sibling.id!=='alwaha-nav-reveal-handle'&&!(sibling.classList?.contains('bottom-nav-bar')&&document.body.classList.contains('alwaha-nav-over-modal')))desired.add(sibling);});branch=parent;}}
   for(const el of [...previousInert.keys()])if(!desired.has(el))setIsolated(el,false);for(const el of desired)setIsolated(el,true);
-  if(active){document.body.classList.add('modal-active');active.setAttribute('aria-modal','true');if(!active.hasAttribute('tabindex'))active.setAttribute('tabindex','-1');if(changed){const target=focusables()[0]||active;requestAnimationFrame(()=>{if(active===top&&target.isConnected){try{target.focus({preventScroll:true});}catch{}}});}}
-  else{document.body.classList.remove('modal-active');if(focusBefore?.isConnected&&typeof focusBefore.focus==='function'){try{focusBefore.focus({preventScroll:true});}catch{}}focusBefore=null;}
+  if(active){if(!document.body.classList.contains('modal-active'))document.body.classList.add('modal-active');if(active.getAttribute('aria-modal')!=='true')active.setAttribute('aria-modal','true');if(!active.hasAttribute('tabindex'))active.setAttribute('tabindex','-1');if(changed){const target=focusables()[0]||active;requestAnimationFrame(()=>{if(active===top&&target.isConnected){try{target.focus({preventScroll:true});}catch{}}});}}
+  else{if(document.body.classList.contains('modal-active'))document.body.classList.remove('modal-active');if(focusBefore?.isConnected&&typeof focusBefore.focus==='function'){try{focusBefore.focus({preventScroll:true});}catch{}}focusBefore=null;}
   if(changed)window.AlwahaExperience?.syncDock?.();
  }
  function focusables(){return active?[...active.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(visible):[];}
@@ -18,9 +18,10 @@
  let started=false,syncScheduled=false;
  const LAYER_SELECTOR=SELECTORS.join(',');
  function nodeContainsLayer(node){return !!node&&node.nodeType===1&&!!(node.matches?.(LAYER_SELECTOR)||node.querySelector?.(LAYER_SELECTOR));}
- function hasRelevantMutation(records){return records.some(record=>{if(record.type==='attributes')return nodeContainsLayer(record.target);return [...record.addedNodes,...record.removedNodes].some(nodeContainsLayer);});}
+ function bodyModalStateChanged(record){if(record.target!==document.body||record.attributeName!=='class')return false;const before=new Set(String(record.oldValue||'').split(/\\s+/).filter(Boolean));const after=new Set(String(document.body.className||'').split(/\\s+/).filter(Boolean));return ['modal-active','alwaha-nav-over-modal'].some(name=>before.has(name)!==after.has(name));}
+ function hasRelevantMutation(records){return records.some(record=>{if(record.type==='attributes'){if(record.target===document.body)return bodyModalStateChanged(record);return nodeContainsLayer(record.target);}return [...record.addedNodes,...record.removedNodes].some(nodeContainsLayer);});}
  function scheduleSync(){if(syncScheduled)return;syncScheduled=true;const enqueue=window.requestAnimationFrame||((callback)=>window.setTimeout(callback,16));enqueue(()=>{syncScheduled=false;try{sync();}catch(error){console.error('[Alwaha Modal Shell] sync failed:',error);}});}
  const observer=new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();});
- function start(){if(started||!document.body)return;started=true;observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden','aria-hidden']});try{sync();}catch(error){console.error('[Alwaha Modal Shell] initial sync failed:',error);}}
+ function start(){if(started||!document.body)return;started=true;observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','hidden','aria-hidden'],attributeOldValue:true});try{sync();}catch(error){console.error('[Alwaha Modal Shell] initial sync failed:',error);}}
  window.AlwahaModalShell={sync,getActive:()=>active};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
