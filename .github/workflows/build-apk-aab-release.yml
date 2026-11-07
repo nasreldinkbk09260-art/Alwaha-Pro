@@ -642,8 +642,11 @@ jobs:
           cp "$AAB" release/Alwaha-Pro-3.0.3.aab
           git archive --format=zip --prefix=Alwaha-Pro-3.0.3/ HEAD > release/Alwaha-Pro-3.0.3-Final-Source.zip
           printf 'version=3.0.3\nbranch=%s\ncommit=%s\nworkflow_run=%s\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > release/BUILD-INFO.txt
-          sha256sum release/Alwaha-Pro-3.0.3.apk release/Alwaha-Pro-3.0.3.aab release/Alwaha-Pro-3.0.3-Final-Source.zip release/BUILD-INFO.txt > release/SHA256SUMS.txt
-          sha256sum --check release/SHA256SUMS.txt
+          (
+            cd release
+            sha256sum Alwaha-Pro-3.0.3.apk Alwaha-Pro-3.0.3.aab Alwaha-Pro-3.0.3-Final-Source.zip BUILD-INFO.txt > SHA256SUMS.txt
+            sha256sum --check SHA256SUMS.txt
+          )
           test -s release/Alwaha-Pro-3.0.3-Final-Source.zip
           echo 'Signed APK, AAB and tracked source archive verified successfully.'
 
