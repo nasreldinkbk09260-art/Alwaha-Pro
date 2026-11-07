@@ -640,10 +640,14 @@ jobs:
           mkdir -p release
           cp "$APK" release/Alwaha-Pro-3.0.3.apk
           cp "$AAB" release/Alwaha-Pro-3.0.3.aab
-          sha256sum release/Alwaha-Pro-3.0.3.apk release/Alwaha-Pro-3.0.3.aab > release/SHA256SUMS.txt
-          echo 'Signed APK and AAB verified successfully.'
+          git archive --format=zip --prefix=Alwaha-Pro-3.0.3/ HEAD > release/Alwaha-Pro-3.0.3-Final-Source.zip
+          printf 'version=3.0.3\nbranch=%s\ncommit=%s\nworkflow_run=%s\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" > release/BUILD-INFO.txt
+          sha256sum release/Alwaha-Pro-3.0.3.apk release/Alwaha-Pro-3.0.3.aab release/Alwaha-Pro-3.0.3-Final-Source.zip release/BUILD-INFO.txt > release/SHA256SUMS.txt
+          sha256sum --check release/SHA256SUMS.txt
+          test -s release/Alwaha-Pro-3.0.3-Final-Source.zip
+          echo 'Signed APK, AAB and tracked source archive verified successfully.'
 
-      - name: Upload APK/AAB artifacts
+      - name: Upload final source and Android artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
           name: Alwaha-Pro-3.0.3-build-${{ github.run_number }}
