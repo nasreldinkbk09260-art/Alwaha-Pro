@@ -28,7 +28,7 @@ const context={document,window:{dispatchEvent(event){events.push(event);}},local
 vm.createContext(context);
 vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
 
-const expected={default:'#10070d',spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
+const expected={spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
 const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8');
 if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw new Error('Theme stylesheet must use the exact offline-precache path.');
 if(!sw.includes("'./alwaha-theme-system.css'"))throw new Error('Theme stylesheet is not precached for offline startup.');
@@ -36,6 +36,9 @@ if(!modalShell.includes('bodyModalStateChanged(record)')||!modalShell.includes("
 if(!modalShell.includes("['modal-active','alwaha-nav-over-modal']"))throw new Error('Body observer must ignore theme-only body class mutations.');
 
 const results=[];
+const defaultValue=context.changeAppTheme('default',false);
+if(defaultValue!=='default'||Object.prototype.hasOwnProperty.call(body.dataset,'alwahaTheme')||stored.get('alwaha_theme')!=='default')throw new Error('The default theme must restore the original unthemed appearance.');
+if(themeCss.includes('body[data-alwaha-theme="default"]'))throw new Error('Default theme must not override original theme styles.');
 for(const theme of Object.keys(expected)){
  const actual=context.changeAppTheme(theme,false);
  if(actual!==theme)throw new Error(`Theme ${theme} normalized to ${actual}`);
