@@ -36,6 +36,7 @@ const checks=[
  ['kids room has parent emergency exit',kids.includes('close(true)')],
  ['ending a call closes kids room before media teardown',html.includes('window.closeAlwahaKidsMode();')],
  ['backup serializes ciphertext in compact base64',vault.includes('dataBase64:toBase64(cipher)')],
+ ['backup metadata records current app version 3.0.3',vault.includes("appVersion:'3.0.3'")],
  ['backup import supports previous byte-array files',vault.includes('new Uint8Array(raw.data||[])')],
  ['backup import only replaces drafts, not the whole IndexedDB store',vault.includes('await clearDrafts();for(const row of payload.records)')&&!vault.includes('await clear();for(const row of payload.records)')],
  ['backup import restores removed preferences exactly',vault.includes('else localStorage.removeItem(keyName)')],
