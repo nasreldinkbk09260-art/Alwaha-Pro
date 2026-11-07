@@ -111,6 +111,8 @@ jobs:
           test -s compatibility.js
           test -s alwaha-local-vault.js
           test -s alwaha-experience.js
+          test -s alwaha-modal-shell.js
+          test -s alwaha-runtime-guard.js
           test -s alwaha-kids-room.js
           test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
@@ -183,6 +185,8 @@ jobs:
           node --check compatibility.js
           node --check alwaha-local-vault.js
           node --check alwaha-experience.js
+          node --check alwaha-modal-shell.js
+          node --check alwaha-runtime-guard.js
           node --check alwaha-kids-room.js
           find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
@@ -213,6 +217,9 @@ jobs:
 
       - name: Run Android device compatibility audit
         run: npm run audit:compatibility
+
+      - name: Run startup/runtime resilience audit
+        run: npm run audit:runtime
 
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
@@ -259,6 +266,7 @@ jobs:
           test -s dist/sw.js
           test -s dist/icon.png
           test -s dist/production-polish.js
+          test -s dist/alwaha-runtime-guard.js
           test -s dist/compatibility.js
           test -s dist/alwaha-native-back-handler.js
           test -s dist/assets/sounds/saffron_tide.mp3
