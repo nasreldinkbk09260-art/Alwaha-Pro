@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b0f19">
-    <title>Alwaha-Pro 3.0.2</title>
+    <title>Alwaha-Pro 3.0.3</title>
 
 <style id="alwaha-r75-fullscreen-isolation">
 .alwaha-fullscreen-layer{position:fixed!important;inset:0!important;z-index:2147483200!important;box-sizing:border-box!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100svh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;overflow:hidden!important;display:none;align-items:stretch!important;justify-content:stretch!important;background:rgba(3,8,17,.97)!important;overscroll-behavior:contain!important;}
@@ -48,8 +48,8 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
     <script src="./production-polish.js" defer></script>
     <script src="./compatibility.js" defer></script>
     <script src="./alwaha-local-vault.js" defer></script>
-    <script src="./alwaha-experience.js?v=3.0.2-r75" defer></script>
-    <script src="./alwaha-modal-shell.js?v=3.0.2-r75" defer></script>
+    <script src="./alwaha-experience.js?v=3.0.3-final-20261107" defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.3-final-20261107" defer></script>
     <script src="./alwaha-kids-room.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
@@ -439,7 +439,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 @media(max-width:360px){.bottom-nav-bar{left:4px!important;right:4px!important;gap:1px!important;padding-left:3px!important;padding-right:3px!important}.bottom-nav-bar .nav-item{font-size:7px}.bottom-nav-bar .nav-item i{width:31px;height:31px;font-size:14px}}
 @keyframes alwahaOrbFloat{0%,100%{translate:0 0}50%{translate:0 -2px}}
 @media(prefers-reduced-motion:reduce){body:before,.bottom-nav-bar .nav-item i{animation:none!important}}
-/* 3.0.2 mobile performance guard */
+/* 3.0.3 mobile performance guard */
 @media (max-width: 768px), (pointer: coarse) {
   body:before { animation:none!important; filter:none!important; }
   #alwaha-touch-atmosphere .alwaha-stars { animation:none!important; }
@@ -453,7 +453,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
 }
 </style>
     <script src="./assets/chess.min.js"></script>
-    <script src="./games.js?v=3.0.2" defer></script>
+    <script src="./games.js?v=3.0.3" defer></script>
 
     <style id="alwaha-real-theme-palettes">
       body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
@@ -587,7 +587,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
-    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.2-r75">
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-final-20261107">
 </head>
 <body>
 
@@ -1119,11 +1119,11 @@ img,video,canvas{max-width:100%}
     <!-- محرك JavaScript الموحد والكامل المربوط بالسحابة -->
     <script>
         (function handleVersionControl() {
-            const currentAppVersion = "3.0.2";
+            const currentAppVersion = "3.0.3";
             const savedVersion = localStorage.getItem('alwaha_app_version');
             if(savedVersion !== currentAppVersion) {
                 localStorage.setItem('alwaha_app_version', currentAppVersion);
-                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.2 بنجاح!", "success"), 1000);
+                setTimeout(() => triggerToastNotification("تم تحديث التطبيق للإصدار 3.0.3 بنجاح!", "success"), 1000);
             }
             const savedTheme = localStorage.getItem('alwaha_theme');
             if(savedTheme) changeAppTheme(savedTheme, false);
@@ -2988,7 +2988,7 @@ async function loadMarketMessages() {
             const me=await getCurrentAuthUser();if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
             const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
-            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من تطبيق ترحيل 3.0.2.</div>`;return;}
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من تطبيق ترحيل 3.0.3.</div>`;return;}
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">لا توجد معاملات مسجلة بعد.</div>';return;}
             holder.innerHTML=rows.map(tx=>{
                 const snap=tx.listing_snapshot||{},warranty=Number(tx.guarantee_days||0),expiry=tx.guarantee_expires_at?new Date(tx.guarantee_expires_at).toLocaleDateString('ar-EG'):'—',retention=tx.retention_until?new Date(tx.retention_until).toLocaleDateString('ar-EG'):'—';
@@ -4209,7 +4209,7 @@ function triggerAnimeAiConverterFilter() {
             const required=['handleNewUserRegistrationSubmit','executeUserLoginAuth','linkPhoneForAccountRecovery','publishNewHomePost','togglePostLike','renderReelsFeed','toggleReelLike','openCommentsModal','submitNewCommentFromModal','loadAllRegisteredUsersList','sendFriendRequest','sendLiveChatMessageFromUI','submitNewProductToMarket','openMarketProductDetails','editMyMarketItem','deleteMyMarketItem','editOwnHomePost','deleteOwnHomePost','editOwnReel','deleteOwnReel','launchGameEngine','openProfessionalCameraView','uploadFileToStorage','openPublicUserProfile','toggleUserFollow','previewAlwahaCallRingtone','setAlwahaRingtoneEnabled','getAlwahaIceServers'];
             const missing=required.filter(name=>typeof window[name]!=='function');
             if(missing.length) console.error('Alwaha-Pro self-test missing:',missing);
-            else console.info('Alwaha-Pro 3.0.2 self-test: OK', getAlwahaCapabilityStatus());
+            else console.info('Alwaha-Pro 3.0.3 self-test: OK', getAlwahaCapabilityStatus());
         }
 
 

@@ -4,6 +4,7 @@ on:
     branches:
       - alwaha-admin-app-1.0.0
       - alwaha-pro-3.0.2-release-20261102
+      - alwaha-pro-3.0.3-final-rebuild-20261107
     paths:
       - 'admin-app/**'
       - 'supabase/functions/admin-api/**'

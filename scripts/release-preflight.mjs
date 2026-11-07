@@ -24,10 +24,10 @@ for(const theme of ['default','spring','summer','autumn','winter'])if(!html.incl
 if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
 if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
-if(pkg.version!=='3.0.2'||lock.version!=='3.0.2'||lock.packages?.['']?.version!=='3.0.2')fail('package and lockfile versions must be 3.0.2.');
+if(pkg.version!=='3.0.3'||lock.version!=='3.0.3'||lock.packages?.['']?.version!=='3.0.3')fail('package and lockfile versions must be 3.0.3.');
 if(cap.appId!=='pro.alwaha.app'||cap.webDir!=='dist')fail('Unexpected Capacitor app configuration.');
 if(manifest.version!==pkg.version)fail('manifest.json version must match package.json.');
-if(!html.includes('Alwaha-Pro 3.0.2'))fail('HTML release version is not 3.0.2.');
+if(!html.includes('Alwaha-Pro 3.0.3'))fail('HTML release version is not 3.0.3.');
 for(const file of ['icon.png','manifest.json','sw.js','scripts/build-web.mjs','production-polish.js','alwaha-modal-shell.js','supabase/migrations/20261007082734_20261005000000_fix_like_count_security.sql','supabase/migrations/20261011204819_secure_contact_privacy_defaults.sql','supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql','supabase/migrations/20261014192321_username_follows_call_features_20261014090000.sql','supabase/migrations/20261014193854_legacy_archive_api_access_hardening.sql','supabase/migrations/20261014194007_safe_public_directory_invoker.sql','supabase/migrations/20261014194053_app_settings_api_privacy.sql','supabase/migrations/20261014194820_release_policy_performance_cleanup.sql','supabase/migrations/20261014194848_rls_initplan_optimization.sql','supabase/migrations/20261014195018_game_room_join_game_validation.sql','supabase/migrations/20261014195108_game_room_join_rpc_compatibility.sql','supabase/migrations/20261014195445_friend_request_column_privileges.sql','supabase/migrations/20261014195540_friend_request_policy_consolidation.sql','supabase/migrations/20261014232322_notification_fail_safe.sql','supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql','supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql','supabase/migrations/20261101022015_marketplace_conversation_messaging.sql','supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql','supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql','supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql','supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql','supabase/migrations/20261102150000_products_seller_email_privacy.sql','supabase/tests/20261102150000_products_seller_email_privacy.sql','supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql'])if(!fs.existsSync(path.join(process.cwd(),file)))fail(`Missing release file: ${file}`);
 if(fs.statSync(path.join(process.cwd(),'icon.png')).size<1000)fail('icon.png unexpectedly small.');
 if (html.includes('openAlwahaLocalNetworkPanel') || html.includes('الشبكة الحرة للأصدقاء القريبين') || html.includes('إعدادات الشبكة القريبة')) fail('Local network UI entry points must remain removed as requested.');
@@ -45,7 +45,7 @@ if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
 for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vendor/supabase/supabase.js','./assets/vendor/cairo/300.css','./assets/vendor/cairo/400.css','./assets/vendor/cairo/600.css','./assets/vendor/cairo/700.css','./assets/vendor/cairo/900.css'])if(!html.includes(asset))fail('Critical UI dependency is not served locally: '+asset);
-for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-spring.webp','assets/backgrounds/bg-summer.webp','assets/backgrounds/bg-autumn.webp','assets/backgrounds/bg-winter.webp','alwaha-theme-system.css'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.2 media asset: '+asset);
+for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-spring.webp','assets/backgrounds/bg-summer.webp','assets/backgrounds/bg-autumn.webp','assets/backgrounds/bg-winter.webp','alwaha-theme-system.css'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.3 media asset: '+asset);
 for(const helper of ['setAlwahaLanguage','setAlwahaDataSaver','setAlwahaReducedMotion','setAlwahaRingtoneChoice'])if(!fs.readFileSync(path.join(process.cwd(),'production-polish.js'),'utf8').includes('window.'+helper))fail('Missing settings handler: '+helper);
 if(!fs.readFileSync(path.join(process.cwd(),'games.js'),'utf8').includes('p_expected_game_id'))fail('Missing wrong-game room join guard.');
 if (!pkg.dependencies?.['@capacitor/app']) fail('Missing Android native back plugin: @capacitor/app.');
@@ -53,7 +53,7 @@ if (!pkg.devDependencies?.['esbuild']) fail('Missing web build dependency: esbui
 if (!html.includes('./alwaha-native-back-handler.js')) fail('Native back handler script tag missing.');
 if (!buildWeb.includes("path.join(root, 'scripts', 'native-back-handler.mjs')") || !buildWeb.includes("outfile: path.join(dist, 'alwaha-native-back-handler.js')") || !buildWeb.includes("if (!fs.existsSync(path.join(dist, 'alwaha-native-back-handler.js')))") ) fail('Native back handler is not integrated into the web build.');
 if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler is not precached by the service worker.');
-if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.2 local experience modules are not precached.');
+if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.3 local experience modules are not precached.');
 if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
 if (!nativeBack.includes('window.alwahaExitNativeApp = () => App.exitApp()') || !html.includes('window.alwahaExitNativeApp')) fail('Android exit confirmation does not invoke the native exit action.');
 for (const permission of ['android.permission.CAMERA','android.permission.RECORD_AUDIO','android.permission.MODIFY_AUDIO_SETTINGS','android.permission.ACCESS_COARSE_LOCATION','android.permission.ACCESS_FINE_LOCATION']) if (!workflow.includes(permission)) fail(`Android feature permission missing from release workflow: ${permission}`);
@@ -87,7 +87,7 @@ for (const feature of ['marketplace_reviews','marketplace_reports','products_sta
 
 const friendPolicyMigrationLatest=read('supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql');
 if (!friendPolicyMigrationLatest.includes('messages_insert_sender_accepted_friends') || !/fr\.status\s*=\s*'accepted'/.test(friendPolicyMigrationLatest) || !/\(SELECT auth\.uid\(\)\)\s*=\s*sender_id/.test(friendPolicyMigrationLatest)) fail('Latest message RLS migration does not require an accepted friendship.');
-for (const file of ['supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql','supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql','supabase/migrations/20261029035151_realtime_call_channel_authorization.sql','supabase/migrations/20261029035414_marketplace_review_privacy_rpc.sql','supabase/migrations/20261029035811_realtime_call_peer_inbox_select.sql']) if (!fs.existsSync(path.join(process.cwd(),file))) fail(`Missing 3.0.2 privacy/marketplace migration: ${file}`);
+for (const file of ['supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql','supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql','supabase/migrations/20261029035151_realtime_call_channel_authorization.sql','supabase/migrations/20261029035414_marketplace_review_privacy_rpc.sql','supabase/migrations/20261029035811_realtime_call_peer_inbox_select.sql']) if (!fs.existsSync(path.join(process.cwd(),file))) fail(`Missing 3.0.3 privacy/marketplace migration: ${file}`);
 if (!html.includes("webrtc-call-result") || !html.includes('handleIncomingCallResult') || !html.includes('hasAcceptedAlwahaFriendship(payload.from)')) fail('Incoming/outgoing call friendship gate is incomplete.');
 if (!html.includes('config:{private:true}') && !html.includes('config: { private: true }')) fail('WebRTC channels must use private Realtime Broadcast.');
 if (!html.includes('waitForIceGathering(timeoutMs = 10000)') || !html.includes('this.client.realtime.setAuth(session.access_token)')) fail('Private call channel auth/ICE safeguards are incomplete.');
@@ -100,9 +100,9 @@ if(!themeCss.includes('--wa-accent')||!themeCss.includes('#alwaha-theme-backdrop
 
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
-if(!html.includes('market-call-room-')||!html.includes("mode:market?'market':'online'")||!html.includes('complete_market_sale')) fail('3.0.2 market call and transaction workflow are incomplete.');
-if(!html.includes('toggleAlwahaKidsMode')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.2 local experience suite is incomplete.');
-if(!fs.existsSync('alwaha-kids-room.js')||!fs.existsSync('alwaha-local-vault.js')||!fs.existsSync('alwaha-experience.js')||!fs.existsSync('alwaha-modal-shell.js')) fail('Missing 3.0.2 local experience modules.');
+if(!html.includes('market-call-room-')||!html.includes("mode:market?'market':'online'")||!html.includes('complete_market_sale')) fail('3.0.3 market call and transaction workflow are incomplete.');
+if(!html.includes('toggleAlwahaKidsMode')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.3 local experience suite is incomplete.');
+if(!fs.existsSync('alwaha-kids-room.js')||!fs.existsSync('alwaha-local-vault.js')||!fs.existsSync('alwaha-experience.js')||!fs.existsSync('alwaha-modal-shell.js')) fail('Missing 3.0.3 local experience modules.');
 const legacyPrivilegesMigration=read('supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql');
 for(const table of ['public.likes','public.profiles','public.ratings']) if(!legacyPrivilegesMigration.includes(table)) fail(`Legacy privilege hardening missing ${table}.`);
 if(!/REVOKE\s+ALL\s+PRIVILEGES\s+ON\s+TABLE[\s\S]*?FROM\s+PUBLIC,\s*anon,\s*authenticated/i.test(legacyPrivilegesMigration)) fail('Legacy client table privileges are not fully revoked.');
@@ -120,7 +120,8 @@ if(!workflow.includes('npm run audit:field-repair') || pkg.scripts?.['audit:fiel
 if(!workflow.includes('npm audit --audit-level=high')) fail('Dependency vulnerability audit is not wired into release CI.');
 if(!fs.existsSync('supabase/tests/20261102010000_legacy_client_privileges_hardening.sql') || !fs.existsSync('supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql')) fail('Supabase regression assertion files are missing.');
 if(!fs.existsSync('scripts/marketplace-column-audit.mjs'))fail('scripts/marketplace-column-audit.mjs is missing.');
-if(!fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java"))fail('native deployment script must preserve scripts/android plugin.');
-if (process.exitCode) throw new Error('Alwaha-Pro 3.0.2 release preflight failed.');
-console.log('Alwaha-Pro 3.0.2 release preflight checks passed.');
+if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
+if(!workflow.includes('alwaha-pro-3.0.3-final-rebuild-20261107'))fail('Android build workflow is not wired to the final rebuild branch.');
+if (process.exitCode) throw new Error('Alwaha-Pro 3.0.3 release preflight failed.');
+console.log('Alwaha-Pro 3.0.3 release preflight checks passed.');
 console.log('Static checks do not replace Supabase integration tests, applying migrations, or two-device call tests.');

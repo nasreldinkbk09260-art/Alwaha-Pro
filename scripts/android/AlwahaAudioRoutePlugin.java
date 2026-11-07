@@ -56,7 +56,7 @@ public class AlwahaAudioRoutePlugin extends Plugin {
                 File source = new File(getContext().getApplicationInfo().sourceDir);
                 File shareDirectory = new File(getContext().getCacheDir(), "shared-apk");
                 if (!shareDirectory.exists() && !shareDirectory.mkdirs()) throw new IllegalStateException("Could not create APK share cache.");
-                File apkCopy = new File(shareDirectory, "Alwaha-Pro-3.0.2.apk");
+                File apkCopy = new File(shareDirectory, "Alwaha-Pro-3.0.3.apk");
                 try (InputStream input = new FileInputStream(source); OutputStream output = new FileOutputStream(apkCopy, false)) {
                     byte[] buffer = new byte[64 * 1024];
                     int read;

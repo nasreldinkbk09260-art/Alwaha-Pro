@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261107';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
