@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const html=fs.readFileSync('index.html','utf8');
+const themeCss=fs.readFileSync('alwaha-theme-system.css','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
 const match=html.match(/^        function changeAppTheme\(themeName, showToast = true\) \{[\s\S]*?^        \}/m);
 if(!match)throw new Error('Could not locate the actual application theme function.');
 
@@ -30,6 +32,7 @@ vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
 
 const expected={spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
 const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8');
+if(!modalShell.includes('record.oldValue||\'\').split(/\\s+/)'))throw new Error('Observer class-token diff must split on whitespace correctly.');
 if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw new Error('Theme stylesheet must use the exact offline-precache path.');
 if(!sw.includes("'./alwaha-theme-system.css'"))throw new Error('Theme stylesheet is not precached for offline startup.');
 if(!modalShell.includes('bodyModalStateChanged(record)')||!modalShell.includes("active.getAttribute('aria-modal')!=='true'")||!modalShell.includes('attributeOldValue:true'))throw new Error('Theme changes must not retrigger modal sync or rewrite stable modal attributes.');
