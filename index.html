@@ -4013,12 +4013,7 @@ function triggerAnimeAiConverterFilter() {
             triggerToastNotification(video.style.filter==='none'?'تم إلغاء فلتر الألوان.':'تم تطبيق فلتر ألوان مباشر على معاينة الكاميرا. يؤثر أيضاً في الصورة الملتقطة.','success');
         }
 
-        /* تهيئة العرض الابتدائي عند تحميل الصفحة */
-        window.addEventListener('DOMContentLoaded', () => {
-            syncUiWithLoadedProfileData();
-            renderHomePostsFeed();
-        });
-
+        /* Initial profile/feed startup is owned by the guarded local-first bootstrap below. */
 
         /* =========================
            الإصدار 2.8.2 - التشغيل الفعلي للإضافات
@@ -4644,7 +4639,6 @@ function triggerAnimeAiConverterFilter() {
             if(gender) gender.addEventListener('change',()=>{if(registerAvatar&&!localUploadedAvatarBase64)registerAvatar.src=getDefaultAvatar(gender.value);});
             const phone=document.getElementById('verification-phone-input');
             if(phone&&!phone.value)phone.value=localStorage.getItem('alwaha_profile_phone')||'';
-            syncUiWithLoadedProfileData();
             showAlwahaPrivacyNoticeIfNeeded();
             const radius=document.getElementById('market-radius-select');if(radius)radius.addEventListener('change',()=>renderProductsList(document.getElementById('market-search-input')?.value||''));
         });
