@@ -108,15 +108,18 @@ check('five themes include original default plus four full-viewport local season
   experience.includes('const THEMES=') && themeCss.includes('body[data-alwaha-theme]') &&
   themeCss.includes('background-size:cover') && html.includes('alwaha:themechange'));
 check('theme/nav motion and sounds stop for reduced motion or data saver',
-  experience.includes('prefers-reduced-motion: reduce') &&
-  experience.includes("localStorage.getItem('alwaha_data_saver')==='true'") &&
+  experience.includes('function motionAllowed()') &&
+  experience.includes("safeGet('alwaha_data_saver')!=='true'") &&
+  experience.includes("safeGet('alwaha_reduced_motion')!=='true'") &&
+  experience.includes("matchMedia('(prefers-reduced-motion: reduce)').matches") &&
   experience.includes('body.alwaha-reduced-motion .bottom-nav-bar') &&
-  experience.includes('body.alwaha-data-saver .bottom-nav-bar'));
-check('nav drag has a lightweight comic follower with falling/recovered hat or shoe, distinct sounds and saver guards',
+  experience.includes('body.alwaha-data-saver .bottom-nav-bar') &&
+  experience.includes('function comic(el){if(!motionAllowed())return;'));
+check('nav drag has a lightweight comic follower with falling/recovered hat or shoe and distinct grab/drop sounds',
   experience.includes('alwaha-comic-walker') && experience.includes('walker-follow') &&
   experience.includes('walker-gear') && experience.includes('alwahaGearDrop') &&
-  experience.includes('sound(440+Math.min(500,Math.abs(a-b)*45))') &&
-  experience.includes("localStorage.getItem('alwaha_data_saver')==='true'"));
+  experience.includes('sound(560)') && experience.includes('sound(760)') &&
+  experience.includes("nav.classList.add('alwaha-nav-free-position','alwaha-nav-group-dragging')"));
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
