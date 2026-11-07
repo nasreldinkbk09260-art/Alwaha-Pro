@@ -6,6 +6,7 @@ const PRECACHE_ASSETS = [
   './icon.png',
   './games.js',
   './production-polish.js',
+  './alwaha-call-feedback.js',
   './compatibility.js',
   './alwaha-local-vault.js',
   './alwaha-experience.js',

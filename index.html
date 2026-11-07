@@ -50,6 +50,7 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
     <script src="./production-polish.js" defer></script>
+    <script src="./alwaha-call-feedback.js" defer></script>
     <script src="./compatibility.js" defer></script>
     <script src="./alwaha-local-vault.js" defer></script>
     <script src="./alwaha-experience.js" defer></script>
@@ -3180,7 +3181,7 @@ async function renderConversationsList() {
                 await this.peerConnection.setLocalDescription(offer);
                 const gathered = await this.waitForIceGathering();
                 if (!gathered) console.warn('[Alwaha Call] ICE gathering timed out; continuing with queued trickle candidates.');
-                this.signaling.send({ type: 'offer', offer: this.peerConnection.localDescription || offer });
+                await this.signaling.send({ type: 'offer', offer: this.peerConnection.localDescription || offer });
             }
             async acceptIncoming(offer) {
                 await this.initPeerConnection();
@@ -3192,7 +3193,7 @@ async function renderConversationsList() {
                 await this.peerConnection.setLocalDescription(answer);
                 const gathered = await this.waitForIceGathering();
                 if (!gathered) console.warn('[Alwaha Call] ICE gathering timed out while answering; queued candidates will continue.');
-                this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
+                await this.signaling.send({ type: 'answer', answer: this.peerConnection.localDescription || answer });
             }
             async handleSignal(data) {
                 if (!data || this.closed) return;
@@ -3208,7 +3209,7 @@ async function renderConversationsList() {
                         else this.pendingCandidates.push(candidate);
                     } else if (data.type === 'end') {
                         this.endCall(false);
-                        this.onState('remote-ended');
+                        this.onState(data.reason || 'remote-ended');
                     }
                 } catch (e) {
                     console.warn('WebRTC signaling error', e);
@@ -3273,12 +3274,12 @@ async function renderConversationsList() {
                 if (this.localVideo) { this.localVideo.srcObject = this.localStream; this.localVideo.play?.().catch(() => {}); }
                 return nextMode;
             }
-            endCall(notifyRemote = true) {
+            endCall(notifyRemote = true, reason = 'ended') {
                 this.closed = true;
                 this.stopAdaptiveVideoQuality();
                 if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
                 this.disconnectTimer = null;
-                if (notifyRemote) this.signaling.send({ type: 'end' });
+                if (notifyRemote) this.signaling.send({ type: 'end', reason }).catch(error=>console.warn('[Alwaha Call] End signal failed:',error));
                 this.localStream?.getTracks?.().forEach(track => track.stop());
                 this.localStream = null;
                 try { this.effectsDestination?.stream?.getTracks?.().forEach(track => track.stop()); } catch (e) {}
@@ -3316,6 +3317,19 @@ async function renderConversationsList() {
                 this.pendingRoomSignalsToSend = [];
                 this.roomPeerReady = false;
                 this.mediaType = 'audio';
+                this.callTimeout = null;
+            }
+            clearCallTimeout() { if(this.callTimeout!==null)clearTimeout(this.callTimeout);this.callTimeout=null; }
+            scheduleCallTimeout(sessionId,delay,incomingPayload=null) {
+                this.clearCallTimeout();const seconds=Math.round(delay/1000);
+                this.callTimeout=setTimeout(async()=>{
+                    if(this.sessionId!==sessionId)return;
+                    if(incomingPayload){if(this.pendingIncoming?.sessionId!==sessionId)return;await this.sendCallResult(incomingPayload.from,sessionId,'no-answer').catch(()=>{});await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
+                    else{if(!this.call)return;await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
+                    const target=currentChatUser||incomingPayload?.displayName||'المستخدم';await this.end(false);
+                    updateCallUi('idle',{target,text:incomingPayload?'مكالمة فائتة — لم يتم الرد':'لم يتم الرد على المكالمة',indicator:'انتهت مهلة انتظار الرد بعد '+seconds+' ثانية.'});
+                    setCallModal(true);window.AlwahaCallFeedback?.play('no-answer');
+                },delay);
             }
             async subscribeChannel(channel) {
                 return new Promise((resolve, reject) => {
@@ -3422,6 +3436,7 @@ async function renderConversationsList() {
                 this.call=new VoiceCall({signaling:{send:payload=>this.sendRoom(payload)},localAudioEl:localAudio,remoteAudioEl:remoteAudio,localVideoEl:localVideo,remoteVideoEl:remoteVideo,mediaType:this.mediaType,onState:state=>this.handleCallState(state)});
                 await this.call.startOutgoing();
                 await this.sendToPeerInbox({type:'offer',mode:market?'market':'online',conversationId:this.conversationId||undefined,to:this.peerId,from:this.myId,displayName:localStorage.getItem('alwaha_profile_name')||'مستخدم Alwaha-Pro',roomId:this.roomId,sessionId:this.sessionId,mediaType:this.mediaType,offer:this.call.peerConnection.localDescription});
+                window.AlwahaCallFeedback?.start('ringback');this.scheduleCallTimeout(this.sessionId,35000);
                 return true;
             }
             async sendCallResult(to, sessionId, status) {
@@ -3434,15 +3449,16 @@ async function renderConversationsList() {
                 } finally { try { await this.client.removeChannel(channel); } catch(e) {} }
             }
             async handleIncomingCallResult(payload) {
-                if(!payload||payload.status!=='rejected'||!this.sessionId||payload.sessionId!==this.sessionId)return;
-                await this.end(false);
-                updateCallUi('idle');
-                setCallModal(false);
-                triggerToastNotification('تعذر بدء المكالمة: يجب أن يقبل الطرف الآخر طلب الصداقة أولاً.','info');
+                if(!payload||!this.sessionId||payload.sessionId!==this.sessionId)return;
+                const states={rejected:{text:'لا يمكن الاتصال قبل قبول طلب الصداقة.',indicator:'المستخدم غير متاح للمكالمات قبل قبول الصداقة.',tone:'unavailable'},declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
+                const result=states[payload.status];if(!result)return;const target=currentChatUser||'المستخدم';
+                await this.end(false);updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
             }
             async handleIncomingOffer(payload) {
-                if(this.call||!payload)return;
+                if(!payload)return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
+                if(this.pendingIncoming?.sessionId===payload.sessionId)return;
+                if(this.call||this.pendingIncoming||this.sessionId){await this.sendCallResult(payload.from,payload.sessionId,'busy').catch(error=>console.warn('[Alwaha Call] Busy response failed:',error));return;}
                 const market=payload.mode==='market'&&!!payload.conversationId;
                 if(market){
                     const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(payload.conversationId)}&select=id,buyer_id,seller_id&limit=1`),c=Array.isArray(rows)?rows[0]:null;
@@ -3456,9 +3472,10 @@ async function renderConversationsList() {
                 currentChatUserIdentifier=payload.from||'';currentChatUser=payload.displayName||payload.from||'مستخدم';
                 try{await this.createRoom(payload.from,payload.sessionId,market?payload.conversationId:null);this.roomPeerReady=true;await this.sendRoom({type:'ready'});}catch(e){console.warn('[Alwaha Call] Incoming room setup failed:',e);}
                 setCallModal(true);updateCallUi('incoming',{target:payload.displayName||payload.from||'مستخدم',text:market?'مكالمة واردة من السوق':'مكالمة واردة',indicator:market?'<i class="fa-solid fa-store"></i> اتصال سوق موثق دون اشتراط الصداقة':'<i class="fa-solid fa-phone-volume"></i> اتصال وارد عبر WebRTC'});
+                this.scheduleCallTimeout(payload.sessionId,30000,payload);
             }
             async acceptIncoming() {
-                stopAlwahaCallRingtone();
+                this.clearCallTimeout();stopAlwahaCallRingtone();
                 if (!this.pendingIncoming) return;
                 const payload = this.pendingIncoming;
                 this.pendingIncoming = null;
@@ -3481,35 +3498,28 @@ async function renderConversationsList() {
                 }
                 updateCallUi('connecting', { target: currentChatUser || payload.displayName || payload.from, text:'جاري الاتصال...' });
             }
-            rejectIncoming() {
-                stopAlwahaCallRingtone();
-                const payload = this.pendingIncoming;
-                this.pendingIncoming = null;
-                if (payload && this.roomChannel) {
-                    this.sendRoom({ type:'end' });
-                }
+            async rejectIncoming() {
+                this.clearCallTimeout();stopAlwahaCallRingtone();
+                const payload=this.pendingIncoming;this.pendingIncoming=null;
+                if(payload&&this.roomChannel)await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
             }
             async handleCallState(state) {
-                if (state === 'connected') {
-                    updateCallUi('connected', { target: this.mode==='market'?'بائع السوق':(currentChatUser || 'المستخدم'), text: 'تم الاتصال', indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة' });
-                    startCallTimer();
-                } else if (state === 'failed') {
-                    triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.', 'error');
-                    await this.end(false);
-                    updateCallUi('idle');
-                    setCallModal(false);
-                } else if (state === 'remote-ended') {
-                    triggerToastNotification('أنهى الطرف الآخر المكالمة.', 'info');
-                    await this.end(false);
-                    updateCallUi('idle');
-                    setCallModal(false);
+                const target=this.mode==='market'?'بائع السوق':(currentChatUser||'المستخدم');
+                if(state==='connected'){this.clearCallTimeout();window.AlwahaCallFeedback?.stop();window.AlwahaCallFeedback?.play('connected');updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});startCallTimer();}
+                else if(['declined','busy','no-answer','unavailable'].includes(state)){
+                    const states={declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
+                    const result=states[state];await this.end(false);updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
+                }else if(state==='failed'){
+                    window.AlwahaCallFeedback?.stop();await this.end(false);updateCallUi('idle',{target,text:'تعذر إتمام المكالمة.',indicator:'تحقق من الميكروفون والاتصال ثم حاول مجدداً.'});setCallModal(true);window.AlwahaCallFeedback?.play('failed');triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.','error');
+                }else if(state==='remote-ended'){
+                    window.AlwahaCallFeedback?.stop();await this.end(false);updateCallUi('idle',{target,text:'أنهى الطرف الآخر المكالمة.',indicator:'انتهى الاتصال بين الجهازين.'});setCallModal(true);window.AlwahaCallFeedback?.play('ended');triggerToastNotification('أنهى الطرف الآخر المكالمة.','info');
                 }
             }
-            async end(notify = true) {
-                stopAlwahaCallRingtone();
+            async end(notify = true, reason = 'ended') {
+                this.clearCallTimeout();window.AlwahaCallFeedback?.stop();stopAlwahaCallRingtone();
                 stopCallTimer();
                 if (typeof window.closeAlwahaKidsMode === 'function') { try { window.closeAlwahaKidsMode(); } catch (error) { console.warn('[Alwaha Kids] safe close failed:', error); } }
-                this.call?.endCall(notify);
+                this.call?.endCall(notify,reason);
                 this.call = null;
                 this.pendingIncoming = null;
                 this.pendingRoomSignals = [];
@@ -3597,10 +3607,8 @@ async function renderConversationsList() {
             }
         }
         async function rejectIncomingCall() {
-            try { activeCallManager?.rejectIncoming(); } catch (e) {}
-            await activeCallManager?.end(false);
-            updateCallUi('idle');
-            setCallModal(false);
+            try { await activeCallManager?.rejectIncoming(); } catch (e) { console.warn('[Alwaha Call] Decline failed:',e); }
+            await activeCallManager?.end(false);updateCallUi('idle');setCallModal(false);
         }
         async function terminateVoiceCall() {
             try { await activeCallManager?.end(true); } catch (e) {}
