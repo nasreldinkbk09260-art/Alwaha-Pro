@@ -31,6 +31,13 @@ vm.createContext(context);
 vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
 
 const expected={spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
+for(const id of Object.keys(expected)){
+ const cssMarker=`body[data-alwaha-theme="${id}"]{--alwaha-theme-image:url('./assets/backgrounds/bg-${id}.webp')`;
+ if(!themeCss.includes(cssMarker))throw new Error(`Missing seasonal CSS palette/background for ${id}.`);
+ if(!sw.includes(`'./assets/backgrounds/bg-${id}.webp'`))throw new Error(`Seasonal image is not precached: ${id}.`);
+ if(!fs.existsSync(`assets/backgrounds/bg-${id}.webp`))throw new Error(`Seasonal image is not included in source: ${id}.`);
+}
+
 const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8');
 if(!modalShell.includes('record.oldValue||\'\').split(/\\s+/)'))throw new Error('Observer class-token diff must split on whitespace correctly.');
 if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw new Error('Theme stylesheet must use the exact offline-precache path.');

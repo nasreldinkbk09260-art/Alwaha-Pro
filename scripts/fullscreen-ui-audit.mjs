@@ -28,4 +28,18 @@ check('modal observation is coalesced and duplicate navigation observer is remov
 
 check('3.0.3 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.3-final-20261107')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
+
+const functionCounts=new Map();
+for(const match of html.matchAll(/\\b(?:async\\s+)?function\\s+([A-Za-z_$][\\w$]*)\\s*\\(/g))functionCounts.set(match[1],(functionCounts.get(match[1])||0)+1);
+check('index page has no shadowed duplicate function definitions',![...functionCounts.values()].some(count=>count>1));
+const navMarkup=html.match(/<nav class="bottom-nav-bar"[\\s\\S]*?<\\/nav>/)?.[0]||'';
+const appSectionIds=[...html.matchAll(/<section\\b(?=[^>]*\\bclass=["'][^"']*\\bapp-section\\b[^"']*["'])[^>]*\\bid=["']([^"']+)["']/g)].map(match=>match[1]);
+const navTargets=[...navMarkup.matchAll(/showSection\\('([^']+)'/g)].map(match=>match[1]);
+check('all six main navigation buttons target real app sections',navTargets.length===6&&navTargets.every(id=>appSectionIds.includes(id))&&new Set(navTargets).size===6);
+const staticMarkup=html.replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script\\s*>/gi,'').replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style\\s*>/gi,'');
+const staticIds=[...staticMarkup.matchAll(/\\bid=["']([^"']+)["']/g)].map(match=>match[1]);
+check('static HTML contains no duplicate element IDs',new Set(staticIds).size===staticIds.length);
+check('profile subpages fill the dynamic viewport and respect Android safe areas',html.includes('.sub-profile-view-box{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;')&&html.includes('env(safe-area-inset-bottom))!important;padding'));
+check('full-screen overlay shell uses fixed viewport bounds and internal scrolling',html.includes('.alwaha-fullscreen-layer{position:fixed!important;inset:0!important;')&&html.includes('height:100dvh!important;min-height:100svh!important;max-width:none!important;max-height:none!important;overflow:hidden!important'));
+
 if(fail.length){console.error(`FULLSCREEN_UI_AUDIT=FAIL (${fail.length})`);process.exit(1);}console.log('FULLSCREEN_UI_AUDIT=PASS');
