@@ -25,6 +25,8 @@ for (const [label, condition] of [
   ['native app install banner is suppressed', html.includes('const androidWebView =') && html.includes('nativeCapacitor || nativeScheme || androidWebView')],
   ['build includes compatibility module', build.includes("'compatibility.js'")],
   ['service worker precaches compatibility module', sw.includes("'./compatibility.js'")],
+  ['both complete ringtone files are precached locally for offline use', sw.includes("'./assets/sounds/saffron_tide.mp3'") && sw.includes("'./assets/sounds/marimba_bloom.mp3'")],
+  ['ringtone preview plays the full selected local file without short synthesized fallback', polish.includes("audio.preload = 'auto'") && polish.includes('audio.loop = !preview') && polish.includes("audio.addEventListener('ended'") && !polish.includes('playLayeredRingtone(preview)')],
   ['service worker cache namespace changed', sw.includes('3.0.3-final-20261107')],
   ['CI runs compatibility audit', workflow.includes('npm run audit:compatibility')]
 ]) condition ? pass(label) : fail(label);
