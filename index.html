@@ -13,6 +13,8 @@
 .alwaha-fullscreen-layer.is-open{display:flex!important;}
 #market-chat-modal{z-index:2147483300!important;}
 #market-chat-modal>section{width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;min-height:100dvh!important;border:0!important;border-radius:0!important;box-sizing:border-box!important;}
+#market-product-detail-modal{padding:0!important;align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;background:rgba(3,8,17,.97)!important;}
+#market-product-detail-modal>.game-modal-card{display:flex!important;flex-direction:column!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border:0!important;border-radius:0!important;overflow-y:auto!important;overscroll-behavior:contain!important;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))!important;}
 #market-conversations-page{flex-direction:column!important;background:linear-gradient(155deg,#071522,#081b2c 58%,#091626)!important;padding:0!important;}
 .alwaha-fullscreen-header{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));border-bottom:1px solid #8bf4ff25;background:#081522;}
 .alwaha-fullscreen-header strong{display:block;color:#8bf4ff;font:800 15px Cairo,sans-serif;}
@@ -3787,8 +3789,8 @@ async function submitNewProductToMarket() {
             const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
             const extraReview=reviewControls;
             let modal=document.getElementById('market-product-detail-modal');
-            if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay';document.body.appendChild(modal);}
-            modal.innerHTML=`<div class="game-modal-card" role="dialog" aria-modal="true" aria-label="تفاصيل المنتج" style="width:min(94vw,520px);max-height:90vh;overflow:auto;">
+            if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay alwaha-fullscreen-layer';document.body.appendChild(modal);}
+            modal.innerHTML=`<div class="game-modal-card" role="dialog" aria-modal="true" aria-label="تفاصيل المنتج">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><h3 style="margin:0;color:#8bf4ff;font-size:16px;">تفاصيل المنتج</h3><button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:20px;" onclick="closeMarketProductDetails()" aria-label="إغلاق">×</button></div>
               ${images}<h4 style="margin:8px 0;color:#fff;font-size:17px;">${escapeHtml(product.title||'منتج')}</h4>
               <div style="color:#ffd700;font-size:16px;font-weight:bold;margin-bottom:8px;">${escapeHtml(product.price||'')}</div>
@@ -3797,10 +3799,10 @@ async function submitNewProductToMarket() {
               <p style="color:#eef4ff;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(product.description||'لا يوجد وصف إضافي.')}</p>
               <div style="border:1px solid #ffd86b44;background:#ffd86b0b;color:#e8d8b1;border-radius:10px;padding:10px;font-size:10px;line-height:1.8;margin:10px 0;">إرشادات السلامة: اتفق على اللقاء في مكان عام ومضاء، افحص السلعة قبل الدفع، لا ترسل رمز تحقق أو بيانات بنكية، ولا تدفع مقدمًا لشخص لا تثق به.</div>${message}${extraReview}
             </div>`;
-            modal.style.display='flex';document.body.classList.add('modal-active');modal.onclick=event=>{if(event.target===modal)closeMarketProductDetails();};
+            modal.classList.add('is-open');document.body.classList.add('modal-active');modal.onclick=event=>{if(event.target===modal)closeMarketProductDetails();};
         }
         function closeMarketProductDetails() {
-            const modal=document.getElementById('market-product-detail-modal');if(modal)modal.style.display='none';
+            const modal=document.getElementById('market-product-detail-modal');if(modal){modal.classList.remove('is-open');modal.style.display='none';}
             const stillOpen=document.querySelector('.sub-profile-view-box[style*="display: block"],#active-chat-box[style*="display: block"],#comments-modal-box[style*="display: block"],#voice-call-modal[style*="display: flex"]');
             if(!stillOpen)document.body.classList.remove('modal-active');
         }
