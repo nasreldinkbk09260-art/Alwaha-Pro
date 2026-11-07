@@ -39,7 +39,8 @@ for(const id of Object.keys(expected)){
 }
 
 const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8');
-if(!modalShell.includes('record.oldValue||\'\').split(/\\s+/)'))throw new Error('Observer class-token diff must split on whitespace correctly.');
+const whitespaceSplit=String.raw`split(/\s+/)`;
+if(!modalShell.includes(whitespaceSplit)||!modalShell.includes("document.body.className||'').split(/\\s+/)"))throw new Error('Observer must split both before/after body class lists on whitespace.');
 if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw new Error('Theme stylesheet must use the exact offline-precache path.');
 if(!sw.includes("'./alwaha-theme-system.css'"))throw new Error('Theme stylesheet is not precached for offline startup.');
 if(!modalShell.includes('bodyModalStateChanged(record)')||!modalShell.includes("active.getAttribute('aria-modal')!=='true'")||!modalShell.includes('attributeOldValue:true'))throw new Error('Theme changes must not retrigger modal sync or rewrite stable modal attributes.');

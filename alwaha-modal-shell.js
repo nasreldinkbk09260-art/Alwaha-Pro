@@ -18,7 +18,7 @@
  let started=false,syncScheduled=false;
  const LAYER_SELECTOR=SELECTORS.join(',');
  function nodeContainsLayer(node){return !!node&&node.nodeType===1&&!!(node.matches?.(LAYER_SELECTOR)||node.querySelector?.(LAYER_SELECTOR));}
- function bodyModalStateChanged(record){if(record.target!==document.body||record.attributeName!=='class')return false;const before=new Set(String(record.oldValue||'').split(/\s+/).filter(Boolean));const after=new Set(String(document.body.className||'').split(/\\s+/).filter(Boolean));return ['modal-active','alwaha-nav-over-modal'].some(name=>before.has(name)!==after.has(name));}
+ function bodyModalStateChanged(record){if(record.target!==document.body||record.attributeName!=='class')return false;const before=new Set(String(record.oldValue||'').split(/\s+/).filter(Boolean));const after=new Set(String(document.body.className||'').split(/\s+/).filter(Boolean));return ['modal-active','alwaha-nav-over-modal'].some(name=>before.has(name)!==after.has(name));}
  function hasRelevantMutation(records){return records.some(record=>{if(record.type==='attributes'){if(record.target===document.body)return bodyModalStateChanged(record);return nodeContainsLayer(record.target);}return [...record.addedNodes,...record.removedNodes].some(nodeContainsLayer);});}
  function scheduleSync(){if(syncScheduled)return;syncScheduled=true;const enqueue=window.requestAnimationFrame||((callback)=>window.setTimeout(callback,16));enqueue(()=>{syncScheduled=false;try{sync();}catch(error){console.error('[Alwaha Modal Shell] sync failed:',error);}});}
  const observer=new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();});
