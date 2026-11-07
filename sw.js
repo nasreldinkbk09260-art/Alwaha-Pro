@@ -10,6 +10,7 @@ const PRECACHE_ASSETS = [
   './alwaha-local-vault.js',
   './alwaha-experience.js',
   './alwaha-modal-shell.js',
+  './alwaha-runtime-guard.js',
   './alwaha-kids-room.js',
   './alwaha-theme-system.css',
   './alwaha-native-back-handler.js',
