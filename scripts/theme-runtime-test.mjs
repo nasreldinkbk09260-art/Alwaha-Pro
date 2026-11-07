@@ -29,6 +29,12 @@ vm.createContext(context);
 vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
 
 const expected={default:'#10070d',spring:'#18333a',summer:'#073344',autumn:'#291b19',winter:'#102940'};
+const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8');
+if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw new Error('Theme stylesheet must use the exact offline-precache path.');
+if(!sw.includes("'./alwaha-theme-system.css'"))throw new Error('Theme stylesheet is not precached for offline startup.');
+if(!modalShell.includes('bodyModalStateChanged(record)')||!modalShell.includes("active.getAttribute('aria-modal')!=='true'")||!modalShell.includes('attributeOldValue:true'))throw new Error('Theme changes must not retrigger modal sync or rewrite stable modal attributes.');
+if(!modalShell.includes("['modal-active','alwaha-nav-over-modal']"))throw new Error('Body observer must ignore theme-only body class mutations.');
+
 const results=[];
 for(const theme of Object.keys(expected)){
  const actual=context.changeAppTheme(theme,false);
