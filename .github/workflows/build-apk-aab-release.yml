@@ -109,6 +109,7 @@ jobs:
           test -s games.js
           test -s production-polish.js
           test -s alwaha-call-feedback.js
+          test -s scripts/call-signaling-runtime-test.mjs
           test -s compatibility.js
           test -s alwaha-local-vault.js
           test -s alwaha-experience.js
@@ -185,6 +186,7 @@ jobs:
           node --check production-polish.js
           node --check alwaha-call-feedback.js
           node --check scripts/call-feedback-runtime-test.mjs
+          node --check scripts/call-signaling-runtime-test.mjs
           node --check compatibility.js
           node --check alwaha-local-vault.js
           node --check alwaha-experience.js
