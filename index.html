@@ -1268,6 +1268,8 @@ img,video,canvas{max-width:100%}
         let homePostImageSelectionId = 0;
         let homePostDetailsRequestId = 0;
         let commentsLoadRequestId = 0;
+        let homePostEditInFlight = false;
+        let homePostDeleteInFlight = false;
         let commentSendInFlight = false;
         let localUploadedAvatarFile = null;
         let marketMultiFilesArray = [];
@@ -2487,6 +2489,7 @@ async function togglePostLike(id) {
         }
 
         async function openHomePostDetails(postId) {
+            const requestId=++homePostDetailsRequestId;
             const modal=document.getElementById('home-post-details-modal');
             const body=document.getElementById('home-post-details-content');
             if(!modal||!body)return;
@@ -2494,7 +2497,9 @@ async function togglePostLike(id) {
             if(!post){
                 const rows=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&select=*&limit=1`);
                 post=Array.isArray(rows)?rows[0]:null;
+                if(requestId!==homePostDetailsRequestId)return;
             }
+            if(requestId!==homePostDetailsRequestId)return;
             if(!post)return triggerToastNotification('تعذر فتح المنشور أو أنه لم يعد متاحاً.','error');
             window.__alwahaActiveHomePostId=String(post.id);
             window.__alwahaHomePosts=window.__alwahaHomePosts||new Map();
@@ -2504,6 +2509,7 @@ async function togglePostLike(id) {
             const imageUrl=typeof post.image_url==='string' && /^(https?:\/\/|\/)/i.test(post.image_url) ? post.image_url : '';
             body.innerHTML=`<div style="color:#9fb1c8;font-size:11px;margin-bottom:10px;">${escapeHtml(post.post_type||'عام')}${post.created_at?` · ${escapeHtml(new Date(post.created_at).toLocaleString('ar-EG'))}`:''}</div><p style="font-size:14px;line-height:1.8;color:#fff;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(post.content||'')}</p>${imageUrl?`<img src="${escapeHtml(imageUrl)}" alt="صورة المنشور" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:10px;margin:10px 0;background:#090d15;">`:''}`;
             const user=await getCurrentAuthUser();
+            if(requestId!==homePostDetailsRequestId)return;
             const owner=!!(user && String(post.author_id)===String(user.id));
             const editBtn=document.getElementById('home-post-edit-btn');
             const deleteBtn=document.getElementById('home-post-delete-btn');
@@ -2544,6 +2550,8 @@ async function togglePostLike(id) {
 
         async function saveEditedHomePost(event) {
             event?.preventDefault?.();
+            if(homePostEditInFlight)return;
+            homePostEditInFlight=true;
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل منشور.');if(!user)return;
             const postId=String(window.__alwahaActiveHomePostId||'');
             const cached=window.__alwahaHomePosts?.get(postId);
@@ -2562,12 +2570,17 @@ async function togglePostLike(id) {
                 triggerToastNotification('تم حفظ تعديلات المنشور.','success');
                 await renderHomePostsFeed();
                 await openHomePostDetails(postId);
+            } catch(error) {
+                console.warn('[Alwaha Home Post] Edit failed:',error);
+                triggerToastNotification('حدث خطأ أثناء حفظ التعديل. بقي النص في نموذج التعديل.','error');
             } finally {
+                homePostEditInFlight=false;
                 if(saveButton){saveButton.disabled=false;saveButton.textContent='حفظ التعديلات';}
             }
         }
 
         function closeHomePostDetails() {
+            homePostDetailsRequestId += 1;
             const modal=document.getElementById('home-post-details-modal');
             if(modal)modal.style.display='none';
             cancelHomePostEdit();
@@ -2600,10 +2613,17 @@ async function togglePostLike(id) {
         }
         async function deleteOwnHomePost(postId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
+            if(homePostDeleteInFlight)return;
             if(!window.confirm('سيُحذف هذا المنشور نهائياً من المنصة ولا توجد استعادة من داخل التطبيق. احفظ نسخة من النص والصورة التي تريد الاحتفاظ بها أولاً. لن تُحذف بقية منشوراتك أو إعداداتك المحلية. هل تتابع؟'))return;
-            const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
-            if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور.','error');
-            triggerToastNotification('تم حذف المنشور.','success');closeHomePostDetails();await renderHomePostsFeed();
+            homePostDeleteInFlight=true;
+            const button=document.getElementById('home-post-delete-btn');if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+            try{
+                const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
+                if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور أو أنه لم يعد متاحاً.','error');
+                window.__alwahaHomePosts?.delete?.(String(postId));
+                triggerToastNotification('تم حذف المنشور.','success');closeHomePostDetails();await renderHomePostsFeed();
+            }catch(error){console.warn('[Alwaha Home Post] Delete failed:',error);triggerToastNotification('حدث خطأ أثناء حذف المنشور.','error');}
+            finally{homePostDeleteInFlight=false;if(button){button.disabled=false;button.removeAttribute('aria-busy');}}
         }
 
         /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
