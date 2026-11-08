@@ -273,3 +273,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ### اختبار تشغيل مكتبات QR المصغرة
 
 أضيف `scripts/qr-runtime-test.mjs` إلى أمر `npm run audit:games`. الاختبار يعيد نفس تحويل esbuild المستخدم في البناء، ويشغّل كود UMD في بيئة VM شبيهة بالمتصفح ليتحقق من ظهور `window.jsQR` و`window.qrcode` بعد التصغير، ثم ينشئ QR payload حقيقيًا ويولد SVG vector ويتحقق من اكتماله. بذلك لا نعتمد على فحوص نصية وحدها لإثبات عمل مولّد الرمز.
+
+
+## إغلاق ألعاب Android عبر زر الرجوع وتنظيف الكاميرا
+
+كشف تدقيق دورة الخروج أن `navigateBack()` كان يخفي `.game-modal-overlay` بإعداد `display:none` فقط. هذا قد يترك مؤقت مزامنة الغرفة أو MediaStream كاميرا QR قائمًا بعد اختفاء الشاشة. تم ربط زر الرجوع مباشرة بوظيفتي الإغلاق الحقيقيتين قبل مسار النوافذ العامة: `closeAlwahaGameQrScanner()` توقف كل مسارات الكاميرا وتلغي animation frame وتزيل طبقة الماسح، و`closeAlwahaGameRoom()` توقف مؤقت polling وتلغي جلسة الغرفة. أضيف فحصان إلى اختبارات full-screen وgames للتحقق من ذلك.

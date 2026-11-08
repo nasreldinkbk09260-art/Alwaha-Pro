@@ -675,6 +675,7 @@
     return toast('اختر لعبة جماعية من قسم الألعاب.', 'info');
   };
   window.closeAlwahaGameRoom = closeRoom;
+  window.closeAlwahaGameQrScanner = stopQrScanner;
   document.addEventListener('DOMContentLoaded', () => {
     const section = $('games-section');
     if (section && section.classList.contains('active-section')) renderGamesSection();

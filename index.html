@@ -4801,6 +4801,10 @@ function triggerAnimeAiConverterFilter() {
             }
             if (alwahaIsVisible(document.getElementById('market-chat-modal'))) { closeMarketConversationChat(); return; }
             if (alwahaIsVisible(document.getElementById('market-conversations-page'))) { closeMarketConversationsPage(); return; }
+            const gameQrScanner = document.getElementById('alwaha-game-qr-scanner');
+            if (alwahaIsVisible(gameQrScanner) && typeof window.closeAlwahaGameQrScanner === 'function') { window.closeAlwahaGameQrScanner(); return; }
+            const gameRoom = document.getElementById('alwaha-multiplayer-room');
+            if (alwahaIsVisible(gameRoom) && typeof window.closeAlwahaGameRoom === 'function') { window.closeAlwahaGameRoom(); return; }
             for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay']) {
                 const box = document.querySelector(selector);
                 if (!alwahaIsVisible(box)) continue;
