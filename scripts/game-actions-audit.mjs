@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 const fail=m=>{console.error('FAIL: '+m);process.exitCode=1;};
 const pass=m=>console.log('PASS: '+m);
-const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),
+const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),qrTest=fs.readFileSync('scripts/qr-runtime-test.mjs','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),
   edge=fs.readFileSync('supabase/functions/game-actions/index.ts','utf8'),
   migration=fs.readFileSync('supabase/migrations/20261108100000_server_authoritative_game_actions.sql','utf8'),
   sqlTest=fs.readFileSync('supabase/tests/20261108100000_game_actions_security.sql','utf8'),
