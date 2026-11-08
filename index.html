@@ -1443,23 +1443,38 @@ async function handleImagePostFromGallery() {
             }});
         }
 
-function previewHomePostImage() {
+function clearHomePostImageDraft() {
+            homePostImageSelectionId += 1;
+            pendingHomePostFile = null;
+            pendingHomePostDataUrl = '';
+            const preview = document.getElementById('home-post-image-preview');
+            const wrap = document.getElementById('home-post-image-preview-wrap');
+            if (preview) { preview.removeAttribute('src'); preview.style.display = 'none'; }
+            if (wrap) wrap.style.display = 'none';
+            triggerToastNotification('تمت إزالة الصورة من المسودة. يمكنك نشر النص وحده أو اختيار صورة أخرى.','info');
+        }
+
+        function previewHomePostImage() {
             pickFilesFromDevice({
                 accept:'image/*',
                 multiple:false,
                 onFiles:async files=>{
                     const original=files?.[0];
                     if(!original)return;
-                    if(!String(original.type||'').startsWith('image/')){
-                        triggerToastNotification('اختر ملف صورة صالحًا.','error');
-                        return;
-                    }
-                    if(original.size>20*1024*1024){
-                        triggerToastNotification('حجم الصورة الأصلية كبير جدًا؛ اختر صورة أصغر من 20MB.','error');
-                        return;
-                    }
+                    const selectionId=++homePostImageSelectionId;
+                    const chooseButton=document.querySelector('button[onclick="previewHomePostImage()"]');
+                    if(chooseButton){chooseButton.disabled=true;chooseButton.setAttribute('aria-busy','true');chooseButton.textContent='جاري تجهيز الصورة…';}
                     try{
+                        if(!String(original.type||'').startsWith('image/')){
+                            triggerToastNotification('اختر ملف صورة صالحًا.','error');
+                            return;
+                        }
+                        if(!Number.isFinite(original.size)||original.size<=0||original.size>20*1024*1024){
+                            triggerToastNotification('حجم الصورة غير صالح أو أكبر من 20MB. اختر صورة أصغر.','error');
+                            return;
+                        }
                         const compressed=await compressImageFile(original,1400,.82);
+                        if(selectionId!==homePostImageSelectionId)return;
                         if(!compressed||!Number.isFinite(compressed.size)||compressed.size<=0){
                             triggerToastNotification('تعذر تجهيز الصورة للمنشور.','error');
                             return;
@@ -1474,16 +1489,27 @@ function previewHomePostImage() {
                             reader.onerror=()=>reject(reader.error||new Error('Image preview read failed'));
                             reader.readAsDataURL(compressed);
                         });
+                        if(selectionId!==homePostImageSelectionId)return;
                         const preview=document.getElementById('home-post-image-preview');
-                        if(!preview)throw new Error('Home post preview element is missing.');
+                        const wrap=document.getElementById('home-post-image-preview-wrap');
+                        if(!preview||!wrap)throw new Error('Home post preview elements are missing.');
                         pendingHomePostFile=compressed;
                         pendingHomePostDataUrl=String(dataUrl||'');
                         preview.src=pendingHomePostDataUrl;
                         preview.style.display='block';
-                        triggerToastNotification('تم تجهيز الصورة محليًا. أضف تعليقك ثم انشر المنشور.','success');
+                        wrap.style.display='block';
+                        triggerToastNotification('تم تجهيز الصورة محليًا. أضف تعليقك أو أزلها ثم انشر المنشور.','success');
                     }catch(error){
-                        console.warn('[Alwaha Home Post] Image preview failed:',error);
-                        triggerToastNotification('تعذر تجهيز الصورة للمعاينة. لم يتم حذف مسودتك الحالية.','error');
+                        if(selectionId===homePostImageSelectionId){
+                            console.warn('[Alwaha Home Post] Image preview failed:',error);
+                            triggerToastNotification('تعذر تجهيز الصورة للمعاينة. لم يتم حذف مسودتك الحالية.','error');
+                        }
+                    }finally{
+                        if(selectionId===homePostImageSelectionId&&chooseButton){
+                            chooseButton.disabled=false;
+                            chooseButton.removeAttribute('aria-busy');
+                            chooseButton.innerHTML='<i class="fa-solid fa-image"></i> صورة';
+                        }
                     }
                 }
             });
@@ -1495,6 +1521,7 @@ function previewHomePostImage() {
             if(!user)return;
             const textEl=document.getElementById('home-post-textarea');
             const previewEl=document.getElementById('home-post-image-preview');
+            const previewWrap=document.getElementById('home-post-image-preview-wrap');
             const content=String(textEl?.value||'').trim();
             const imageFile=pendingHomePostFile;
             if(!content&&!imageFile){
@@ -1505,7 +1532,7 @@ function previewHomePostImage() {
                 triggerToastNotification('الصورة غير صالحة أو تجاوزت حد 8MB. اخترها مرة أخرى.','error');
                 return;
             }
-            const publishButton=document.querySelector('button[onclick="publishNewHomePost()"]');
+            const publishButton=document.getElementById('home-post-publish-btn');
             window.__alwahaHomePostInFlight=true;
             if(publishButton){publishButton.disabled=true;publishButton.setAttribute('aria-busy','true');publishButton.dataset.originalLabel=publishButton.textContent||'نشر';publishButton.textContent='جاري النشر…';}
             try{
@@ -1529,9 +1556,11 @@ function previewHomePostImage() {
                     return;
                 }
                 if(textEl)textEl.value='';
+                homePostImageSelectionId+=1;
                 pendingHomePostFile=null;
                 pendingHomePostDataUrl='';
                 if(previewEl){previewEl.removeAttribute('src');previewEl.style.display='none';}
+                if(previewWrap)previewWrap.style.display='none';
                 triggerToastNotification('تم نشر المنشور بنجاح.','success');
                 void renderHomePostsFeed();
             }catch(error){
