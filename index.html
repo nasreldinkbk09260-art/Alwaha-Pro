@@ -4013,6 +4013,19 @@ function handleMarketMultiImages() {
         }
 
 async function submitNewProductToMarket() {
+            if(window.__alwahaMarketProductSubmitInFlight)return;
+            window.__alwahaMarketProductSubmitInFlight=true;
+            const button=document.getElementById('market-submit-product-btn');
+            const previousLabel=button?.textContent||'نشر الإعلان الآن';
+            if(button){button.disabled=true;button.textContent='جارٍ حفظ الإعلان…';}
+            try{return await submitNewProductToMarketInternal();}
+            finally{
+                window.__alwahaMarketProductSubmitInFlight=false;
+                if(button){button.disabled=false;button.textContent=editingMarketProductId?'حفظ التعديلات':previousLabel;}
+            }
+        }
+
+        async function submitNewProductToMarketInternal() {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لنشر إعلان في السوق.');if(!user)return;
             const name=document.getElementById('prod-name')?.value.trim()||'';
             const price=document.getElementById('prod-price')?.value.trim()||'';
