@@ -32,10 +32,10 @@ check('release version 3.0.3 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.3' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.3' && manifest.version === '3.0.3' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.3 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-css'") &&
-  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-final-20261108-three-themes-css') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-css') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-css'));
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup'") &&
+  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-final-20261108-three-themes-qr-camera-cleanup') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup') &&
+  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',

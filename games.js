@@ -190,17 +190,23 @@
     card?.querySelector('[data-mp-join]')?.setAttribute('aria-expanded', 'false');
     form.remove();
   }
+  function releaseQrCameraStream(scan) {
+    if (!scan) return;
+    const stream = scan.stream;
+    scan.stream = null;
+    if (scan.frame) { cancelAnimationFrame(scan.frame); scan.frame = 0; }
+    if (scan.video) {
+      try { scan.video.pause(); } catch (_) {}
+      if (!stream || scan.video.srcObject === stream) scan.video.srcObject = null;
+    }
+    if (stream) stream.getTracks().forEach(track => { try { track.stop(); } catch (_) {} });
+  }
   function stopQrScanner() {
     const scan = SESSION.qrScanner;
     if (!scan) return;
     scan.closed = true;
     SESSION.qrScanner = null;
-    if (scan.frame) cancelAnimationFrame(scan.frame);
-    if (scan.stream) scan.stream.getTracks().forEach(track => { try { track.stop(); } catch (_) {} });
-    if (scan.video) {
-      try { scan.video.pause(); } catch (_) {}
-      scan.video.srcObject = null;
-    }
+    releaseQrCameraStream(scan);
     if (scan.onKeyDown) document.removeEventListener('keydown', scan.onKeyDown, true);
     if (scan.onVisibility) document.removeEventListener('visibilitychange', scan.onVisibility);
     if (scan.overlay) scan.overlay.remove();
@@ -255,6 +261,7 @@
     }
   }
   async function connectQrCamera(scan) {
+    if (scan.stream) releaseQrCameraStream(scan);
     setQrScannerStatus(scan, 'بانتظار إذن الكاميرا...');
     const retry = scan.overlay.querySelector('#mp-qr-retry');
     if (retry) retry.hidden = true;
@@ -274,12 +281,24 @@
         return;
       }
       scan.stream = stream;
+      for (const track of stream.getVideoTracks()) {
+        const onTrackEnded = () => {
+          if (SESSION.qrScanner !== scan || scan.closed || scan.stream !== stream) return;
+          releaseQrCameraStream(scan);
+          setQrScannerStatus(scan, 'توقف بث الكاميرا. يمكنك إعادة تشغيلها أو إدخال كود الغرفة يدويًا.');
+          const retryButton = scan.overlay.querySelector('#mp-qr-retry');
+          if (retryButton) retryButton.hidden = false;
+        };
+        if (typeof track.addEventListener === 'function') track.addEventListener('ended', onTrackEnded, { once: true });
+        else track.onended = onTrackEnded;
+      }
       scan.video.srcObject = stream;
       await scan.video.play();
       if (SESSION.qrScanner !== scan || scan.closed) return;
       setQrScannerStatus(scan, 'وجّه كاميرا الجهاز إلى QR الخاص بالغرفة. سيتم الانضمام بعد التحقق من الرمز والخادم.');
       scan.frame = requestAnimationFrame(() => scanQrFrame(scan));
     } catch (error) {
+      releaseQrCameraStream(scan);
       if (SESSION.qrScanner !== scan || scan.closed) return;
       let message = 'تعذر فتح الكاميرا. راجع إذن الكاميرا ثم حاول مرة أخرى.';
       if (error?.message === 'SECURE_CONTEXT_REQUIRED') message = 'مسح QR يحتاج اتصالًا آمنًا HTTPS أو تشغيل التطبيق الأصلي.';
