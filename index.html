@@ -1270,6 +1270,9 @@ img,video,canvas{max-width:100%}
         let currentMarketMessages=[],currentMarketReplyTarget=null,marketReplySchemaAvailable=false;
         let marketMessageSendInFlight = false;
         let marketMessagesRequestId = 0;
+        let directMessagesRequestId = 0;
+        let directMessageSendInFlight = false;
+        let directChatOpenRequestId = 0;
         let marketConversationsRenderRequestId = 0;
         let marketTransactionsRenderRequestId = 0;
         let marketConversationChannel = null;
@@ -2908,50 +2911,51 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 
         async function openTargetUserDirectChat(name, identifier = '', userId = '') {
-            const previousChatUserId=currentChatUserId;
-            currentChatUser = name || 'المستخدم';
-            currentChatUserIdentifier = identifier || '';
-            currentChatUserId = userId || '';
-            if (!currentChatUserId && identifier) {
-                const rows = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}&select=id&limit=1`);
-                currentChatUserId = Array.isArray(rows) && rows[0] ? rows[0].id : '';
+            const requestId=++directChatOpenRequestId,targetName=name||'المستخدم',targetIdentifier=identifier||'';
+            let resolvedUserId=userId||'';
+            if(!resolvedUserId&&targetIdentifier){
+                const rows=await supabaseFetch(`users?identifier=eq.${encodeURIComponent(targetIdentifier)}&select=id&limit=1`);
+                if(requestId!==directChatOpenRequestId)return;
+                resolvedUserId=Array.isArray(rows)&&rows[0]?rows[0].id:'';
             }
-            if(previousChatUserId!==currentChatUserId){currentDirectReplyTarget=null;currentDirectMessages=[];renderDirectReplyPreview();}
-            const lobbyWrapper = document.getElementById('chat-main-lobby-wrapper');
-            if (lobbyWrapper) lobbyWrapper.style.display = 'none';
-            document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
-            const chatBox = document.getElementById('active-chat-box');
-            if (chatBox) {
-                chatBox.style.display = 'block';
-                document.body.classList.add('modal-active');
-                const nameEl = document.getElementById('current-chat-name');
-                if (nameEl) nameEl.innerText = currentChatUser;
+            if(requestId!==directChatOpenRequestId)return;
+            const previousChatUserId=currentChatUserId;
+            currentChatUser=targetName;currentChatUserIdentifier=targetIdentifier;currentChatUserId=resolvedUserId;
+            if(previousChatUserId!==currentChatUserId){currentDirectReplyTarget=null;currentDirectMessages=[];directMessagesRequestId++;renderDirectReplyPreview();}
+            const lobbyWrapper=document.getElementById('chat-main-lobby-wrapper');if(lobbyWrapper)lobbyWrapper.style.display='none';
+            document.querySelectorAll('.chat-tab-content').forEach(tab=>tab.style.display='none');
+            const chatBox=document.getElementById('active-chat-box');
+            if(chatBox){
+                chatBox.style.display='block';document.body.classList.add('modal-active');
+                const nameEl=document.getElementById('current-chat-name');if(nameEl)nameEl.innerText=currentChatUser;
                 await loadDirectMessages();
+                if(requestId!==directChatOpenRequestId||String(currentChatUserId||'')!==String(resolvedUserId||''))return;
                 await subscribeToDirectMessages();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({top:0,behavior:'smooth'});
             }
         }
 
         async function loadDirectMessages() {
+            const requestId=++directMessagesRequestId,peerId=String(currentChatUserId||'');
             const container=document.getElementById('chat-messages-container'),me=await getCurrentAuthUser();
-            if(!container||!me||!currentChatUserId)return;
+            if(!container||!me||!peerId||requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
-            let rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at,reply_to_id&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(currentChatUserId)}),and(sender_id.eq.${encodeURIComponent(currentChatUserId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            let rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at,reply_to_id&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             directReplySchemaAvailable=Array.isArray(rows);
-            if(!Array.isArray(rows))rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(currentChatUserId)}),and(sender_id.eq.${encodeURIComponent(currentChatUserId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            if(!Array.isArray(rows))rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:20px;">تعذر تحميل الرسائل. تحقق من الاتصال ثم أعد المحاولة.</div>';return;}
             currentDirectMessages=rows;
-            await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(currentChatUserId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(peerId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';renderDirectReplyPreview();return;}
             const messageMap=new Map(rows.map(m=>[String(m.id),m]));
             container.innerHTML=rows.map(m=>{
                 const mine=m.sender_id===me.id,parent=m.reply_to_id?messageMap.get(String(m.reply_to_id)):null;
                 const quote=m.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;color:inherit;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
                 const replyButton=directReplySchemaAvailable?`<button type="button" onclick="setDirectMessageReply('${escapeJs(m.id)}')" style="margin-top:4px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
-                return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};">
-                    <div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:80%;direction:rtl;text-align:right;">${quote}${escapeHtml(m.message)}</div>
-                    <span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}
-                </div>`;
+                return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};"><div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:80%;direction:rtl;text-align:right;">${quote}${escapeHtml(m.message)}</div><span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
             }).join('');
             renderDirectReplyPreview();container.scrollTop=container.scrollHeight;
         }
@@ -2969,6 +2973,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
         function clearDirectMessageReply(){currentDirectReplyTarget=null;renderDirectReplyPreview();}
         function closeActiveChatWindow() {
+            directChatOpenRequestId++;directMessagesRequestId++;
             const chatBox=document.getElementById('active-chat-box');if(chatBox)chatBox.style.display='none';
             const wrapper=document.getElementById('chat-main-lobby-wrapper');if(wrapper)wrapper.style.display='block';
             document.body.classList.remove('modal-active');
@@ -2982,27 +2987,34 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 
         async function sendLiveChatMessageFromUI() {
-            const user = await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
-            if (!user) return;
-            const input = document.getElementById('chat-message-input');
-            if(!input || !input.value.trim() || !currentChatUserId) return triggerToastNotification('اختر مستخدماً أولاً.', 'error');
-            if(!(await hasAcceptedAlwahaFriendship(currentChatUserId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل الرسائل.','info');
-            const payload={sender_id:user.id,receiver_id:currentChatUserId,message:input.value.trim()};
-            if(currentDirectReplyTarget){if(!directReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');payload.reply_to_id=currentDirectReplyTarget.id;}
-            const result=await supabaseFetch('messages',{method:'POST',body:JSON.stringify(payload)});
-            if (!result) {
-                const apiError = window.__alwahaLastApiError || {};
-                console.warn('Message insert failed safely:', apiError);
-                let friendly = 'تعذر حفظ الرسالة. حاول مرة أخرى.';
-                if (apiError.status === 401) friendly = 'انتهت جلسة الدخول؛ سجّل الدخول مرة أخرى.';
-                else if (apiError.status === 403) friendly = 'الخادم رفض الإرسال بسبب الصلاحيات (403). راجع تسجيل الدخول وأمان الرسائل.';
-                else if (apiError.status === 400) friendly = 'تعذر حفظ الرسالة؛ تحقق من المستلم ثم أعد المحاولة.';
-                else if (apiError.status === 0) friendly = 'تعذر الاتصال لحفظ الرسالة. تحقق من الإنترنت ثم أعد المحاولة.';
-                return triggerToastNotification(friendly, 'error');
-            }
-            input.value='';currentDirectReplyTarget=null;renderDirectReplyPreview();
-            await loadDirectMessages();
-
+            if(directMessageSendInFlight)return;
+            const input=document.getElementById('chat-message-input'),peerId=String(currentChatUserId||''),content=input?.value?.trim()||'',replyTarget=currentDirectReplyTarget;
+            if(!input||!content||!peerId)return triggerToastNotification('اختر مستخدماً أولاً واكتب رسالتك.','error');
+            if(replyTarget&&!directReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');
+            const button=document.querySelector('#active-chat-box .alwaha-chat-composer button');
+            directMessageSendInFlight=true;if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='جارٍ الإرسال…';}
+            try{
+                const user=await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
+                if(!user||peerId!==String(currentChatUserId||''))return;
+                if(!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل الرسائل.','info');
+                if(peerId!==String(currentChatUserId||''))return;
+                const payload={sender_id:user.id,receiver_id:peerId,message:content};if(replyTarget)payload.reply_to_id=replyTarget.id;
+                const result=await supabaseFetch('messages',{method:'POST',body:JSON.stringify(payload)});
+                if(!result){
+                    const apiError=window.__alwahaLastApiError||{};console.warn('Message insert failed safely:',apiError);
+                    let friendly='تعذر حفظ الرسالة. حاول مرة أخرى.';
+                    if(apiError.status===401)friendly='انتهت جلسة الدخول؛ سجّل الدخول مرة أخرى.';
+                    else if(apiError.status===403)friendly='الخادم رفض الإرسال بسبب الصلاحيات (403). راجع تسجيل الدخول وأمان الرسائل.';
+                    else if(apiError.status===400)friendly='تعذر حفظ الرسالة؛ تحقق من المستلم ثم أعد المحاولة.';
+                    else if(apiError.status===0)friendly='تعذر الاتصال لحفظ الرسالة. تحقق من الإنترنت ثم أعد المحاولة.';
+                    return triggerToastNotification(friendly,'error');
+                }
+                if(peerId===String(currentChatUserId||'')){
+                    if(input.value.trim()===content)input.value='';
+                    if(currentDirectReplyTarget?.id===replyTarget?.id){currentDirectReplyTarget=null;renderDirectReplyPreview();}
+                    void loadDirectMessages();
+                }
+            }finally{directMessageSendInFlight=false;if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent='إرسال';}}
         }
 
         async function loadMarketMessages() {
