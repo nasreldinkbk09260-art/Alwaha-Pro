@@ -454,7 +454,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     backdrop-filter:none!important;
     -webkit-backdrop-filter:none!important;
   }
-  body.theme-tech, body.theme-soft {
+  body.theme-oasis, body.theme-abyss {
     background-attachment:scroll!important;
   }
 }
@@ -463,20 +463,13 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <script src="./games.js" defer></script>
 
     <style id="alwaha-real-theme-palettes">
-      body:not(.theme-nature):not(.theme-tech):not(.theme-soft) { background:radial-gradient(ellipse at 16% 12%,rgba(41,174,210,.18),transparent 38%),radial-gradient(ellipse at 84% 24%,rgba(133,95,219,.17),transparent 38%),radial-gradient(ellipse at 70% 88%,rgba(55,200,165,.11),transparent 36%),linear-gradient(155deg,#03050d 0%,#0a1224 52%,#101024 100%) !important; background-attachment:fixed !important; }
-      body.theme-nature { background:radial-gradient(ellipse at 10% 12%,rgba(74,222,128,.18),transparent 38%),radial-gradient(ellipse at 90% 70%,rgba(20,184,166,.15),transparent 40%),linear-gradient(155deg,#071713 0%,#102922 52%,#0b1a20 100%) !important; background-attachment:fixed !important; }
-      body.theme-tech { background:radial-gradient(ellipse at 12% 18%,rgba(34,211,238,.20),transparent 38%),radial-gradient(ellipse at 82% 68%,rgba(99,102,241,.17),transparent 40%),linear-gradient(155deg,#030712 0%,#0b1530 52%,#090d1b 100%) !important; background-attachment:fixed !important; }
-      body.theme-soft { background:radial-gradient(ellipse at 12% 12%,rgba(147,197,253,.18),transparent 40%),radial-gradient(ellipse at 90% 75%,rgba(196,181,253,.16),transparent 42%),linear-gradient(155deg,#121a2a 0%,#1b2638 52%,#202033 100%) !important; background-attachment:fixed !important; }
-      body.theme-nature:before { background:radial-gradient(circle at 15% 24%,#5af59b24 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#4de2c42a 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#7de39a20 0 3%,transparent 19%); }
-      body.theme-soft:before { background:radial-gradient(circle at 15% 24%,#94c8ff20 0 2%,transparent 16%),radial-gradient(circle at 78% 20%,#d8c7ff24 0 3%,transparent 18%),radial-gradient(circle at 72% 76%,#b6e5ff1c 0 3%,transparent 19%); }
-    </style>
+body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){background:radial-gradient(ellipse at 14% 12%,rgba(35,183,211,.16),transparent 38%),radial-gradient(ellipse at 86% 18%,rgba(183,77,126,.17),transparent 42%),radial-gradient(ellipse at 66% 88%,rgba(54,168,157,.10),transparent 38%),linear-gradient(155deg,#06070d 0%,#100b18 52%,#080b12 100%)!important;background-attachment:fixed!important}
+body.theme-oasis{background:linear-gradient(155deg,#0b2530,#102c36 55%,#081c28)!important;background-attachment:fixed!important}
+body.theme-abyss{background:linear-gradient(155deg,#031522,#052a3d 56%,#04131f)!important;background-attachment:fixed!important}
+</style>
 
 
 <style id="alwaha-2-8-7-wallpaper-and-accessibility">
-body:not(.theme-nature):not(.theme-tech):not(.theme-soft){background-image:linear-gradient(160deg,rgba(2,6,18,.82),rgba(5,12,28,.70)),url('./assets/backgrounds/bg-nebula.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
-body.theme-nature{background-image:linear-gradient(160deg,rgba(2,18,23,.72),rgba(2,24,33,.60)),url('./assets/backgrounds/bg-aurora.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
-body.theme-tech{background-image:linear-gradient(160deg,rgba(0,9,22,.72),rgba(2,12,30,.62)),url('./assets/backgrounds/bg-underwater.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
-body.theme-soft{background-image:linear-gradient(160deg,rgba(5,14,29,.72),rgba(6,14,30,.57)),url('./assets/backgrounds/bg-moonlit.webp')!important;background-position:center center!important;background-size:cover!important;background-attachment:fixed!important}
 body.alwaha-reduced-motion *,body.alwaha-data-saver *{animation:none!important;scroll-behavior:auto!important;transition:none!important}
 body.alwaha-data-saver *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .bottom-nav-bar{padding-bottom:6px!important}
@@ -487,7 +480,7 @@ body.alwaha-data-saver *{backdrop-filter:none!important;-webkit-backdrop-filter:
 <style id="alwaha-2-8-8-touch-wallpaper">
 :root{--alwaha-pointer-x:50%;--alwaha-pointer-y:48%}
 /* Default: black, burgundy, cyan and rose; lightweight CSS effects only. */
-body:not(.theme-nature):not(.theme-tech):not(.theme-soft){
+body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){
  background-color:#07060b!important;
  background-image:radial-gradient(ellipse at var(--alwaha-pointer-x) var(--alwaha-pointer-y),rgba(0,218,235,.16),transparent 35%),radial-gradient(ellipse at 78% 20%,rgba(190,20,67,.24),transparent 44%),radial-gradient(ellipse at 15% 85%,rgba(92,0,37,.28),transparent 45%),linear-gradient(155deg,#050609,#170711 52%,#050a11)!important;
  background-attachment:fixed!important;background-size:cover!important
@@ -973,15 +966,13 @@ img,video,canvas{max-width:100%}
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-settings')"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">المظهر الكامل والخلفية الموسمية</h4>
-        <p style="color:#a9bfd2;font-size:10px;line-height:1.8;margin:0 0 10px;">يتغير المشهد والخلفية وألوان البطاقات والنوافذ وعناصر التنقل معاً. المشاهد مضمّنة وتعمل دون إنترنت؛ لنقل اختيارك لجهاز آخر استخدم النسخة الاحتياطية المشفرة. الثيم الأساسي يعيد شكل الواحة الأصلي.</p>
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:20px;">
-            <button type="button" class="alwaha-theme-choice" data-theme-choice="default" aria-pressed="false" style="background-image:linear-gradient(155deg,rgba(8,5,11,.25),rgba(22,5,16,.78)),radial-gradient(ellipse at 20% 20%,#79304f,#10070d 70%);" onclick="changeAppTheme('default')"><span>🌌</span><span class="theme-choice-name">الأساسي الأصلي</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
-            <button type="button" class="alwaha-theme-choice" data-theme-choice="spring" aria-pressed="false" style="background-image:linear-gradient(155deg,#12222b22,#112129a6),url('./assets/backgrounds/bg-spring.webp');" onclick="changeAppTheme('spring')"><span>🌸</span><span class="theme-choice-name">الربيع</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
-            <button type="button" class="alwaha-theme-choice" data-theme-choice="summer" aria-pressed="false" style="background-image:linear-gradient(155deg,#092b3b22,#092d3ba6),url('./assets/backgrounds/bg-summer.webp');" onclick="changeAppTheme('summer')"><span>☀️</span><span class="theme-choice-name">الصيف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
-            <button type="button" class="alwaha-theme-choice" data-theme-choice="autumn" aria-pressed="false" style="background-image:linear-gradient(155deg,#2b160d22,#291710aa),url('./assets/backgrounds/bg-autumn.webp');" onclick="changeAppTheme('autumn')"><span>🍂</span><span class="theme-choice-name">الخريف</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
-            <button type="button" class="alwaha-theme-choice" data-theme-choice="winter" aria-pressed="false" style="background-image:linear-gradient(155deg,#0c213522,#0c233db0),url('./assets/backgrounds/bg-winter.webp');" onclick="changeAppTheme('winter')"><span>❄️</span><span class="theme-choice-name">الشتاء</span><span class="theme-choice-state">اضغط للتفعيل</span></button>
-        </div>
+        <h4 style="color:#aaa;font-size:13px;margin:0 0 8px;">ثلاث تجارب بصرية للتطبيق بالكامل</h4>
+<p style="color:#a9bfd2;font-size:10px;line-height:1.8;margin:0 0 12px;">اختر مظهرًا واحدًا يتغير معه مشهد الخلفية والألوان والبطاقات والنوافذ والتنقل في جميع أقسام الواحة. الخلفيات محفوظة محليًا وتعمل دون اتصال.</p>
+<div class="alwaha-theme-grid" style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:20px;">
+<button type="button" class="alwaha-theme-choice" data-theme-choice="oasis" aria-label="تفعيل ثيم الواحة الغامرة" aria-pressed="false" style="background-image:linear-gradient(100deg,rgba(4,22,30,.20),rgba(4,22,30,.82)),url('./assets/backgrounds/bg-aurora.webp');" onclick="changeAppTheme('oasis')"><span class="theme-choice-icon">🌿</span><span class="theme-choice-copy"><span class="theme-choice-name">الواحة الغامرة</span><span class="theme-choice-description">مشهد طبيعي كامل الشاشة وألوان زجاجية هادئة</span><span class="theme-choice-state">اضغط للتفعيل</span></span></button>
+<button type="button" class="alwaha-theme-choice" data-theme-choice="abyss" aria-label="تفعيل ثيم العالم الزجاجي" aria-pressed="false" style="background-image:linear-gradient(100deg,rgba(1,19,34,.18),rgba(1,25,42,.84)),url('./assets/backgrounds/bg-underwater.webp');" onclick="changeAppTheme('abyss')"><span class="theme-choice-icon">🌊</span><span class="theme-choice-copy"><span class="theme-choice-name">العالم الزجاجي</span><span class="theme-choice-description">تصميم محيطي عميق بلمسات ضوئية وواجهات شفافة</span><span class="theme-choice-state">اضغط للتفعيل</span></span></button>
+<button type="button" class="alwaha-theme-choice" data-theme-choice="default" aria-label="تفعيل ثيم الواحة الأصلي المطوّر" aria-pressed="false" style="background-image:linear-gradient(100deg,rgba(8,5,11,.18),rgba(22,5,16,.86)),url('./assets/backgrounds/bg-nebula.webp');" onclick="changeAppTheme('default')"><span class="theme-choice-icon">✨</span><span class="theme-choice-copy"><span class="theme-choice-name">الواحة الأصلية المطوّرة</span><span class="theme-choice-description">الطابع الداكن المعروف مع وضوح وتباين وترتيب أفضل</span><span class="theme-choice-state">اضغط للتفعيل</span></span></button>
+</div>
 
 
         <div style="margin:8px 0 18px;padding:12px;border:1px solid #8bf4ff33;border-radius:12px;background:#8bf4ff08;"><label style="display:flex;gap:9px;align-items:center;color:#d8e9f7;font-size:12px;margin-bottom:10px;"><input id="alwaha-call-ringtone-enabled" type="checkbox" checked onchange="setAlwahaRingtoneEnabled(this.checked)"> تفعيل رنة الواحة الحصرية للمكالمات الواردة</label><label for="alwaha-ringtone-choice" style="display:block;color:#c9ddec;font-size:11px;margin:8px 0 5px;">اختيار نغمة المكالمة</label><select id="alwaha-ringtone-choice" aria-label="اختيار نغمة المكالمة" style="width:100%;background:#0c1420;color:#fff;border:1px solid #8bf4ff44;border-radius:9px;padding:10px;margin-bottom:9px;font-size:12px;"><option value="saffron_tide">Saffron Tide — نغمة هادئة</option><option value="marimba_bloom">Marimba Bloom — نغمة مشرقة</option></select><button type="button" class="btn-action" style="width:100%;background:linear-gradient(110deg,#00d9b3,#83d7ff);color:#071722;padding:10px;border-radius:10px;font-size:12px;" onclick="previewAlwahaCallRingtone()"><i class="fa-solid fa-music"></i> تجربة رنة الواحة الحديثة</button><div style="font-size:10px;color:#8ba3ba;margin-top:8px;line-height:1.7;">رنة أصلية مولّدة داخل التطبيق بإيقاع مبهج ولمسات إيقاعية أفريقية. استقبال الرنين يتطلب أن يكون التطبيق نشطًا؛ التنبيه أثناء الإغلاق الكامل يحتاج إشعارات أصلية.</div></div>
@@ -993,6 +984,7 @@ img,video,canvas{max-width:100%}
           </label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-data-saver" type="checkbox"> توفير البيانات والتحميل الكسول للصور</label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
+<label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-ui-sounds-enabled" type="checkbox" checked> أصوات تفاعلية خفيفة للأزرار والتنقل</label>
           <p role="note" aria-disabled="true" style="margin:0;color:#91a4bb;font-size:9px;line-height:1.7;">المكالمات عبر البلوتوث لم تُنفذ بعد؛ المكالمات المتاحة حالياً تستخدم اتصال الإنترنت.</p>
           <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
         </div>
@@ -1315,61 +1307,40 @@ img,video,canvas{max-width:100%}
         let notificationRenderRequestId = 0;
 
         function changeAppTheme(themeName, showToast = true) {
-            const legacyThemeMap = { nature: 'spring', tech: 'summer', soft: 'winter' };
+            const legacyThemeMap = { nature:'oasis', spring:'oasis', summer:'oasis', autumn:'oasis', tech:'abyss', winter:'abyss', soft:'default' };
             const requested = String(themeName || 'default').trim().toLowerCase();
             const normalized = legacyThemeMap[requested] || requested;
-            const allowedThemes = new Set(['default', 'spring', 'summer', 'autumn', 'winter']);
+            const allowedThemes = new Set(['default','oasis','abyss']);
             const selectedTheme = allowedThemes.has(normalized) ? normalized : 'default';
             if (!document.body) return selectedTheme;
-
             const previousTheme = document.body.dataset.alwahaTheme || 'default';
             const changed = previousTheme !== selectedTheme;
-            // Do not rewrite body classes when the selected theme is already active.
-            // This avoids needless global style recalculation and MutationObserver work.
-            if (changed) {
-                document.body.classList.remove('theme-nature', 'theme-tech', 'theme-soft', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter');
-                if (selectedTheme !== 'default') document.body.classList.add(`theme-${selectedTheme}`);
-                if (selectedTheme === 'default') delete document.body.dataset.alwahaTheme;
-                else document.body.dataset.alwahaTheme = selectedTheme;
+            const legacyClasses = ['theme-nature','theme-tech','theme-soft','theme-spring','theme-summer','theme-autumn','theme-winter','theme-oasis','theme-abyss'];
+            const staleClass = legacyClasses.some(name=>document.body.classList.contains(name));
+            const staleDefault = selectedTheme==='default' && Object.prototype.hasOwnProperty.call(document.body.dataset,'alwahaTheme');
+            if(changed||staleClass||staleDefault){
+                document.body.classList.remove(...legacyClasses);
+                if(selectedTheme==='default') delete document.body.dataset.alwahaTheme;
+                else {document.body.dataset.alwahaTheme=selectedTheme;document.body.classList.add(`theme-${selectedTheme}`);}
             }
-
-            let backdrop = document.getElementById('alwaha-theme-backdrop');
-            if (!backdrop) {
-                backdrop = document.createElement('div');
-                backdrop.id = 'alwaha-theme-backdrop';
-                backdrop.setAttribute('aria-hidden', 'true');
-                document.body.insertBefore(backdrop, document.body.firstChild);
-            }
-            if (backdrop.dataset.theme !== selectedTheme) backdrop.dataset.theme = selectedTheme;
-
-            const themeColors = { default: '#10070d', spring: '#18333a', summer: '#073344', autumn: '#291b19', winter: '#102940' };
-            const chrome = document.querySelector('meta[name="theme-color"]');
-            if (chrome && chrome.content !== themeColors[selectedTheme]) chrome.setAttribute('content', themeColors[selectedTheme] || themeColors.default);
-            try {
-                if (localStorage.getItem('alwaha_theme') !== selectedTheme) localStorage.setItem('alwaha_theme', selectedTheme);
-            } catch (error) { console.warn('Unable to persist theme selection:', error); }
-
-            document.querySelectorAll('[data-theme-choice]').forEach(button => {
-                const active = button.dataset.themeChoice === selectedTheme;
-                const pressed = active ? 'true' : 'false';
-                if (button.getAttribute?.('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
-                const state = button.querySelector('.theme-choice-state');
-                const label = active ? 'المظهر النشط' : 'اضغط للتفعيل';
-                if (state && state.textContent !== label) state.textContent = label;
+            let backdrop=document.getElementById('alwaha-theme-backdrop');
+            if(!backdrop){backdrop=document.createElement('div');backdrop.id='alwaha-theme-backdrop';backdrop.setAttribute('aria-hidden','true');document.body.insertBefore(backdrop,document.body.firstChild);}
+            if(backdrop.dataset.theme!==selectedTheme)backdrop.dataset.theme=selectedTheme;
+            const themeColors={default:'#10070d',oasis:'#143a43',abyss:'#062b45'};
+            const themeNames={default:'الواحة الأصلية المطوّرة',oasis:'الواحة الغامرة',abyss:'العالم الزجاجي'};
+            const chrome=document.querySelector('meta[name="theme-color"]');
+            if(chrome&&chrome.content!==themeColors[selectedTheme])chrome.setAttribute('content',themeColors[selectedTheme]);
+            try{if(localStorage.getItem('alwaha_theme')!==selectedTheme)localStorage.setItem('alwaha_theme',selectedTheme);}catch(error){console.warn('Unable to persist theme selection:',error);}
+            document.querySelectorAll('[data-theme-choice]').forEach(button=>{
+                const active=button.dataset.themeChoice===selectedTheme,pressed=active?'true':'false';
+                if(button.getAttribute?.('aria-pressed')!==pressed)button.setAttribute('aria-pressed',pressed);
+                const state=button.querySelector('.theme-choice-state'),label=active?'المظهر النشط':'اضغط للتفعيل';
+                if(state&&state.textContent!==label)state.textContent=label;
             });
-            const label = document.getElementById('alwaha-theme-label');
-            if (label) {
-                const names = { default: 'الأساسي الأصلي', spring: 'الربيع', summer: 'الصيف', autumn: 'الخريف', winter: 'الشتاء' };
-                const nextLabel = `الثيم الحالي: ${names[selectedTheme] || names.default}`;
-                if (label.textContent !== nextLabel) label.textContent = nextLabel;
-            }
-
-            // Dispatch once per actual change (and once for the initial theme application).
-            if (changed || window.__alwahaAppliedTheme !== selectedTheme) {
-                window.__alwahaAppliedTheme = selectedTheme;
-                window.dispatchEvent(new CustomEvent('alwaha:themechange', { detail: { theme: selectedTheme } }));
-            }
-            if (showToast) triggerToastNotification('تم حفظ الثيم وتطبيق الخلفية والألوان.', 'success');
+            const label=document.getElementById('alwaha-theme-label');
+            if(label){const nextLabel=`الثيم الحالي: ${themeNames[selectedTheme]}`;if(label.textContent!==nextLabel)label.textContent=nextLabel;}
+            if(changed||window.__alwahaAppliedTheme!==selectedTheme){window.__alwahaAppliedTheme=selectedTheme;window.dispatchEvent(new CustomEvent('alwaha:themechange',{detail:{theme:selectedTheme}}));}
+            if(showToast)triggerToastNotification(`تم تطبيق مظهر ${themeNames[selectedTheme]} بنجاح.`,'success');
             return selectedTheme;
         }
 
