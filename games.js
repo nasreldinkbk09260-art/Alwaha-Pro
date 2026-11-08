@@ -182,7 +182,20 @@
       '<button type="button" class="mp-action mp-muted" data-mp-cancel-join>إلغاء</button></div>';
     card.appendChild(form);
     button.setAttribute('aria-expanded', 'true');
-    form.querySelector('input')?.focus();
+    const codeInput = form.querySelector('input[name="roomCode"]');
+    if (codeInput) {
+      codeInput.addEventListener('input', () => {
+        const normalized = codeInput.value.toUpperCase();
+        if (normalized !== codeInput.value) {
+          const cursor = codeInput.selectionStart;
+          codeInput.value = normalized;
+          if (typeof cursor === 'number') {
+            try { codeInput.setSelectionRange(Math.min(cursor, normalized.length), Math.min(cursor, normalized.length)); } catch (_) {}
+          }
+        }
+      });
+      codeInput.focus();
+    }
   }
   function closeJoinCodeForm(form) {
     if (!form) return;
@@ -209,6 +222,7 @@
     releaseQrCameraStream(scan);
     if (scan.onKeyDown) document.removeEventListener('keydown', scan.onKeyDown, true);
     if (scan.onVisibility) document.removeEventListener('visibilitychange', scan.onVisibility);
+    if (scan.onPageHide) window.removeEventListener('pagehide', scan.onPageHide);
     if (scan.overlay) scan.overlay.remove();
     document.body.classList.remove('modal-active');
     window.AlwahaModalShell?.sync?.();
@@ -349,7 +363,8 @@
       previousFocus: document.activeElement,
       joinForm: scanButton?.closest('.mp-join-code-form') || null,
       onKeyDown: null,
-      onVisibility: null
+      onVisibility: null,
+      onPageHide: null
     };
     SESSION.qrScanner = scan;
     document.body.appendChild(overlay);
@@ -361,8 +376,10 @@
     overlay.querySelector('#mp-qr-retry').onclick = () => void connectQrCamera(scan);
     scan.onKeyDown = event => { if (event.key === 'Escape') { event.preventDefault(); stopQrScanner(); } };
     scan.onVisibility = () => { if (document.hidden) stopQrScanner(); };
+    scan.onPageHide = () => stopQrScanner();
     document.addEventListener('keydown', scan.onKeyDown, true);
     document.addEventListener('visibilitychange', scan.onVisibility);
+    window.addEventListener('pagehide', scan.onPageHide, { once: true });
     overlay.focus();
     await connectQrCamera(scan);
   }
@@ -534,6 +551,7 @@
     if (typeof window.alwahaInvokeEdgeFunction !== 'function') return toast('خدمة الألعاب الآمنة غير متاحة.', 'error');
     SESSION.busy = true;
     try {
+      renderRoom(room);
       const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'move',room_id:roomId,expected_move_no:room.move_no,move});
       if (generation !== SESSION.pollGeneration || String(SESSION.room?.id || '') !== roomId) return;
       const updated = normalizeRoom(result?.room);
@@ -574,7 +592,7 @@
       const target = SESSION.legalTargets.includes(square);
       const glyphs = { wp:'♙', wn:'♘', wb:'♗', wr:'♖', wq:'♕', wk:'♔', bp:'♟', bn:'♞', bb:'♝', br:'♜', bq:'♛', bk:'♚' };
       const glyph = piece ? glyphs[piece.color + piece.type] : '';
-      board += `<button type="button" class="mp-chess-square ${(rank + files.indexOf(file)) % 2 ? 'mp-chess-dark' : 'mp-chess-light'}${selected ? ' mp-selected' : ''}${target ? ' mp-target' : ''}" data-chess-square="${square}" aria-label="${square}" ${!isMyTurn(room) || room.status !== 'playing' ? 'disabled' : ''}><span class="${piece?.color === 'w' ? 'mp-chess-piece-white' : 'mp-chess-piece-black'}">${glyph}</span></button>`;
+      board += `<button type="button" class="mp-chess-square ${(rank + files.indexOf(file)) % 2 ? 'mp-chess-dark' : 'mp-chess-light'}${selected ? ' mp-selected' : ''}${target ? ' mp-target' : ''}" data-chess-square="${square}" aria-label="${square}" ${!isMyTurn(room) || room.status !== 'playing' || SESSION.busy ? 'disabled' : ''}><span class="${piece?.color === 'w' ? 'mp-chess-piece-white' : 'mp-chess-piece-black'}">${glyph}</span></button>`;
     }
     const whose = isMyTurn(room) ? 'دورك — اختر قطعة ثم مربع الوجهة.' : `انتظر دور ${room.current_turn === room.player1_id ? 'الأبيض' : 'الأسود'}.`;
     const fenTurn = game.turn() === 'w' ? 'الأبيض' : 'الأسود';
@@ -583,7 +601,7 @@
     $('mp-room-stage').onclick = async (event) => {
       const button = event.target.closest('[data-chess-square]'); if (!button) return;
       const square = button.dataset.chessSquare;
-      if (!isMyTurn(SESSION.room)) return toast('ليس دورك الآن.', 'info');
+      if (!isMyTurn(SESSION.room) || SESSION.busy) return toast('انتظر اكتمال الحركة الحالية أو دورك.', 'info');
       const current = createChess(SESSION.room.state); if (!current) return;
       if (SESSION.selectedSquare) {
         try {
@@ -634,8 +652,8 @@
       pieces += '<button type="button" class="mp-ludo-piece p' + seat + '" style="left:' + p.x + '%;top:' + p.y + '%" data-ludo-pawn="' + index + '" data-ludo-seat="' + seat + '" aria-label="تحريك القطعة ' + (index + 1) + ' في ليدو" ' + (clickable ? '' : 'disabled') + ' title="القطعة ' + (index + 1) + '">' + (index + 1) + '</button>';
     }));
     const diceHtml = state.dice ? `النرد: 🎲 ${state.dice} — اختر قطعة مضيئة.` : 'اضغط رمي النرد عند حلول دورك.';
-    const btn = isMyTurn(room) && state.dice === null ? '<button type="button" class="mp-action mp-create" id="mp-ludo-roll" aria-label="رمي النرد في ليدو">🎲 رمي النرد</button>' : '';
-    const pass = isMyTurn(room) && state.dice !== null && legal.length === 0 ? '<button type="button" class="mp-action mp-join" id="mp-ludo-pass" aria-label="إنهاء دورك في ليدو لعدم وجود حركة">لا توجد حركة — إنهاء الدور</button>' : '';
+    const btn = isMyTurn(room) && state.dice === null && !SESSION.busy ? '<button type="button" class="mp-action mp-create" id="mp-ludo-roll" aria-label="رمي النرد في ليدو">🎲 رمي النرد</button>' : '';
+    const pass = isMyTurn(room) && state.dice !== null && legal.length === 0 && !SESSION.busy ? '<button type="button" class="mp-action mp-join" id="mp-ludo-pass" aria-label="إنهاء دورك في ليدو لعدم وجود حركة">لا توجد حركة — إنهاء الدور</button>' : '';
     $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك.' : 'انتظر دور الخصم.')} ${esc(diceHtml)}</div><div class="mp-ludo-board">${cells}<span class="mp-ludo-center">🏁</span><span class="mp-ludo-yard" style="left:25%;top:24%">الأحمر</span><span class="mp-ludo-yard" style="left:62%;top:69%">الأزرق</span>${pieces}</div><div style="text-align:center;margin:10px">${btn}${pass}</div><div class="mp-help">تحتاج إلى 6 لإخراج القطعة. الحركة النهائية تتطلب رقماً دقيقاً. الأكل يعيد قطعة الخصم إلى قاعدتها.</div>`;
     const roll = $('mp-ludo-roll');
     if (roll) roll.onclick = async () => {
@@ -662,7 +680,7 @@
     const cards = s.lastCards || [null,null];
     const card = (value, name) => value == null ? `<div class="mp-playing-card back"><span>?</span><span class="big">🂠</span><span>?</span></div>` : `<div class="mp-playing-card ${Number(value) < 11 ? 'red' : ''}"><span>${esc(rankLabel(value))}</span><span class="big">${esc(rankLabel(value))}</span><span style="text-align:right">${esc(name)}</span></div>`;
     const myDeck = seat === 0 ? s.deck1 : s.deck2, oppDeck = seat === 0 ? s.deck2 : s.deck1;
-    $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك: اسحب الورقتين.' : 'انتظر خصمك حتى يسحب الورقتين.')} · الجولة ${Number(s.rounds)||0}</div><div class="mp-war-cards"><div style="text-align:center"><div class="mp-help">أنت · ${myDeck.length} ورقة</div>${card(cards[seat], 'ورقتك')}</div><div style="text-align:center"><div class="mp-help">الخصم · ${oppDeck.length} ورقة</div>${card(cards[1-seat], 'ورقة الخصم')}</div></div><div class="mp-status">${esc(s.message || 'أعلى قيمة تفوز بالجولة. A أعلى ورقة.')}</div><div style="text-align:center">${isMyTurn(room) ? '<button type="button" class="mp-action mp-create" id="mp-war-draw" aria-label="سحب ورقتي الحرب">🂠 اسحب الورقتين</button>' : ''}</div><div class="mp-help">قيم الأوراق: 2 إلى 10 ثم J وQ وK وA. عند التعادل تحدث حرب تلقائية بثلاث أوراق مخفية ثم ورقة مقارنة.</div>`;
+    $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك: اسحب الورقتين.' : 'انتظر خصمك حتى يسحب الورقتين.')} · الجولة ${Number(s.rounds)||0}</div><div class="mp-war-cards"><div style="text-align:center"><div class="mp-help">أنت · ${myDeck.length} ورقة</div>${card(cards[seat], 'ورقتك')}</div><div style="text-align:center"><div class="mp-help">الخصم · ${oppDeck.length} ورقة</div>${card(cards[1-seat], 'ورقة الخصم')}</div></div><div class="mp-status">${esc(s.message || 'أعلى قيمة تفوز بالجولة. A أعلى ورقة.')}</div><div style="text-align:center">${isMyTurn(room) && !SESSION.busy ? '<button type="button" class="mp-action mp-create" id="mp-war-draw" aria-label="سحب ورقتي الحرب">🂠 اسحب الورقتين</button>' : ''}</div><div class="mp-help">قيم الأوراق: 2 إلى 10 ثم J وQ وK وA. عند التعادل تحدث حرب تلقائية بثلاث أوراق مخفية ثم ورقة مقارنة.</div>`;
     const draw = $('mp-war-draw');
     if (draw) draw.onclick = async () => {
       if (!isMyTurn(room) || SESSION.busy) return;

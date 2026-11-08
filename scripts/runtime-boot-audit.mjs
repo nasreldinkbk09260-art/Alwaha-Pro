@@ -25,7 +25,7 @@ const checks=[
  ['core local script URLs exactly match precache paths without query strings', ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js'].every(asset=>html.includes('src="./'+asset+'"')&&sw.includes("'./"+asset+"'"))],
  ['runtime guard is copied into the Web build and service-worker precache',build.includes("'alwaha-runtime-guard.js'")&&sw.includes("'./alwaha-runtime-guard.js'")],
  ['runtime audit is wired into npm and Android CI',pkg.scripts?.['audit:runtime']==='node scripts/runtime-boot-audit.mjs'&&wf.includes('npm run audit:runtime')],
- ['service-worker uses the final 3.0.3 cache namespace',sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup'")]
+ ['service-worker uses the final 3.0.3 cache namespace',sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-roundtrip-games-controls'")]
 ];
 for(const [name,ok] of checks)ok?pass(name):fail(name);
 if(process.exitCode)process.exit(1);

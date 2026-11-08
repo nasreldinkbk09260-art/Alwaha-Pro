@@ -28,7 +28,7 @@ check('accepting a request removes only its related request rows and does not wa
 check('modal module is included in HTML, web build and service-worker precache',html.includes('src="./alwaha-modal-shell.js"')&&!html.includes('alwaha-modal-shell.js?v=')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'"));
 check('modal observation is coalesced and duplicate navigation observer is removed',shell.includes('syncScheduled=false')&&shell.includes('function scheduleSync()')&&shell.includes('new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();})')&&shell.includes('if(changed)window.AlwahaExperience?.syncDock?.();')&&!exp.includes('modalObserver')&&!exp.includes('new MutationObserver'));
 
-check('3.0.3 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
+check('3.0.3 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-roundtrip-games-controls')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 
 const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*[(]/g)].map(match=>match[1]);
