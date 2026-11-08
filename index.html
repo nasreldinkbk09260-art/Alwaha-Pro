@@ -57,6 +57,7 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
     <script src="./alwaha-modal-shell.js" defer></script>
     <script src="./alwaha-runtime-guard.js" defer></script>
     <script src="./alwaha-kids-room.js" defer></script>
+    <script src="./alwaha-smart-assistant.js" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -680,6 +681,15 @@ img,video,canvas{max-width:100%}
                 </button>
             </div>
         </div>
+
+        <section id="alwaha-smart-assistant" aria-label="مساعد الواحة السياقي" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;margin:0 0 15px;border:1px solid rgba(103,232,249,.28);border-radius:14px;background:linear-gradient(125deg,rgba(18,44,64,.42),rgba(16,25,45,.28));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);">
+            <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;color:#8bf4ff;font-size:11px;font-weight:800;margin-bottom:4px;"><i class="fa-solid fa-wand-magic-sparkles"></i> مساعد الواحة</div>
+                <strong data-smart-title style="display:block;color:#fff;font-size:12px;margin-bottom:3px;">يجهّز اقتراحاً مناسباً لك…</strong>
+                <p id="alwaha-smart-assistant-message" role="status" aria-live="polite" style="margin:0;color:#b7c7d8;font-size:10px;line-height:1.7;">اقتراحات محلية حسب حالة الاتصال والمسودة والتنبيهات على جهازك.</p>
+            </div>
+            <button type="button" id="alwaha-smart-assistant-action" class="btn-action" data-action="market" style="max-width:125px;min-width:106px;min-height:42px;padding:8px 10px;border:1px solid rgba(103,232,249,.3);border-radius:11px;background:rgba(103,232,249,.12);color:#a9f6ff;font-size:10px;font-weight:800;">استكشاف السوق</button>
+        </section>
 
         <div id="home-posts-feed-container" aria-live="polite" aria-busy="true">
             <div class="alwaha-feed-loading" role="status" style="text-align:center;color:#38bdf8;font-size:12px;padding:20px;">جاري تحديث المنشورات...</div>
