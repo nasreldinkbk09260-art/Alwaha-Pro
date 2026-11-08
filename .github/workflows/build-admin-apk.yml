@@ -36,6 +36,7 @@ jobs:
           npm run build
           test -s dist/index.html
           test -s dist/icon.png
+          test -s dist/vendor/supabase/supabase.js
       - name: Create Android project
         working-directory: admin-app
         run: |
