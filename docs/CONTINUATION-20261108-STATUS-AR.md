@@ -35,3 +35,10 @@
 - لا تغيير بيانات المستخدمين أو قاعدة الإنتاج دون ضرورة وموافقة وخطة رجوع.
 - لا نشر تلقائي ولا إعادة تفعيل وظائف المحاكاة القديمة.
 - نجاح static audit أو PostgreSQL fixture لا يساوي اختبار Supabase حي أو اختبار جهاز حقيقي.
+
+## تحديث بعد CI 131–135
+- أُصلح خطأ dollar-quoting في `supabase/tests/20261108120000_message_reply_scope.sql`، وتم التحقق من وجود `DO $$ BEGIN` و`END $$;` في الملف المنشور على الفرع.
+- أضاف ترحيل `20261108100000_server_authoritative_game_actions.sql` منع الكتابة المباشرة إلى `game_rooms` من `PUBLIC/anon/authenticated`، مع إبقاء `SELECT` للمستخدم المسجل ومنح `SELECT/INSERT/UPDATE` إلى `service_role`. اختبار PostgreSQL يتحقق من صلاحيات الجدول والدالة.
+- في تشغيل CI رقم 135 عند commit `f171eed3`: نجحت وظيفة SQL regression، ونجحت بوابات preflight/performance/chat-feed/compatibility/runtime/call/UI/theme/marketplace-column/reconciliation؛ فشل البناء فقط عند خطوة Deno لأن وضع node_modules لم يكن مهيأ لـ `npm:chess.js`.
+- أُصلح أمر Deno في workflow إلى `deno check --node-modules-dir=auto supabase/functions/game-actions/index.ts` في commit `8a7bb97d`. يلزم تشغيل جديد على هذا الـ commit لإثبات نجاح type-check ثم الوصول إلى إنشاء APK/AAB.
+- أضيف تدقيق لوحة الإدارة وخطة الذكاء الاصطناعي الآمن في `docs/ADMIN-CONSOLE-AUDIT-AND-AI-PRIVACY-PLAN-20261108-AR.md`. اللوحة الحالية أساس إداري فقط، ولم تُنشأ بعد جداول الدعم أو Edge Function للذكاء الاصطناعي.
