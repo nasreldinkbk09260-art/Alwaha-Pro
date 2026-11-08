@@ -115,6 +115,7 @@ jobs:
           test -s production-polish.js
           test -s alwaha-call-feedback.js
           test -s scripts/call-signaling-runtime-test.mjs
+          test -s scripts/adaptive-video-quality-runtime-test.mjs
           test -s compatibility.js
           test -s alwaha-local-vault.js
           test -s alwaha-experience.js
@@ -192,6 +193,7 @@ jobs:
           node --check alwaha-call-feedback.js
           node --check scripts/call-feedback-runtime-test.mjs
           node --check scripts/call-signaling-runtime-test.mjs
+          node --check scripts/adaptive-video-quality-runtime-test.mjs
           node --check compatibility.js
           node --check alwaha-local-vault.js
           node --check alwaha-experience.js
@@ -233,6 +235,9 @@ jobs:
 
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
+
+      - name: Run adaptive video quality runtime audit
+        run: npm run audit:adaptive-video-quality
 
       - name: Run field repair regression audit
         run: npm run audit:field-repair

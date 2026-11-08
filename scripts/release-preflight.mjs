@@ -130,6 +130,7 @@ if(!workflow.includes('npm run audit:marketplace-columns') || pkg.scripts?.['aud
 if(!workflow.includes('npm run audit:ui') || pkg.scripts?.['audit:ui']!=='node scripts/ui-handler-audit.mjs') fail('Full UI handler audit is not wired into release CI.');
 if(!workflow.includes('npm run audit:themes') || pkg.scripts?.['audit:themes']!=='node scripts/theme-runtime-test.mjs') fail('Theme runtime audit is not wired into release CI.');
 if(!workflow.includes('npm run audit:field-repair') || pkg.scripts?.['audit:field-repair']!=='node scripts/field-repair-audit.mjs') fail('Field repair regression audit is not wired into release CI.');
+if(!fs.existsSync('scripts/adaptive-video-quality-runtime-test.mjs') || !workflow.includes('npm run audit:adaptive-video-quality') || pkg.scripts?.['audit:adaptive-video-quality']!=='node scripts/adaptive-video-quality-runtime-test.mjs') fail('Adaptive video quality feedback regression audit is missing or not wired into release CI.');
 if(!workflow.includes('npm audit --audit-level=high')) fail('Dependency vulnerability audit is not wired into release CI.');
 if(!fs.existsSync('supabase/tests/20261102010000_legacy_client_privileges_hardening.sql') || !fs.existsSync('supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql')) fail('Supabase regression assertion files are missing.');
 if(!fs.existsSync('scripts/marketplace-column-audit.mjs'))fail('scripts/marketplace-column-audit.mjs is missing.');

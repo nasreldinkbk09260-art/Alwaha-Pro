@@ -15,6 +15,7 @@
     "audit:chat": "node scripts/chat-release-audit.mjs",
     "audit:compatibility": "node scripts/compatibility-audit.mjs",
     "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs && node scripts/call-feedback-runtime-test.mjs && node scripts/call-signaling-runtime-test.mjs",
+    "audit:adaptive-video-quality": "node scripts/adaptive-video-quality-runtime-test.mjs",
     "audit:ui": "node scripts/ui-handler-audit.mjs",
     "audit:retention-kids-vault": "node scripts/retention-kids-vault-audit.mjs",
     "audit:admin": "node scripts/admin-app-audit.mjs",
