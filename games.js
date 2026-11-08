@@ -261,19 +261,28 @@
   }
   async function submitGameAction(move) {
     const room = SESSION.room;
-    if (!room || SESSION.busy || !isMyTurn(room)) return toast('انتظر دورك أو اكتمال المزامنة.', 'info');
+    const roomId = room?.id ? String(room.id) : '';
+    const generation = SESSION.pollGeneration;
+    if (!roomId || SESSION.busy || !isMyTurn(room)) return toast('انتظر دورك أو اكتمال المزامنة.', 'info');
     if (typeof window.alwahaInvokeEdgeFunction !== 'function') return toast('خدمة الألعاب الآمنة غير متاحة.', 'error');
     SESSION.busy = true;
     try {
-      const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'move',room_id:room.id,expected_move_no:room.move_no,move});
+      const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'move',room_id:roomId,expected_move_no:room.move_no,move});
+      if (generation !== SESSION.pollGeneration || String(SESSION.room?.id || '') !== roomId) return;
       const updated = normalizeRoom(result?.room);
-      if (!updated?.id) throw new Error('لم يؤكد الخادم حفظ الحركة.');
+      if (!updated?.id || String(updated.id) !== roomId) throw new Error('لم يؤكد الخادم حفظ الحركة في الغرفة الحالية.');
       SESSION.room = updated; SESSION.selectedSquare = null; SESSION.legalTargets = []; SESSION.game = null;
-      renderRoom(updated);
     } catch(error) {
-      toast(error?.message || 'لم يتم حفظ الحركة؛ ستتم مزامنة الغرفة.', 'error');
-      await pollRoom();
-    } finally { SESSION.busy = false; }
+      if (generation === SESSION.pollGeneration && String(SESSION.room?.id || '') === roomId) {
+        toast(error?.message || 'لم يتم حفظ الحركة؛ ستتم مزامنة الغرفة.', 'error');
+        await pollRoom();
+      }
+    } finally {
+      if (generation === SESSION.pollGeneration && String(SESSION.room?.id || '') === roomId) {
+        SESSION.busy = false;
+        if (SESSION.room) renderRoom(SESSION.room);
+      }
+    }
   }
   function otherTurn(room = SESSION.room) { return room.current_turn === room.player1_id ? room.player2_id : room.player1_id; }
 
