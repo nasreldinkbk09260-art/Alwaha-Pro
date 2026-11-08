@@ -1305,6 +1305,7 @@ img,video,canvas{max-width:100%}
         let marketLifecycleSchemaPromise = null;
         let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
         let reelsFeedRequestId = 0;
+        let reelPublishInFlight = false;
         let reelRecorder = null;
         let reelRecorderChunks = [];
         let pendingRecordedReel = null;
@@ -1410,6 +1411,9 @@ img,video,canvas{max-width:100%}
         }
 
 async function publishReelFile(file, title='ريلز جديد') {
+            if(reelPublishInFlight)return false;
+            reelPublishInFlight=true;
+            try {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لإضافة ريلز.');
             if (!user || !file) return false;
             if (!String(file.type||'').startsWith('video/')) { triggerToastNotification('اختر ملف فيديو صالحًا.','error'); return false; }
@@ -1424,6 +1428,7 @@ async function publishReelFile(file, title='ريلز جديد') {
             triggerToastNotification('تم نشر الفيديو بنجاح.','success');
             await renderReelsFeed();
             return true;
+            } finally { reelPublishInFlight=false; }
         }
 
 async function handleReelUploadFromGallery() {
