@@ -84,6 +84,7 @@ for (const file of ['supabase/migrations/20261101022015_marketplace_conversation
 const marketChatPolicyFix=read('supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql');
 if (!marketChatPolicyFix.includes('p.seller_id=market_conversations.seller_id')) fail('Marketplace conversation insert policy must bind seller_id to the outer conversation row.');
 if (!html.includes('window.__alwahaHomeFeedInFlight') || !html.includes("alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null)")) fail('Home feed must coalesce duplicate renders and bound the public posts fetch.');
+if(!html.includes('window.__alwahaMarketProductSubmitInFlight')||!html.includes('async function submitNewProductToMarketInternal()')||!html.includes('finally{')||!html.includes("button.textContent='جارٍ حفظ الإعلان…'"))fail('Marketplace publish/edit must block duplicate submissions and restore the button after completion.');
 if (!html.includes('id="market-conversations-panel"') || !html.includes("modal.id='market-chat-modal'") || !html.includes('async function sendMarketMessage()') || !html.includes('market_messages')) fail('Marketplace chat must use its own inbox, modal, and message table.');
 if (!html.includes('hasAcceptedAlwahaFriendship(currentChatUserId)')) fail('Friend chat must retain its accepted-friendship gate.');
 if (!html.includes('callMarketSeller') || !html.includes('اتصال صوتي بالبائع') || !html.includes('toggleReelFollow')) fail('Marketplace voice-call action missing.');
