@@ -1,5 +1,5 @@
 BEGIN;
-DO $ BEGIN
+DO $$ BEGIN
   IF NOT has_function_privilege('authenticated','public.can_reply_to_direct_message(bigint,uuid,uuid)','EXECUTE') OR
      NOT has_function_privilege('authenticated','public.can_reply_to_market_message(uuid,uuid,uuid)','EXECUTE') THEN
     RAISE EXCEPTION 'Authenticated chat participants must execute reply predicates through RLS';
@@ -8,7 +8,7 @@ DO $ BEGIN
      has_function_privilege('anon','public.can_reply_to_market_message(uuid,uuid,uuid)','EXECUTE') THEN
     RAISE EXCEPTION 'Anonymous callers must not execute reply scope predicates';
   END IF;
-END $;
+END $$;
 INSERT INTO auth.users(id) VALUES ('30000000-0000-4000-8000-000000000001'),('30000000-0000-4000-8000-000000000002'),('30000000-0000-4000-8000-000000000003') ON CONFLICT DO NOTHING;
 INSERT INTO public.friend_requests(requester_id,target_id,status) VALUES ('30000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000002','accepted'),('30000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000003','accepted');
 INSERT INTO public.messages(sender_id,receiver_id,message) VALUES ('30000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000002','direct parent A-B'),('30000000-0000-4000-8000-000000000001','30000000-0000-4000-8000-000000000003','direct parent A-C');
