@@ -305,3 +305,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## تصحيح مرجع الكاش داخل اختبار الألعاب
 
 فشل CI في `audit:games` لأن assertion فحص namespace الجديد ترك اسمَي متغيرين محليين (`cacheNew` و`newRegex`) في نص الاختبار بدل القيم الفعلية. تم استبدالهما باسم namespace الثابت داخل Service Worker وبصيغة Regex المهربة داخل performance audit. لا تغيير في تنفيذ التطبيق أو cache نفسه.
+
+
+## تبسيط فحص cache داخل audit:games
+
+كشف CI أن assertion الألعاب كان يستخدم الاسم `performance` كأنه نص مقروء، بينما Node.js يعرّفه ككائن أداء عام؛ كما أنه ليس مكان اختبار اتساق كل ملفات الإصلاح. تم فصل المسؤوليات: `audit:games` يتحقق فقط من أن `sw.js` يحمل namespace المحدد `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup`، بينما اختبارات performance/field-repair/compatibility/reconciliation/fullscreen/runtime تتحقق من اتساقها الخاص. هذا يمنع تضارب أسماء المتغيرات ويبقي الاختبار مركزًا على القسم الذي يراجعه.
