@@ -9,6 +9,8 @@ function check(name,ok){checks++;if(ok)console.log(`PASS: ${name}`);else{failed+
 check('admin app is a separate package identity',read('admin-app/capacitor.config.json').includes('pro.alwaha.admin'));
 check('main app identity remains unchanged',read('capacitor.config.json').includes('pro.alwaha.app'));
 check('admin frontend invokes the protected Edge Function',html.includes("db.functions.invoke('admin-api'"));
+check('admin frontend loads the pinned local Supabase SDK without a runtime CDN dependency',html.includes('<script src="vendor/supabase/supabase.js"></script>')&&!html.includes('cdn.jsdelivr.net/npm/@supabase/supabase-js')&&read('admin-app/build.mjs').includes('adminSupabaseSdkSha256')&&read('admin-app/build.mjs').includes('crypto.createHash'));
+check('main app Supabase SDK asset is present for deterministic admin packaging',fs.existsSync('assets/vendor/supabase/supabase.js'));
 check('admin frontend does not query privileged tables directly',!(/db\.from\(['"](?:users|verification_requests|admin_action_logs)['"]\)/.test(html)));
 check('admin frontend does not embed service-role credentials',!html.includes('SUPABASE_SERVICE_ROLE_KEY')&&!/eyJ[^'"\s]+service_role/.test(html));
 check('admin UI includes requests, users and audit-log views',html.includes('requestsPane')&&html.includes('usersPane')&&html.includes('auditPane')&&html.includes("adminApi('list_audit_logs'"));
