@@ -28,6 +28,8 @@ if(!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')|
 if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
 if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
+if(/function\\s+renderGamesSection\\s*\\(/.test(html)||/function\\s+launchGameEngine\\s*\\(/.test(html)||html.includes('لعبة الذاكرة التقنية 🧠')||html.includes('تحدي كسر التشفير 🔐'))fail('Obsolete inline game UI must not shadow the dedicated multiplayer games module.');
+if(!games.includes('window.renderGamesSection = renderGamesSection')||!games.includes('window.launchGameEngine = function(gameTitle)'))fail('Dedicated multiplayer games module must own the games UI and launcher.');
 if(pkg.version!=='3.0.3'||lock.version!=='3.0.3'||lock.packages?.['']?.version!=='3.0.3')fail('package and lockfile versions must be 3.0.3.');
 if(cap.appId!=='pro.alwaha.app'||cap.webDir!=='dist')fail('Unexpected Capacitor app configuration.');
 if(manifest.version!==pkg.version)fail('manifest.json version must match package.json.');
