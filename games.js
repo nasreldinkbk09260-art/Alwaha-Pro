@@ -457,6 +457,13 @@
       if (generation !== SESSION.pollGeneration || String(SESSION.room?.id || '') !== activeRoomId) return;
       const fresh = Array.isArray(rows) ? rows[0] : null;
       if (!fresh || String(fresh.id) !== activeRoomId) throw new Error('لم تصل حالة الغرفة الحالية من الخادم.');
+      const freshMoveNo = Number(fresh.move_no);
+      const currentMoveNo = Number(SESSION.room?.move_no ?? 0);
+      if (!Number.isSafeInteger(freshMoveNo) || freshMoveNo < 0) throw new Error('وصل رقم حركة غير صالح من الخادم.');
+      if (freshMoveNo < currentMoveNo) return;
+      const freshUpdatedAt = Date.parse(String(fresh.updated_at || ''));
+      const currentUpdatedAt = Date.parse(String(SESSION.room?.updated_at || ''));
+      if (freshMoveNo === currentMoveNo && Number.isFinite(freshUpdatedAt) && Number.isFinite(currentUpdatedAt) && freshUpdatedAt < currentUpdatedAt) return;
       const key = `${fresh.move_no}|${fresh.status}|${fresh.player2_id || ''}|${fresh.current_turn || ''}|${fresh.updated_at || ''}`;
       SESSION.room = fresh;
       if (SESSION.syncFailed) {

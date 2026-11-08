@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-roundtrip-games-controls';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-roundtrip-poll-version-guard';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
