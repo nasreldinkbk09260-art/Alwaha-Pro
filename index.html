@@ -1764,25 +1764,15 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         window.alwahaInvokeEdgeFunction = async function(functionName, payload) {
             if (!/^[a-z0-9-]{2,64}$/.test(String(functionName||''))) throw new Error('اسم خدمة الخادم غير صالح.');
-            const sessionResult = await supabaseClient?.auth.getSession();
-            const accessToken = sessionResult?.data?.session?.access_token;
-            if (!accessToken) throw new Error('سجّل الدخول مجدداً قبل تنفيذ هذا الإجراء.');
-            const controller = typeof AbortController === 'function' ? new AbortController() : null;
-            const timeout = controller ? setTimeout(() => controller.abort(), 12000) : null;
-            try {
-                const response = await fetch(SUPABASE_URL + '/functions/v1/' + functionName, {
-                    method:'POST',
-                    headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-                    body:JSON.stringify(payload||{}),
-                    ...(controller?{signal:controller.signal}:{})
-                });
-                const data = await response.json().catch(()=>({}));
-                if (!response.ok) throw new Error(String(data?.error || data?.message || 'تعذر تنفيذ الإجراء على الخادم.').slice(0,240));
-                return data;
-            } catch(error) {
-                if (error?.name === 'AbortError') throw new Error('انتهت مهلة تنفيذ الحركة؛ حدّث الغرفة قبل إعادة المحاولة.');
-                throw error;
-            } finally { if (timeout) clearTimeout(timeout); }
+            if (!supabaseClient?.functions?.invoke) throw new Error('خدمة Supabase غير مهيأة.');
+            const {data,error}=await supabaseClient.functions.invoke(functionName,{body:payload||{}});
+            if(error){
+                let detail=error.message||'تعذر الاتصال بخدمة الخادم.';
+                try{const response=await error.context?.json();if(response?.error)detail=response.error;}catch{}
+                throw new Error(detail);
+            }
+            if(data?.error)throw new Error(String(data.error));
+            return data||{};
         };
 
         window.addEventListener('alwaha:public-cache-updated',event=>{
