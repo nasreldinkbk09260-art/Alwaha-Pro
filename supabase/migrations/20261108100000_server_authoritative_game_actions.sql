@@ -74,7 +74,13 @@ GRANT SELECT ON TABLE public.game_rooms TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.game_rooms TO service_role;
 -- Keep the two intentionally authenticated SECURITY DEFINER helpers pinned to an empty search_path.
 ALTER FUNCTION public.join_game_room(text, text) SET search_path TO '';
-ALTER FUNCTION IF EXISTS public.can_review_marketplace_product(bigint, uuid) SET search_path TO '';
+DO $hardening$
+BEGIN
+  IF to_regprocedure('public.can_review_marketplace_product(bigint,uuid)') IS NOT NULL THEN
+    EXECUTE 'ALTER FUNCTION public.can_review_marketplace_product(bigint, uuid) SET search_path TO ''''';
+  END IF;
+END;
+$hardening$;
 -- The legacy mutation RPC is retained for rollback history but is not callable by application roles.
 ALTER FUNCTION public.submit_game_move(uuid, integer, jsonb, uuid, text, uuid) SET search_path TO '';
 
