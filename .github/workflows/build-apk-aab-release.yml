@@ -248,6 +248,8 @@ jobs:
         run: npm run audit:navigation-dock
       - name: Run sequential home section acceptance audit
         run: npm run audit:home
+      - name: Run local contextual smart assistant audit
+        run: npm run audit:smart-assistant
 
       - name: Run UI handler audit
         run: npm run audit:ui
