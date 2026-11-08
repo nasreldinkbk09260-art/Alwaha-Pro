@@ -41,3 +41,23 @@ body[data-alwaha-theme] #alwaha-theme-backdrop{filter:saturate(1.04);}
 @media(prefers-reduced-motion:reduce){#alwaha-theme-backdrop{transition:none!important;animation:none!important;}body[data-alwaha-theme] .alwaha-theme-choice{transition:none!important;}}
 body.alwaha-data-saver #alwaha-theme-backdrop{filter:none!important;}
 body.alwaha-data-saver .bottom-nav-bar.alwaha-nav-floating{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;}
+
+/* Theme tint for the legacy inline-styled cards across every section. */
+body[data-alwaha-theme] .app-section [style*="background:rgba(255,255,255"],
+body[data-alwaha-theme] .app-section [style*="background: rgba(255,255,255"],
+body[data-alwaha-theme] .app-section [style*="background:rgba(0,0,0"],
+body[data-alwaha-theme] .app-section [style*="background: rgba(0,0,0"],
+body[data-alwaha-theme] .app-section [style*="background:#0"],
+body[data-alwaha-theme] .app-section [style*="background: #0"],
+body[data-alwaha-theme] .app-section [style*="background:linear-gradient(145deg,#0"],
+body[data-alwaha-theme] .app-section [style*="background: linear-gradient(145deg,#0"]{background-color:var(--wa-surface-soft)!important;border-color:var(--wa-border)!important;}
+body[data-alwaha-theme] .app-section [style*="color:#aaa"],body[data-alwaha-theme] .app-section [style*="color: #aaa"],
+body[data-alwaha-theme] .app-section [style*="color:#888"],body[data-alwaha-theme] .app-section [style*="color: #888"],
+body[data-alwaha-theme] .app-section [style*="color:#9fb1c8"],body[data-alwaha-theme] .app-section [style*="color: #9fb1c8"],
+body[data-alwaha-theme] .app-section [style*="color:#a9bfd2"],body[data-alwaha-theme] .app-section [style*="color: #a9bfd2"],
+body[data-alwaha-theme] .app-section [style*="color:#9fb6c9"],body[data-alwaha-theme] .app-section [style*="color: #9fb6c9"]{color:var(--wa-muted)!important;}
+body[data-alwaha-theme] .reel-card,body[data-alwaha-theme] .game-card,body[data-alwaha-theme] .profile-card-header-view,body[data-alwaha-theme] .profile-options-menu-list,body[data-alwaha-theme] .chat-sub-topbar,body[data-alwaha-theme] .chat-tab-content,body[data-alwaha-theme] .notification-nav-item,body[data-alwaha-theme] .market-center{border-color:var(--wa-border)!important;}
+body[data-alwaha-theme] .modal-overlay,body[data-alwaha-theme] .comments-modal-box,body[data-alwaha-theme] #active-chat-box,body[data-alwaha-theme] #voice-call-modal,body[data-alwaha-theme] #home-post-details-modal,body[data-alwaha-theme] .pro-camera-modal{background-color:var(--wa-surface)!important;border-color:var(--wa-border)!important;}
+body[data-alwaha-theme] .btn-glow-cyan{border-color:var(--wa-accent-2)!important;box-shadow:0 0 16px var(--wa-glow),inset 0 0 8px var(--wa-glow)!important;}
+body[data-alwaha-theme] .btn-glow-pink{border-color:var(--wa-accent)!important;box-shadow:0 0 16px var(--wa-glow),inset 0 0 8px var(--wa-glow)!important;}
+body[data-alwaha-theme] .alwaha-chat-presence,body[data-alwaha-theme] .call-state-pill{border-color:var(--wa-border)!important;}
