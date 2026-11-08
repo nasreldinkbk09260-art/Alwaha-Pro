@@ -1270,6 +1270,8 @@ img,video,canvas{max-width:100%}
         let currentMarketMessages=[],currentMarketReplyTarget=null,marketReplySchemaAvailable=false;
         let marketMessageSendInFlight = false;
         let marketMessagesRequestId = 0;
+        let marketConversationsRenderRequestId = 0;
+        let marketTransactionsRenderRequestId = 0;
         let marketConversationChannel = null;
         let marketInboxChannel = null;
         let currentActiveCommentPostId = null;
@@ -3130,12 +3132,14 @@ async function subscribeToMarketConversation() {
                 .subscribe();
         }
         async function renderMarketConversationsList() {
+            const requestId=++marketConversationsRenderRequestId;
             const holder=document.getElementById('market-conversations-container');if(!holder)return;
-            const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me||requestId!==marketConversationsRenderRequestId)return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:11px;padding:12px;">جاري تحميل محادثات السوق...</div>';
             const filter=`or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&order=created_at.desc&limit=100`;
             let rows=await supabaseFetch(`market_conversations?select=id,product_id,buyer_id,seller_id,created_at,archived_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&${filter}`);
             if(!Array.isArray(rows))rows=await supabaseFetch(`market_conversations?select=id,product_id,buyer_id,seller_id,created_at&${filter}`);
+            if(requestId!==marketConversationsRenderRequestId)return;
             if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:14px;">تعذر تحميل محادثات السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
             if(!rows.length){holder.innerHTML='<div style="text-align:center;color:#9fb1c8;font-size:11px;padding:14px;">لا توجد محادثات سوق بعد. افتح إعلاناً واضغط «هل ما زال متوفرًا؟» لبدء محادثة مع البائع.</div>';return;}
             const ids=rows.map(r=>String(r.id)),productIds=[...new Set(rows.map(r=>r.product_id).filter(v=>v!==null&&v!==undefined).map(String))],peerIds=[...new Set(rows.map(r=>r.buyer_id===me.id?r.seller_id:r.buyer_id))],idFilter=ids.map(encodeURIComponent).join(',');
@@ -3146,6 +3150,7 @@ async function subscribeToMarketConversation() {
                 supabaseFetch(`market_transactions?conversation_id=in.(${idFilter})&select=id,conversation_id,listing_snapshot,guarantee_days,guarantee_expires_at,retention_until,status,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&order=created_at.desc&limit=100`),
                 supabaseFetch(`market_conversations?id=in.(${idFilter})&select=id,listing_snapshot`)
             ]);
+            if(requestId!==marketConversationsRenderRequestId)return;
             const pm=new Map((Array.isArray(products)?products:[]).map(r=>[String(r.id),r])),um=new Map((Array.isArray(users)?users:[]).map(r=>[String(r.id),r])),txm=new Map((Array.isArray(transactions)?transactions:[]).map(r=>[String(r.conversation_id),r])),sm=new Map((Array.isArray(snapshots)?snapshots:[]).map(r=>[String(r.id),r.listing_snapshot||{}])),latest=new Map(),unread=new Map();
             (Array.isArray(messages)?messages:[]).forEach(m=>{const id=String(m.conversation_id);if(!latest.has(id))latest.set(id,m);if(m.sender_id!==me.id&&!m.read_at)unread.set(id,(unread.get(id)||0)+1);});
             holder.innerHTML=rows.map(c=>{
@@ -3160,10 +3165,12 @@ async function subscribeToMarketConversation() {
             }).join('');
         }
         async function renderMarketTransactionsList() {
+            const requestId=++marketTransactionsRenderRequestId;
             const holder=document.getElementById('market-transactions-container');if(!holder)return;
-            const me=await getCurrentAuthUser();if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
+            const me=await getCurrentAuthUser();if(requestId!==marketTransactionsRenderRequestId)return;if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
             const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
+            if(requestId!==marketTransactionsRenderRequestId)return;
             if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من تطبيق ترحيلات السوق الآمنة.</div>`;return;}
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">لا توجد معاملات مسجلة بعد.</div>';return;}
             holder.innerHTML=rows.map(tx=>{
