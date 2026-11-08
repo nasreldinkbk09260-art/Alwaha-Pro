@@ -12,8 +12,8 @@ const events=[];class FakeCustomEvent{constructor(type,options){this.type=type;t
 const context={document,window:{dispatchEvent(event){events.push(event);}},localStorage:{setItem(k,v){stored.set(k,String(v));},getItem(k){return stored.get(k)||null;}},CustomEvent:FakeCustomEvent,console,Set,String,Object};
 vm.createContext(context);vm.runInContext(match[0]+'\nthis.changeAppTheme=changeAppTheme;',context);
 const expected={oasis:'#143a43',abyss:'#062b45'};
-for(const [id,asset] of Object.entries({oasis:'bg-aurora.webp',abyss:'bg-underwater.webp'})){const marker=`body[data-alwaha-theme="${id}"]{--alwaha-theme-image:url('./assets/backgrounds/${asset}')`;if(!themeCss.includes(marker))throw Error('Missing '+id+' palette');if(!sw.includes(`'./assets/backgrounds/${asset}'`))throw Error('No precache '+asset);if(!fs.existsSync(`assets/backgrounds/${asset}`))throw Error('Missing asset '+asset);}
-if(!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))throw Error('Default nebula not precached');
+for(const [id,color] of Object.entries({oasis:'#143a43',abyss:'#062b45'})){const marker=`body[data-alwaha-theme="${id}"] #alwaha-theme-backdrop{background-image:radial-gradient`;if(!themeCss.includes(marker))throw Error('Missing premium CSS atmosphere '+id);if(themeCss.includes(`url('./assets/backgrounds/bg-${id==='oasis'?'aurora':'underwater'}.webp')`))throw Error('Theme still depends on a decorative image '+id);}
+if(!themeCss.includes('linear-gradient(145deg,#061a23')||!themeCss.includes('linear-gradient(145deg,#041323'))throw Error('Premium layered theme backgrounds missing');
 for(const old of ['bg-spring.webp','bg-summer.webp','bg-autumn.webp','bg-winter.webp'])if(sw.includes(old))throw Error('Unused seasonal image remains cached: '+old);
 if(!themeCss.includes('z-index:0!important')||!themeCss.includes('pointer-events:none!important'))throw Error('Backdrop may intercept app interactions');
 if(!html.includes('body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}'))throw Error('UI layer above backdrop is missing');
