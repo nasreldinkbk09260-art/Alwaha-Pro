@@ -2747,6 +2747,15 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             }
         }
 
+        function closeCommentsModal() {
+            commentsLoadRequestId += 1;
+            const modal=document.getElementById('comments-modal-box');
+            if(modal)modal.style.display='none';
+            currentActiveCommentPostId=null;
+            if(!document.querySelector('#home-post-details-modal[style*="display: block"]'))document.body.classList.remove('modal-active');
+            window.AlwahaModalShell?.sync?.();
+        }
+
         async function submitNewCommentFromModal() {
             if(commentSendInFlight)return;
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لكتابة تعليق.');
