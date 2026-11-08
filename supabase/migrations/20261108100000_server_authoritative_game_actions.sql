@@ -68,5 +68,9 @@ REVOKE ALL ON FUNCTION public.apply_game_action_result(uuid,integer,uuid,jsonb,u
 GRANT EXECUTE ON FUNCTION public.apply_game_action_result(uuid,integer,uuid,jsonb,uuid,text,uuid) TO service_role;
 -- Retain the old RPC for rollback records but remove direct state-write access from app users.
 REVOKE EXECUTE ON FUNCTION public.submit_game_move(uuid,integer,jsonb,uuid,text,uuid) FROM PUBLIC, anon, authenticated;
+-- Clients may read rooms for realtime synchronization, but room creation and state writes are server-owned.
+REVOKE ALL ON TABLE public.game_rooms FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.game_rooms TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON TABLE public.game_rooms TO service_role;
 
 COMMIT;

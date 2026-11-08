@@ -15,6 +15,7 @@ const checks=[
  ['edge function verifies the caller JWT and uses service-role server writes',edge.includes('auth.auth.getUser')&&edge.includes('SUPABASE_SERVICE_ROLE_KEY')&&edge.includes("rpc('apply_game_action_result'")],
  ['atomic state RPC locks the room and checks participant, turn and move version',migration.includes('FOR UPDATE')&&migration.includes('p_expected_move_no')&&migration.includes('p_actor_user_id')],
  ['direct authenticated state mutation is revoked; service-only result RPC is granted',migration.includes('REVOKE EXECUTE ON FUNCTION public.submit_game_move')&&migration.includes('TO service_role')],
+ ['game room writes are restricted to service role while authenticated users retain reads',migration.includes('REVOKE ALL ON TABLE public.game_rooms FROM PUBLIC, anon, authenticated')&&migration.includes('GRANT SELECT ON TABLE public.game_rooms TO authenticated')&&migration.includes('GRANT SELECT, INSERT, UPDATE ON TABLE public.game_rooms TO service_role')&&sqlTest.includes("has_table_privilege('authenticated','public.game_rooms','INSERT')")&&sqlTest.includes("has_table_privilege('service_role','public.game_rooms','UPDATE')")],
  ['edge function is JWT protected in Supabase config',/\[functions\.game-actions\]\s*verify_jwt\s*=\s*true/.test(config)],
  ['PostgreSQL CI runs the new game migration and privilege regression test',ci.includes('20261108100000_server_authoritative_game_actions.sql')&&ci.includes('20261108100000_game_actions_security.sql')&&sqlTest.includes('GAME_ACTIONS_SECURITY=PASS')]
 ];

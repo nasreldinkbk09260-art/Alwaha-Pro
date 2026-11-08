@@ -29,6 +29,17 @@ BEGIN
   IF has_function_privilege('authenticated','public.submit_game_move(uuid,integer,jsonb,uuid,text,uuid)','EXECUTE') THEN
     RAISE EXCEPTION 'Authenticated legacy direct state mutation RPC must be revoked';
   END IF;
+  IF NOT has_table_privilege('authenticated','public.game_rooms','SELECT') OR
+     has_table_privilege('authenticated','public.game_rooms','INSERT') OR
+     has_table_privilege('authenticated','public.game_rooms','UPDATE') OR
+     has_table_privilege('authenticated','public.game_rooms','DELETE') THEN
+    RAISE EXCEPTION 'Authenticated clients may read game rooms but must not write them directly';
+  END IF;
+  IF NOT has_table_privilege('service_role','public.game_rooms','SELECT') OR
+     NOT has_table_privilege('service_role','public.game_rooms','INSERT') OR
+     NOT has_table_privilege('service_role','public.game_rooms','UPDATE') THEN
+    RAISE EXCEPTION 'Service role must retain server-side game room read/write privileges';
+  END IF;
 END $$;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
 DO $$
