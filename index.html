@@ -1269,6 +1269,7 @@ img,video,canvas{max-width:100%}
         let currentDirectMessages=[],currentDirectReplyTarget=null,directReplySchemaAvailable=false;
         let currentMarketMessages=[],currentMarketReplyTarget=null,marketReplySchemaAvailable=false;
         let marketMessageSendInFlight = false;
+        let marketMessagesRequestId = 0;
         let marketConversationChannel = null;
         let marketInboxChannel = null;
         let currentActiveCommentPostId = null;
@@ -3003,15 +3004,19 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 
         async function loadMarketMessages() {
+            const requestId=++marketMessagesRequestId,conversationId=String(currentMarketConversationId||'');
             const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
-            if(!holder||!me||!currentMarketConversationId)return;
+            if(!holder||!me||!conversationId||requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
-            let rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
+            let rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=500`);
+            if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             marketReplySchemaAvailable=Array.isArray(rows);
-            if(!Array.isArray(rows))rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
+            if(!Array.isArray(rows))rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=500`);
+            if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:16px;font-size:11px;">تعذر تحميل رسائل السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
             currentMarketMessages=rows;
-            await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';renderMarketReplyPreview();return;}
             const messageMap=new Map(rows.map(row=>[String(row.id),row]));
             holder.innerHTML=rows.map(row=>{
@@ -3109,7 +3114,7 @@ async function subscribeToMarketConversation() {
             const titleEl=document.getElementById('market-chat-title');if(titleEl)titleEl.textContent=title||'إعلان السوق';
             modal.classList.add('is-open');modal.style.display='flex';document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();await loadMarketMessages();await subscribeToMarketConversation();const input=document.getElementById('market-chat-input');if(input){input.onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMarketMessage();}};input.focus({preventScroll:true});}
         }
-        function closeMarketConversationChat() {currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();
+        function closeMarketConversationChat() {marketMessagesRequestId++;currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();
             const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
             if(marketConversationChannel&&supabaseClient){supabaseClient.removeChannel(marketConversationChannel).catch(()=>{});marketConversationChannel=null;}
             currentMarketConversationId='';syncAlwahaModalBodyLock();window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();
