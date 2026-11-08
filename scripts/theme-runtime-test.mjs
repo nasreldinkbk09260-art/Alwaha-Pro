@@ -14,6 +14,7 @@ vm.createContext(context);vm.runInContext(match[0]+'\nthis.changeAppTheme=change
 const expected={oasis:'#143a43',abyss:'#062b45'};
 for(const [id,color] of Object.entries({oasis:'#143a43',abyss:'#062b45'})){const marker=`body[data-alwaha-theme="${id}"] #alwaha-theme-backdrop{background-image:radial-gradient`;if(!themeCss.includes(marker))throw Error('Missing premium CSS atmosphere '+id);if(themeCss.includes(`url('./assets/backgrounds/bg-${id==='oasis'?'aurora':'underwater'}.webp')`))throw Error('Theme still depends on a decorative image '+id);}
 if(!themeCss.includes('linear-gradient(145deg,#061a23')||!themeCss.includes('linear-gradient(145deg,#041323'))throw Error('Premium layered theme backgrounds missing');
+if(!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))throw Error('Original default nebula is not precached');
 for(const old of ['bg-spring.webp','bg-summer.webp','bg-autumn.webp','bg-winter.webp'])if(sw.includes(old))throw Error('Unused seasonal image remains cached: '+old);
 if(!themeCss.includes('z-index:0!important')||!themeCss.includes('pointer-events:none!important'))throw Error('Backdrop may intercept app interactions');
 if(!html.includes('body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}'))throw Error('UI layer above backdrop is missing');
@@ -30,4 +31,4 @@ for(const id of Object.keys(expected)){const v=context.changeAppTheme(id,false);
 const ev=events.length,mut=classMutations;context.changeAppTheme('abyss',false);if(events.length!==ev||classMutations!==mut)throw Error('No-op theme selection mutated state');
 for(const [legacy,wanted] of [['nature','oasis'],['spring','oasis'],['summer','oasis'],['autumn','oasis'],['tech','abyss'],['winter','abyss'],['soft','default']])if(context.changeAppTheme(legacy,false)!==wanted||stored.get('alwaha_theme')!==wanted)throw Error('Legacy migration failed: '+legacy);
 if(context.changeAppTheme('bad-name',false)!=='default'||stored.get('alwaha_theme')!=='default'||Object.prototype.hasOwnProperty.call(body.dataset,'alwahaTheme'))throw Error('Invalid theme fallback failed');
-console.log('THEME_RUNTIME_AUDIT=PASS (3 themes, legacy migration, single chooser, local precache, persistence, backdrop layering, sound control)');
+console.log('THEME_RUNTIME_AUDIT=PASS (3 themes, legacy migration, single chooser, image-free CSS atmospheres, persistence, backdrop layering, sound control)');
