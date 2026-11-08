@@ -7,6 +7,15 @@ const kids=read('alwaha-kids-room.js');
 const experience=read('alwaha-experience.js');
 const vault=read('alwaha-local-vault.js');
 const html=read('index.html');
+const soundStart=experience.indexOf('function sound(freq=480)');
+const soundEnd=experience.indexOf('function setSoundEnabled',soundStart);
+const soundBody=soundStart>=0&&soundEnd>soundStart?experience.slice(soundStart,soundEnd):'';
+const grabStart=experience.indexOf("nav.addEventListener('pointerdown'");
+const moveStart=experience.indexOf("nav.addEventListener('pointermove'",grabStart);
+const finishStart=experience.indexOf('const finish=',moveStart);
+const grabBody=grabStart>=0&&moveStart>grabStart?experience.slice(grabStart,moveStart):'';
+const moveBody=moveStart>=0&&finishStart>moveStart?experience.slice(moveStart,finishStart):'';
+const finishBody=finishStart>=0?experience.slice(finishStart,experience.indexOf("nav.addEventListener('pointerup'",finishStart)):'';
 const checks=[
  ['retention migration exists and is substantive',migration.length>8000],
  ['marketplace archive migration blocks client hard-delete of listings',archiveMigration.includes('REVOKE DELETE ON TABLE public.products FROM PUBLIC, anon, authenticated')&&archiveMigration.includes('DROP POLICY IF EXISTS products_delete_own')],
@@ -28,16 +37,7 @@ const checks=[
  ['kids room routes sound effects to the remote WebRTC peer',html.includes('window.alwahaPlayCallEffect = (kind=\'tap\') => activeCallManager?.call?.playEffect?.(kind) || false;')&&html.includes('this.peerConnection.addTrack(this.effectsTrack, this.effectsDestination.stream)')&&kids.includes('window.alwahaPlayCallEffect(kind)')],
  ['shared sound track is isolated from microphone mute and is cleaned up at call end',html.includes('this.effectsDestination = this.effectsContext.createMediaStreamDestination()')&&html.includes('this.effectsContext?.close?.()')&&html.includes('this.effectsTrack = null')],
  ['remote WebRTC audio/video tracks are aggregated so shared effects cannot replace microphone or camera streams',html.includes('this.remoteCombinedStream = this.remoteCombinedStream || new MediaStream()')&&html.includes('this.remoteCombinedStream.addTrack(incomingTrack)')&&html.includes('this.remoteAudio.srcObject = combined')&&html.includes('this.remoteVideo.srcObject = combined')],
-const soundStart=experience.indexOf('function sound(freq=480)');
-const soundEnd=experience.indexOf('function setSoundEnabled',soundStart);
-const soundBody=soundStart>=0&&soundEnd>soundStart?experience.slice(soundStart,soundEnd):'';
-const grabStart=experience.indexOf("nav.addEventListener('pointerdown'");
-const moveStart=experience.indexOf("nav.addEventListener('pointermove'",grabStart);
-const finishStart=experience.indexOf('const finish=',moveStart);
-const grabBody=grabStart>=0&&moveStart>grabStart?experience.slice(grabStart,moveStart):'';
-const moveBody=moveStart>=0&&finishStart>moveStart?experience.slice(moveStart,finishStart):'';
-const finishBody=finishStart>=0?experience.slice(finishStart,experience.indexOf("nav.addEventListener('pointerup'",finishStart)):'';
-check('navigation group drag reuses one AudioContext, rate-limits at 85ms, and keeps grab/drop cues on pointer lifecycle',experience.includes('let audioContext=null,lastSoundAt=0')&&soundBody.includes('audioContext=audioContext||new C()')&&soundBody.includes('now-lastSoundAt<85')&&grabBody.includes('sound(560)')&&finishBody.includes('sound(760)')&&!moveBody.includes('sound('));
+ ['navigation group drag reuses one AudioContext, rate-limits at 85ms, and keeps grab/drop cues on pointer lifecycle',experience.includes('let audioContext=null,lastSoundAt=0')&&soundBody.includes('audioContext=audioContext||new C()')&&soundBody.includes('now-lastSoundAt<85')&&grabBody.includes('sound(560)')&&finishBody.includes('sound(760)')&&!moveBody.includes('sound(')],
  ['kids room plays the distinct numeric pitches requested by interactions',kids.includes("typeof kind==='number'?Math.max(120,Math.min(1800,kind))")],
  ['kids room resets key/lock/score/filter for each session',kids.includes('keyCollected=false;doorUnlocked=false;score=0;filterIndex=0')],
  ['kids room uses camera colour filters rather than pretending face tracking',kids.includes('ألوان الكاميرا')],
