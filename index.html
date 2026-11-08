@@ -4016,12 +4016,11 @@ async function submitNewProductToMarket() {
             if(window.__alwahaMarketProductSubmitInFlight)return;
             window.__alwahaMarketProductSubmitInFlight=true;
             const button=document.getElementById('market-submit-product-btn');
-            const previousLabel=button?.textContent||'نشر الإعلان الآن';
             if(button){button.disabled=true;button.textContent='جارٍ حفظ الإعلان…';}
             try{return await submitNewProductToMarketInternal();}
             finally{
                 window.__alwahaMarketProductSubmitInFlight=false;
-                if(button){button.disabled=false;button.textContent=editingMarketProductId?'حفظ التعديلات':previousLabel;}
+                if(button){button.disabled=false;button.textContent=editingMarketProductId?'حفظ التعديلات':'نشر الإعلان الآن';}
             }
         }
 
