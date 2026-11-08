@@ -1288,6 +1288,7 @@ img,video,canvas{max-width:100%}
         let exitModalHistoryGuarded = false;
         let privacyNoticePreviousFocus = null;
         let notificationChannel = null;
+        let notificationRenderRequestId = 0;
 
         function changeAppTheme(themeName, showToast = true) {
             const legacyThemeMap = { nature: 'spring', tech: 'summer', soft: 'winter' };
@@ -2064,9 +2065,19 @@ function handleRegisterAvatarPick() {
 
 async function toggleInternalNotificationCenter() {
             const center=document.getElementById('internal-notification-center');if(!center)return;
-            if(center.classList.contains('alwaha-notifications-open')){center.classList.remove('alwaha-notifications-open');center.style.display='none';window.AlwahaModalShell?.sync?.();return;}
+            if(center.classList.contains('alwaha-notifications-open')){
+                notificationRenderRequestId++;
+                center.classList.remove('alwaha-notifications-open');
+                center.style.display='none';
+                window.AlwahaModalShell?.sync?.();
+                return;
+            }
+            const me=await requireAuthenticatedUser('سجّل الدخول أولاً لعرض التنبيهات.');
+            if(!me)return;
             if(center.parentElement!==document.body)document.body.appendChild(center);
-            center.classList.add('alwaha-notifications-open');center.style.display='flex';document.body.classList.add('modal-active');
+            center.classList.add('alwaha-notifications-open');
+            center.style.display='flex';
+            document.body.classList.add('modal-active');
             await renderInternalNotificationCenter();
         }
         async function refreshAlwahaNotificationBadge(){
@@ -2074,7 +2085,13 @@ async function toggleInternalNotificationCenter() {
             const me=await getCurrentAuthUser();
             if(!me){badges.forEach(el=>{if(el){el.textContent='';el.style.display='none';}});return 0;}
             const rows=await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false&select=id&limit=100`);
-            const count=Array.isArray(rows)?rows.length:0;
+            if(!Array.isArray(rows)){
+                console.warn('[Alwaha Notifications] Badge refresh failed; retaining the last known count.',window.__alwahaLastApiError||{});
+                const previous=badges.find(el=>el&&el.textContent.trim())?.textContent.trim()||'0';
+                const number=previous==='99+'?100:(Number(previous)||0);
+                return number;
+            }
+            const count=rows.length;
             badges.forEach(el=>{if(!el)return;el.textContent=count>99?'99+':String(count);el.style.display=count?'inline-block':'none';el.setAttribute('aria-label',count+' إشعار غير مقروء');});
             return count;
         }
@@ -2098,14 +2115,16 @@ async function toggleInternalNotificationCenter() {
             const result = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
             if (result === null) return triggerToastNotification('تعذر تحديث الإشعارات.', 'error');
             await refreshAlwahaNotificationBadge();
-            await renderInternalNotificationCenter();
+            const center=document.getElementById('internal-notification-center');
+            if(center?.classList.contains('alwaha-notifications-open'))await renderInternalNotificationCenter();
         }
 
         async function renderInternalNotificationCenter() {
             const center = document.getElementById('internal-notification-center');
-            if (!center) return;
+            if (!center || !center.classList.contains('alwaha-notifications-open')) return;
+            const requestId=++notificationRenderRequestId;
             const me = await requireAuthenticatedUser('سجل الدخول أولاً لعرض التنبيهات.');
-            if (!me) return;
+            if (!me || requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open')) return;
             if(center.parentElement!==document.body)document.body.appendChild(center);
             center.classList.add('alwaha-notifications-open');
             center.style.display = 'flex';
@@ -2115,6 +2134,7 @@ async function toggleInternalNotificationCenter() {
                 supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`),
                 supabaseFetch(`friend_requests?target_id=eq.${encodeURIComponent(me.id)}&status=eq.pending&select=id,requester_id,created_at&order=created_at.desc&limit=30`)
             ]);
+            if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             const notificationRows=Array.isArray(rows)?rows:[];
             if (!Array.isArray(rows)) console.warn('Notification rows unavailable; still displaying pending friend requests.',window.__alwahaLastApiError||{});
             const parts = notificationRows.length ? notificationRows.map(n => {
@@ -2138,13 +2158,16 @@ async function toggleInternalNotificationCenter() {
             if(Array.isArray(pendingFriendRequests)&&pendingFriendRequests.length){
                 const requesterIds=[...new Set(pendingFriendRequests.map(r=>r.requester_id).filter(Boolean))];
                 const requesterQuery=requesterIds.length?await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`):[];
+                if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
                 const requesterMap=new Map((Array.isArray(requesterQuery)?requesterQuery:[]).map(u=>[String(u.id),u]));
                 directFriendRequestHtml=`<section aria-label="طلبات الصداقة المعلقة" style="padding:8px 10px;background:rgba(115,30,63,.18);border-bottom:1px solid rgba(210,90,130,.22);"><div style="font-size:12px;font-weight:700;color:#f3aec6;padding:4px 0 8px;">طلبات صداقة بانتظار ردك (${pendingFriendRequests.length})</div>${pendingFriendRequests.map(r=>{const u=requesterMap.get(String(r.requester_id))||{};const name=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';return `<div data-friend-request-id="${escapeJs(r.id)}" style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);"><img src="${escapeHtml(u.avatar_url||'icon.png')}" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%;"><div style="flex:1;min-width:0;color:#eee;font-size:11px;">${escapeHtml(name)}<div style="color:#999;font-size:9px;margin-top:3px;">${escapeHtml(r.created_at?new Date(r.created_at).toLocaleString('ar-EG'):'طلب صداقة')}</div></div><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#00b978;color:#07140f;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#5b2435;color:#fff;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>`;}).join('')}</section>`;
             }
             const profile = await getCurrentProfile();
+            if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             let adminHtml = '';
             if (profile?.is_admin) {
                 const pending = await supabaseFetch('verification_requests?status=eq.pending&select=id,user_id,reason,category,extra_details,profile_url,created_at&order=created_at.desc&limit=30');
+                if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
                 let pendingCards;
                 if (!Array.isArray(pending)) {
                     pendingCards = '<div style="padding:12px;color:#ffb8dd;font-size:11px;text-align:center;">تعذر تحميل طلبات التوثيق.</div>';
@@ -2169,6 +2192,7 @@ async function toggleInternalNotificationCenter() {
                     ${pendingCards}
                 </section>`;
             }
+            if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
 
         }
