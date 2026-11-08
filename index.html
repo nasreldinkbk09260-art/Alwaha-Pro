@@ -4270,7 +4270,11 @@ async function renderMyPersonalMarketItems() {
             const container=document.getElementById('my-market-items-container');if(!container)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
-            const rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
+            let rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
+            if(!Array.isArray(rows)&&[400,404].includes(Number(window.__alwahaLastApiError?.status||0))){
+                rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc`);
+                if(Array.isArray(rows))rows=rows.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:'active'}));
+            }
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
@@ -4287,7 +4291,11 @@ async function renderMyPersonalMarketItems() {
         }
         async function editMyMarketItem(productId) {
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل إعلان.');if(!user)return;
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
+            let rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
+            if(!Array.isArray(rows)&&[400,404].includes(Number(window.__alwahaLastApiError?.status||0))){
+                rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(user.id)}&select=id,seller_id,title,price,category,description,image_url&limit=1`);
+                if(Array.isArray(rows))rows=rows.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:'active'}));
+            }
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
