@@ -1296,6 +1296,7 @@ img,video,canvas{max-width:100%}
         let marketSearchLatitude = null;
         let marketSearchLongitude = null;
         let marketLifecycleSchemaReady = null;
+        let marketLifecycleSchemaPromise = null;
         let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
         let reelRecorder = null;
         let reelRecorderChunks = [];
@@ -3981,13 +3982,15 @@ async function renderConversationsList() {
 
 async function detectMarketLifecycleSchema() {
             if(marketLifecycleSchemaReady!==null)return marketLifecycleSchemaReady;
-            // Do not block the product grid on a separate schema probe; the real listing query
-            // verifies these optional columns and updates the state when it succeeds.
-            marketLifecycleSchemaReady=false;
-            supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until&limit=1')
-              .then(probe=>{if(Array.isArray(probe))marketLifecycleSchemaReady=true;})
-              .catch(()=>{});
-            return marketLifecycleSchemaReady;
+            if(marketLifecycleSchemaPromise)return marketLifecycleSchemaPromise;
+            marketLifecycleSchemaPromise=(async()=>{
+                const probe=await supabaseFetch('products?select=id,status,location_label,latitude,longitude,promoted_until&limit=1');
+                if(Array.isArray(probe)){marketLifecycleSchemaReady=true;return true;}
+                const status=Number(window.__alwahaLastApiError?.status||0);
+                if(status===400||status===404)marketLifecycleSchemaReady=false;
+                return false;
+            })().catch(()=>false).finally(()=>{marketLifecycleSchemaPromise=null;});
+            return marketLifecycleSchemaPromise;
         }
         function requestLocationOnce(onSuccess,onError) {
             if(!navigator.geolocation)return onError?.(new Error('Geolocation unsupported'));
@@ -4112,12 +4115,14 @@ async function submitNewProductToMarket() {
             let products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
             // Backward compatibility: if optional columns/migrations are absent, load legacy products.
             const queryError=window.__alwahaLastApiError||{};
+            let usedLegacyMarketQuery=false;
             if(!Array.isArray(products) && (queryError.status===400 || queryError.status===404)) {
+                usedLegacyMarketQuery=true;
                 products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc&limit=120');
                 if(Array.isArray(products)) products=products.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:p.status||'active'}));
             }
             if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
-            marketLifecycleSchemaReady=true;
+            marketLifecycleSchemaReady=!usedLegacyMarketQuery;
             if(!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
             const q=String(searchQuery||'').trim().toLowerCase();
             const radiusValue=document.getElementById('market-radius-select')?.value||'all';
