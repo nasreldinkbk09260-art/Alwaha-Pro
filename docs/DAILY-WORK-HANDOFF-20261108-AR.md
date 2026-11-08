@@ -332,3 +332,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## حماية المزامنة من الردود الأقدم لنفس الغرفة
 
 أثناء مراجعة تدفق انضمام اللاعب الثاني والحركات السريعة اكتُشف أن حارس polling السابق كان يتحقق من معرّف الغرفة/جيل الجلسة فقط، ولا يمنع ردًا متأخرًا لنفس الغرفة من إعادة الحالة إلى نسخة أقدم. أضيفت مقارنة `move_no`، ثم مقارنة `updated_at` عند تساوي رقم الحركة؛ أي snapshot أقدم يتم تجاهله قبل تحديث `SESSION.room`. هذا يحمي حالة انضمام اللاعب الثاني أيضًا عندما يبقى رقم الحركة ثابتًا لكن `updated_at` يتقدم. أضيف assertion لانحدار الحالتين. كما تم تحديث اختبار الشطرنج ليشمل تعطيل الرقعة أثناء `SESSION.busy`.
+
+
+## توحيد آخر Assertion لكاش QR والمزامنة
+
+أظهر CI أن نسخة assertion في `game-actions-audit.mjs` بقيت على namespace `qr-roundtrip-games-controls` بينما Service Worker واختبارات التوافق الأخرى تستخدم `qr-roundtrip-poll-version-guard`. تم تحديث assertion والتسمية لتطابق الكاش النشط؛ لم يتغير runtime أو SQL.
