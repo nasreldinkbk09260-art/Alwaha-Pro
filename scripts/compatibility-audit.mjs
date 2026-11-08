@@ -27,7 +27,7 @@ for (const [label, condition] of [
   ['service worker precaches compatibility module', sw.includes("'./compatibility.js'")],
   ['both complete ringtone files are precached locally for offline use', sw.includes("'./assets/sounds/saffron_tide.mp3'") && sw.includes("'./assets/sounds/marimba_bloom.mp3'")],
   ['ringtone preview plays the full selected local file without short synthesized fallback', polish.includes("audio.preload = 'auto'") && polish.includes('audio.loop = !preview') && polish.includes("audio.addEventListener('ended'") && !polish.includes('playLayeredRingtone(preview)')],
-  ['service worker cache namespace changed', sw.includes('3.0.3-final-20261107')],
+  ['service worker cache namespace matches the active 3.0.3 three-theme cache', sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-css'")],
   ['CI runs compatibility audit', workflow.includes('npm run audit:compatibility')]
 ]) condition ? pass(label) : fail(label);
 const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
