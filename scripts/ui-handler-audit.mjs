@@ -22,5 +22,5 @@ const forbidden=['toggleFreeMeshShareSystem','free-mode-toggle-main-btn','local-
 for(const marker of forbidden){if(html.includes(marker))throw new Error(`Removed local-network control returned: ${marker}`);}
 console.log('PASS: removed local-network controls remain absent.');
 const chessEngine=fs.readFileSync('assets/chess.min.js','utf8');
-if(/\\bexport\\s*\\{/.test(chessEngine)||!chessEngine.includes("window.Chess=Chess"))throw new Error('Chess engine must expose window.Chess for the classic games runtime.');
+if(/\bexport\s*\{/.test(chessEngine)||!chessEngine.includes("window.Chess=Chess"))throw new Error('Chess engine must expose window.Chess for the classic games runtime.');
 console.log('PASS: chess engine is compatible with the classic games runtime.');
