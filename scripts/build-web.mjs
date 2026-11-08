@@ -39,7 +39,11 @@ for (const vendor of qrVendors) {
   if (!fs.existsSync(source) || !fs.existsSync(license)) {
     throw new Error('Missing pinned offline QR vendor source or license: ' + vendor.source);
   }
-  const result = await transform(fs.readFileSync(source, 'utf8'), {
+  let sourceCode = fs.readFileSync(source, 'utf8');
+  if (vendor.output === 'qrcode-generator.min.js') {
+    sourceCode += '\n; if (typeof window !== \'undefined\') window.qrcode = qrcode;\n';
+  }
+  const result = await transform(sourceCode, {
     loader: 'js',
     minify: true,
     target: ['es2018'],
