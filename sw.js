@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-smart-assistant';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -20,10 +20,8 @@ const PRECACHE_ASSETS = [
   './assets/sounds/saffron_tide.mp3',
   './assets/sounds/marimba_bloom.mp3',
   './assets/backgrounds/bg-nebula.webp',
-  './assets/backgrounds/bg-spring.webp',
-  './assets/backgrounds/bg-summer.webp',
-  './assets/backgrounds/bg-autumn.webp',
-  './assets/backgrounds/bg-winter.webp',
+  './assets/backgrounds/bg-aurora.webp',
+  './assets/backgrounds/bg-underwater.webp',
   './assets/vendor/fontawesome/css/all.min.css',
   './assets/vendor/supabase/supabase.js',
   './assets/vendor/cairo/300.css',
