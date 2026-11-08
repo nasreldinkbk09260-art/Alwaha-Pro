@@ -22,6 +22,12 @@
     style.textContent = `
       /* ALWAHA FIELD REPAIR: viewport-safe room dialog and legacy WebView fallback */
       .game-modal-overlay{position:fixed!important;inset:0!important;width:100%!important;height:100vh!important;z-index:2147482500!important;align-items:center!important;justify-content:center!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important;padding:12px!important}
+      .alwaha-game-page.game-modal-overlay{align-items:stretch!important;justify-content:stretch!important;overflow:hidden!important;padding:0!important;background:rgba(3,8,17,.97)!important;}
+      .alwaha-game-page>.game-modal-card{display:flex!important;flex-direction:column!important;width:100vw!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0!important;overflow:hidden!important;box-sizing:border-box!important;padding:calc(10px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;}
+      .alwaha-game-page #mp-room-stage{flex:1 1 auto!important;min-height:0!important;width:100%!important;overflow:auto!important;overscroll-behavior:contain!important;padding:4px 0!important;}
+      .alwaha-game-page #mp-room-meta{flex:0 0 auto!important;}
+      .alwaha-game-page .mp-help{flex:0 0 auto!important;max-height:72px!important;overflow:auto!important;}
+      @supports(height:100dvh){.alwaha-game-page>.game-modal-card{height:100dvh!important;}}
       #alwaha-multiplayer-room .game-modal-card{width:calc(100vw - 24px)!important;max-width:480px!important;max-height:calc(100vh - 24px)!important;margin:auto!important;overflow-y:auto!important;box-sizing:border-box!important}
       @supports(height:100dvh){.game-modal-overlay{height:100dvh!important}#alwaha-multiplayer-room .game-modal-card{max-height:calc(100dvh - 24px)!important}}
 
@@ -180,10 +186,10 @@
     addStyles();
     let modal = $('alwaha-multiplayer-room');
     if (modal) modal.remove();
-    modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay';
+    modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay alwaha-fullscreen-layer alwaha-game-page';
     modal.innerHTML = `<div class="game-modal-card" style="width:calc(100vw - 24px);max-width:480px;max-height:calc(100vh - 24px);margin:auto;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="إغلاق غرفة اللعبة">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
     modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'mp-room-title'); modal.setAttribute('tabindex', '-1');
-    document.body.appendChild(modal); document.body.classList.add('modal-active');
+    document.body.appendChild(modal); modal.classList.add('is-open'); document.body.classList.add('modal-active');
     window.AlwahaModalShell?.sync?.();
     $('mp-room-close').onclick = closeRoom;
     modal.addEventListener('click', ev => { if (ev.target === modal) closeRoom(); });
