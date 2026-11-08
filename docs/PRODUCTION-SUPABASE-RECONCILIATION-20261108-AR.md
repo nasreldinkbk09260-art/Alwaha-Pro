@@ -3,13 +3,17 @@
 > جرد للقراءة فقط؛ لم تُنفذ أي كتابة أو ترحيل أو تعديل بيانات على قاعدة الإنتاج.
 
 ## سجل الترحيلات
-- يحتوي الفرع 27 ملف SQL ضمن supabase/migrations، وسجل الإنتاج يحتوي 29 إصداراً.
+- يحتوي الفرع 31 ملف SQL ضمن supabase/migrations، وسجل الإنتاج يحتوي 29 إصداراً.
 - 23 إصداراً متطابقاً بين المصدر والسجل الحي.
-- أربعة ملفات مصدر لم تظهر مطبقة في الإنتاج:
+- ثمانية ملفات مصدر لم تظهر مطبقة في الإنتاج:
   - 20261101210000_marketplace_transaction_archive_and_call_auth.sql
   - 20261102010000_legacy_client_privileges_hardening.sql
   - 20261102100000_marketplace_retention_policy_and_cleanup.sql
   - 20261102150000_products_seller_email_privacy.sql
+- 20261108100000_server_authoritative_game_actions.sql
+- 20261108110000_marketplace_retention_two_party_consent.sql
+- 20261108120000_real_chat_message_replies.sql
+- 20261108130000_friend_request_acceptance_notification.sql
 - إصداران مسجلان كمطبقين في الإنتاج ولم نعثر على ملفيهما أو على commits لهما في مسار المستودع:
   - 20261011184718_alwaha_profile_privacy_clean_start.sql
   - 20261011184813_verification_request_profile_requirements.sql
@@ -23,6 +27,14 @@
 - سياسة products_delete_own ما زالت موجودة، وصلاحية DELETE على public.products ما زالت ممنوحة إلى authenticated.
 - سياسات realtime.messages الحية تحتوي مسارات مكالمات الصداقة القديمة ولا تحتوي market-call-inbox- أو market-call-room-.
 - لذلك لا يجوز إعلان البيع الموثق أو لقطة الإعلان أو الضمان أو الاحتفاظ الآلي أو مكالمات السوق مكتملة إنتاجياً قبل مراجعة واعتماد الترحيلات وتشغيل اختبارات تكامل عليها.
+
+
+## ترحيلات 3.0.3 الجديدة غير المنشورة
+- `20261108100000_server_authoritative_game_actions.sql`: ينقل إنشاء الغرف وحركات الألعاب إلى Edge Function ويتحقق من دور اللاعب ورقم الحركة ويمنع الكتابة المباشرة في game_rooms.
+- `20261108110000_marketplace_retention_two_party_consent.sql`: يمنع الحذف التلقائي؛ يتطلب موافقة منفصلة قابلة للسحب من المشتري والبائع بعد الإشعار والمهلة.
+- `20261108120000_real_chat_message_replies.sql`: يضيف reply_to_id ويمنع RLS الرد على رسالة من زوج محادثة آخر أو من محادثة سوق مختلفة.
+- `20261108130000_friend_request_acceptance_notification.sql`: يرسل لصاحب الطلب إشعاراً واحداً عند قبول الصداقة.
+- هذه الملفات اجتازت اختبارات PostgreSQL المعزولة عندما يكتمل CI، لكنها لم تُطبّق على قاعدة الإنتاج. لا تفترض أن وظائفها متاحة للمستخدمين الفعليين قبل النشر والتحقق.
 
 ## ما تأكد أنه محمي حالياً
 - عمود products.seller_email موجود، لكن authenticated لا يملك SELECT عليه، ويوجد trigger حي باسم products_clear_public_email. لم أضف إصلاحاً مكرراً لهذا المسار.
