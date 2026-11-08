@@ -2430,25 +2430,49 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
         }
 
         async function shareTextContent(title, text) {
-            try {
-                if (navigator.share) {
-                    await navigator.share({ title, text, url: window.location.href });
-                } else if (navigator.clipboard?.writeText) {
-                    await navigator.clipboard.writeText(window.location.href);
-                    triggerToastNotification('تم نسخ رابط المشاركة.', 'success');
-                } else {
-                    triggerToastNotification('المشاركة غير مدعومة على هذا الجهاز.', 'info');
-                }
-            } catch (e) {}
+            const url=window.location.href;
+            const shareText=[String(text||'').trim(),url].filter(Boolean).join('\n\n');
+            if(typeof navigator.share==='function'){
+                try{await navigator.share({title:String(title||'Alwaha-Pro'),text:String(text||''),url});return;}
+                catch(error){if(error?.name==='AbortError')return;console.warn('[Alwaha Share] Native share failed:',error);}
+            }
+            if(navigator.clipboard?.writeText){
+                try{await navigator.clipboard.writeText(shareText);triggerToastNotification('تم نسخ نص المنشور ورابطه للمشاركة.','success');return;}
+                catch(error){console.warn('[Alwaha Share] Clipboard fallback failed:',error);}
+            }
+            triggerToastNotification('تعذرت المشاركة من هذا الجهاز. يمكنك نسخ النص والرابط يدويًا.','error');
         }
 
 async function togglePostLike(id) {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لإضافة إعجاب.'); if(!user) return;
-            const existing=await supabaseFetch(`post_likes?post_id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(user.id)}&select=post_id&limit=1`);
-            let ok;
-            if(Array.isArray(existing)&&existing.length){ok=await supabaseFetch(`post_likes?post_id=eq.${encodeURIComponent(id)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'});}else{ok=await supabaseFetch('post_likes',{method:'POST',body:JSON.stringify({post_id:Number(id),user_id:user.id}),prefer:'return=minimal'});}
-            if(ok===null) return triggerToastNotification('تعذر تحديث الإعجاب.','error');
- renderHomePostsFeed();
+            const postId=String(id||'');
+            if(!postId)return;
+            const locks=window.__alwahaPostLikeLocks||(window.__alwahaPostLikeLocks=new Set());
+            if(locks.has(postId))return;
+            locks.add(postId);
+            const button=document.getElementById('like-btn-'+postId);
+            if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
+            try{
+                const user=await requireAuthenticatedUser('سجل الدخول أولاً لإضافة إعجاب.');
+                if(!user)return;
+                const existing=await supabaseFetch(`post_likes?post_id=eq.${encodeURIComponent(postId)}&user_id=eq.${encodeURIComponent(user.id)}&select=post_id&limit=1`);
+                if(!Array.isArray(existing)){
+                    triggerToastNotification('تعذر التحقق من حالة الإعجاب. لم نرسل طلبًا جديدًا لتجنب التكرار.','error');
+                    return;
+                }
+                const liked=existing.length>0;
+                const result=liked
+                    ? await supabaseFetch(`post_likes?post_id=eq.${encodeURIComponent(postId)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'})
+                    : await supabaseFetch('post_likes',{method:'POST',body:JSON.stringify({post_id:Number(postId),user_id:user.id}),prefer:'return=minimal'});
+                if(result===null){triggerToastNotification('تعذر تحديث الإعجاب. تحقق من الاتصال ثم أعد المحاولة.','error');return;}
+                triggerToastNotification(liked?'تم إزالة إعجابك.':'تم تسجيل إعجابك.','success');
+                await renderHomePostsFeed();
+            }catch(error){
+                console.warn('[Alwaha Post Like] Action failed:',error);
+                triggerToastNotification('حدث خطأ أثناء تحديث الإعجاب. حاول مرة أخرى.','error');
+            }finally{
+                locks.delete(postId);
+                if(button){button.disabled=false;button.removeAttribute('aria-busy');}
+            }
         }
 
         function handleHomePostCardActivation(postId, event) {
