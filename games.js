@@ -7,7 +7,7 @@
     ludo: { title: 'ليدو', icon: '🎲', color: '#00e0a4', description: 'ليدو لشخصين: رمي النرد، إخراج القطع، أكل قطع الخصم والوصول إلى النهاية.' },
     war: { title: 'الكتشينة — حرب الورق', icon: '🂡', color: '#ffd166', description: 'ورق لعب قياسي؛ أعلى ورقة تفوز بالجولة، والتعادل يفعّل الحرب.' }
   };
-  const SESSION = { room: null, user: null, timer: null, loading: false, pollGeneration: 0, syncFailed: false, roomActionBusy: false, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
+  const SESSION = { room: null, user: null, timer: null, loading: false, pollGeneration: 0, syncFailed: false, roomActionBusy: false, qrScanner: null, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
   const toast = (message, type = 'info') => {
@@ -35,6 +35,21 @@
       .mp-game-card{border:1px solid #ffffff20;background:linear-gradient(145deg,#142033,#0c111d);border-radius:16px;padding:14px;min-width:0}
       .mp-game-icon{font-size:34px;margin-bottom:7px}.mp-game-title{font-size:16px;color:#fff;font-weight:900}.mp-game-desc{font-size:11px;line-height:1.8;color:#b7c1d1;min-height:43px;margin:7px 0 11px}
       .mp-action{border:0;border-radius:10px;padding:9px 12px;font-family:inherit;font-weight:800;font-size:11px;cursor:pointer;margin:3px;max-width:100%}
+      .mp-join-code-form{display:grid;gap:8px;margin:10px 0 2px;padding:11px;border:1px solid #70d6ff55;border-radius:13px;background:linear-gradient(145deg,#14263b,#0d1726)}
+      .mp-join-code-form label{font-size:11px;font-weight:900;color:#e8f4ff}
+      .mp-join-code-form input{width:100%;min-width:0;box-sizing:border-box;border:1px solid #70d6ff65;border-radius:10px;background:#071321;color:#fff;padding:11px 12px;text-align:center;letter-spacing:4px;font:800 17px Cairo,sans-serif;text-transform:uppercase;outline:none}
+      .mp-join-code-form input:focus{border-color:#70d6ff;box-shadow:0 0 0 3px #70d6ff22}
+      .mp-join-code-actions{display:flex;gap:6px;flex-wrap:wrap}.mp-join-code-actions button{flex:1 1 105px;margin:0}
+      .mp-join-code-help{font-size:9px;line-height:1.7;color:#aebed1;margin:0}
+      .mp-room-qr-panel{display:grid;justify-items:center;gap:7px;margin:10px auto;padding:12px;width:min(100%,270px);box-sizing:border-box;background:#fff;border-radius:15px;color:#182333}
+      .mp-room-qr-panel img{display:block;width:min(100%,220px);height:auto;aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+      .mp-room-qr-panel p{margin:0;color:#26364c;font:700 10px/1.7 Cairo,sans-serif;text-align:center}
+      #mp-room-code-value{width:min(100%,230px);box-sizing:border-box;font:900 23px Cairo,sans-serif;letter-spacing:5px;color:#ffd166;background:#0005;border:1px dashed #ffd16670;border-radius:12px;padding:8px;text-align:center;user-select:all}
+      .mp-qr-camera-shell{position:relative;width:100%;max-height:58dvh;min-height:220px;overflow:hidden;border:1px solid #70d6ff55;border-radius:18px;background:#000}
+      .mp-qr-camera-shell video{display:block;width:100%;height:min(58dvh,470px);min-height:220px;object-fit:cover;background:#000}
+      .mp-qr-scan-frame{position:absolute;inset:16% 13%;border:3px solid #70d6ff;border-radius:20px;box-shadow:0 0 0 999px #0005,inset 0 0 18px #70d6ff55;pointer-events:none}
+      .mp-qr-scanner-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.mp-qr-scanner-actions button{min-width:125px}
+      .alwaha-game-qr-scanner>.game-modal-card{gap:9px}.alwaha-game-qr-scanner #mp-qr-scan-status{margin:4px 0}
       .mp-create{background:#00e0a4;color:#001b15}.mp-join{background:#70d6ff;color:#07151c}.mp-muted{background:#ffffff12;color:#fff;border:1px solid #ffffff25}
       .mp-room-code{font-size:26px;letter-spacing:5px;font-weight:900;color:#ffd166;background:#0005;border:1px dashed #ffd16670;border-radius:12px;padding:9px;text-align:center;user-select:text}
       .mp-room-meta{font-size:11px;color:#d2d9e3;line-height:1.9;margin:8px 0}
@@ -92,7 +107,7 @@
     }
     SESSION.roomActionBusy = true;
     const container = $('games-list-container');
-    const controls = container ? [...container.querySelectorAll('[data-mp-create],[data-mp-join]')] : [];
+    const controls = container ? [...container.querySelectorAll('[data-mp-create],[data-mp-join],.mp-join-code-form input,.mp-join-code-form button')] : [];
     const previous = controls.map(control => ({
       disabled: control.disabled,
       ariaBusy: control.getAttribute('aria-busy'),
@@ -137,21 +152,205 @@
       releaseAction();
     }
   }
-  async function joinRoom(gameId, button = null) {
+  function parseGameQrPayload(value) {
+    const match = String(value || '').trim().match(/^ALWAHA-GAME\|1\|(chess|ludo|war)\|([A-HJ-NP-Z2-9]{6})$/);
+    return match ? { gameId: match[1], code: match[2] } : null;
+  }
+  function showJoinCodeForm(gameId, button) {
+    if (!GAME_INFO[gameId] || !button) return;
+    const card = button.closest('.mp-game-card');
+    if (!card) return;
+    let form = card.querySelector('.mp-join-code-form');
+    if (form) {
+      form.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      form.querySelector('input')?.focus();
+      return;
+    }
+    form = document.createElement('form');
+    form.className = 'mp-join-code-form';
+    form.dataset.mpJoinForm = gameId;
+    const inputId = 'mp-join-code-' + gameId;
+    const helpId = 'mp-join-code-help-' + gameId;
+    form.innerHTML =
+      '<label for="' + inputId + '">كود غرفة ' + esc(GAME_INFO[gameId].title) + '</label>' +
+      '<input id="' + inputId + '" name="roomCode" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" minlength="6" pattern="[A-HJ-NP-Z2-9]{6}" placeholder="ABC123" aria-describedby="' + helpId + '" required>' +
+      '<p class="mp-join-code-help" id="' + helpId + '">اكتب الكود المكوّن من 6 أحرف أو أرقام، أو امسح QR بكاميرا الجهاز.</p>' +
+      '<div class="mp-join-code-actions">' +
+      '<button type="submit" class="mp-action mp-create" aria-label="تأكيد الانضمام إلى غرفة ' + esc(GAME_INFO[gameId].title) + '">انضمام</button>' +
+      '<button type="button" class="mp-action mp-muted" data-mp-scan="' + gameId + '" aria-label="مسح QR للانضمام إلى ' + esc(GAME_INFO[gameId].title) + '">مسح QR بالكاميرا</button>' +
+      '<button type="button" class="mp-action mp-muted" data-mp-cancel-join>إلغاء</button></div>';
+    card.appendChild(form);
+    button.setAttribute('aria-expanded', 'true');
+    form.querySelector('input')?.focus();
+  }
+  function stopQrScanner() {
+    const scan = SESSION.qrScanner;
+    if (!scan) return;
+    scan.closed = true;
+    SESSION.qrScanner = null;
+    if (scan.frame) cancelAnimationFrame(scan.frame);
+    if (scan.stream) scan.stream.getTracks().forEach(track => { try { track.stop(); } catch (_) {} });
+    if (scan.video) {
+      try { scan.video.pause(); } catch (_) {}
+      scan.video.srcObject = null;
+    }
+    if (scan.onKeyDown) document.removeEventListener('keydown', scan.onKeyDown, true);
+    if (scan.onVisibility) document.removeEventListener('visibilitychange', scan.onVisibility);
+    if (scan.overlay) scan.overlay.remove();
+    document.body.classList.remove('modal-active');
+    window.AlwahaModalShell?.sync?.();
+    scan.previousFocus?.focus?.();
+  }
+  function setQrScannerStatus(scan, message) {
+    if (SESSION.qrScanner !== scan || scan.closed) return;
+    const status = scan.overlay.querySelector('#mp-qr-scan-status');
+    if (status) status.textContent = message;
+  }
+  function scanQrFrame(scan) {
+    if (SESSION.qrScanner !== scan || scan.closed) return;
+    scan.frame = requestAnimationFrame(() => scanQrFrame(scan));
+    const video = scan.video;
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return;
+    const now = Date.now();
+    if (now - scan.lastFrameAt < 140) return;
+    scan.lastFrameAt = now;
+    const scale = Math.min(1, 720 / video.videoWidth);
+    const width = Math.max(1, Math.round(video.videoWidth * scale));
+    const height = Math.max(1, Math.round(video.videoHeight * scale));
+    scan.canvas.width = width;
+    scan.canvas.height = height;
+    const context = scan.canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return;
+    try {
+      context.drawImage(video, 0, 0, width, height);
+      const frame = context.getImageData(0, 0, width, height);
+      const result = window.jsQR(frame.data, frame.width, frame.height, { inversionAttempts: 'attemptBoth' });
+      if (!result?.data) return;
+      const decoded = parseGameQrPayload(result.data);
+      if (!decoded) {
+        if (now - scan.lastInvalidAt > 1400) {
+          scan.lastInvalidAt = now;
+          setQrScannerStatus(scan, 'هذا الرمز ليس دعوة غرفة صالحة من Alwaha-Pro. وجّه الكاميرا إلى QR الخاص بالغرفة.');
+        }
+        return;
+      }
+      scan.detected = true;
+      const title = GAME_INFO[decoded.gameId]?.title || 'اللعبة';
+      stopQrScanner();
+      toast('تم التعرف على دعوة ' + title + '، جارٍ التحقق من الغرفة...', 'success');
+      void joinRoom(decoded.gameId, null, decoded.code);
+    } catch (error) {
+      if (now - scan.lastErrorAt > 2000) {
+        scan.lastErrorAt = now;
+        setQrScannerStatus(scan, 'تعذرت قراءة الصورة الآن. ثبّت الكاميرا وحاول مرة أخرى.');
+      }
+    }
+  }
+  async function connectQrCamera(scan) {
+    setQrScannerStatus(scan, 'بانتظار إذن الكاميرا...');
+    const retry = scan.overlay.querySelector('#mp-qr-retry');
+    if (retry) retry.hidden = true;
+    try {
+      if (!window.isSecureContext && location.hostname !== 'localhost') {
+        throw new Error('SECURE_CONTEXT_REQUIRED');
+      }
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+        throw new Error('CAMERA_UNAVAILABLE');
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      if (scan.closed || SESSION.qrScanner !== scan) {
+        stream.getTracks().forEach(track => { try { track.stop(); } catch (_) {} });
+        return;
+      }
+      scan.stream = stream;
+      scan.video.srcObject = stream;
+      await scan.video.play();
+      if (SESSION.qrScanner !== scan || scan.closed) return;
+      setQrScannerStatus(scan, 'وجّه كاميرا الجهاز إلى QR الخاص بالغرفة. سيتم الانضمام بعد التحقق من الرمز والخادم.');
+      scan.frame = requestAnimationFrame(() => scanQrFrame(scan));
+    } catch (error) {
+      if (SESSION.qrScanner !== scan || scan.closed) return;
+      let message = 'تعذر فتح الكاميرا. راجع إذن الكاميرا ثم حاول مرة أخرى.';
+      if (error?.message === 'SECURE_CONTEXT_REQUIRED') message = 'مسح QR يحتاج اتصالًا آمنًا HTTPS أو تشغيل التطبيق الأصلي.';
+      else if (error?.message === 'CAMERA_UNAVAILABLE') message = 'ميزة الكاميرا غير متاحة في هذا المتصفح. يمكنك إغلاق هذه الصفحة وإدخال كود الغرفة يدويًا.';
+      else if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') message = 'لم يُسمح باستخدام الكاميرا. فعّل إذن الكاميرا للتطبيق ثم أعد المحاولة.';
+      else if (error?.name === 'NotFoundError') message = 'لم يتم العثور على كاميرا متاحة على هذا الجهاز.';
+      setQrScannerStatus(scan, message);
+      if (retry) retry.hidden = false;
+    }
+  }
+  async function startQrScan() {
+    const user = await requireUser();
+    if (!user) return;
+    if (SESSION.qrScanner) return;
+    if (typeof window.jsQR !== 'function') {
+      toast('قارئ QR المحلي غير جاهز. أغلق التطبيق وافتحه بعد اكتمال تحديثه.', 'error');
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.id = 'alwaha-game-qr-scanner';
+    overlay.className = 'game-modal-overlay alwaha-fullscreen-layer alwaha-game-page alwaha-game-qr-scanner';
+    overlay.innerHTML =
+      '<div class="game-modal-card">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+      '<h2 id="mp-qr-scanner-title" style="margin:0;font:900 17px Cairo,sans-serif;color:#eaf7ff">مسح QR للانضمام إلى لعبة</h2>' +
+      '<button type="button" id="mp-qr-close" class="mp-action mp-muted" aria-label="إغلاق ماسح QR">إغلاق ×</button></div>' +
+      '<div class="mp-status" id="mp-qr-scan-status" role="status" aria-live="polite">جارٍ تجهيز الكاميرا...</div>' +
+      '<div class="mp-qr-camera-shell"><video id="mp-qr-video" autoplay muted playsinline></video><div class="mp-qr-scan-frame" aria-hidden="true"></div></div>' +
+      '<div class="mp-qr-scanner-actions"><button type="button" id="mp-qr-retry" class="mp-action mp-create" hidden>إعادة تشغيل الكاميرا</button>' +
+      '<button type="button" id="mp-qr-cancel" class="mp-action mp-muted">إلغاء المسح</button></div>' +
+      '<p class="mp-help">استخدم كاميرا الجهاز الخلفية. لا يتم حفظ صورة الكاميرا أو إرسالها؛ تتم قراءة QR محليًا على الهاتف فقط.</p>' +
+      '</div>';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'mp-qr-scanner-title');
+    overlay.setAttribute('tabindex', '-1');
+    const scan = {
+      overlay,
+      video: overlay.querySelector('#mp-qr-video'),
+      canvas: document.createElement('canvas'),
+      stream: null,
+      frame: 0,
+      lastFrameAt: 0,
+      lastInvalidAt: 0,
+      lastErrorAt: 0,
+      closed: false,
+      detected: false,
+      previousFocus: document.activeElement,
+      onKeyDown: null,
+      onVisibility: null
+    };
+    SESSION.qrScanner = scan;
+    document.body.appendChild(overlay);
+    overlay.classList.add('is-open');
+    document.body.classList.add('modal-active');
+    window.AlwahaModalShell?.sync?.();
+    overlay.querySelector('#mp-qr-close').onclick = stopQrScanner;
+    overlay.querySelector('#mp-qr-cancel').onclick = stopQrScanner;
+    overlay.querySelector('#mp-qr-retry').onclick = () => void connectQrCamera(scan);
+    scan.onKeyDown = event => { if (event.key === 'Escape') { event.preventDefault(); stopQrScanner(); } };
+    scan.onVisibility = () => { if (document.hidden) stopQrScanner(); };
+    document.addEventListener('keydown', scan.onKeyDown, true);
+    document.addEventListener('visibilitychange', scan.onVisibility);
+    overlay.focus();
+    await connectQrCamera(scan);
+  }
+  async function joinRoom(gameId, button = null, suppliedCode = '') {
     if (!GAME_INFO[gameId]) return toast('نوع اللعبة غير معروف.', 'error');
+    const code = String(suppliedCode || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
+      toast('كود الغرفة غير صحيح. أدخل 6 أحرف أو أرقام أو امسح رمز QR.', 'error');
+      return;
+    }
     const releaseAction = beginRoomAction(button, 'جارٍ الانضمام…');
     if (!releaseAction) return;
     try {
       const user = await requireUser(); if (!user) return;
-      if (typeof window.prompt !== 'function' || typeof window.supabaseFetch !== 'function') {
-        throw new Error('خدمة الانضمام إلى الغرف غير متاحة في هذه النسخة.');
-      }
-      const code = (window.prompt('أدخل كود الغرفة المكوّن من 6 أحرف أو أرقام:') || '').trim().toUpperCase();
-      if (!code) return;
-      if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
-        toast('كود الغرفة غير صحيح.', 'error');
-        return;
-      }
+      if (typeof window.supabaseFetch !== 'function') throw new Error('خدمة الانضمام إلى الغرف غير متاحة في هذه النسخة.');
       const response = await window.supabaseFetch('rpc/join_game_room', {
         method: 'POST',
         body: JSON.stringify({ p_room_code: code, p_expected_game_id: gameId }),
@@ -161,6 +360,7 @@
       if (!joined?.id || joined.game_id !== gameId || ![joined.player1_id, joined.player2_id].includes(user.id)) {
         throw new Error('تعذر الانضمام. تحقق من الكود، ونوع اللعبة، وأن الغرفة تنتظر لاعباً.');
       }
+      button?.closest('.mp-join-code-form')?.remove();
       SESSION.user = user;
       openRoom(joined, user);
       toast('تم الانضمام إلى الغرفة.', 'success');
@@ -240,10 +440,44 @@
     const box = $('mp-room-meta'); if (!box) return;
     const seat = mySeat(room);
     const status = room.status === 'waiting' ? 'بانتظار اللاعب الثاني' : room.status === 'finished' ? 'انتهت المباراة' : (isMyTurn(room) ? 'دورك الآن' : 'دور الخصم');
-    box.innerHTML = `<div>كود الغرفة</div><div class="mp-room-code">${esc(room.room_code)}</div><div style="text-align:center"><button type="button" id="mp-copy-code" class="mp-action mp-muted" aria-label="نسخ كود غرفة اللعبة">نسخ/عرض الكود</button></div><div class="mp-status">${esc(status)}</div><div>أنت: اللاعب ${seat === 0 ? 'الأول' : 'الثاني'} · الخصم: ${room.player2_id ? 'انضم' : 'لم ينضم بعد'}</div><div>رقم الحركة: ${Number(room.move_no) || 0}</div>`;
-    const copy = $('mp-copy-code'); if (copy) copy.onclick = async () => {
-      try { await navigator.clipboard.writeText(room.room_code); toast('تم نسخ كود الغرفة.', 'success'); }
-      catch (_) { window.prompt('انسخ كود الغرفة وشاركه مع خصمك:', room.room_code); }
+    box.innerHTML = '<div>كود الغرفة</div><input id="mp-room-code-value" class="mp-room-code" type="text" readonly spellcheck="false" aria-label="كود غرفة اللعبة" value="' + esc(room.room_code) + '"><div style="text-align:center"><button type="button" id="mp-copy-code" class="mp-action mp-muted" aria-label="نسخ كود غرفة اللعبة">نسخ الكود</button><button type="button" id="mp-show-qr" class="mp-action mp-create" aria-label="عرض رمز QR لدعوة لاعب">عرض QR</button></div><div id="mp-room-qr-panel" class="mp-room-qr-panel" hidden><img id="mp-room-qr-image" alt="رمز QR للانضمام إلى غرفة اللعبة"><p>امسح هذا الرمز من جهاز اللاعب الآخر للانضمام مباشرة إلى هذه الغرفة.</p></div><div class="mp-status">' + esc(status) + '</div><div>أنت: اللاعب ' + (seat === 0 ? 'الأول' : 'الثاني') + ' · الخصم: ' + (room.player2_id ? 'انضم' : 'لم ينضم بعد') + '</div><div>رقم الحركة: ' + (Number(room.move_no) || 0) + '</div>';
+    const copy = $('mp-copy-code');
+    if (copy) copy.onclick = async () => {
+      const input = $('mp-room-code-value');
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(room.room_code);
+          toast('تم نسخ كود الغرفة.', 'success');
+          return;
+        }
+      } catch (_) {}
+      if (input) {
+        input.focus(); input.select();
+        let copied = false;
+        try { copied = !!document.execCommand?.('copy'); } catch (_) {}
+        toast(copied ? 'تم نسخ كود الغرفة.' : 'تم تحديد الكود؛ انسخه باستخدام أمر النسخ في جهازك.', copied ? 'success' : 'info');
+      }
+    };
+    const showQr = $('mp-show-qr');
+    if (showQr) showQr.onclick = () => {
+      const panel = $('mp-room-qr-panel');
+      if (!panel) return;
+      const open = panel.hidden;
+      panel.hidden = !open;
+      showQr.textContent = open ? 'إخفاء QR' : 'عرض QR';
+      showQr.setAttribute('aria-expanded', String(open));
+      if (!open || panel.dataset.ready === 'true') return;
+      try {
+        if (typeof window.qrcode !== 'function') throw new Error('QR encoder is unavailable.');
+        const code = window.qrcode(0, 'M');
+        code.addData('ALWAHA-GAME|1|' + room.game_id + '|' + room.room_code);
+        code.make();
+        $('mp-room-qr-image').src = code.createDataURL(6, 8);
+        panel.dataset.ready = 'true';
+      } catch (error) {
+        panel.innerHTML = '<p>تعذر تجهيز رمز QR. يمكنك مشاركة كود الغرفة المكتوب أعلاه.</p>';
+        toast('تعذر إنشاء QR على هذا الجهاز؛ استخدم كود الغرفة.', 'error');
+      }
     };
   }
   function renderRoom(room) {
@@ -370,11 +604,11 @@
     let pieces = '';
     (state.pawns || [[],[]]).forEach((array, seat) => array.forEach((pos, index) => {
       const p = ludoPawnPoint(Number(pos), seat, index); const clickable = seat === mySeat(room) && isMyTurn(room) && legal.includes(index) && !SESSION.busy;
-      pieces += `<button class="mp-ludo-piece p${seat}" style="left:${p.x}%;top:${p.y}%" data-ludo-pawn="${index}" data-ludo-seat="${seat}" ${clickable ? '' : 'disabled'} title="القطعة ${index + 1}">${index + 1}</button>`;
+      pieces += '<button type="button" class="mp-ludo-piece p' + seat + '" style="left:' + p.x + '%;top:' + p.y + '%" data-ludo-pawn="' + index + '" data-ludo-seat="' + seat + '" aria-label="تحريك القطعة ' + (index + 1) + ' في ليدو" ' + (clickable ? '' : 'disabled') + ' title="القطعة ' + (index + 1) + '">' + (index + 1) + '</button>';
     }));
     const diceHtml = state.dice ? `النرد: 🎲 ${state.dice} — اختر قطعة مضيئة.` : 'اضغط رمي النرد عند حلول دورك.';
-    const btn = isMyTurn(room) && state.dice === null ? `<button class="mp-action mp-create" id="mp-ludo-roll">🎲 رمي النرد</button>` : '';
-    const pass = isMyTurn(room) && state.dice !== null && legal.length === 0 ? `<button class="mp-action mp-join" id="mp-ludo-pass">لا توجد حركة — إنهاء الدور</button>` : '';
+    const btn = isMyTurn(room) && state.dice === null ? '<button type="button" class="mp-action mp-create" id="mp-ludo-roll" aria-label="رمي النرد في ليدو">🎲 رمي النرد</button>' : '';
+    const pass = isMyTurn(room) && state.dice !== null && legal.length === 0 ? '<button type="button" class="mp-action mp-join" id="mp-ludo-pass" aria-label="إنهاء دورك في ليدو لعدم وجود حركة">لا توجد حركة — إنهاء الدور</button>' : '';
     $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك.' : 'انتظر دور الخصم.')} ${esc(diceHtml)}</div><div class="mp-ludo-board">${cells}<span class="mp-ludo-center">🏁</span><span class="mp-ludo-yard" style="left:25%;top:24%">الأحمر</span><span class="mp-ludo-yard" style="left:62%;top:69%">الأزرق</span>${pieces}</div><div style="text-align:center;margin:10px">${btn}${pass}</div><div class="mp-help">تحتاج إلى 6 لإخراج القطعة. الحركة النهائية تتطلب رقماً دقيقاً. الأكل يعيد قطعة الخصم إلى قاعدتها.</div>`;
     const roll = $('mp-ludo-roll');
     if (roll) roll.onclick = async () => {
@@ -401,7 +635,7 @@
     const cards = s.lastCards || [null,null];
     const card = (value, name) => value == null ? `<div class="mp-playing-card back"><span>?</span><span class="big">🂠</span><span>?</span></div>` : `<div class="mp-playing-card ${Number(value) < 11 ? 'red' : ''}"><span>${esc(rankLabel(value))}</span><span class="big">${esc(rankLabel(value))}</span><span style="text-align:right">${esc(name)}</span></div>`;
     const myDeck = seat === 0 ? s.deck1 : s.deck2, oppDeck = seat === 0 ? s.deck2 : s.deck1;
-    $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك: اسحب الورقتين.' : 'انتظر خصمك حتى يسحب الورقتين.')} · الجولة ${Number(s.rounds)||0}</div><div class="mp-war-cards"><div style="text-align:center"><div class="mp-help">أنت · ${myDeck.length} ورقة</div>${card(cards[seat], 'ورقتك')}</div><div style="text-align:center"><div class="mp-help">الخصم · ${oppDeck.length} ورقة</div>${card(cards[1-seat], 'ورقة الخصم')}</div></div><div class="mp-status">${esc(s.message || 'أعلى قيمة تفوز بالجولة. A أعلى ورقة.')}</div><div style="text-align:center">${isMyTurn(room) ? '<button class="mp-action mp-create" id="mp-war-draw">🂠 اسحب الورقتين</button>' : ''}</div><div class="mp-help">قيم الأوراق: 2 إلى 10 ثم J وQ وK وA. عند التعادل تحدث حرب تلقائية بثلاث أوراق مخفية ثم ورقة مقارنة.</div>`;
+    $('mp-room-stage').innerHTML = `<div class="mp-status">${esc(isMyTurn(room) ? 'دورك: اسحب الورقتين.' : 'انتظر خصمك حتى يسحب الورقتين.')} · الجولة ${Number(s.rounds)||0}</div><div class="mp-war-cards"><div style="text-align:center"><div class="mp-help">أنت · ${myDeck.length} ورقة</div>${card(cards[seat], 'ورقتك')}</div><div style="text-align:center"><div class="mp-help">الخصم · ${oppDeck.length} ورقة</div>${card(cards[1-seat], 'ورقة الخصم')}</div></div><div class="mp-status">${esc(s.message || 'أعلى قيمة تفوز بالجولة. A أعلى ورقة.')}</div><div style="text-align:center">${isMyTurn(room) ? '<button type="button" class="mp-action mp-create" id="mp-war-draw" aria-label="سحب ورقتي الحرب">🂠 اسحب الورقتين</button>' : ''}</div><div class="mp-help">قيم الأوراق: 2 إلى 10 ثم J وQ وK وA. عند التعادل تحدث حرب تلقائية بثلاث أوراق مخفية ثم ورقة مقارنة.</div>`;
     const draw = $('mp-war-draw');
     if (draw) draw.onclick = async () => {
       if (!isMyTurn(room) || SESSION.busy) return;
@@ -413,13 +647,24 @@
     addStyles();
     const container = $('games-list-container');
     if (!container) return;
-    const cards = Object.entries(GAME_INFO).map(([id, game]) => `<article class="mp-game-card" style="border-color:${game.color}55"><div class="mp-game-icon" aria-hidden="true">${game.icon}</div><div class="mp-game-title">${esc(game.title)}</div><div class="mp-game-desc" id="mp-desc-${id}">${esc(game.description)}</div><button type="button" class="mp-action mp-create" data-mp-create="${id}" aria-label="إنشاء غرفة ${esc(game.title)}" aria-describedby="mp-desc-${id}">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="${id}" aria-label="الانضمام إلى غرفة ${esc(game.title)} بكود" aria-describedby="mp-desc-${id}">الانضمام بكود</button></article>`).join('');
+    const cards = Object.entries(GAME_INFO).map(([id, game]) => '<article class="mp-game-card" style="border-color:' + game.color + '55"><div class="mp-game-icon" aria-hidden="true">' + game.icon + '</div><div class="mp-game-title">' + esc(game.title) + '</div><div class="mp-game-desc" id="mp-desc-' + id + '">' + esc(game.description) + '</div><button type="button" class="mp-action mp-create" data-mp-create="' + id + '" aria-label="إنشاء غرفة ' + esc(game.title) + '" aria-describedby="mp-desc-' + id + '">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="' + id + '" aria-label="الانضمام إلى غرفة ' + esc(game.title) + ' بكود" aria-expanded="false" aria-describedby="mp-desc-' + id + '">الانضمام بكود</button></article>').join('');
     container.innerHTML = `<div class="mp-help" style="font-size:12px">الألعاب الجماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div>`;
     container.onclick = (event) => {
       const create = event.target.closest('[data-mp-create]');
       if (create) { void createRoom(create.dataset.mpCreate, create); return; }
+      const scan = event.target.closest('[data-mp-scan]');
+      if (scan) { void startQrScan(); return; }
+      const cancelJoin = event.target.closest('[data-mp-cancel-join]');
+      if (cancelJoin) { cancelJoin.closest('.mp-join-code-form')?.remove(); return; }
       const join = event.target.closest('[data-mp-join]');
-      if (join) void joinRoom(join.dataset.mpJoin, join);
+      if (join) { showJoinCodeForm(join.dataset.mpJoin, join); return; }
+    };
+    container.onsubmit = (event) => {
+      const form = event.target.closest('[data-mp-join-form]');
+      if (!form) return;
+      event.preventDefault();
+      const input = form.querySelector('input[name="roomCode"]');
+      void joinRoom(form.dataset.mpJoinForm, form.querySelector('button[type="submit"]'), input?.value || '');
     };
   }
   window.renderGamesSection = renderGamesSection;

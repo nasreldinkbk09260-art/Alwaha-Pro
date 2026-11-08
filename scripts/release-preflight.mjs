@@ -30,6 +30,10 @@ if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pre
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
 if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine\s*\(/.test(html)||html.includes('لعبة الذاكرة التقنية 🧠')||html.includes('تحدي كسر التشفير 🔐'))fail('Obsolete inline game UI must not shadow the dedicated multiplayer games module.');
 if(!games.includes('window.renderGamesSection = renderGamesSection')||!games.includes('window.launchGameEngine = function(gameTitle)'))fail('Dedicated multiplayer games module must own the games UI and launcher.');
+if(!html.includes('./assets/qr/qrcode-generator.min.js')||!html.includes('./assets/qr/jsQR.min.js')||!sw.includes("'./assets/qr/qrcode-generator.min.js'")||!sw.includes("'./assets/qr/jsQR.min.js'"))fail('Offline QR generator/decoder scripts are not loaded and precached.');
+if(!buildWeb.includes("scripts', 'vendor', 'qr'")||!buildWeb.includes('minify: true'))fail('Pinned offline QR libraries are not built into minified web assets.');
+if(!games.includes('navigator.mediaDevices.getUserMedia')||!games.includes('window.jsQR(frame.data')||games.includes('window.prompt('))fail('Game QR scanner or in-app room code entry is incomplete.');
+if(!workflow.includes('android.permission.CAMERA'))fail('Android camera permission is required for game QR scanning.');
 if(pkg.version!=='3.0.3'||lock.version!=='3.0.3'||lock.packages?.['']?.version!=='3.0.3')fail('package and lockfile versions must be 3.0.3.');
 if(cap.appId!=='pro.alwaha.app'||cap.webDir!=='dist')fail('Unexpected Capacitor app configuration.');
 if(manifest.version!==pkg.version)fail('manifest.json version must match package.json.');
