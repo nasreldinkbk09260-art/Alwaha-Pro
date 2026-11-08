@@ -184,6 +184,12 @@
     button.setAttribute('aria-expanded', 'true');
     form.querySelector('input')?.focus();
   }
+  function closeJoinCodeForm(form) {
+    if (!form) return;
+    const card = form.closest('.mp-game-card');
+    card?.querySelector('[data-mp-join]')?.setAttribute('aria-expanded', 'false');
+    form.remove();
+  }
   function stopQrScanner() {
     const scan = SESSION.qrScanner;
     if (!scan) return;
@@ -237,6 +243,7 @@
       }
       scan.detected = true;
       const title = GAME_INFO[decoded.gameId]?.title || 'اللعبة';
+      closeJoinCodeForm(scan.joinForm);
       stopQrScanner();
       toast('تم التعرف على دعوة ' + title + '، جارٍ التحقق من الغرفة...', 'success');
       void joinRoom(decoded.gameId, null, decoded.code);
@@ -283,7 +290,7 @@
       if (retry) retry.hidden = false;
     }
   }
-  async function startQrScan() {
+  async function startQrScan(scanButton = null) {
     const user = await requireUser();
     if (!user) return;
     if (SESSION.qrScanner) return;
@@ -321,6 +328,7 @@
       closed: false,
       detected: false,
       previousFocus: document.activeElement,
+      joinForm: scanButton?.closest('.mp-join-code-form') || null,
       onKeyDown: null,
       onVisibility: null
     };
@@ -360,7 +368,7 @@
       if (!joined?.id || joined.game_id !== gameId || ![joined.player1_id, joined.player2_id].includes(user.id)) {
         throw new Error('تعذر الانضمام. تحقق من الكود، ونوع اللعبة، وأن الغرفة تنتظر لاعباً.');
       }
-      button?.closest('.mp-join-code-form')?.remove();
+      closeJoinCodeForm(button?.closest('.mp-join-code-form'));
       SESSION.user = user;
       openRoom(joined, user);
       toast('تم الانضمام إلى الغرفة.', 'success');
@@ -653,9 +661,9 @@
       const create = event.target.closest('[data-mp-create]');
       if (create) { void createRoom(create.dataset.mpCreate, create); return; }
       const scan = event.target.closest('[data-mp-scan]');
-      if (scan) { void startQrScan(); return; }
+      if (scan) { void startQrScan(scan); return; }
       const cancelJoin = event.target.closest('[data-mp-cancel-join]');
-      if (cancelJoin) { cancelJoin.closest('.mp-join-code-form')?.remove(); return; }
+      if (cancelJoin) { closeJoinCodeForm(cancelJoin.closest('.mp-join-code-form')); return; }
       const join = event.target.closest('[data-mp-join]');
       if (join) { showJoinCodeForm(join.dataset.mpJoin, join); return; }
     };
