@@ -3101,6 +3101,9 @@ async function renderConversationsList() {
                 this.disconnectTimer = null;
                 this.qualityTimer = null;
                 this.qualityTier = 'balanced';
+                this.lastRemoteVideoFeedback = null;
+                this.qualitySampleInFlight = null;
+                this.adaptiveQualityCheck = null;
                 this.rtcConfig = {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
@@ -3201,31 +3204,143 @@ async function renderConversationsList() {
                 };
             }
             startAdaptiveVideoQuality() {
-                if(this.mediaType!=='video'||this.qualityTimer||!this.peerConnection)return;
-                let stableSamples=0;
-                const check=async()=>{
-                    const pc=this.peerConnection;if(this.closed||!pc||pc.connectionState!=='connected')return;
-                    try{
-                        const stats=await pc.getStats();let outbound=null,remoteInbound=null;
-                        stats.forEach(report=>{if(report.type==='outbound-rtp'&&report.kind==='video'&&!report.isRemote)outbound=report;if(report.type==='remote-inbound-rtp'&&report.kind==='video')remoteInbound=report;});
-                        const loss=remoteInbound&&Number(remoteInbound.packetsLost)>=0&&Number(remoteInbound.packetsReceived)>=0?Number(remoteInbound.packetsLost)/(Number(remoteInbound.packetsLost)+Number(remoteInbound.packetsReceived)+1):0;
-                        const rtt=Number(remoteInbound?.roundTripTime||0);
-                        let tier='balanced';
-                        if(loss>.06||rtt>.45){tier='low';stableSamples=0;}else if(loss<.02&&rtt<.22){stableSamples++;if(stableSamples>=3)tier='high';}else{stableSamples=0;}
-                        if(tier===this.qualityTier)return;
-                        this.qualityTier=tier;
-                        const sender=pc.getSenders().find(x=>x.track?.kind==='video');
-                        const cfg=tier==='low'?{maxBitrate:220000,maxFramerate:12,width:320,height:180}:tier==='high'?{maxBitrate:850000,maxFramerate:24,width:640,height:360}:{maxBitrate:480000,maxFramerate:18,width:480,height:270};
-                        if(sender?.getParameters&&sender?.setParameters){const params=sender.getParameters();if(!params.encodings||!params.encodings.length)params.encodings=[{}];params.encodings[0].maxBitrate=cfg.maxBitrate;params.encodings[0].maxFramerate=cfg.maxFramerate;await sender.setParameters(params).catch(()=>{});}
-                        const track=this.localStream?.getVideoTracks?.()[0];if(track?.applyConstraints)await track.applyConstraints({width:{ideal:cfg.width},height:{ideal:cfg.height},frameRate:{ideal:cfg.maxFramerate,max:cfg.maxFramerate}}).catch(()=>{});
-                        const label=tier==='low'?'منخفض لتقليل التقطيع':tier==='high'?'عالٍ — الشبكة مستقرة':'متوازن';
-                        const indicator=document.getElementById('call-method-indicator');if(indicator)indicator.textContent='فيديو متكيف: '+label;
-                        window.__alwahaVideoQuality={tier,loss,rtt,at:Date.now()};
-                    }catch(error){console.debug('[Alwaha Video] quality sample skipped',error);}
+                if (this.mediaType !== 'video' || this.qualityTimer || !this.peerConnection) return;
+                let stableSamples = 0;
+                const check = async () => {
+                    if (this.qualitySampleInFlight) return this.qualitySampleInFlight;
+                    const pc = this.peerConnection;
+                    if (this.closed || !pc || pc.connectionState !== 'connected') return;
+                    const task = (async () => {
+                        try {
+                            const stats = await pc.getStats();
+                            if (this.closed || this.peerConnection !== pc) return;
+                            const reports = [];
+                            stats?.forEach?.(report => reports.push(report));
+                            const remoteInbound = reports.find(report =>
+                                report.type === 'remote-inbound-rtp' &&
+                                (report.kind === 'video' || report.mediaType === 'video')
+                            ) || null;
+                            const candidatePairs = reports.filter(report =>
+                                report.type === 'candidate-pair' &&
+                                report.state === 'succeeded' &&
+                                Number(report.currentRoundTripTime) > 0
+                            );
+                            const selectedPair = candidatePairs.find(report => report.selected === true) ||
+                                candidatePairs.find(report => report.nominated === true) ||
+                                (candidatePairs.length === 1 ? candidatePairs[0] : null);
+
+                            let loss = null;
+                            const fractionLost = Number(remoteInbound?.fractionLost);
+                            if (Number.isFinite(fractionLost) && fractionLost >= 0) {
+                                loss = Math.max(0, Math.min(1, fractionLost));
+                            } else if (remoteInbound) {
+                                const packetsLost = Number(remoteInbound.packetsLost);
+                                const packetsReceived = Number(remoteInbound.packetsReceived);
+                                const key = String(remoteInbound.id || remoteInbound.ssrc || 'remote-video');
+                                if (Number.isFinite(packetsLost) && packetsLost >= 0 &&
+                                    Number.isFinite(packetsReceived) && packetsReceived >= 0) {
+                                    const previous = this.lastRemoteVideoFeedback;
+                                    if (previous && previous.key === key &&
+                                        packetsLost >= previous.packetsLost &&
+                                        packetsReceived >= previous.packetsReceived) {
+                                        const lostDelta = packetsLost - previous.packetsLost;
+                                        const receivedDelta = packetsReceived - previous.packetsReceived;
+                                        const totalDelta = lostDelta + receivedDelta;
+                                        if (totalDelta > 0) loss = lostDelta / totalDelta;
+                                    }
+                                    this.lastRemoteVideoFeedback = { key, packetsLost, packetsReceived };
+                                } else {
+                                    this.lastRemoteVideoFeedback = null;
+                                }
+                            } else {
+                                this.lastRemoteVideoFeedback = null;
+                            }
+
+                            const remoteRtt = Number(remoteInbound?.roundTripTime);
+                            const candidateRtt = Number(selectedPair?.currentRoundTripTime);
+                            const rtt = Number.isFinite(remoteRtt) && remoteRtt > 0
+                                ? remoteRtt
+                                : Number.isFinite(candidateRtt) && candidateRtt > 0
+                                    ? candidateRtt
+                                    : null;
+                            const hasLossFeedback = loss !== null;
+                            const hasRttFeedback = rtt !== null;
+
+                            // No feedback is not proof of a healthy link. Keep the current tier
+                            // instead of promoting to high on synthetic zero-loss/zero-RTT values.
+                            if (!hasLossFeedback && !hasRttFeedback) return;
+
+                            let tier = 'balanced';
+                            if ((hasLossFeedback && loss > 0.06) || (hasRttFeedback && rtt > 0.45)) {
+                                tier = 'low';
+                                stableSamples = 0;
+                            } else if (hasLossFeedback && hasRttFeedback && loss < 0.02 && rtt < 0.22) {
+                                stableSamples++;
+                                if (stableSamples >= 3) tier = 'high';
+                            } else {
+                                stableSamples = 0;
+                            }
+
+                            if (tier !== this.qualityTier) {
+                                this.qualityTier = tier;
+                                const cfg = tier === 'low'
+                                    ? { maxBitrate: 220000, maxFramerate: 12, width: 320, height: 180 }
+                                    : tier === 'high'
+                                        ? { maxBitrate: 850000, maxFramerate: 24, width: 640, height: 360 }
+                                        : { maxBitrate: 480000, maxFramerate: 18, width: 480, height: 270 };
+                                const sender = pc.getSenders?.().find(item => item.track?.kind === 'video');
+                                if (sender?.getParameters && sender?.setParameters) {
+                                    const params = sender.getParameters();
+                                    if (!params.encodings || !params.encodings.length) params.encodings = [{}];
+                                    params.encodings[0].maxBitrate = cfg.maxBitrate;
+                                    params.encodings[0].maxFramerate = cfg.maxFramerate;
+                                    await sender.setParameters(params).catch(() => {});
+                                }
+                                const track = this.localStream?.getVideoTracks?.()[0];
+                                if (track?.applyConstraints) {
+                                    await track.applyConstraints({
+                                        width: { ideal: cfg.width },
+                                        height: { ideal: cfg.height },
+                                        frameRate: { ideal: cfg.maxFramerate, max: cfg.maxFramerate }
+                                    }).catch(() => {});
+                                }
+                                const label = tier === 'low'
+                                    ? 'منخفض لتقليل التقطيع'
+                                    : tier === 'high'
+                                        ? 'عالٍ — الشبكة مستقرة'
+                                        : 'متوازن';
+                                const indicator = document.getElementById('call-method-indicator');
+                                if (indicator) indicator.textContent = 'فيديو متكيف: ' + label;
+                            }
+                            window.__alwahaVideoQuality = {
+                                tier: this.qualityTier,
+                                loss,
+                                lossKnown: hasLossFeedback,
+                                rtt,
+                                rttKnown: hasRttFeedback,
+                                at: Date.now()
+                            };
+                        } catch (error) {
+                            console.debug('[Alwaha Video] quality sample skipped', error);
+                        }
+                    })();
+                    this.qualitySampleInFlight = task;
+                    try {
+                        return await task;
+                    } finally {
+                        if (this.qualitySampleInFlight === task) this.qualitySampleInFlight = null;
+                    }
                 };
-                check();this.qualityTimer=setInterval(check,8000);
+                this.adaptiveQualityCheck = check;
+                void check();
+                this.qualityTimer = setInterval(() => { void check(); }, 8000);
             }
-            stopAdaptiveVideoQuality(){if(this.qualityTimer){clearInterval(this.qualityTimer);this.qualityTimer=null;}}
+            stopAdaptiveVideoQuality() {
+                if (this.qualityTimer) clearInterval(this.qualityTimer);
+                this.qualityTimer = null;
+                this.lastRemoteVideoFeedback = null;
+                this.adaptiveQualityCheck = null;
+            }
 
             async waitForIceGathering(timeoutMs = 10000) {
                 const pc = this.peerConnection;
