@@ -24,7 +24,8 @@
     "audit:fullscreen-ui": "node scripts/fullscreen-ui-audit.mjs",
     "audit:themes": "node scripts/theme-runtime-test.mjs",
     "audit:runtime": "node scripts/runtime-boot-audit.mjs",
-    "audit:games": "node scripts/game-actions-audit.mjs"
+    "audit:games": "node scripts/game-actions-audit.mjs",
+    "audit:navigation-dock": "node scripts/navigation-dock-runtime-test.mjs"
   },
   "engines": {
     "node": ">=22"
