@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-css';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
