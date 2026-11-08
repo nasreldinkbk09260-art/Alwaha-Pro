@@ -6,6 +6,9 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.game_rooms(room_code,game_id,created_by,player1_id,player2_id,current_turn,status,state,move_no)
 VALUES ('G7H2K9','chess','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001','playing',jsonb_build_object('fen','start'),0)
 ON CONFLICT (room_code) DO NOTHING;
+INSERT INTO public.game_rooms(room_code,game_id,created_by,player1_id,player2_id,current_turn,status,state,move_no)
+VALUES ('H7K2L9','chess','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',NULL,'10000000-0000-4000-8000-000000000001','waiting',jsonb_build_object('fen','start'),0)
+ON CONFLICT (room_code) DO NOTHING;
 SELECT set_config('request.jwt.claim.role','service_role',true);
 DO $$
 DECLARE v public.game_rooms;
@@ -60,7 +63,26 @@ BEGIN
   END IF;
 END $$;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
-DO $$
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000002',true);
+DO $
+DECLARE joined_room public.game_rooms;
+BEGIN
+  joined_room := public.join_game_room('H7K2L9','chess');
+  IF joined_room.player2_id IS DISTINCT FROM '10000000-0000-4000-8000-000000000002'::uuid OR
+     joined_room.status <> 'playing' OR
+     joined_room.current_turn IS DISTINCT FROM '10000000-0000-4000-8000-000000000001'::uuid THEN
+    RAISE EXCEPTION 'Authenticated second player could not join through the protected RPC';
+  END IF;
+  BEGIN
+    INSERT INTO public.game_rooms(room_code,game_id,created_by,player1_id,player2_id,current_turn,status,state,move_no)
+    VALUES ('C8D4M5','chess','10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000002',NULL,'10000000-0000-4000-8000-000000000002','waiting',jsonb_build_object('fen','start'),0);
+    RAISE EXCEPTION 'Authenticated direct game room creation unexpectedly succeeded';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $;
+RESET ROLE;
+DO $
 BEGIN
   BEGIN
     PERFORM public.apply_game_action_result(
