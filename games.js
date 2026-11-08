@@ -81,24 +81,15 @@
   function roomEndpoint(id) { return `game_rooms?select=*&id=eq.${encodeURIComponent(id)}&limit=1`; }
   async function createRoom(gameId) {
     const user = await requireUser(); if (!user) return;
-    if (typeof window.supabaseFetch !== 'function') return toast('الاتصال بقاعدة البيانات غير متاح.', 'error');
-    toast('جاري إنشاء الغرفة...', 'info');
-    let created = null;
-    for (let attempt = 0; attempt < 3 && !created; attempt++) {
-      const code = randomCode();
-      const rows = await window.supabaseFetch('game_rooms', {
-        method: 'POST',
-        body: JSON.stringify({ room_code: code, game_id: gameId, created_by: user.id, player1_id: user.id, current_turn: user.id, status: 'waiting', state: initialState(gameId), move_no: 0 }),
-        prefer: 'return=representation'
-      });
-      if (Array.isArray(rows) && rows[0]) created = rows[0];
-      else if (rows && rows.id) created = rows;
-      else if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 250));
-    }
-    if (!created) return toast('لم يتم إنشاء الغرفة. تأكد من تطبيق ترحيل قاعدة البيانات وأن جلسة الدخول فعّالة.', 'error');
-    SESSION.user = user;
-    openRoom(created, user);
-    toast('تم إنشاء الغرفة. أرسل الكود للاعب الآخر.', 'success');
+    if (typeof window.alwahaInvokeEdgeFunction !== 'function') return toast('خدمة الألعاب الآمنة غير متاحة في هذه النسخة.', 'error');
+    toast('جاري إنشاء الغرفة الآمنة...', 'info');
+    try {
+      const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'create_room',game_id:gameId});
+      const created = normalizeRoom(result?.room);
+      if (!created?.id) throw new Error('لم يؤكد الخادم إنشاء الغرفة.');
+      SESSION.user = user; openRoom(created,user);
+      toast('تم إنشاء الغرفة. أرسل الكود للاعب الآخر.', 'success');
+    } catch(error) { toast(error?.message || 'تعذر إنشاء الغرفة.', 'error'); }
   }
   async function joinRoom(gameId) {
     const user = await requireUser(); if (!user) return;
@@ -177,20 +168,20 @@
     else if (room.game_id === 'war') renderWar(room);
     else $('mp-room-stage').innerHTML = '<div class="mp-status">نوع اللعبة غير معروف.</div>';
   }
-  async function submitMove(nextState, nextTurn, status = 'playing', winnerId = null) {
+  async function submitGameAction(move) {
     const room = SESSION.room;
     if (!room || SESSION.busy || !isMyTurn(room)) return toast('انتظر دورك أو اكتمال المزامنة.', 'info');
+    if (typeof window.alwahaInvokeEdgeFunction !== 'function') return toast('خدمة الألعاب الآمنة غير متاحة.', 'error');
     SESSION.busy = true;
     try {
-      const payload = await window.supabaseFetch('rpc/submit_game_move', {
-        method: 'POST',
-        body: JSON.stringify({ p_room_id: room.id, p_expected_move_no: room.move_no, p_next_state: nextState, p_next_turn: nextTurn, p_next_status: status, p_winner_id: winnerId }),
-        prefer: 'return=representation'
-      });
-      const updated = normalizeRoom(payload);
-      if (!updated || !updated.id) { toast('لم يتم حفظ الحركة. قد تكون حركة الخصم وصلت قبلك؛ ستتم إعادة المزامنة.', 'error'); await pollRoom(); return; }
+      const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'move',room_id:room.id,expected_move_no:room.move_no,move});
+      const updated = normalizeRoom(result?.room);
+      if (!updated?.id) throw new Error('لم يؤكد الخادم حفظ الحركة.');
       SESSION.room = updated; SESSION.selectedSquare = null; SESSION.legalTargets = []; SESSION.game = null;
       renderRoom(updated);
+    } catch(error) {
+      toast(error?.message || 'لم يتم حفظ الحركة؛ ستتم مزامنة الغرفة.', 'error');
+      await pollRoom();
     } finally { SESSION.busy = false; }
   }
   function otherTurn(room = SESSION.room) { return room.current_turn === room.player1_id ? room.player2_id : room.player1_id; }
@@ -231,12 +222,7 @@
         try {
           const moved = current.move({ from: SESSION.selectedSquare, to: square, promotion: 'q' });
           if (moved) {
-            const over = gameOver(current);
-            const mate = checkmate(current);
-            const winner = over && mate ? (current.turn() === 'w' ? SESSION.room.player2_id : SESSION.room.player1_id) : null;
-            const state = { fen: current.fen(), lastMove: moved.san, result: over ? (mate ? 'كش مات' : 'تعادل') : '' };
-            const nextTurn = over ? null : (current.turn() === 'w' ? SESSION.room.player1_id : SESSION.room.player2_id);
-            await submitMove(state, nextTurn, over ? 'finished' : 'playing', winner); return;
+            await submitGameAction({type:'chess_move',from:SESSION.selectedSquare,to:square}); return;
           }
         } catch (_) { /* keep selection so the player can pick a legal destination */ }
       }
@@ -287,40 +273,17 @@
     const roll = $('mp-ludo-roll');
     if (roll) roll.onclick = async () => {
       if (!isMyTurn(room) || SESSION.busy || SESSION.room.state.dice !== null) return;
-      const die = 1 + Math.floor(Math.random() * 6);
-      const nextState = { ...SESSION.room.state, dice: die, lastDice: die, message: `نتيجة النرد ${die}.` };
-      const valid = ludoLegalPawns(SESSION.room, die);
-      let nextTurn = SESSION.user.id;
-      if (!valid.length) {
-        nextState.dice = null;
-        if (die !== 6) nextTurn = otherTurn(SESSION.room);
-      }
-      await submitMove(nextState, nextTurn, 'playing', null);
+      await submitGameAction({type:'ludo_roll'});
     };
     const passBtn = $('mp-ludo-pass');
-    if (passBtn) passBtn.onclick = async () => { const nextState = { ...SESSION.room.state, dice: null }; await submitMove(nextState, otherTurn(SESSION.room), 'playing', null); };
+    if (passBtn) passBtn.onclick = async () => { await submitGameAction({type:'ludo_pass'}); };
     $('mp-room-stage').onclick = async (event) => {
       const btn = event.target.closest('[data-ludo-pawn]'); if (!btn || SESSION.busy) return;
       const seat = Number(btn.dataset.ludoSeat), index = Number(btn.dataset.ludoPawn);
       const currentRoom = SESSION.room, currentState = currentRoom?.state;
-      if (!currentRoom || seat !== mySeat(currentRoom) || !isMyTurn(currentRoom) || !currentState?.dice) return;
+      if (!currentRoom || seat !== mySeat(currentRoom) || !isMyTurn(currentRoom) || currentState?.dice == null) return;
       const legalNow = ludoLegalPawns(currentRoom, currentState.dice); if (!legalNow.includes(index)) return;
-      const pawns = currentState.pawns.map(arr => [...arr]);
-      let target = pawns[seat][index] === -1 ? 0 : pawns[seat][index] + currentState.dice;
-      pawns[seat][index] = target;
-      const nextState = { ...currentState, pawns, dice: null, message: `تحركت القطعة ${index + 1}.` };
-      const globalTarget = target <= 51 ? ((seat === 0 ? 0 : 26) + target) % 52 : null;
-      // Safe-square and capture handling is recomputed without relying on UI input.
-      const safeSet = new Set([0,8,13,21,26,34,39,47]);
-      if (globalTarget !== null && !safeSet.has(globalTarget)) {
-        const opponent = 1 - seat;
-        pawns[opponent] = pawns[opponent].map(pos => pos >= 0 && pos <= 51 && ((opponent === 0 ? 0 : 26) + pos) % 52 === globalTarget ? -1 : pos);
-        nextState.pawns = pawns;
-      }
-      const won = pawns[seat].every(pos => pos === 57);
-      const nextTurn = won ? null : (currentState.dice === 6 || target === 57 ? SESSION.user.id : otherTurn(currentRoom));
-      nextState.message = won ? 'وصلت جميع القطع إلى النهاية!' : nextState.message;
-      await submitMove(nextState, nextTurn, won ? 'finished' : 'playing', won ? SESSION.user.id : null);
+      await submitGameAction({type:'ludo_move',pawn_index:index});
     };
   }
 
@@ -336,21 +299,7 @@
     const draw = $('mp-war-draw');
     if (draw) draw.onclick = async () => {
       if (!isMyTurn(room) || SESSION.busy) return;
-      const d1 = [...SESSION.room.state.deck1], d2 = [...SESSION.room.state.deck2]; let pot=[]; let last=[null,null]; let winner=null; let battles=0;
-      while (d1.length && d2.length && battles < 110) {
-        const a=d1.shift(), b=d2.shift(); pot.push(a,b); last=[a,b]; battles++;
-        if (a !== b) { winner = a > b ? 0 : 1; break; }
-        // War: each side places up to three face-down cards, then the next card is compared.
-        for (let i=0;i<3;i++) { if(d1.length) pot.push(d1.shift()); if(d2.length) pot.push(d2.shift()); }
-        if (!d1.length || !d2.length) break;
-      }
-      if (winner === null) winner = d1.length > d2.length ? 0 : d2.length > d1.length ? 1 : null;
-      if (winner === 0) d1.push(...pot); else if (winner === 1) d2.push(...pot);
-      const done = !d1.length || !d2.length || battles >= 110;
-      const state = { deck1:d1, deck2:d2, lastCards:last, rounds:(Number(SESSION.room.state.rounds)||0)+1, message: winner === null ? 'تعادل في الحرب.' : `الفائز بهذه الجولة: اللاعب ${winner===0?'الأول':'الثاني'} (${rankLabel(last[winner])}).` };
-      if (done) state.result = d1.length === d2.length ? 'تعادل' : `فاز اللاعب ${d1.length > d2.length ? 'الأول' : 'الثاني'} بعد نفاد أوراق الخصم.`;
-      const winnerId = done && d1.length !== d2.length ? (d1.length > d2.length ? SESSION.room.player1_id : SESSION.room.player2_id) : null;
-      await submitMove(state, done ? null : otherTurn(SESSION.room), done ? 'finished' : 'playing', winnerId);
+      await submitGameAction({type:'war_draw'});
     };
   }
 

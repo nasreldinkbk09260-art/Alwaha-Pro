@@ -17,7 +17,11 @@ for migration in \
   20261101022031_marketplace_conversation_policy_owner_fix.sql \
   20261101210000_marketplace_transaction_archive_and_call_auth.sql \
   20261102010000_legacy_client_privileges_hardening.sql \
-  20261102150000_products_seller_email_privacy.sql; do
+  20261102150000_products_seller_email_privacy.sql \
+  20261013235236_multiplayer_game_rooms_v283.sql \
+  20261014195018_game_room_join_game_validation.sql \
+  20261014195108_game_room_join_rpc_compatibility.sql \
+  20261108100000_server_authoritative_game_actions.sql; do
   echo "APPLY TEST MIGRATION: $migration"
   psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/$migration"
 done
@@ -42,6 +46,7 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102100000_marketplace_rete
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102150000_products_seller_email_privacy.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108100000_game_actions_security.sql"
 
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"

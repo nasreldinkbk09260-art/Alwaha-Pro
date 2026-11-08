@@ -247,6 +247,8 @@ jobs:
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation
 
+      - name: Run server-authoritative multiplayer game audit
+        run: npm run audit:games
       - name: Run retention, kids-room, and backup audit
         run: npm run audit:retention-kids-vault
 

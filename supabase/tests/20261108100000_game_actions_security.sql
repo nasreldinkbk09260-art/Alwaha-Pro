@@ -1,0 +1,64 @@
+BEGIN;
+INSERT INTO auth.users(id) VALUES
+ ('10000000-0000-4000-8000-000000000001'),
+ ('10000000-0000-4000-8000-000000000002')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.game_rooms(room_code,game_id,created_by,player1_id,player2_id,current_turn,status,state,move_no)
+VALUES ('G7H2K9','chess','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001','playing',jsonb_build_object('fen','start'),0)
+ON CONFLICT (room_code) DO NOTHING;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+DO $$
+DECLARE v public.game_rooms;
+BEGIN
+  SELECT * INTO v FROM public.apply_game_action_result(
+    (SELECT id FROM public.game_rooms WHERE room_code='G7H2K9'),0,
+    '10000000-0000-4000-8000-000000000001',
+    jsonb_build_object('fen','after-valid-move'),
+    '10000000-0000-4000-8000-000000000002',
+    'playing',NULL
+  );
+  IF v.move_no<>1 OR v.current_turn<>'10000000-0000-4000-8000-000000000002' OR v.state->>'fen'<>'after-valid-move' THEN
+    RAISE EXCEPTION 'Atomic authorized game action update failed';
+  END IF;
+  IF has_function_privilege('authenticated','public.apply_game_action_result(uuid,integer,uuid,jsonb,uuid,text,uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'Authenticated must not execute service-only game action RPC';
+  END IF;
+  IF has_function_privilege('anon','public.apply_game_action_result(uuid,integer,uuid,jsonb,uuid,text,uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'Anon must not execute service-only game action RPC';
+  END IF;
+  IF has_function_privilege('authenticated','public.submit_game_move(uuid,integer,jsonb,uuid,text,uuid)','EXECUTE') THEN
+    RAISE EXCEPTION 'Authenticated legacy direct state mutation RPC must be revoked';
+  END IF;
+END $$;
+SELECT set_config('request.jwt.claim.role','authenticated',true);
+DO $$
+BEGIN
+  BEGIN
+    PERFORM public.apply_game_action_result(
+      (SELECT id FROM public.game_rooms WHERE room_code='G7H2K9'),1,
+      '10000000-0000-4000-8000-000000000002',
+      jsonb_build_object('fen','unauthorized'),
+      '10000000-0000-4000-8000-000000000001',
+      'playing',NULL
+    );
+    RAISE EXCEPTION 'Expected service role claim guard to reject authenticated claim';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+SELECT set_config('request.jwt.claim.role','service_role',true);
+DO $$
+BEGIN
+  BEGIN
+    PERFORM public.apply_game_action_result(
+      (SELECT id FROM public.game_rooms WHERE room_code='G7H2K9'),0,
+      '10000000-0000-4000-8000-000000000002',
+      jsonb_build_object('fen','stale-write'),
+      '10000000-0000-4000-8000-000000000001',
+      'playing',NULL
+    );
+    RAISE EXCEPTION 'Expected stale move rejection';
+  EXCEPTION WHEN serialization_failure THEN NULL;
+  END;
+END $$;
+ROLLBACK;
+SELECT 'GAME_ACTIONS_SECURITY=PASS' AS result;
