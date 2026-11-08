@@ -24,7 +24,7 @@
     "audit:fullscreen-ui": "node scripts/fullscreen-ui-audit.mjs",
     "audit:themes": "node scripts/theme-runtime-test.mjs",
     "audit:runtime": "node scripts/runtime-boot-audit.mjs",
-    "audit:games": "node scripts/game-actions-audit.mjs",
+    "audit:games": "node scripts/game-actions-audit.mjs && node scripts/qr-runtime-test.mjs",
     "audit:navigation-dock": "node scripts/navigation-dock-runtime-test.mjs",
     "audit:home": "node scripts/home-section-acceptance.mjs",
     "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs"

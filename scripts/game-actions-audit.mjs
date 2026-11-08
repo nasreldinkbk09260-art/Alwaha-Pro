@@ -7,6 +7,7 @@ const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js'
   sqlTest=fs.readFileSync('supabase/tests/20261108100000_game_actions_security.sql','utf8'),
   config=fs.readFileSync('supabase/config.toml','utf8'),ci=fs.readFileSync('scripts/ci-validate-supabase-sql.sh','utf8');
 const checks=[
+ ['QR runtime smoke test is part of the games audit command',fs.existsSync('scripts/qr-runtime-test.mjs')],
  ['game creation moves to a server-generated room and deck',games.includes("alwahaInvokeEdgeFunction('game-actions',{action:'create_room'")&&edge.includes('function shuffledDeck()')&&edge.includes("!['chess','ludo','war'].includes(gameId)")],
  ['client no longer calls the direct state mutation RPC',!games.includes("rpc/submit_game_move")&&!games.includes('async function submitMove(')],
  ['chess move is validated by server chess.js rules',edge.includes("new Chess(String(room.state?.fen || ''))")&&edge.includes('chess.move({ from: action.from, to: action.to, promotion: \'q\' })')],

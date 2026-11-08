@@ -268,3 +268,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## إصلاح ربط فحص QR في audit:games
 
 أول CI بعد إضافة QR وصل إلى فحص الألعاب ثم توقف بخطأ `ReferenceError: sw is not defined`. السبب أن assertions الجديدة كانت تقرأ Service Worker و`build-web.mjs` دون تعريف متغيري القراءة داخل ملف الاختبار. أضيف تعريفهما في رأس `scripts/game-actions-audit.mjs`؛ لا تغيير على وظيفة QR أو سلوك اللعبة بسبب هذا الفشل.
+
+
+### اختبار تشغيل مكتبات QR المصغرة
+
+أضيف `scripts/qr-runtime-test.mjs` إلى أمر `npm run audit:games`. الاختبار يعيد نفس تحويل esbuild المستخدم في البناء، ويشغّل كود UMD في بيئة VM شبيهة بالمتصفح ليتحقق من ظهور `window.jsQR` و`window.qrcode` بعد التصغير، ثم ينشئ QR payload حقيقيًا ويولد SVG vector ويتحقق من اكتماله. بذلك لا نعتمد على فحوص نصية وحدها لإثبات عمل مولّد الرمز.
