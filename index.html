@@ -821,6 +821,7 @@ img,video,canvas{max-width:100%}
             <button type="button" onclick="showChatPrivacyInfo()"><i class="fa-solid fa-shield-halved"></i> معلومات الأمان والخصوصية</button>
         </div>
         <div id="chat-messages-container" style="height:calc(100dvh - 180px);overflow-y:auto;padding:10px 4px 76px;display:flex;flex-direction:column;overscroll-behavior:contain;"></div>
+        <div id="direct-reply-preview" style="display:none;padding:7px 10px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
         <div class="alwaha-chat-composer">
             <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off">
             <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة"><i class="fa-solid fa-paper-plane"></i></button>
@@ -1245,6 +1246,8 @@ img,video,canvas{max-width:100%}
         let currentChatUserId = "";
         let directMessageChannel = null;
         let currentMarketConversationId = '';
+        let currentDirectMessages=[],currentDirectReplyTarget=null,directReplySchemaAvailable=false;
+        let currentMarketMessages=[],currentMarketReplyTarget=null,marketReplySchemaAvailable=false;
         let marketMessageSendInFlight = false;
         let marketConversationChannel = null;
         let marketInboxChannel = null;
@@ -2767,6 +2770,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 
         async function openTargetUserDirectChat(name, identifier = '', userId = '') {
+            const previousChatUserId=currentChatUserId;
             currentChatUser = name || 'المستخدم';
             currentChatUserIdentifier = identifier || '';
             currentChatUserId = userId || '';
@@ -2774,6 +2778,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 const rows = await supabaseFetch(`users?identifier=eq.${encodeURIComponent(identifier)}&select=id&limit=1`);
                 currentChatUserId = Array.isArray(rows) && rows[0] ? rows[0].id : '';
             }
+            if(previousChatUserId!==currentChatUserId){currentDirectReplyTarget=null;currentDirectMessages=[];renderDirectReplyPreview();}
             const lobbyWrapper = document.getElementById('chat-main-lobby-wrapper');
             if (lobbyWrapper) lobbyWrapper.style.display = 'none';
             document.querySelectorAll('.chat-tab-content').forEach(tab => tab.style.display = 'none');
@@ -2790,36 +2795,48 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 
         async function loadDirectMessages() {
-            const container = document.getElementById('chat-messages-container');
-            const me = await getCurrentAuthUser();
-            if (!container || !me || !currentChatUserId) return;
-            container.innerHTML = '<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
-            const rows = await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(currentChatUserId)}),and(sender_id.eq.${encodeURIComponent(currentChatUserId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
-            await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(currentChatUserId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`, { method:'PATCH', body:JSON.stringify({read_at:new Date().toISOString()}), prefer:'return=minimal' });
-            if (!Array.isArray(rows) || !rows.length) {
-                container.innerHTML = '<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';
-                return;
-            }
-            container.innerHTML = rows.map(m => {
-                const mine = m.sender_id === me.id;
-                return `<div style="text-align:${mine ? 'left' : 'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine ? 'flex-end' : 'flex-start'};">
-                    <div style="display:inline-block;background:${mine ? 'linear-gradient(135deg,#3a86ff,#00ffff)' : 'rgba(255,255,255,.08)'};color:${mine ? '#000' : '#fff'};padding:10px 15px;border-radius:15px;max-width:80%;direction:rtl;text-align:right;">${escapeHtml(m.message)}</div>
-                    <span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>
+            const container=document.getElementById('chat-messages-container'),me=await getCurrentAuthUser();
+            if(!container||!me||!currentChatUserId)return;
+            container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
+            let rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at,reply_to_id&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(currentChatUserId)}),and(sender_id.eq.${encodeURIComponent(currentChatUserId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            directReplySchemaAvailable=Array.isArray(rows);
+            if(!Array.isArray(rows))rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(currentChatUserId)}),and(sender_id.eq.${encodeURIComponent(currentChatUserId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:20px;">تعذر تحميل الرسائل. تحقق من الاتصال ثم أعد المحاولة.</div>';return;}
+            currentDirectMessages=rows;
+            await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(currentChatUserId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(!rows.length){container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';renderDirectReplyPreview();return;}
+            const messageMap=new Map(rows.map(m=>[String(m.id),m]));
+            container.innerHTML=rows.map(m=>{
+                const mine=m.sender_id===me.id,parent=m.reply_to_id?messageMap.get(String(m.reply_to_id)):null;
+                const quote=m.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;color:inherit;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
+                const replyButton=directReplySchemaAvailable?`<button type="button" onclick="setDirectMessageReply('${escapeJs(m.id)}')" style="margin-top:4px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
+                return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};">
+                    <div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:80%;direction:rtl;text-align:right;">${quote}${escapeHtml(m.message)}</div>
+                    <span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}
                 </div>`;
             }).join('');
-            container.scrollTop = container.scrollHeight;
+            renderDirectReplyPreview();container.scrollTop=container.scrollHeight;
         }
-
+        function renderDirectReplyPreview(){
+            const host=document.getElementById('direct-reply-preview');if(!host)return;
+            if(!currentDirectReplyTarget){host.style.display='none';host.innerHTML='';return;}
+            host.style.display='flex';host.style.alignItems='center';host.style.justifyContent='space-between';host.style.gap='8px';
+            host.innerHTML=`<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">رداً على: ${escapeHtml(currentDirectReplyTarget.message)}</span><button type="button" onclick="clearDirectMessageReply()" aria-label="إلغاء الرد" style="border:0;background:transparent;color:#ffb1c5;font-size:16px;">×</button>`;
+        }
+        function setDirectMessageReply(messageId){
+            if(!directReplySchemaAvailable)return triggerToastNotification('ميزة الرد تتطلب تحديث قاعدة البيانات.','info');
+            const row=currentDirectMessages.find(m=>String(m.id)===String(messageId));if(!row)return;
+            currentDirectReplyTarget={id:row.id,message:String(row.message||'').slice(0,500)};renderDirectReplyPreview();
+            document.getElementById('chat-message-input')?.focus({preventScroll:true});
+        }
+        function clearDirectMessageReply(){currentDirectReplyTarget=null;renderDirectReplyPreview();}
         function closeActiveChatWindow() {
-            const chatBox = document.getElementById('active-chat-box');
-            if(chatBox) chatBox.style.display = 'none';
-            const wrapper = document.getElementById('chat-main-lobby-wrapper');
-            if(wrapper) wrapper.style.display = 'block';
+            const chatBox=document.getElementById('active-chat-box');if(chatBox)chatBox.style.display='none';
+            const wrapper=document.getElementById('chat-main-lobby-wrapper');if(wrapper)wrapper.style.display='block';
             document.body.classList.remove('modal-active');
-            if (directMessageChannel && supabaseClient) { supabaseClient.removeChannel(directMessageChannel).catch(() => {}); directMessageChannel = null; }
-            currentChatUserId = '';
+            if(directMessageChannel&&supabaseClient){supabaseClient.removeChannel(directMessageChannel).catch(()=>{});directMessageChannel=null;}
+            currentChatUserId='';currentDirectReplyTarget=null;currentDirectMessages=[];renderDirectReplyPreview();
         }
-
         async function hasAcceptedAlwahaFriendship(targetId) {
             const me=await getCurrentAuthUser();if(!me||!targetId||targetId===me.id)return false;
             const rows=await supabaseFetch('friend_requests?status=eq.accepted&or=(and(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(targetId)+'),and(requester_id.eq.'+encodeURIComponent(targetId)+',target_id.eq.'+encodeURIComponent(me.id)+'))&select=id&limit=1');
@@ -2832,10 +2849,9 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const input = document.getElementById('chat-message-input');
             if(!input || !input.value.trim() || !currentChatUserId) return triggerToastNotification('اختر مستخدماً أولاً.', 'error');
             if(!(await hasAcceptedAlwahaFriendship(currentChatUserId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل الرسائل.','info');
-            const result = await supabaseFetch('messages', {
-                method:'POST',
-                body:JSON.stringify({ sender_id:user.id, receiver_id:currentChatUserId, message:input.value.trim() })
-            });
+            const payload={sender_id:user.id,receiver_id:currentChatUserId,message:input.value.trim()};
+            if(currentDirectReplyTarget){if(!directReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');payload.reply_to_id=currentDirectReplyTarget.id;}
+            const result=await supabaseFetch('messages',{method:'POST',body:JSON.stringify(payload)});
             if (!result) {
                 const apiError = window.__alwahaLastApiError || {};
                 console.warn('Message insert failed safely:', apiError);
@@ -2846,40 +2862,62 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 else if (apiError.status === 0) friendly = 'تعذر الاتصال لحفظ الرسالة. تحقق من الإنترنت ثم أعد المحاولة.';
                 return triggerToastNotification(friendly, 'error');
             }
-            input.value = '';
+            input.value='';currentDirectReplyTarget=null;renderDirectReplyPreview();
             await loadDirectMessages();
 
         }
 
-async function loadMarketMessages() {
+        async function loadMarketMessages() {
             const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
             if(!holder||!me||!currentMarketConversationId)return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
-            const rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
+            let rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
+            marketReplySchemaAvailable=Array.isArray(rows);
+            if(!Array.isArray(rows))rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&order=created_at.asc&limit=500`);
             if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:16px;font-size:11px;">تعذر تحميل رسائل السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
+            currentMarketMessages=rows;
             await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(currentMarketConversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
-            if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';return;}
-            holder.innerHTML=rows.map(row=>{const mine=row.sender_id===me.id;return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:86%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(row.message)}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}).join('');
-            holder.scrollTop=holder.scrollHeight;
+            if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';renderMarketReplyPreview();return;}
+            const messageMap=new Map(rows.map(row=>[String(row.id),row]));
+            holder.innerHTML=rows.map(row=>{
+                const mine=row.sender_id===me.id,parent=row.reply_to_id?messageMap.get(String(row.reply_to_id)):null;
+                const quote=row.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
+                const replyButton=marketReplySchemaAvailable?`<button type="button" onclick="setMarketMessageReply('${escapeJs(row.id)}')" style="margin-top:3px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
+                return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:86%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${quote}${escapeHtml(row.message)}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
+            }).join('');
+            renderMarketReplyPreview();holder.scrollTop=holder.scrollHeight;
         }
+        function renderMarketReplyPreview(){
+            const host=document.getElementById('market-reply-preview');if(!host)return;
+            if(!currentMarketReplyTarget){host.style.display='none';host.innerHTML='';return;}
+            host.style.display='flex';host.style.alignItems='center';host.style.justifyContent='space-between';host.style.gap='8px';
+            host.innerHTML=`<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">رداً على: ${escapeHtml(currentMarketReplyTarget.message)}</span><button type="button" onclick="clearMarketMessageReply()" aria-label="إلغاء الرد" style="border:0;background:transparent;color:#ffb1c5;font-size:16px;">×</button>`;
+        }
+        function setMarketMessageReply(messageId){
+            if(!marketReplySchemaAvailable)return triggerToastNotification('ميزة الرد تتطلب تحديث قاعدة البيانات.','info');
+            const row=currentMarketMessages.find(m=>String(m.id)===String(messageId));if(!row)return;
+            currentMarketReplyTarget={id:row.id,message:String(row.message||'').slice(0,500)};renderMarketReplyPreview();
+            document.getElementById('market-chat-input')?.focus({preventScroll:true});
+        }
+        function clearMarketMessageReply(){currentMarketReplyTarget=null;renderMarketReplyPreview();}
         async function sendMarketMessage() {
             if(marketMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال رسالة للبائع.');if(!me||!currentMarketConversationId)return;
             const input=document.getElementById('market-chat-input'),message=input?.value?.trim()||'';
             if(!message)return triggerToastNotification('اكتب رسالتك أولاً.','info');
+            if(currentMarketReplyTarget&&!marketReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');
             const modal=document.getElementById('market-chat-modal'),button=modal?.querySelector('button[onclick="sendMarketMessage()"]');
             marketMessageSendInFlight=true;if(button){button.disabled=true;button.textContent='جارٍ الإرسال…';}
             try{
-                const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify({conversation_id:currentMarketConversationId,sender_id:me.id,message}),prefer:'return=representation'});
+                const payload={conversation_id:currentMarketConversationId,sender_id:me.id,message};if(currentMarketReplyTarget)payload.reply_to_id=currentMarketReplyTarget.id;
+                const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
                 if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':(e.status===0?'انقطع الاتصال؛ بقي النص في خانة الكتابة ويمكن إعادة إرساله.':'تعذر إرسال الرسالة ('+(e.status||'خطأ اتصال')+'). بقي النص في خانة الكتابة.'),'error');return;}
-                if(input)input.value='';
+                if(input)input.value='';currentMarketReplyTarget=null;renderMarketReplyPreview();
                 triggerToastNotification('تم إرسال رسالتك إلى البائع.','success');
-                // The database insert is the success boundary; refreshes must not hold the send button.
-                void loadMarketMessages();
-                void renderMarketConversationsList();
+                void loadMarketMessages();void renderMarketConversationsList();
             }finally{marketMessageSendInFlight=false;if(button){button.disabled=false;button.textContent='إرسال';}}
         }
-        async function subscribeToMarketConversation() {
+async function subscribeToMarketConversation() {
             if(!supabaseClient||!currentMarketConversationId)return;
             if(marketConversationChannel){try{await supabaseClient.removeChannel(marketConversationChannel);}catch(e){}marketConversationChannel=null;}
             const id=currentMarketConversationId;
@@ -2915,13 +2953,15 @@ async function loadMarketMessages() {
             const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,buyer_id,seller_id&limit=1`);
             const c=Array.isArray(rows)?rows[0]:null;
             if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))return triggerToastNotification('هذه المحادثة غير متاحة لهذا الحساب.','error');
-            currentMarketConversationId=String(c.id);
+            const previousMarketConversationId=currentMarketConversationId;currentMarketConversationId=String(c.id);
+            if(previousMarketConversationId!==currentMarketConversationId){currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();}
             let modal=document.getElementById('market-chat-modal');
             if(!modal){
                 modal=document.createElement('div');modal.id='market-chat-modal';modal.className='game-modal-overlay alwaha-fullscreen-layer';modal.style.zIndex='2147483200';
                 modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="محادثة السوق" style="box-sizing:border-box;width:100vw;height:100dvh;max-width:none;max-height:none;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#0c1728;border:0;border-radius:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));box-shadow:none;">
                     <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
+                    <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
                     <div style="display:flex;gap:7px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button></div>
                     <div style="font-size:9px;color:#8294aa;padding:5px 2px 0;">رسائل السوق مستقلة عن طلبات الصداقة ودردشة الأصدقاء.</div></section>`;
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
@@ -2929,7 +2969,7 @@ async function loadMarketMessages() {
             const titleEl=document.getElementById('market-chat-title');if(titleEl)titleEl.textContent=title||'إعلان السوق';
             modal.classList.add('is-open');modal.style.display='flex';document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();await loadMarketMessages();await subscribeToMarketConversation();const input=document.getElementById('market-chat-input');if(input){input.onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMarketMessage();}};input.focus({preventScroll:true});}
         }
-        function closeMarketConversationChat() {
+        function closeMarketConversationChat() {currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();
             const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
             if(marketConversationChannel&&supabaseClient){supabaseClient.removeChannel(marketConversationChannel).catch(()=>{});marketConversationChannel=null;}
             currentMarketConversationId='';window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();

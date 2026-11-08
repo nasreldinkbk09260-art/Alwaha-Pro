@@ -11,6 +11,7 @@ export PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 psql -v ON_ERROR_STOP=1 -c 'SELECT version();'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/chat-replies-ci-bootstrap.sql"
 
 for migration in \
   20261101022015_marketplace_conversation_messaging.sql \
@@ -42,6 +43,8 @@ PY
 psql -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/retention-with-cron-test-double.sql"
 echo 'APPLY TEST MIGRATION: 20261108110000_marketplace_retention_two_party_consent.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql"
+echo 'APPLY TEST MIGRATION: 20261108120000_real_chat_message_replies.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108120000_real_chat_message_replies.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102010000_legacy_client_privileges_hardening.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102100000_marketplace_retention_behavior.sql"
@@ -50,6 +53,7 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102160000_marketplace_snap
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108100000_game_actions_security.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108110000_marketplace_retention_two_party_consent.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108120000_message_reply_scope.sql"
 
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
