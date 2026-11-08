@@ -295,3 +295,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 في مراجعة كأنها استخدام فعلي ظهر مسار خطأ: قد تنجح `getUserMedia` ثم يفشل `video.play()`، وكان stream يبقى مفتوحًا حتى إغلاق الماسح. أضيفت `releaseQrCameraStream(scan)` مركزية توقف animation frame، وتوقف video، وتفصل `srcObject`، وتوقف كل MediaStream tracks. تُستدعى الآن عند إغلاق الماسح، قبل إعادة المحاولة، وعند أي فشل داخل فتح/تشغيل الكاميرا، كما أضيف مستمع `track.ended` يعرض حالة التوقف وزر إعادة التشغيل. أضيف assertion يثبت مسارات التنظيف هذه.
 
 كما تم تحديث Service Worker cache namespace من `alwaha-pro-v3.0.3-final-20261108-three-themes-css` إلى `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup` لكي يثبت المتصفح/Android WebView أصول الألعاب والكاميرا الجديدة بدل الاستمرار على cache سابق. وُحّد الرمز الجديد في performance, field-repair, compatibility, reconciliation, fullscreen audits. لا يوجد تغيير على صلاحيات الغرف أو SQL أو قواعد اللعب.
+
+
+## توحيد اختبار استقرار التشغيل مع اسم الكاش الجديد
+
+بعد تغيير namespace لتجديد ملفات QR على الأجهزة المثبّتة، كشف CI أن `scripts/runtime-boot-audit.mjs` كان يحتفظ بفحص مستقل للاسم السابق. تم تحديثه إلى `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup`؛ بقية فحوص الكاش والأداء والتوافق والمصالحة كانت قد اجتازت بالفعل. لا يوجد تغيير إضافي في كود التطبيق هنا.
