@@ -8,7 +8,6 @@
  ];
  const OLD_SEASONS={nature:'oasis',spring:'oasis',summer:'oasis',autumn:'oasis',tech:'abyss',winter:'abyss',soft:'default'};
  let audioContext=null,lastSoundAt=0,dragState=null,initialized=false,soundListenerBound=false;
- let audioContext=null,lastSoundAt=0,dragState=null,initialized=false;
  const css=`
  /* R7.5: full-screen image themes are provided by the local background assets in index.html. */
  body[data-alwaha-theme]{background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important;}
