@@ -97,7 +97,15 @@ if(!html.includes('let reelsFeedRequestId = 0;')||!html.includes('requestId!==re
 if(!html.includes('let reelPublishInFlight = false;')||!html.includes('if(reelPublishInFlight)return false;')||!html.includes('finally { reelPublishInFlight=false; }'))fail('Reel publishing must prevent duplicate concurrent uploads/inserts and always release its lock.');
 if(!html.includes('previousMarkup=button?.innerHTML')||!html.includes('button.innerHTML=previousMarkup'))fail('Direct chat send action must restore its original icon/markup after completion.');
 if (!html.includes('id="market-conversations-panel"') || !html.includes("modal.id='market-chat-modal'") || !html.includes('async function sendMarketMessage()') || !html.includes('market_messages')) fail('Marketplace chat must use its own inbox, modal, and message table.');
-if (!html.includes('hasAcceptedAlwahaFriendship(currentChatUserId)')) fail('Friend chat must retain its accepted-friendship gate.');
+const friendMessageSendStart = html.indexOf('async function sendLiveChatMessageFromUI()');
+const friendMessageSendEnd = html.indexOf('async function renderConversationsList()', friendMessageSendStart);
+const friendMessageSendBody = friendMessageSendStart >= 0 && friendMessageSendEnd > friendMessageSendStart
+  ? html.slice(friendMessageSendStart, friendMessageSendEnd)
+  : '';
+if (!friendMessageSendBody.includes('hasAcceptedAlwahaFriendship(peerId)') ||
+    !friendMessageSendBody.includes('peerId!==String(currentChatUserId||\'\')')) {
+  fail('Friend chat must verify an accepted friendship for the active peer before sending.');
+}
 if (!html.includes('callMarketSeller') || !html.includes('اتصال صوتي بالبائع') || !html.includes('toggleReelFollow')) fail('Marketplace voice-call action missing.');
 if (!html.includes('setMarketSearchLocation') || !html.includes('market-radius-select')) fail('Marketplace distance/radius search controls missing.');
 if (!html.includes('alwaha_privacy_notice_ack_v1') || !html.includes('showAlwahaPrivacyNoticeIfNeeded')) fail('Privacy notice on first launch missing.');
