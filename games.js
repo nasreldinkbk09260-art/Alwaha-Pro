@@ -107,7 +107,7 @@
     }
     SESSION.roomActionBusy = true;
     const container = $('games-list-container');
-    const controls = container ? [...container.querySelectorAll('[data-mp-create],[data-mp-join],.mp-join-code-form input,.mp-join-code-form button')] : [];
+    const controls = container ? [...container.querySelectorAll('[data-mp-create],[data-mp-join],[data-mp-resume],.mp-join-code-form input,.mp-join-code-form button')] : [];
     const previous = controls.map(control => ({
       disabled: control.disabled,
       ariaBusy: control.getAttribute('aria-busy'),

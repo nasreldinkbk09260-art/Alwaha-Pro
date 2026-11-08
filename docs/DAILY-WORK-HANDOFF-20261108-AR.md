@@ -337,3 +337,10 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## توحيد آخر Assertion لكاش QR والمزامنة
 
 أظهر CI أن نسخة assertion في `game-actions-audit.mjs` بقيت على namespace `qr-roundtrip-games-controls` بينما Service Worker واختبارات التوافق الأخرى تستخدم `qr-roundtrip-poll-version-guard`. تم تحديث assertion والتسمية لتطابق الكاش النشط؛ لم يتغير runtime أو SQL.
+
+
+## استعادة آخر غرفة بعد إغلاق نافذة اللعب
+
+أضيف مسار `العودة إلى آخر غرفة`: يحتفظ التطبيق بمعرّف UUID للغرفة فقط في `localStorage` تحت مفتاح `alwaha_game_last_room_v1`، ولا يحفظ كود الدعوة أو بيانات اعتماد. عند الضغط على زر العودة، يعيد العميل جلب الغرفة من `game_rooms`، ثم يتحقق أن المستخدم الحالي يطابق `player1_id` أو `player2_id` قبل فتحها. إذا كانت الغرفة غير موجودة أو تخص حسابًا آخر، يحذف مرجع الاستعادة؛ وإذا انقطع الاتصال، يبقي المرجع للسماح بإعادة المحاولة. أضيف زر استعادة إلى قائمة الألعاب عند توفر معرّف محفوظ، ويدخل الزر في قفل single-flight حتى لا يتزامن مع الإنشاء أو الانضمام. يوضح زر الرجوع أن إغلاق النافذة لا ينهي المباراة.
+
+سياسة RLS الحالية تقصر قراءة `game_rooms` على طرفي الغرفة (`player1_id` أو `player2_id`)، ويؤكد اختبار الاستعادة هذه الحماية. رُفع cache namespace إلى `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-room-resume` حتى تصل ميزة الاستعادة للأجهزة المثبتة.
