@@ -7,7 +7,7 @@
     ludo: { title: 'ليدو', icon: '🎲', color: '#00e0a4', description: 'ليدو لشخصين: رمي النرد، إخراج القطع، أكل قطع الخصم والوصول إلى النهاية.' },
     war: { title: 'الكتشينة — حرب الورق', icon: '🂡', color: '#ffd166', description: 'ورق لعب قياسي؛ أعلى ورقة تفوز بالجولة، والتعادل يفعّل الحرب.' }
   };
-  const SESSION = { room: null, user: null, timer: null, loading: false, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
+  const SESSION = { room: null, user: null, timer: null, loading: false, pollGeneration: 0, syncFailed: false, roomActionBusy: false, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
   const toast = (message, type = 'info') => {
@@ -79,37 +79,101 @@
     return Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
   }
   function roomEndpoint(id) { return `game_rooms?select=*&id=eq.${encodeURIComponent(id)}&limit=1`; }
-  async function createRoom(gameId) {
-    const user = await requireUser(); if (!user) return;
-    if (typeof window.alwahaInvokeEdgeFunction !== 'function') return toast('خدمة الألعاب الآمنة غير متاحة في هذه النسخة.', 'error');
-    toast('جاري إنشاء الغرفة الآمنة...', 'info');
+  function beginRoomAction(button, busyLabel) {
+    if (SESSION.roomActionBusy) {
+      toast('جارٍ تنفيذ طلب لعبة آخر. انتظر اكتماله أولاً.', 'info');
+      return null;
+    }
+    SESSION.roomActionBusy = true;
+    const container = $('games-list-container');
+    const controls = container ? [...container.querySelectorAll('[data-mp-create],[data-mp-join]')] : [];
+    const previous = controls.map(control => ({
+      disabled: control.disabled,
+      ariaBusy: control.getAttribute('aria-busy'),
+      textContent: control.textContent
+    }));
+    controls.forEach(control => {
+      control.disabled = true;
+      control.setAttribute('aria-busy', 'true');
+    });
+    if (button) button.textContent = busyLabel;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      controls.forEach((control, index) => {
+        control.disabled = previous[index].disabled;
+        if (previous[index].ariaBusy === null) control.removeAttribute('aria-busy');
+        else control.setAttribute('aria-busy', previous[index].ariaBusy);
+        control.textContent = previous[index].textContent;
+      });
+      SESSION.roomActionBusy = false;
+    };
+  }
+  async function createRoom(gameId, button = null) {
+    if (!GAME_INFO[gameId]) return toast('نوع اللعبة غير معروف.', 'error');
+    const releaseAction = beginRoomAction(button, 'جارٍ إنشاء الغرفة…');
+    if (!releaseAction) return;
     try {
+      const user = await requireUser(); if (!user) return;
+      if (typeof window.alwahaInvokeEdgeFunction !== 'function') throw new Error('خدمة الألعاب الآمنة غير متاحة في هذه النسخة.');
+      toast('جاري إنشاء الغرفة الآمنة...', 'info');
       const result = await window.alwahaInvokeEdgeFunction('game-actions',{action:'create_room',game_id:gameId});
       const created = normalizeRoom(result?.room);
-      if (!created?.id) throw new Error('لم يؤكد الخادم إنشاء الغرفة.');
+      if (!created?.id || created.game_id !== gameId || created.player1_id !== user.id) {
+        throw new Error('لم يؤكد الخادم إنشاء غرفة صحيحة لهذا الحساب واللعبة.');
+      }
       SESSION.user = user; openRoom(created,user);
       toast('تم إنشاء الغرفة. أرسل الكود للاعب الآخر.', 'success');
-    } catch(error) { toast(error?.message || 'تعذر إنشاء الغرفة.', 'error'); }
+    } catch(error) {
+      toast(error?.message || 'تعذر إنشاء الغرفة.', 'error');
+    } finally {
+      releaseAction();
+    }
   }
-  async function joinRoom(gameId) {
-    const user = await requireUser(); if (!user) return;
-    const code = (window.prompt('أدخل كود الغرفة المكوّن من 6 أحرف أو أرقام:') || '').trim().toUpperCase();
-    if (!code) return;
-    if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) return toast('كود الغرفة غير صحيح.', 'error');
-    const joined = normalizeRoom(await window.supabaseFetch('rpc/join_game_room', { method: 'POST', body: JSON.stringify({ p_room_code: code, p_expected_game_id: gameId }), prefer: 'return=representation' }));
-    if (!joined || !joined.id) return toast('تعذر الانضمام. تحقق من الكود، وأن الغرفة تنتظر لاعباً، وأن ترحيل قاعدة البيانات مطبّق.', 'error');
-    if (joined.game_id !== gameId) return toast(`هذا الكود مخصص للعبة ${GAME_INFO[joined.game_id]?.title || joined.game_id}. افتحها من قسم اللعبة الصحيح.`, 'error');
-    SESSION.user = user;
-    openRoom(joined, user);
+  async function joinRoom(gameId, button = null) {
+    if (!GAME_INFO[gameId]) return toast('نوع اللعبة غير معروف.', 'error');
+    const releaseAction = beginRoomAction(button, 'جارٍ الانضمام…');
+    if (!releaseAction) return;
+    try {
+      const user = await requireUser(); if (!user) return;
+      if (typeof window.prompt !== 'function' || typeof window.supabaseFetch !== 'function') {
+        throw new Error('خدمة الانضمام إلى الغرف غير متاحة في هذه النسخة.');
+      }
+      const code = (window.prompt('أدخل كود الغرفة المكوّن من 6 أحرف أو أرقام:') || '').trim().toUpperCase();
+      if (!code) return;
+      if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) {
+        toast('كود الغرفة غير صحيح.', 'error');
+        return;
+      }
+      const response = await window.supabaseFetch('rpc/join_game_room', {
+        method: 'POST',
+        body: JSON.stringify({ p_room_code: code, p_expected_game_id: gameId }),
+        prefer: 'return=representation'
+      });
+      const joined = normalizeRoom(response);
+      if (!joined?.id || joined.game_id !== gameId || ![joined.player1_id, joined.player2_id].includes(user.id)) {
+        throw new Error('تعذر الانضمام. تحقق من الكود، ونوع اللعبة، وأن الغرفة تنتظر لاعباً.');
+      }
+      SESSION.user = user;
+      openRoom(joined, user);
+      toast('تم الانضمام إلى الغرفة.', 'success');
+    } catch(error) {
+      toast(error?.message || 'تعذر الانضمام إلى الغرفة.', 'error');
+    } finally {
+      releaseAction();
+    }
   }
   function stopPolling() {
     if (SESSION.timer) clearInterval(SESSION.timer);
-    SESSION.timer = null; SESSION.room = null; SESSION.lastRenderKey = ''; SESSION.selectedSquare = null; SESSION.legalTargets = []; SESSION.game = null; SESSION.busy = false;
+    SESSION.pollGeneration += 1;
+    SESSION.timer = null; SESSION.loading = false; SESSION.syncFailed = false; SESSION.room = null; SESSION.lastRenderKey = ''; SESSION.selectedSquare = null; SESSION.legalTargets = []; SESSION.game = null; SESSION.busy = false;
   }
   function closeRoom() {
     stopPolling();
     const modal = $('alwaha-multiplayer-room'); if (modal) modal.remove();
     document.body.classList.remove('modal-active');
+    window.AlwahaModalShell?.sync?.();
   }
   function openRoom(room, user) {
     stopPolling(); SESSION.room = room; SESSION.user = user;
@@ -117,24 +181,51 @@
     let modal = $('alwaha-multiplayer-room');
     if (modal) modal.remove();
     modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay';
-    modal.innerHTML = `<div class="game-modal-card" style="width:calc(100vw - 24px);max-width:480px;max-height:calc(100vh - 24px);margin:auto;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button class="mp-action mp-muted" id="mp-room-close">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
+    modal.innerHTML = `<div class="game-modal-card" style="width:calc(100vw - 24px);max-width:480px;max-height:calc(100vh - 24px);margin:auto;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="إغلاق غرفة اللعبة">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
+    modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'mp-room-title'); modal.setAttribute('tabindex', '-1');
     document.body.appendChild(modal); document.body.classList.add('modal-active');
+    window.AlwahaModalShell?.sync?.();
     $('mp-room-close').onclick = closeRoom;
     modal.addEventListener('click', ev => { if (ev.target === modal) closeRoom(); });
     renderRoom(room);
     SESSION.timer = setInterval(pollRoom, 1900);
   }
   async function pollRoom() {
-    if (!SESSION.room || SESSION.loading || typeof window.supabaseFetch !== 'function') return;
+    const activeRoomId = SESSION.room?.id ? String(SESSION.room.id) : '';
+    if (!activeRoomId || SESSION.loading) return;
+    if (typeof window.supabaseFetch !== 'function') {
+      if (!SESSION.syncFailed) toast('خدمة مزامنة الألعاب غير متاحة؛ تحقق من الاتصال.', 'error');
+      SESSION.syncFailed = true;
+      const syncStatus = $('mp-sync-status');
+      if (syncStatus) { syncStatus.textContent = 'تعذر الاتصال بخدمة المزامنة. أعد الاتصال بالإنترنت للمواصلة.'; syncStatus.hidden = false; }
+      return;
+    }
+    const generation = SESSION.pollGeneration;
     SESSION.loading = true;
     try {
-      const rows = await window.supabaseFetch(roomEndpoint(SESSION.room.id), { method: 'GET', prefer: 'return=representation' });
+      const rows = await window.supabaseFetch(roomEndpoint(activeRoomId), { method: 'GET', prefer: 'return=representation' });
+      if (generation !== SESSION.pollGeneration || String(SESSION.room?.id || '') !== activeRoomId) return;
       const fresh = Array.isArray(rows) ? rows[0] : null;
-      if (!fresh || !SESSION.room) return;
+      if (!fresh || String(fresh.id) !== activeRoomId) throw new Error('لم تصل حالة الغرفة الحالية من الخادم.');
       const key = `${fresh.move_no}|${fresh.status}|${fresh.player2_id || ''}|${fresh.current_turn || ''}|${fresh.updated_at || ''}`;
       SESSION.room = fresh;
+      if (SESSION.syncFailed) {
+        SESSION.syncFailed = false;
+        const syncStatus = $('mp-sync-status');
+        if (syncStatus) syncStatus.hidden = true;
+        toast('عادت مزامنة اللعبة.', 'success');
+      }
       if (key !== SESSION.lastRenderKey) renderRoom(fresh);
-    } finally { SESSION.loading = false; }
+    } catch(error) {
+      if (generation === SESSION.pollGeneration && String(SESSION.room?.id || '') === activeRoomId) {
+        if (!SESSION.syncFailed) toast('تعذر تحديث حالة اللعبة. تحقق من الاتصال؛ سنعيد المحاولة تلقائياً.', 'error');
+        SESSION.syncFailed = true;
+        const syncStatus = $('mp-sync-status');
+        if (syncStatus) { syncStatus.textContent = 'المزامنة متوقفة مؤقتاً بسبب الاتصال. أعد الاتصال للمتابعة؛ ستتم إعادة المحاولة تلقائياً.'; syncStatus.hidden = false; }
+      }
+    } finally {
+      if (generation === SESSION.pollGeneration && String(SESSION.room?.id || '') === activeRoomId) SESSION.loading = false;
+    }
   }
   function mySeat(room = SESSION.room) { return room && room.player1_id === SESSION.user?.id ? 0 : 1; }
   function opponentId(room = SESSION.room) { return mySeat(room) === 0 ? room?.player2_id : room?.player1_id; }
@@ -143,7 +234,7 @@
     const box = $('mp-room-meta'); if (!box) return;
     const seat = mySeat(room);
     const status = room.status === 'waiting' ? 'بانتظار اللاعب الثاني' : room.status === 'finished' ? 'انتهت المباراة' : (isMyTurn(room) ? 'دورك الآن' : 'دور الخصم');
-    box.innerHTML = `<div>كود الغرفة</div><div class="mp-room-code">${esc(room.room_code)}</div><div style="text-align:center"><button id="mp-copy-code" class="mp-action mp-muted">نسخ/عرض الكود</button></div><div class="mp-status">${esc(status)}</div><div>أنت: اللاعب ${seat === 0 ? 'الأول' : 'الثاني'} · الخصم: ${room.player2_id ? 'انضم' : 'لم ينضم بعد'}</div><div>رقم الحركة: ${Number(room.move_no) || 0}</div>`;
+    box.innerHTML = `<div>كود الغرفة</div><div class="mp-room-code">${esc(room.room_code)}</div><div style="text-align:center"><button type="button" id="mp-copy-code" class="mp-action mp-muted" aria-label="نسخ كود غرفة اللعبة">نسخ/عرض الكود</button></div><div class="mp-status">${esc(status)}</div><div>أنت: اللاعب ${seat === 0 ? 'الأول' : 'الثاني'} · الخصم: ${room.player2_id ? 'انضم' : 'لم ينضم بعد'}</div><div>رقم الحركة: ${Number(room.move_no) || 0}</div>`;
     const copy = $('mp-copy-code'); if (copy) copy.onclick = async () => {
       try { await navigator.clipboard.writeText(room.room_code); toast('تم نسخ كود الغرفة.', 'success'); }
       catch (_) { window.prompt('انسخ كود الغرفة وشاركه مع خصمك:', room.room_code); }
@@ -307,13 +398,13 @@
     addStyles();
     const container = $('games-list-container');
     if (!container) return;
-    const cards = Object.entries(GAME_INFO).map(([id, game]) => `<article class="mp-game-card" style="border-color:${game.color}55"><div class="mp-game-icon">${game.icon}</div><div class="mp-game-title">${esc(game.title)}</div><div class="mp-game-desc">${esc(game.description)}</div><button type="button" class="mp-action mp-create" data-mp-create="${id}">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="${id}">الانضمام بكود</button></article>`).join('');
+    const cards = Object.entries(GAME_INFO).map(([id, game]) => `<article class="mp-game-card" style="border-color:${game.color}55"><div class="mp-game-icon" aria-hidden="true">${game.icon}</div><div class="mp-game-title">${esc(game.title)}</div><div class="mp-game-desc" id="mp-desc-${id}">${esc(game.description)}</div><button type="button" class="mp-action mp-create" data-mp-create="${id}" aria-label="إنشاء غرفة ${esc(game.title)}" aria-describedby="mp-desc-${id}">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="${id}" aria-label="الانضمام إلى غرفة ${esc(game.title)} بكود" aria-describedby="mp-desc-${id}">الانضمام بكود</button></article>`).join('');
     container.innerHTML = `<div class="mp-help" style="font-size:12px">الألعاب الجماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div>`;
     container.onclick = (event) => {
       const create = event.target.closest('[data-mp-create]');
-      if (create) { createRoom(create.dataset.mpCreate); return; }
+      if (create) { void createRoom(create.dataset.mpCreate, create); return; }
       const join = event.target.closest('[data-mp-join]');
-      if (join) joinRoom(join.dataset.mpJoin);
+      if (join) void joinRoom(join.dataset.mpJoin, join);
     };
   }
   window.renderGamesSection = renderGamesSection;
