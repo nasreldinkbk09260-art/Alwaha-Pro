@@ -2551,7 +2551,6 @@ async function togglePostLike(id) {
         async function saveEditedHomePost(event) {
             event?.preventDefault?.();
             if(homePostEditInFlight)return;
-            homePostEditInFlight=true;
             const user=await requireAuthenticatedUser('سجل الدخول أولاً لتعديل منشور.');if(!user)return;
             const postId=String(window.__alwahaActiveHomePostId||'');
             const cached=window.__alwahaHomePosts?.get(postId);
@@ -2559,6 +2558,7 @@ async function togglePostLike(id) {
             const textarea=document.getElementById('home-post-edit-text');
             const nextContent=String(textarea?.value||'').trim();
             if(!nextContent&&!cached.image_url)return triggerToastNotification('أضف نصاً أو صورة قبل الحفظ.','error');
+            homePostEditInFlight=true;
             const saveButton=document.getElementById('home-post-edit-save-btn');
             if(saveButton){saveButton.disabled=true;saveButton.textContent='جارٍ الحفظ...';}
             try {
@@ -2612,12 +2612,12 @@ async function togglePostLike(id) {
             startHomePostEdit();
         }
         async function deleteOwnHomePost(postId) {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
             if(homePostDeleteInFlight)return;
-            if(!window.confirm('سيُحذف هذا المنشور نهائياً من المنصة ولا توجد استعادة من داخل التطبيق. احفظ نسخة من النص والصورة التي تريد الاحتفاظ بها أولاً. لن تُحذف بقية منشوراتك أو إعداداتك المحلية. هل تتابع؟'))return;
             homePostDeleteInFlight=true;
             const button=document.getElementById('home-post-delete-btn');if(button){button.disabled=true;button.setAttribute('aria-busy','true');}
             try{
+                const user=await requireAuthenticatedUser('سجل الدخول أولاً لحذف منشور.');if(!user)return;
+                if(!window.confirm('سيُحذف هذا المنشور نهائياً من المنصة ولا توجد استعادة من داخل التطبيق. احفظ نسخة من النص والصورة التي تريد الاحتفاظ بها أولاً. لن تُحذف بقية منشوراتك أو إعداداتك المحلية. هل تتابع؟'))return;
                 const result=await supabaseFetch(`posts?id=eq.${encodeURIComponent(postId)}&author_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=representation'});
                 if(result===null||(Array.isArray(result)&&result.length===0))return triggerToastNotification('تعذر حذف المنشور أو أنه لم يعد متاحاً.','error');
                 window.__alwahaHomePosts?.delete?.(String(postId));
