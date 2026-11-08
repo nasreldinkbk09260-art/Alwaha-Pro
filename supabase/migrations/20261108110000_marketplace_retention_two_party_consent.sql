@@ -16,8 +16,7 @@ AS $function$
 BEGIN
   -- Trusted worker may stamp the one-time retention notice only.
   IF current_user IN ('postgres','service_role')
-     AND OLD.retention_notice_sent_at IS NULL
-     AND NEW.retention_notice_sent_at IS NOT NULL
+     AND NEW.retention_notice_sent_at IS DISTINCT FROM OLD.retention_notice_sent_at
      AND (to_jsonb(NEW)-'retention_notice_sent_at') IS NOT DISTINCT FROM
          (to_jsonb(OLD)-'retention_notice_sent_at') THEN
     RETURN NEW;
