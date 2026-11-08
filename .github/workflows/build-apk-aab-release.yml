@@ -246,6 +246,8 @@ jobs:
         run: npm run audit:themes
       - name: Run mobile navigation dock regression audit
         run: npm run audit:navigation-dock
+      - name: Run sequential home section acceptance audit
+        run: npm run audit:home
 
       - name: Run UI handler audit
         run: npm run audit:ui
