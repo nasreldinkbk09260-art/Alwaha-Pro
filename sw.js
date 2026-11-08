@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261107';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-smart-assistant';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const PRECACHE_ASSETS = [
   './alwaha-modal-shell.js',
   './alwaha-runtime-guard.js',
   './alwaha-kids-room.js',
+  './alwaha-smart-assistant.js',
   './alwaha-theme-system.css',
   './alwaha-native-back-handler.js',
   './assets/chess.min.js',
