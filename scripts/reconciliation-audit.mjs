@@ -32,9 +32,9 @@ check('release version 3.0.3 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.3' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.3' && manifest.version === '3.0.3' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.3 final cache token agrees across audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261107'") &&
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-css'") &&
   read('scripts/performance-audit.mjs').includes('final-20261107') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261107') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-css') &&
   read('scripts/compatibility-audit.mjs').includes('3.0.3-final-20261107'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
@@ -103,18 +103,22 @@ check('kids effect sounds have a distinct WebRTC audio track and bridge to remot
 check('encrypted local backup supports export/import and excludes passwords/session/service keys',
   vault.includes('PBKDF2') && vault.includes('AES-GCM') && vault.includes('async function exportBackup') &&
   vault.includes('async function importBackup') && vault.includes('لا يتضمن كلمات المرور أو رموز الجلسة أو مفاتيح الخدمة'));
-check('five themes include original default plus four full-viewport local seasonal scenes',
-  ['bg-spring.webp','bg-summer.webp','bg-autumn.webp','bg-winter.webp'].every(x=>experience.includes(x)) &&
-  experience.includes('const THEMES=') && themeCss.includes('body[data-alwaha-theme]') &&
-  themeCss.includes('background-size:cover') && html.includes('alwaha:themechange'));
-check('theme/nav motion and sounds stop for reduced motion or data saver',
+check('three approved themes include the default plus two full-app image-free premium atmospheres',
+  ['default','oasis','abyss'].every(x=>experience.includes(`id:'${x}'`)) &&
+  [...html.matchAll(/data-theme-choice="([^"]+)"/g)].length===3 &&
+  themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop') &&
+  themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop') &&
+  !themeCss.includes('bg-aurora.webp') && !themeCss.includes('bg-underwater.webp') &&
+  html.includes('alwaha:themechange'));
+check('theme/nav motion respects reduced-motion and data-saver while UI sound remains independently configurable',
   experience.includes('function motionAllowed()') &&
   experience.includes("safeGet('alwaha_data_saver')!=='true'") &&
   experience.includes("safeGet('alwaha_reduced_motion')!=='true'") &&
   experience.includes("matchMedia('(prefers-reduced-motion: reduce)').matches") &&
   experience.includes('body.alwaha-reduced-motion .bottom-nav-bar') &&
   experience.includes('body.alwaha-data-saver .bottom-nav-bar') &&
-  experience.includes('function comic(el){if(!motionAllowed())return;'));
+  experience.includes('function comic(el){if(!motionAllowed())return;') &&
+  experience.includes('function setSoundEnabled') && experience.includes('bindGlobalFeedbackSound'));
 check('nav drag has a lightweight comic follower with falling/recovered hat or shoe and distinct grab/drop sounds',
   experience.includes('alwaha-comic-walker') && experience.includes('walker-follow') &&
   experience.includes('walker-gear') && experience.includes('alwahaGearDrop') &&
