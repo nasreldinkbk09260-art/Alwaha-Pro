@@ -2092,14 +2092,17 @@ async function toggleInternalNotificationCenter() {
                 let payload = {};
                 try { payload = JSON.parse(n.body || '{}'); } catch(e) {}
                 const friendRequestId = n.type === 'friend_request' ? String(payload.friend_request_id || '') : '';
+                const acceptedById = n.type === 'friend_request_accepted' ? String(payload.accepted_by || '') : '';
                 const actions = n.type === 'friend_request'
                     ? (friendRequestId ? `<div style="display:flex;gap:6px;margin-top:8px;"><button type="button" class="btn-action" style="background:#00ff88;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();respondFriendRequest('${escapeJs(friendRequestId)}','accepted')">قبول</button><button type="button" class="btn-action" style="background:#ff0055;color:#fff;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();respondFriendRequest('${escapeJs(friendRequestId)}','rejected')">رفض</button></div>` : '<small style="display:block;color:#b7a7ad;margin-top:6px;">طلب الصداقة لم يعد متاحاً؛ حدّث قائمة الطلبات.</small>')
-                    : (n.type === 'message'
-                        ? `<button type="button" class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>`
-                        : '');
+                    : (n.type === 'friend_request_accepted'
+                        ? (acceptedById ? `<button type="button" class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();markSingleNotificationRead('${escapeJs(n.id)}');openTargetUserDirectChat('صديق جديد','', '${escapeJs(acceptedById)}')">فتح المحادثة</button>` : '')
+                        : (n.type === 'message'
+                            ? `<button type="button" class="btn-action" style="margin-top:7px;background:#00ffff;color:#000;padding:6px 10px;border-radius:8px;font-size:10px;" onclick="event.stopPropagation();openTargetUserDirectChat('مرسل الرسالة','', '${escapeJs(payload.sender_id || '')}')">فتح المحادثة</button>`
+                            : ''));
                 return `<div data-notification-id="${escapeJs(n.id)}" ${friendRequestId ? `data-friend-request-id="${escapeJs(friendRequestId)}"` : ''} onclick="markSingleNotificationRead('${escapeJs(n.id)}')" style="padding:11px;border-bottom:1px solid rgba(255,255,255,.07);background:${n.is_read ? 'transparent':'rgba(0,255,255,.05)'};">
                     <div style="display:flex;justify-content:space-between;gap:8px;"><strong style="color:#00ffff;font-size:11px;">${escapeHtml(n.title)}</strong><small style="color:#777;">${new Date(n.created_at).toLocaleString('ar-EG')}</small></div>
-                    <div style="color:#ddd;font-size:10px;margin-top:4px;line-height:1.6;">${escapeHtml(n.type === 'friend_request' ? (payload.requester_name ? `أرسل لك ${payload.requester_name} طلب صداقة.` : 'أرسل لك أحد المستخدمين طلب صداقة.') : (n.type === 'message' ? 'لديك رسالة جديدة.' : (n.type === 'follow' ? ((payload.follower_name || 'عضو في الواحة') + ' بدأ بمتابعتك.') : (n.body || ''))))}</div>${actions}</div>`;
+                    <div style="color:#ddd;font-size:10px;margin-top:4px;line-height:1.6;">${escapeHtml(n.type === 'friend_request' ? (payload.requester_name ? `أرسل لك ${payload.requester_name} طلب صداقة.` : 'أرسل لك أحد المستخدمين طلب صداقة.') : (n.type === 'friend_request_accepted' ? 'تم قبول طلب الصداقة. أصبح بإمكانك بدء محادثة الآن.' : (n.type === 'message' ? 'لديك رسالة جديدة.' : (n.type === 'follow' ? ((payload.follower_name || 'عضو في الواحة') + ' بدأ بمتابعتك.') : (n.body || '')))))}</div>${actions}</div>`;
             }).join('') : '<div style="padding:14px;color:#aaa;font-size:11px;text-align:center;">لا توجد إشعارات حالياً.</div>';
 
             let directFriendRequestHtml='';

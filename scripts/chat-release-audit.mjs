@@ -4,6 +4,8 @@ const experience = fs.readFileSync('alwaha-experience.js','utf8');
 const kids = fs.readFileSync('alwaha-kids-room.js','utf8');
 const replyMigration=fs.readFileSync('supabase/migrations/20261108120000_real_chat_message_replies.sql','utf8');
 const replyTest=fs.readFileSync('supabase/tests/20261108120000_message_reply_scope.sql','utf8');
+const friendAcceptMigration=fs.readFileSync('supabase/migrations/20261108130000_friend_request_acceptance_notification.sql','utf8');
+const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_request_acceptance_notification.sql','utf8');
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
@@ -32,6 +34,8 @@ const checks = [
   ['market messages have their own table', 'market_messages'],
   ['direct chat persists reply ids and renders source-message context',html.includes('setDirectMessageReply')&&html.includes('payload.reply_to_id=currentDirectReplyTarget.id')&&html.includes('reply_to_id&or=')],
   ['market chat persists replies within the selected conversation only',html.includes('setMarketMessageReply')&&html.includes('payload.reply_to_id=currentMarketReplyTarget.id')&&html.includes('market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id')],
+  ['friend request acceptance sends one notification to the original requester',friendAcceptMigration.includes("NEW.status='accepted'")&&friendAcceptMigration.includes("'friend_request_accepted'")&&friendAcceptMigration.includes('friend_requests_accept_notify_trigger')&&friendAcceptTest.includes('FRIEND_REQUEST_ACCEPTED_NOTIFICATION=PASS')],
+  ['accepted friend notification opens chat and marks only that notice read',html.includes('friend_request_accepted')&&html.includes("markSingleNotificationRead('${escapeJs(n.id)}');openTargetUserDirectChat")],
   ['reply RLS prevents cross-pair and cross-conversation references',replyMigration.includes('parent.receiver_id=messages.receiver_id')&&replyMigration.includes('parent.conversation_id=market_messages.conversation_id')&&replyTest.includes('Cross-chat direct reply unexpectedly passed RLS')&&replyTest.includes('Cross-conversation market reply unexpectedly passed RLS')],
   ['legacy schemas keep normal sending active while hiding reply controls',html.includes('directReplySchemaAvailable=Array.isArray(rows)')&&html.includes('marketReplySchemaAvailable=Array.isArray(rows)')&&html.includes('if(!Array.isArray(rows))rows=await supabaseFetch')],
   ['market has dedicated chat modal', "modal.id='market-chat-modal'"],

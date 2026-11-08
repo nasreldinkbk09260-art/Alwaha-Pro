@@ -55,7 +55,8 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108120000_real_chat_m
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108120000_message_reply_scope.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108100000_game_actions_security.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108110000_marketplace_retention_two_party_consent.sql"
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108120000_message_reply_scope.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108130000_friend_request_acceptance_notification.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108130000_friend_request_acceptance_notification.sql"
 
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
