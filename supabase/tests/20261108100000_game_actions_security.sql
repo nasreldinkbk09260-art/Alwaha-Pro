@@ -65,7 +65,7 @@ END $$;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000002',true);
-DO $
+DO $$
 DECLARE joined_room public.game_rooms;
 BEGIN
   joined_room := public.join_game_room('H7K2L9','chess');
@@ -82,7 +82,7 @@ BEGIN
   END;
 END $;
 RESET ROLE;
-DO $
+DO $$
 BEGIN
   BEGIN
     PERFORM public.apply_game_action_result(
