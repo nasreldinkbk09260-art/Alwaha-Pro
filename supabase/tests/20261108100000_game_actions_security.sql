@@ -40,6 +40,23 @@ BEGIN
      NOT has_table_privilege('service_role','public.game_rooms','UPDATE') THEN
     RAISE EXCEPTION 'Service role must retain server-side game room read/write privileges';
   END IF;
+  IF NOT has_function_privilege('authenticated','public.join_game_room(text,text)','EXECUTE') OR
+     has_function_privilege('anon','public.join_game_room(text,text)','EXECUTE') THEN
+    RAISE EXCEPTION 'join_game_room must remain authenticated-only for safe room joining';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid='public.join_game_room(text,text)'::regprocedure
+                 AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
+    RAISE EXCEPTION 'join_game_room SECURITY DEFINER search_path must be empty';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid='public.submit_game_move(uuid,integer,jsonb,uuid,text,uuid)'::regprocedure
+                 AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
+    RAISE EXCEPTION 'legacy submit_game_move SECURITY DEFINER search_path must be empty';
+  END IF;
+  IF to_regprocedure('public.can_review_marketplace_product(bigint,uuid)') IS NOT NULL AND
+     NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid='public.can_review_marketplace_product(bigint,uuid)'::regprocedure
+                 AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
+    RAISE EXCEPTION 'can_review_marketplace_product SECURITY DEFINER search_path must be empty';
+  END IF;
 END $$;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
 DO $$
