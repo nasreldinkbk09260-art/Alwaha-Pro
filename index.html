@@ -3075,12 +3075,17 @@ async function subscribeToMarketConversation() {
             const close=page.querySelector('button[aria-label="إغلاق محادثات السوق"]');close?.focus({preventScroll:true});
             window.AlwahaModalShell?.sync?.();
         }
+        function syncAlwahaModalBodyLock() {
+            const active=Array.from(document.querySelectorAll('.game-modal-overlay,.alwaha-fullscreen-layer,#internal-notification-center,#floating-options-menu,#floating-add-menu')).some(layer=>alwahaIsVisible(layer));
+            document.body.classList.toggle('modal-active',active);
+        }
+
         function closeMarketConversationsPage() {
             const page=document.getElementById('market-conversations-page');if(!page)return;
             page.classList.remove('is-open');page.style.display='none';
             const panel=document.getElementById('market-conversations-panel'),placeholder=document.getElementById('market-conversations-panel-placeholder');
             if(panel&&placeholder&&panel.parentElement!==placeholder.parentElement){placeholder.parentElement.insertBefore(panel,placeholder);panel.style.display='none';}
-            window.AlwahaModalShell?.sync?.();
+            syncAlwahaModalBodyLock();window.AlwahaModalShell?.sync?.();
         }
 
         async function openMarketConversationChat(conversationId,title,peerId) {
@@ -3107,7 +3112,7 @@ async function subscribeToMarketConversation() {
         function closeMarketConversationChat() {currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();
             const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
             if(marketConversationChannel&&supabaseClient){supabaseClient.removeChannel(marketConversationChannel).catch(()=>{});marketConversationChannel=null;}
-            currentMarketConversationId='';window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();
+            currentMarketConversationId='';syncAlwahaModalBodyLock();window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();
         }
         async function subscribeToMarketInbox() {
             const me=await getCurrentAuthUser();if(!me||!supabaseClient||marketInboxChannel)return;
