@@ -28,7 +28,7 @@ check('home composer has accessible image picker and removal control',home.inclu
 check('home composer has a stable publish button',home.includes('id="home-post-publish-btn"'));
 check('image preview is local before upload and validates MIME/type/size',html.includes('reader.readAsDataURL(compressed)')&&html.includes("startsWith('image/')")&&html.includes('compressed.size>8*1024*1024'));
 check('image preview ignores stale asynchronous selections',html.includes('homePostImageSelectionId')&&html.includes('selectionId!==homePostImageSelectionId'));
-check('removing an image clears the pending file and preview',/function clearHomePostImageDraft\(\)[\s\S]{0,1000}pendingHomePostFile = null;[\s\S]{0,500}previewWrap/.test(html));
+check('removing an image clears the pending file, preview source and wrapper',/function clearHomePostImageDraft\(\)[\s\S]{0,1000}pendingHomePostFile = null;[\s\S]{0,500}preview.removeAttribute\('src'\)[\s\S]{0,250}wrap.style.display = 'none'/.test(html));
 check('publish blocks duplicate requests and disables the action',html.includes('window.__alwahaHomePostInFlight=true')&&html.includes("publishButton.disabled=true"));
 check('publish retains draft on failed upload or row creation',html.includes('بقيت المسودة الحالية')&&html.includes('if(!imageUrl)return;')&&html.includes('if(!result){'));
 check('publish clears text and image only after successful insert',/if\(textEl\)textEl\.value='';[\s\S]{0,350}pendingHomePostFile=null/.test(html));
@@ -54,6 +54,10 @@ check('post details ignore stale async lookups',html.includes('const requestId=+
 check('post edit requires the owner and prevents duplicate save',html.includes('homePostEditInFlight')&&html.includes('cached.author_id)!==String(user.id)')&&html.includes('author_id=eq.'));
 check('post delete requires ownership, confirmation and duplicate guard',html.includes('homePostDeleteInFlight')&&html.includes('هل تتابع؟')&&html.includes('posts?id=eq.'));
 check('notification count is updated from recipient-specific unread rows',html.includes("notifications?recipient_id=eq.")&&html.includes('is_read=eq.false')&&html.includes('refreshAlwahaNotificationBadge'));
+check('notifications require a signed-in user before opening the panel',html.includes("const me=await requireAuthenticatedUser('سجّل الدخول أولاً لعرض التنبيهات.')")&&html.indexOf('const me=await requireAuthenticatedUser',html.indexOf('async function toggleInternalNotificationCenter'))<html.indexOf("center.classList.add('alwaha-notifications-open')",html.indexOf('async function toggleInternalNotificationCenter')));
+check('closing notifications cancels any older in-flight render',html.includes('notificationRenderRequestId++')&&html.includes("center.style.display='none'"));
+check('late notification results cannot reopen a closed panel',html.includes('requestId!==notificationRenderRequestId')&&html.includes("!center.classList.contains('alwaha-notifications-open')"));
+check('failed unread-count refresh preserves the last known badge value',html.includes('retaining the last known count')&&html.includes('if(!Array.isArray(rows)){'));
 
 check('install action is only exposed when beforeinstallprompt is available',html.includes("window.addEventListener('beforeinstallprompt'")&&html.includes("(!installed && deferredPrompt)?'inline-flex':'none'"));
 check('share/install controls have native Android and web fallbacks',html.includes('window.alwahaAudioRoute?.shareApk')&&html.includes('navigator.share')&&html.includes('deferredPrompt.prompt()'));
