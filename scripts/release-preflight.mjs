@@ -112,7 +112,7 @@ if (!html.includes('config:{private:true}') && !html.includes('config: { private
 if (!html.includes('waitForIceGathering(timeoutMs = 10000)') || !html.includes('this.client.realtime.setAuth(session.access_token)')) fail('Private call channel auth/ICE safeguards are incomplete.');
 if (!html.includes("supabaseClient.rpc('can_review_marketplace_product'")) fail('Marketplace buyer eligibility must be checked by the privacy-safe RPC.');
 
-const themeCss=read('alwaha-theme-system.css');
+
 const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
 if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
 if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
