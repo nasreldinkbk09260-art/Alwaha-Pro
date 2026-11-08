@@ -47,7 +47,7 @@ const checks = [
   ['friend request notification actions do not bubble to the parent card', 'event.stopPropagation();respondFriendRequest'],
   ['only the resolved friend request notification is marked read', 'markNotificationsReadSilently(notificationIds)'],
   ['market listing deletion archives instead of deleting', "status:'archived'"],
-  ['market conversation list supports the live pre-snapshot schema', 'market_conversations?select=id,product_id,buyer_id,seller_id,created_at&or='],
+  ['market conversation list supports the live pre-snapshot schema', 'market_conversations?select=id,product_id,buyer_id,seller_id,created_at&${filter}'],
   ['market snapshots are queried as an optional schema extension', 'market_conversations?id=in.(${idFilter})&select=id,listing_snapshot'],
   ['market message success does not wait for secondary list refresh', 'void renderMarketConversationsList();'],
   ['market audio call has independent mode', "startAlwahaCall('market','audio'"],
