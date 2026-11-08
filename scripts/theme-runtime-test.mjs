@@ -21,8 +21,8 @@ const choices=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(x=>x[1]);if
 if(experience.includes('خمسة مظاهر كاملة')||/THEMES\.map\(t=>/.test(experience))throw Error('Duplicate dynamic theme picker still present');
 if(!html.includes('id="alwaha-ui-sounds-enabled"')||!experience.includes('function setSoundEnabled')||!experience.includes('bindGlobalFeedbackSound'))throw Error('UI sound toggle not wired');
 const soundFn=experience.match(/function sound\(freq=480\)\{[\s\S]*?\}\n function setSoundEnabled/);if(!soundFn||soundFn[0].includes('motionAllowed()'))throw Error('Sound is incorrectly disabled by motion/data saver settings');
-const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8'),ws=String.raw`split(/\\s+/)`;
-if(!modalShell.includes(ws)||!modalShell.includes("document.body.className||'').split(/\\s+/)"))throw Error('MutationObserver whitespace guard missing');
+const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8'),ws='split(/'+String.fromCharCode(92)+'s+/)';
+if(!modalShell.includes(ws)||!modalShell.includes("document.body.className||'')."+ws))throw Error('MutationObserver whitespace guard missing');
 if(!html.includes('href="./alwaha-theme-system.css"')||html.includes('alwaha-theme-system.css?v='))throw Error('Theme CSS path mismatch');
 if(!sw.includes("'./alwaha-theme-system.css'"))throw Error('Theme CSS not precached');
 const first=context.changeAppTheme('default',false);if(first!=='default'||Object.prototype.hasOwnProperty.call(body.dataset,'alwahaTheme')||stored.get('alwaha_theme')!=='default')throw Error('Default theme did not restore');
