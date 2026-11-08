@@ -1304,6 +1304,7 @@ img,video,canvas{max-width:100%}
         let marketLifecycleSchemaReady = null;
         let marketLifecycleSchemaPromise = null;
         let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
+        let reelsFeedRequestId = 0;
         let reelRecorder = null;
         let reelRecorderChunks = [];
         let pendingRecordedReel = null;
@@ -2656,16 +2657,19 @@ async function togglePostLike(id) {
         /* --- محرك الريلز بجميع الأزرار والميزات الكاملة --- */
 
 async function renderReelsFeed() {
+            const requestId=++reelsFeedRequestId;
             const reelsContainer=document.getElementById('reels-container'); if(!reelsContainer) return;
             if(!reelsContainer.querySelector('.reel-card'))reelsContainer.innerHTML='<div style="text-align:center;color:#ff0055;padding:20px;font-size:12px;">جاري تحديث الريلز في الخلفية...</div>';
             const [reels,counts]=await Promise.all([supabaseFetch('reels?select=*&order=created_at.desc&limit=50'),supabaseFetch('reel_like_counts?select=reel_id,likes_count')]);
+            if(requestId!==reelsFeedRequestId)return;
             if(!Array.isArray(reels)) { const e=window.__alwahaLastApiError||{}; reelsContainer.innerHTML=`<div style="text-align:center;color:#ff9ab4;padding:22px;font-size:11px;line-height:1.8;">تعذر تحميل الريلز (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من الاتصال أو أعد المحاولة.')}</div>`;return; }
             if(!reels.length){reelsContainer.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;font-size:12px;">لا توجد ريلز بعد. استخدم زر الإضافة لتصوير فيديو أو اختياره من الهاتف.</div>';return;}
-            const me=await getCurrentAuthUser();
+            const me=await getCurrentAuthUser();if(requestId!==reelsFeedRequestId)return;
             const [mine,following]=me?await alwahaUiDeadline(Promise.all([
                 supabaseFetch(`reel_likes?user_id=eq.${encodeURIComponent(me.id)}&select=reel_id`),
                 supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&select=following_id&limit=500`)
             ]),1200,[[],[]]):[[],[]];
+            if(requestId!==reelsFeedRequestId)return;
             const countMap=new Map((Array.isArray(counts)?counts:[]).map(x=>[String(x.reel_id),Number(x.likes_count||0)]));
             const mineSet=new Set((Array.isArray(mine)?mine:[]).map(x=>String(x.reel_id)));
             const followingSet=new Set((Array.isArray(following)?following:[]).map(x=>String(x.following_id)));
@@ -2693,26 +2697,39 @@ async function renderReelsFeed() {
         }
 
 async function toggleReelFollow(targetId) {
-            const me=await requireAuthenticatedUser('سجل الدخول أولًا لمتابعة صاحب الريلز.');if(!me)return;
-            if(!targetId||targetId===me.id)return triggerToastNotification('لا يمكنك متابعة حسابك الشخصي.','info');
-            const rows=await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(targetId)}&select=follower_id&limit=1`);
-            if(!Array.isArray(rows))return triggerToastNotification('تعذر التحقق من حالة المتابعة؛ تحقق من الاتصال أو صلاحيات قاعدة البيانات.','error');
-            const result=rows.length
-              ? await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(targetId)}`,{method:'DELETE',prefer:'return=minimal'})
-              : await supabaseFetch('follows',{method:'POST',body:JSON.stringify({follower_id:me.id,following_id:targetId}),prefer:'return=representation'});
-            if(result===null)return triggerToastNotification('تعذر تحديث المتابعة. تحقق من الاتصال وصلاحيات قاعدة البيانات.','error');
-            triggerToastNotification(rows.length?'تم إلغاء متابعة صاحب الريلز.':'تمت متابعة صاحب الريلز.','success');
-            await renderReelsFeed();
+            const locks=window.__alwahaReelFollowLocks||(window.__alwahaReelFollowLocks=new Set()),key=String(targetId||'');
+            if(!key||locks.has(key))return;locks.add(key);
+            try{
+                const me=await requireAuthenticatedUser('سجل الدخول أولًا لمتابعة صاحب الريلز.');if(!me)return;
+                if(key===me.id)return triggerToastNotification('لا يمكنك متابعة حسابك الشخصي.','info');
+                const rows=await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(key)}&select=follower_id&limit=1`);
+                if(!Array.isArray(rows))return triggerToastNotification('تعذر التحقق من حالة المتابعة؛ لم نرسل طلبًا جديدًا لتجنب التكرار.','error');
+                const result=rows.length
+                    ? await supabaseFetch(`follows?follower_id=eq.${encodeURIComponent(me.id)}&following_id=eq.${encodeURIComponent(key)}`,{method:'DELETE',prefer:'return=minimal'})
+                    : await supabaseFetch('follows',{method:'POST',body:JSON.stringify({follower_id:me.id,following_id:key}),prefer:'return=representation'});
+                if(result===null)return triggerToastNotification('تعذر تحديث المتابعة. تحقق من الاتصال وصلاحيات قاعدة البيانات.','error');
+                triggerToastNotification(rows.length?'تم إلغاء متابعة صاحب الريلز.':'تمت متابعة صاحب الريلز.','success');
+                await renderReelsFeed();
+            }finally{locks.delete(key);}
         }
 
 async function toggleReelLike(reelId) {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لإضافة إعجاب.'); if(!user) return;
-            const existing=await supabaseFetch(`reel_likes?reel_id=eq.${encodeURIComponent(reelId)}&user_id=eq.${encodeURIComponent(user.id)}&select=reel_id&limit=1`);
-            let ok;
-            if(Array.isArray(existing)&&existing.length) ok=await supabaseFetch(`reel_likes?reel_id=eq.${encodeURIComponent(reelId)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'});
-            else ok=await supabaseFetch('reel_likes',{method:'POST',body:JSON.stringify({reel_id:Number(reelId),user_id:user.id}),prefer:'return=minimal'});
-            if(ok===null)return triggerToastNotification('تعذر تحديث الإعجاب.','error');
- renderReelsFeed();
+            const locks=window.__alwahaReelLikeLocks||(window.__alwahaReelLikeLocks=new Set()),key=String(reelId);
+            if(locks.has(key))return;locks.add(key);
+            try{
+                const user=await requireAuthenticatedUser('سجل الدخول أولاً لإضافة إعجاب.');if(!user)return;
+                const existing=await supabaseFetch(`reel_likes?reel_id=eq.${encodeURIComponent(key)}&user_id=eq.${encodeURIComponent(user.id)}&select=reel_id&limit=1`);
+                if(!Array.isArray(existing))return triggerToastNotification('تعذر التحقق من الإعجاب؛ لم نرسل طلبًا جديدًا لتجنب التكرار.','error');
+                const wasLiked=existing.length>0;
+                const result=wasLiked
+                    ? await supabaseFetch(`reel_likes?reel_id=eq.${encodeURIComponent(key)}&user_id=eq.${encodeURIComponent(user.id)}`,{method:'DELETE',prefer:'return=minimal'})
+                    : await supabaseFetch('reel_likes',{method:'POST',body:JSON.stringify({reel_id:Number(key),user_id:user.id}),prefer:'return=minimal'});
+                if(result===null)return triggerToastNotification('تعذر تحديث الإعجاب.','error');
+                const button=document.getElementById(`reel-like-btn-${key}`),icon=document.getElementById(`reel-like-icon-${key}`),count=document.getElementById(`reel-like-count-${key}`);
+                button?.classList.toggle('liked',!wasLiked);
+                if(icon)icon.style.color=wasLiked?'#fff':'#ff0055';
+                if(count)count.textContent=String(Math.max(0,(Number(count.textContent)||0)+(wasLiked?-1:1)));
+            }finally{locks.delete(key);}
         }
 
 async function shareReelContent(title, mediaUrl='') {
