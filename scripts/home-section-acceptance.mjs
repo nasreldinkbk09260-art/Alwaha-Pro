@@ -61,6 +61,9 @@ check('failed unread-count refresh preserves the last known badge value',html.in
 
 check('install action is only exposed when beforeinstallprompt is available',html.includes("window.addEventListener('beforeinstallprompt'")&&html.includes("(!installed && deferredPrompt)?'inline-flex':'none'"));
 check('share/install controls have native Android and web fallbacks',html.includes('window.alwahaAudioRoute?.shareApk')&&html.includes('navigator.share')&&html.includes('deferredPrompt.prompt()'));
+check('install action consumes the prompt once and blocks repeat taps',html.includes('installPromptInFlight')&&html.includes('deferredPrompt=null;')&&html.includes('if(installPromptInFlight)return;'));
+check('install banner refreshes after accepted, dismissed or failed prompt',html.includes('finally{')&&html.includes('refreshAlwahaInstallShareActions();')&&html.includes('install.disabled=!!installPromptInFlight'));
+check('native APK share falls back to sharing the app link',html.includes("APK share failed; falling back to app link")&&html.includes("window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url)"));
 
 if(failures){console.error(`HOME_SECTION_ACCEPTANCE=FAIL (${failures})`);process.exit(1);}
 console.log('HOME_SECTION_ACCEPTANCE=PASS');
