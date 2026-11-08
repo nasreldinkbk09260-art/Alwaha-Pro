@@ -68,6 +68,6 @@ check('dock has visible focus and active states',source.includes('.nav-item:focu
 check('bottom and top anchors respect Android safe-area insets',source.includes('bottom:calc(7px + env(safe-area-inset-bottom))')&&source.includes('top:calc(7px + env(safe-area-inset-top))'));
 check('drag release snaps and clears temporary free-position mode',source.includes('showPosition(orientation,true);nav.classList.remove(\'alwaha-nav-group-dragging\')'));
 check('reset navigation returns to bottom rather than screen center',source.includes("showPosition('bottom',true);"));
-check('position selector defaults to the bottom option',source.includes('pos.value=safeGet(POSITION_KEY)||\'bottom\''));
+check('position selector defaults to the bottom option',source.includes("host.querySelector('#alwaha-nav-position-select').value=safeGet(POSITION_KEY)||'bottom'"));
 if(failures){console.error(`NAVIGATION_DOCK_TEST=FAIL (${failures})`);process.exit(1);}
 console.log('NAVIGATION_DOCK_TEST=PASS');
