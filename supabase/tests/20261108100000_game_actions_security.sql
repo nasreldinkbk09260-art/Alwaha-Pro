@@ -52,10 +52,11 @@ BEGIN
                  AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
     RAISE EXCEPTION 'legacy submit_game_move SECURITY DEFINER search_path must be empty';
   END IF;
-  IF to_regprocedure('public.can_review_marketplace_product(bigint,uuid)') IS NOT NULL AND
-     NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid='public.can_review_marketplace_product(bigint,uuid)'::regprocedure
-                 AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
-    RAISE EXCEPTION 'can_review_marketplace_product SECURITY DEFINER search_path must be empty';
+  IF to_regprocedure('public.can_review_marketplace_product(bigint,uuid)') IS NOT NULL THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=to_regprocedure('public.can_review_marketplace_product(bigint,uuid)')
+                   AND coalesce(p.proconfig,ARRAY[]::text[]) @> ARRAY['search_path=""']::text[]) THEN
+      RAISE EXCEPTION 'can_review_marketplace_product SECURITY DEFINER search_path must be empty';
+    END IF;
   END IF;
 END $$;
 SELECT set_config('request.jwt.claim.role','authenticated',true);
