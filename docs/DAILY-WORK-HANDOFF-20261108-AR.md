@@ -300,3 +300,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## توحيد اختبار استقرار التشغيل مع اسم الكاش الجديد
 
 بعد تغيير namespace لتجديد ملفات QR على الأجهزة المثبّتة، كشف CI أن `scripts/runtime-boot-audit.mjs` كان يحتفظ بفحص مستقل للاسم السابق. تم تحديثه إلى `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup`؛ بقية فحوص الكاش والأداء والتوافق والمصالحة كانت قد اجتازت بالفعل. لا يوجد تغيير إضافي في كود التطبيق هنا.
+
+
+## تصحيح مرجع الكاش داخل اختبار الألعاب
+
+فشل CI في `audit:games` لأن assertion فحص namespace الجديد ترك اسمَي متغيرين محليين (`cacheNew` و`newRegex`) في نص الاختبار بدل القيم الفعلية. تم استبدالهما باسم namespace الثابت داخل Service Worker وبصيغة Regex المهربة داخل performance audit. لا تغيير في تنفيذ التطبيق أو cache نفسه.
