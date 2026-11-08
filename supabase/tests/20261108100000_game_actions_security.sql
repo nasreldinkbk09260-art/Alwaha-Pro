@@ -80,7 +80,7 @@ BEGIN
     RAISE EXCEPTION 'Authenticated direct game room creation unexpectedly succeeded';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
-END $;
+END $$;
 RESET ROLE;
 DO $$
 BEGIN
