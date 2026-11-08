@@ -82,6 +82,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
 
+      - name: Set up Deno for Edge Function type checks
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Setup Node.js
         uses: actions/setup-node@v7.1.0
         with:
@@ -247,6 +252,8 @@ jobs:
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation
 
+      - name: Type-check server-authoritative game Edge Function
+        run: deno check supabase/functions/game-actions/index.ts
       - name: Run server-authoritative multiplayer game audit
         run: npm run audit:games
       - name: Run retention, kids-room, and backup audit

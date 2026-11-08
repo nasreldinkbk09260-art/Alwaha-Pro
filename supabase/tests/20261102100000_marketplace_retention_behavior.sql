@@ -10,6 +10,7 @@ DECLARE
   v_conversation_no_sale uuid;
   v_conversation_disputed uuid;
   v_transaction uuid;
+  v_expired_transaction uuid;
   v_snapshot jsonb;
   v_retention timestamptz;
   v_deleted integer;
@@ -59,8 +60,8 @@ BEGIN
     guarantee_expires_at,retention_until,status
   ) VALUES(
     v_product,v_buyer,v_seller,jsonb_build_object('title','أرشيف تجريبي'),10,
-    now()-interval '40 days',now()-interval '1 day',now()+interval '6 days','active'
-  );
+    now()-interval '40 days',now()-interval '1 day',now()-interval '1 day','active'
+  ) RETURNING id INTO v_expired_transaction;
   PERFORM public.purge_expired_marketplace_archives(50);
   IF NOT EXISTS (
     SELECT 1 FROM public.market_transactions
@@ -69,8 +70,21 @@ BEGIN
   IF (SELECT count(*) FROM public.notifications WHERE type='market_retention_notice' AND recipient_id IN (v_buyer,v_seller)) < 2 THEN
     RAISE EXCEPTION 'Both transaction participants must receive a retention notice';
   END IF;
+  UPDATE public.market_transactions SET retention_notice_sent_at=now()-interval '8 days' WHERE id=v_expired_transaction;
+  PERFORM set_config('request.jwt.claim.sub',v_buyer::text,true);
+  PERFORM public.approve_market_archive_deletion('transaction',v_expired_transaction,true);
+  PERFORM public.purge_expired_marketplace_archives(50);
+  IF NOT EXISTS (SELECT 1 FROM public.market_transactions WHERE id=v_expired_transaction) THEN
+    RAISE EXCEPTION 'One participant consent must not delete a sale transaction';
+  END IF;
+  PERFORM set_config('request.jwt.claim.sub',v_seller::text,true);
+  PERFORM public.approve_market_archive_deletion('transaction',v_expired_transaction,true);
+  PERFORM public.purge_expired_marketplace_archives(50);
+  IF EXISTS (SELECT 1 FROM public.market_transactions WHERE id=v_expired_transaction) THEN
+    RAISE EXCEPTION 'Transaction should be purged only after both participants consent and the grace period';
+  END IF;
 
-  -- A no-sale conversation is retained as an archive, then purged when its deadline passes.
+  -- A no-sale conversation remains archived after its deadline until both participants approve deletion.
   INSERT INTO public.products(seller_id,title,price,description)
   VALUES(v_seller,'إعلان بلا بيع','50','أرشيف شهر') RETURNING id INTO v_product_no_sale;
   INSERT INTO public.market_conversations(product_id,buyer_id,seller_id)
@@ -88,10 +102,19 @@ BEGIN
     RAISE EXCEPTION 'Late retention job must notify first and preserve the conversation during grace';
   END IF;
   UPDATE public.market_conversations SET retention_notice_sent_at=now()-interval '8 days' WHERE id=v_conversation_no_sale;
+  PERFORM set_config('request.jwt.claim.sub',v_buyer::text,true);
+  PERFORM public.approve_market_archive_deletion('conversation',v_conversation_no_sale,true);
+  PERFORM public.purge_expired_marketplace_archives(50);
+  IF NOT EXISTS (SELECT 1 FROM public.market_conversations WHERE id=v_conversation_no_sale)
+     OR NOT EXISTS (SELECT 1 FROM public.market_messages WHERE conversation_id=v_conversation_no_sale) THEN
+    RAISE EXCEPTION 'One participant consent must retain the conversation and its messages';
+  END IF;
+  PERFORM set_config('request.jwt.claim.sub',v_seller::text,true);
+  PERFORM public.approve_market_archive_deletion('conversation',v_conversation_no_sale,true);
   PERFORM public.purge_expired_marketplace_archives(50);
   IF EXISTS (SELECT 1 FROM public.market_conversations WHERE id=v_conversation_no_sale)
      OR EXISTS (SELECT 1 FROM public.market_messages WHERE conversation_id=v_conversation_no_sale) THEN
-    RAISE EXCEPTION 'Conversation/messages should be purged after the seven-day notice grace';
+    RAISE EXCEPTION 'Conversation/messages should be purged only after both participants consent';
   END IF;
 
   -- A disputed transaction blocks conversation cleanup even beyond the nominal deadline.

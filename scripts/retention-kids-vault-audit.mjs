@@ -2,6 +2,7 @@ import fs from 'node:fs';
 const read=(p)=>fs.readFileSync(p,'utf8');
 const migration=read('supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql');
 const archiveMigration=read('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql');
+const consentMigration=read('supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql');
 const kids=read('alwaha-kids-room.js');
 const experience=read('alwaha-experience.js');
 const vault=read('alwaha-local-vault.js');
@@ -14,7 +15,8 @@ const checks=[
  ['retention job runs daily at 03:00 UTC',migration.includes("'0 3 * * *'")&&migration.includes('alwaha-marketplace-retention-daily')],
  ['no-warranty conversations keep the 30-day minimum',migration.includes("now()+interval '30 days'")],
  ['both participants receive pre-purge notifications',migration.includes('t.buyer_id')&&migration.includes('t.seller_id')&&migration.includes("'market_retention_notice'")&&migration.includes("interval '7 days'")],
- ['late cron recovery still notifies expired conversations before cleanup',migration.includes(`c.retention_notice_sent_at IS NULL AND c.retention_until<=now()+interval '7 days'`)&&migration.includes(`c.retention_notice_sent_at<=now()-interval '7 days'`)&&migration.includes('يبدأ الحذف بعد 7 أيام من هذا التنبيه')],
+ ['late cron recovery notifies but never deletes without two explicit approvals',migration.includes(`c.retention_notice_sent_at IS NULL AND c.retention_until<=now()+interval '7 days'`)&&consentMigration.includes('delete_approved_by_buyer_at IS NOT NULL')&&consentMigration.includes('delete_approved_by_seller_at IS NOT NULL')&&consentMigration.includes('لن يتم الحذف تلقائياً')],
+ ['archive deletion approvals can be approved or revoked only by the signed-in participant',consentMigration.includes('auth.uid()')&&consentMigration.includes('p_approve boolean DEFAULT true')&&consentMigration.includes('SET delete_approved_by_buyer_at')&&consentMigration.includes('SET delete_approved_by_seller_at')&&consentMigration.includes('GRANT EXECUTE ON FUNCTION public.approve_market_archive_deletion')],
  ['scheduled warranty expiry is allowed only for the database job role',migration.includes("current_user IN ('postgres','service_role')")&&migration.includes("OLD.status='active'")&&migration.includes("NEW.status='archived'")&&migration.includes('Only the buyer may confirm receipt once')],
  ['retention notifications are batch-bounded and mark only selected rows',migration.includes('WITH due AS MATERIALIZED')&&migration.includes('UPDATE public.market_transactions AS t')&&migration.includes('UPDATE public.market_conversations AS c')&&migration.includes('GET DIAGNOSTICS v_notified_transactions=ROW_COUNT')&&migration.includes('GET DIAGNOSTICS v_notified_conversations=ROW_COUNT')],
  ['disputed transactions block automatic cleanup',migration.includes("t.status='disputed'")],
