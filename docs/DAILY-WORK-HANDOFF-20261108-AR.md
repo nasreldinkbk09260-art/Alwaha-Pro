@@ -310,3 +310,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## تبسيط فحص cache داخل audit:games
 
 كشف CI أن assertion الألعاب كان يستخدم الاسم `performance` كأنه نص مقروء، بينما Node.js يعرّفه ككائن أداء عام؛ كما أنه ليس مكان اختبار اتساق كل ملفات الإصلاح. تم فصل المسؤوليات: `audit:games` يتحقق فقط من أن `sw.js` يحمل namespace المحدد `alwaha-pro-v3.0.3-final-20261108-three-themes-qr-camera-cleanup`، بينما اختبارات performance/field-repair/compatibility/reconciliation/fullscreen/runtime تتحقق من اتساقها الخاص. هذا يمنع تضارب أسماء المتغيرات ويبقي الاختبار مركزًا على القسم الذي يراجعه.
+
+
+## توحيد اختبار إغلاق ماسح QR مع دالة تحرير الكاميرا
+
+كشف CI أن assertion قديمًا كان يبحث عن `scan.stream.getTracks().stop()` داخل `stopQrScanner` مباشرة، بينما تنظيف الكاميرا أصبح موحدًا داخل `releaseQrCameraStream(scan)` وتستدعيها دالة الإغلاق. تم تحديث الاختبار ليؤكد وجود الدالة، وإيقاف كل المسارات وإلغاء animation frame، وأن الإغلاق يستدعيها، مع إبقاء اختبار إغلاق الكاميرا بعد قراءة QR.
