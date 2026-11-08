@@ -263,3 +263,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ### ضمان واجهة مولّد QR بعد التصغير
 
 أضيفت خطوة تصدير صريحة في `scripts/build-web.mjs`: بعد تصغير `qrcode-generator.js`، يربط البناء الدالة إلى `window.qrcode` داخل المصدر الذي يجري تصغيره، بحيث يعيد esbuild كتابة مرجع الدالة حتى لو غيّر اسم المتغير المحلي. أُضيف assertion إلى compatibility/game/release-preflight للتحقق من وجود تصدير `window.qrcode = qrcode`. هذا يمنع اعتمادًا غير مضمون على أسماء متغيرات top-level بعد minification.
+
+
+## إصلاح ربط فحص QR في audit:games
+
+أول CI بعد إضافة QR وصل إلى فحص الألعاب ثم توقف بخطأ `ReferenceError: sw is not defined`. السبب أن assertions الجديدة كانت تقرأ Service Worker و`build-web.mjs` دون تعريف متغيري القراءة داخل ملف الاختبار. أضيف تعريفهما في رأس `scripts/game-actions-audit.mjs`؛ لا تغيير على وظيفة QR أو سلوك اللعبة بسبب هذا الفشل.
