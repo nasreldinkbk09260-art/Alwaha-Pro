@@ -234,3 +234,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## ضبط أولوية صفحة اللعبة الكاملة
 
 عند مراجعة CSS قبل البناء تبيّن أن قاعدة قديمة مرتبطة بالمعرّف `#alwaha-multiplayer-room` كانت أعلى أولوية من قاعدة العرض الكاملة، كما كان في العنصر inline dimensions لنافذة صغيرة. أزيلت الأبعاد القديمة من markup، واستُبدلت القاعدة القديمة بمحدد صريح `#alwaha-multiplayer-room.alwaha-game-page>.game-modal-card` يفرض 100vw/100dvh وبدون max-width/max-height، مع safe-area padding. ورُفع z-index للطبقة إلى `2147483200` لتكون فوق شريط التنقل. تم تقوية اختبار العزل حتى يتحقق من المحدد الأعلى أولوية ومن ترتيب الطبقات، وليس فقط وجود كلاس شكلي.
+
+
+## توحيد رمز التخزين المؤقت في فحص المصالحة
+
+تشغيل CI `42521201782` اجتاز بوابة عزل الصفحات الكاملة وفحوص ما قبلها، ثم توقف عند فحص المصالحة الذي كان يتوقع `final-20261107` داخل `performance-audit.mjs` و`compatibility-audit.mjs`. المصدر الحالي يثبت `alwaha-pro-v3.0.3-final-20261108-three-themes-css` في Service Worker، ويثبت الرمز نفسه في field repair وcompatibility، بينما performance audit يتحقق منه بصيغة Regex ذات النقاط المهربة. تم تحديث reconciliation assertion لمطابقة الرمز الحالي في كل هذه الملفات، دون تعديل Service Worker أو تغيير البيانات المخزنة أو أسلوب التخزين.
