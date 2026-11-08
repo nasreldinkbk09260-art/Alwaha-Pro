@@ -1141,6 +1141,7 @@ img,video,canvas{max-width:100%}
         })();
 
         let deferredPrompt;
+        let installPromptInFlight=false;
         function isAlwahaInstalledContext() {
             const cap = window.Capacitor;
             const nativeCapacitor = !!(cap && ((typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) || (typeof cap.getPlatform === 'function' && ['android','ios'].includes(cap.getPlatform()))));
@@ -1154,7 +1155,11 @@ img,video,canvas{max-width:100%}
             const install=document.getElementById('install-app-btn-main');
             const share=document.getElementById('share-app-btn-main');
             const installed=isAlwahaInstalledContext();
-            if(install) install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
+            if(install){
+                install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
+                install.disabled=!!installPromptInFlight;
+                if(installPromptInFlight)install.setAttribute('aria-busy','true');else install.removeAttribute('aria-busy');
+            }
             if(share) share.style.display='inline-flex';
             if(banner) banner.style.display=(!installed && deferredPrompt)?'flex':'none';
         }
@@ -1167,34 +1172,43 @@ img,video,canvas{max-width:100%}
         window.addEventListener('DOMContentLoaded', refreshAlwahaInstallShareActions, {once:true});
         async function shareAlwahaApp() {
             const shareData={title:'Alwaha-Pro',text:'جرّب تطبيق Alwaha-Pro',url:window.location.href};
-            try {
-                if (typeof isAlwahaNativeAndroid === 'function' && isAlwahaNativeAndroid()) {
-                    if (!window.alwahaAudioRoute?.shareApk) { triggerToastNotification('ميزة مشاركة ملف التطبيق غير جاهزة في هذه النسخة.', 'error'); return; }
-                    await window.alwahaAudioRoute.shareApk();
-                    return;
-                }
-                if (navigator.share) { await navigator.share(shareData); return; }
-                if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(shareData.url); triggerToastNotification('تم نسخ رابط التطبيق. أرسله عبر أي تطبيق مراسلة.', 'success'); return; }
-                window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:', shareData.url);
-            } catch(error) {
-                if (error?.name !== 'AbortError') {
-                    console.warn('[Alwaha Share] App sharing failed:', error);
-                    triggerToastNotification('تعذرت مشاركة التطبيق من هذا الجهاز.', 'error');
-                }
+            if(typeof isAlwahaNativeAndroid==='function'&&isAlwahaNativeAndroid()&&window.alwahaAudioRoute?.shareApk){
+                try{await window.alwahaAudioRoute.shareApk();return;}
+                catch(error){console.warn('[Alwaha Share] APK share failed; falling back to app link:',error);}
+            }
+            try{
+                if(typeof navigator.share==='function'){await navigator.share(shareData);return;}
+                if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(shareData.url);triggerToastNotification('تم نسخ رابط التطبيق. أرسله عبر أي تطبيق مراسلة.','success');return;}
+                window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);
+            }catch(error){
+                if(error?.name==='AbortError')return;
+                console.warn('[Alwaha Share] App sharing failed:',error);
+                try{window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);}
+                catch{triggerToastNotification('تعذرت مشاركة التطبيق من هذا الجهاز.','error');}
             }
         }
 
-        function promptAppInstallation() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        triggerToastNotification("بدأ التثبيت على جهازك!", "success");
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                triggerToastNotification("التطبيق مثبت لديك بالفعل أو افتح الموقع من متصفح كروم لتنزيله مباشرة.", "info");
+        async function promptAppInstallation() {
+            if(installPromptInFlight)return;
+            const promptEvent=deferredPrompt;
+            if(!promptEvent){
+                triggerToastNotification("لا يوجد طلب تثبيت متاح حالياً. افتح التطبيق من متصفح يدعم تثبيت التطبيقات.", "info");
+                return;
+            }
+            deferredPrompt=null;
+            installPromptInFlight=true;
+            refreshAlwahaInstallShareActions();
+            try{
+                await promptEvent.prompt();
+                const choice=await promptEvent.userChoice;
+                if(choice?.outcome==='accepted')triggerToastNotification("بدأ التثبيت على جهازك!", "success");
+                else triggerToastNotification("لم يتم التثبيت. يمكنك متابعة استخدام الواحة وإعادة التثبيت عندما يظهر الخيار.", "info");
+            }catch(error){
+                console.warn('[Alwaha Install] Prompt failed:',error);
+                triggerToastNotification('تعذر بدء التثبيت من هذا المتصفح. استخدم قائمة المتصفح أو افتح التطبيق المثبت.', 'error');
+            }finally{
+                installPromptInFlight=false;
+                refreshAlwahaInstallShareActions();
             }
         }
 
