@@ -239,3 +239,8 @@ if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine
 ## توحيد رمز التخزين المؤقت في فحص المصالحة
 
 تشغيل CI `42521201782` اجتاز بوابة عزل الصفحات الكاملة وفحوص ما قبلها، ثم توقف عند فحص المصالحة الذي كان يتوقع `final-20261107` داخل `performance-audit.mjs` و`compatibility-audit.mjs`. المصدر الحالي يثبت `alwaha-pro-v3.0.3-final-20261108-three-themes-css` في Service Worker، ويثبت الرمز نفسه في field repair وcompatibility، بينما performance audit يتحقق منه بصيغة Regex ذات النقاط المهربة. تم تحديث reconciliation assertion لمطابقة الرمز الحالي في كل هذه الملفات، دون تعديل Service Worker أو تغيير البيانات المخزنة أو أسلوب التخزين.
+
+
+## تحديث فحص الصوت التفاعلي لشريط التنقل
+
+فشل `retention-kids-vault-audit` في شرط وحيد لأن الاختبار كان يتوقع حد تهدئة `70ms` بينما التنفيذ الحالي يستخدم `85ms`. تمت مراجعة الدالة: AudioContext واحد يعاد استخدامه، وحد التهدئة هو 85ms، وصوت الإمساك `560Hz` يصدر من مسار pointerdown الطويل، وصوت الإفلات `760Hz` من مسار pointerup، ولا يصدر صوت داخل pointermove. تم تحديث الاختبار ليتحقق من هذه السلوكيات بدل رقم قديم.
