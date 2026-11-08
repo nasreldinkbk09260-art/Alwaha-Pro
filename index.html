@@ -4383,60 +4383,7 @@ async function renderMyPersonalMarketItems() {
             await renderMyPersonalMarketItems();await renderProductsList();
         }
 
-        /* --- قسم الألعاب المكتمل التفاعلي --- */
-        function renderGamesSection() {
-            const container = document.getElementById('games-list-container');
-            if(!container) return;
-
-            const games = [
-                { id: "game_memory", title: "لعبة الذاكرة التقنية 🧠", desc: "اختبر ذاكرتك في مطابقة الأيقونات الإلكترونية والصيانة.", icon: "fa-brain", color: "#00ffff" },
-                { id: "game_cyber", title: "تحدي كسر التشفير 🔐", desc: "خمن الشفرة السرية لفتح الخزنة المتقدمة.", icon: "fa-key", color: "#ffd700" },
-                { id: "game_hardware", title: "تفكيك وتجميع الهواتف 📲", desc: "لعبة سريعة لاختبار سرعتك في التعرف على قطع غيار الموبايل.", icon: "fa-screwdriver-wrench", color: "#00ff88" },
-                { id: "game_speed", title: "تحدي سرعة الصيانة ⚡", desc: "اضغط على الخلل التقني قبل انتهاء الوقت المحدد.", icon: "fa-bolt", color: "#ff00ff" }
-            ];
-
-            container.innerHTML = "";
-            games.forEach(g => {
-                container.innerHTML += `
-                    <div class="game-card">
-                        <div style="width:50px; height:50px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid ${g.color}; display:flex; justify-content:center; align-items:center; font-size:22px; color:${g.color};">
-                            <i class="fa-solid ${g.icon}"></i>
-                        </div>
-                        <div style="flex:1;">
-                            <div style="font-weight:bold; color:#fff; font-size:14px; margin-bottom:3px;">${g.title}</div>
-                            <div style="font-size:10px; color:#aaa; line-height:1.3;">${g.desc}</div>
-                        </div>
-                        <button class="btn-action" style="background:${g.color}; color:#000; padding:8px 14px; border-radius:20px; font-size:11px;" onclick="launchGameEngine('${g.title}')">
-                            <i class="fa-solid fa-play"></i> لعب
-                        </button>
-                    </div>
-                `;
-            });
-        }
-
-async function launchGameEngine(gameTitle) {
-            const games = {
-                'لعبة الذاكرة التقنية 🧠':'memory',
-                'تحدي كسر التشفير 🔐':'code',
-                'تفكيك وتجميع الهواتف 📲':'hardware',
-                'تحدي سرعة الصيانة ⚡':'speed'
-            };
-            const id=games[gameTitle]||'speed';
-            const overlay=document.createElement('div'); overlay.className='game-modal-overlay alwaha-fullscreen-layer alwaha-game-page';
-            overlay.innerHTML=`<div class="game-modal-card" id="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;"><h3 style="margin:0;color:#00ffff;font-size:15px;">${escapeHtml(gameTitle)}</h3><button class="btn-action" style="background:transparent;color:#fff;font-size:18px;" onclick="this.closest('.game-modal-overlay').remove();document.body.classList.remove('modal-active');">×</button></div><div id="game-stage"></div></div>`;
-            document.body.appendChild(overlay); overlay.classList.add('is-open'); document.body.classList.add('modal-active');
-            const stage=overlay.querySelector('#game-stage');
-            const saveScore=async score=>{const user=await getCurrentAuthUser();if(user)await supabaseFetch('game_scores',{method:'POST',body:JSON.stringify({user_id:user.id,game_id:id,score:Math.max(0,Math.round(score))}),prefer:'return=minimal'});};
-            const finish=(score,msg)=>{stage.innerHTML=`<div style="text-align:center;padding:35px 10px;"><div style="font-size:28px;color:#00ff88;">${score}</div><div style="color:#fff;font-size:13px;margin:8px 0;">${msg}</div><button class="btn-action" style="background:#00ffff;color:#000;padding:9px 18px;border-radius:20px;font-size:11px;" onclick="this.closest('.game-modal-overlay').remove();document.body.classList.remove('modal-active');">إغلاق</button></div>`;saveScore(score);};
-            if(id==='memory'){
-                const symbols=['📱','🔧','🔋','💾','📡','⚡'];let deck=[...symbols,...symbols].sort(()=>Math.random()-.5), first=null, lock=false,matches=0,moves=0;
-                stage.innerHTML='<div style="color:#aaa;font-size:11px;margin-top:12px;">طابق الرموز بأقل عدد من المحاولات.</div><div class="memory-grid">'+deck.map((x,i)=>`<button class="memory-card" data-i="${i}">${x}</button>`).join('')+'</div><div id="game-moves" style="text-align:center;color:#aaa;font-size:10px;margin-top:10px;">المحاولات: 0</div>';
-                stage.querySelectorAll('.memory-card').forEach(btn=>btn.onclick=()=>{if(lock||btn.classList.contains('matched')||btn.classList.contains('revealed'))return;btn.classList.add('revealed');const i=Number(btn.dataset.i);if(first===null){first=i;return;}moves++;stage.querySelector('#game-moves').textContent=`المحاولات: ${moves}`;lock=true;const other=[...stage.querySelectorAll('.memory-card')][first];if(deck[first]===deck[i]){other.classList.add('matched');btn.classList.add('matched');matches++;lock=false;first=null;if(matches===symbols.length)finish(Math.max(10,100-moves*5),`أتممت المطابقة في ${moves} محاولة.`);}else setTimeout(()=>{other.classList.remove('revealed');btn.classList.remove('revealed');lock=false;first=null;},550);});
-            }else if(id==='code'){
-                const code=String(Math.floor(1000+Math.random()*9000));let attempts=0;stage.innerHTML=`<div style="color:#aaa;font-size:11px;margin:12px 0;">خمّن رمز الخزنة من 4 أرقام. لديك 8 محاولات.</div><input id="code-input" inputmode="numeric" maxlength="4" style="width:100%;padding:12px;border-radius:10px;background:#050b14;border:1px solid #ffd700;color:#fff;font-size:20px;text-align:center;letter-spacing:8px;"><button class="btn-action" style="width:100%;margin-top:10px;background:#ffd700;color:#000;padding:10px;border-radius:10px;" id="code-submit">محاولة</button><div id="code-hint" style="margin-top:10px;color:#aaa;font-size:10px;text-align:center;"></div>`;stage.querySelector('#code-submit').onclick=()=>{const val=stage.querySelector('#code-input').value;attempts++;if(val===code)return finish(Math.max(20,100-(attempts-1)*10),`فتحت الخزنة في ${attempts} محاولة.`);if(attempts>=8)return finish(0,`انتهت المحاولات. الرمز الصحيح كان ${code}.`);let exact=0;for(let i=0;i<4;i++)if(val[i]===code[i])exact++;stage.querySelector('#code-hint').textContent=`أرقام صحيحة في مكانها: ${exact} — المحاولة ${attempts}/8`;};
-            }else{
-                const questions=[['أين توجد حماية البطارية؟',['PMIC','Mic','Speaker'],'PMIC'],['ما القطعة المسؤولة عن الصوت؟',['Speaker','RAM','GPU'],'Speaker'],['ما القطعة التي تحفظ البيانات مؤقتاً؟',['RAM','Charging Port','Antenna'],'RAM'],['ما الجزء الخاص بالشحن السلكي؟',['Charging Port','Camera','Flash'],'Charging Port']];let q=0,score=0,start=performance.now();const next=()=>{if(q>=questions.length){finish(score,`أنهيت التحدي في ${((performance.now()-start)/1000).toFixed(1)} ثانية.`);return;}const [question,opts,answer]=questions[q];stage.innerHTML=`<div style="color:#fff;font-size:13px;margin:15px 0;">${question}</div>`+opts.map(o=>`<button class="choice-btn" data-v="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('');stage.querySelectorAll('.choice-btn').forEach(b=>b.onclick=()=>{if(b.dataset.v===answer)score+=25;q++;next();});};next();}
-        }
+        
 
         /* Legacy file-picker sharing removed; use the supported chat sharing controls. */
 
