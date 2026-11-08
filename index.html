@@ -1111,8 +1111,8 @@ img,video,canvas{max-width:100%}
         </div>
         <div id="comments-list-container" style="height: calc(100vh - 160px); overflow-y: auto; margin-bottom:15px;"></div>
         <div style="display:flex; gap:8px;">
-            <input type="text" id="modal-comment-input" placeholder="اكتب تعليقك..." class="keyboard-target" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:20px; color:#fff; font-size:12px; outline:none;">
-            <button class="btn-action" style="background:#00ffff; color:#000; padding:8px 15px; border-radius:20px; font-size:12px;" onclick="submitNewCommentFromModal()">إرسال</button>
+            <input type="text" id="modal-comment-input" maxlength="3000" aria-label="نص التعليق" placeholder="اكتب تعليقك..." class="keyboard-target" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:20px; color:#fff; font-size:12px; outline:none;">
+            <button type="button" id="modal-comment-submit-btn" class="btn-action" style="background:#00ffff; color:#000; padding:8px 15px; border-radius:20px; font-size:12px;min-height:40px;" onclick="submitNewCommentFromModal()">إرسال</button>
         </div>
     </div>
 
@@ -2701,38 +2701,69 @@ async function editOwnReel(reelId) {
         }
 
 async function loadCommentsForTarget(targetId, targetType=window.currentActiveCommentType||'post') {
-            const list=document.getElementById('comments-list-container'); if(!list)return;
-            list.innerHTML='<div style="text-align:center;color:#aaa;padding:20px;">جاري تحميل التعليقات...</div>';
-            const comments=await supabaseFetch(`comments?target_id=eq.${encodeURIComponent(targetId)}&target_type=eq.${encodeURIComponent(targetType)}&select=id,user_id,author_name,content,created_at&order=created_at.asc`);
-            if(!Array.isArray(comments)||!comments.length){list.innerHTML='<div style="text-align:center;color:#777;padding:20px;">لا توجد تعليقات بعد.</div>';return;}
-            list.innerHTML=comments.map(c=>`<div style="background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.2);padding:10px;border-radius:8px;margin-bottom:8px;"><span style="color:#00ff88;font-weight:bold;font-size:11px;">${escapeHtml(c.author_name||'مستخدم')}:</span><p style="margin:4px 0 0;font-size:12px;color:#eee;white-space:pre-wrap;">${escapeHtml(c.content||'')}</p><small style="color:#777;">${new Date(c.created_at).toLocaleString('ar-EG')}</small></div>`).join('');
-            list.scrollTop=list.scrollHeight;
-        }
-
-        function closeCommentsModal() {
-            const modal = document.getElementById('comments-modal-box');
-            if (modal) { modal.style.display = 'none'; document.body.classList.remove('modal-active'); }
-            currentActiveCommentPostId = null;
+            const list=document.getElementById('comments-list-container');if(!list)return;
+            const requestId=++commentsLoadRequestId,target=String(targetId),type=String(targetType||'post');
+            list.setAttribute('aria-busy','true');
+            list.innerHTML='<div role="status" style="text-align:center;color:#aaa;padding:20px;">جاري تحميل التعليقات...</div>';
+            try{
+                const comments=await supabaseFetch(`comments?target_id=eq.${encodeURIComponent(target)}&target_type=eq.${encodeURIComponent(type)}&select=id,user_id,author_name,content,created_at&order=created_at.asc`);
+                if(requestId!==commentsLoadRequestId||String(currentActiveCommentPostId)!==target||String(window.currentActiveCommentType||'post')!==type)return;
+                list.setAttribute('aria-busy','false');
+                if(!Array.isArray(comments)){
+                    list.innerHTML=`<div role="alert" style="text-align:center;color:#ffb1c5;padding:20px;line-height:1.8;">تعذر تحميل التعليقات. تحقق من الاتصال ثم أعد المحاولة.<br><button type="button" class="btn-action" style="margin-top:8px;background:#164054;color:#fff;padding:8px 14px;border-radius:10px;" onclick="loadCommentsForTarget('${escapeJs(target)}','${escapeJs(type)}')">إعادة المحاولة</button></div>`;
+                    return;
+                }
+                if(!comments.length){
+                    list.innerHTML='<div role="status" style="text-align:center;color:#a8b5c7;padding:20px;">لا توجد تعليقات بعد. كن أول من يعلّق.</div>';
+                    return;
+                }
+                list.innerHTML=comments.map(c=>`<div style="background:rgba(0,255,255,.05);border:1px solid rgba(0,255,255,.2);padding:10px;border-radius:8px;margin-bottom:8px;"><span style="color:#00ff88;font-weight:bold;font-size:11px;">${escapeHtml(c.author_name||'مستخدم')}:</span><p style="margin:4px 0 0;font-size:12px;color:#eee;white-space:pre-wrap;">${escapeHtml(c.content||'')}</p><small style="color:#777;">${c.created_at?escapeHtml(new Date(c.created_at).toLocaleString('ar-EG')):''}</small></div>`).join('');
+                list.scrollTop=list.scrollHeight;
+            }catch(error){
+                if(requestId!==commentsLoadRequestId)return;
+                list.setAttribute('aria-busy','false');
+                console.warn('[Alwaha Comments] Load failed:',error);
+                list.innerHTML='<div role="alert" style="text-align:center;color:#ffb1c5;padding:20px;">حدث خطأ أثناء تحميل التعليقات. أعد المحاولة.</div>';
+            }
         }
 
         async function submitNewCommentFromModal() {
-            const user = await requireAuthenticatedUser('سجل الدخول أولاً لكتابة تعليق.');
-            if (!user) return;
-            const input = document.getElementById('modal-comment-input');
-            const list = document.getElementById('comments-list-container');
-            if (!input || !input.value.trim() || !list || !currentActiveCommentPostId) return;
-            const profile = await getCurrentProfile();
-            const payload = {
-                target_id: String(currentActiveCommentPostId),
-                target_type: window.currentActiveCommentType || 'post',
-                user_id: user.id,
-                author_name: `${profile?.first_name || user.user_metadata?.first_name || ''} ${profile?.last_name || user.user_metadata?.last_name || ''}`.trim() || 'مستخدم',
-                content: input.value.trim()
-            };
-            const result = await supabaseFetch('comments', { method:'POST', body:JSON.stringify(payload) });
-            if (!result) return triggerToastNotification('تعذر حفظ التعليق.', 'error');
-            input.value = '';
-            await loadCommentsForTarget(currentActiveCommentPostId, window.currentActiveCommentType || 'post');
+            if(commentSendInFlight)return;
+            const user=await requireAuthenticatedUser('سجل الدخول أولاً لكتابة تعليق.');
+            if(!user)return;
+            const input=document.getElementById('modal-comment-input'),list=document.getElementById('comments-list-container');
+            const button=document.getElementById('modal-comment-submit-btn');
+            if(!input||!list||!currentActiveCommentPostId)return;
+            const content=String(input.value||'').trim();
+            if(!content)return triggerToastNotification('اكتب تعليقك أولاً.','error');
+            if(content.length>3000)return triggerToastNotification('التعليق أطول من الحد المسموح.','error');
+            const targetId=String(currentActiveCommentPostId),targetType=String(window.currentActiveCommentType||'post');
+            commentSendInFlight=true;
+            if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='جارٍ الإرسال…';}
+            try{
+                const profile=await getCurrentProfile();
+                if(targetId!==String(currentActiveCommentPostId)||targetType!==String(window.currentActiveCommentType||'post'))return;
+                const payload={
+                    target_id:targetId,
+                    target_type:targetType,
+                    user_id:user.id,
+                    author_name:`${profile?.first_name||user.user_metadata?.first_name||''} ${profile?.last_name||user.user_metadata?.last_name||''}`.trim()||'مستخدم',
+                    content
+                };
+                const result=await supabaseFetch('comments',{method:'POST',body:JSON.stringify(payload)});
+                if(!Array.isArray(result)||!result.length){
+                    triggerToastNotification('تعذر حفظ التعليق. بقي النص في الحقل حتى لا تفقده.','error');
+                    return;
+                }
+                if(input.value.trim()===content)input.value='';
+                await loadCommentsForTarget(targetId,targetType);
+            }catch(error){
+                console.warn('[Alwaha Comments] Send failed:',error);
+                triggerToastNotification('حدث خطأ أثناء إرسال التعليق. بقي النص في الحقل.','error');
+            }finally{
+                commentSendInFlight=false;
+                if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent='إرسال';}
+            }
         }
 
         function expandChatSubWindow(tabId) {
