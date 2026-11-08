@@ -21,7 +21,10 @@ if(!html.includes('لا توجد طلبات توثيق معلقة حالياً.'
 if(!html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.','error');"))fail('Admin review authorization guard missing.');
 if(html.includes('seller_email'))fail('Frontend must not request or render seller_email.');
 if(!html.includes("savedTheme = localStorage.getItem('alwaha_theme') || 'default'"))fail('Saved theme is not restored on startup.');
-for(const theme of ['default','spring','summer','autumn','winter'])if(!html.includes(`changeAppTheme('${theme}')`) && !experience.includes(`id:'${theme}'`))fail(`Missing theme selection: ${theme}`);
+const themeChoices=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
+if(themeChoices.length!==3||new Set(themeChoices).size!==3||!['default','oasis','abyss'].every(theme=>themeChoices.includes(theme)))fail('The app must expose exactly the three approved theme choices.');
+const themeCss=read('alwaha-theme-system.css');
+if(!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop'))fail('Premium image-free theme atmospheres are incomplete.');
 if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
 if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
@@ -48,7 +51,7 @@ if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
 for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vendor/supabase/supabase.js','./assets/vendor/cairo/300.css','./assets/vendor/cairo/400.css','./assets/vendor/cairo/600.css','./assets/vendor/cairo/700.css','./assets/vendor/cairo/900.css'])if(!html.includes(asset))fail('Critical UI dependency is not served locally: '+asset);
-for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','assets/backgrounds/bg-spring.webp','assets/backgrounds/bg-summer.webp','assets/backgrounds/bg-autumn.webp','assets/backgrounds/bg-winter.webp','alwaha-theme-system.css'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.3 media asset: '+asset);
+for(const asset of ['assets/sounds/saffron_tide.mp3','assets/sounds/marimba_bloom.mp3','assets/backgrounds/bg-nebula.webp','alwaha-theme-system.css'])if(!fs.existsSync(path.join(process.cwd(),asset)))fail('Missing 3.0.3 media asset: '+asset);
 for(const helper of ['setAlwahaLanguage','setAlwahaDataSaver','setAlwahaReducedMotion','setAlwahaRingtoneChoice'])if(!fs.readFileSync(path.join(process.cwd(),'production-polish.js'),'utf8').includes('window.'+helper))fail('Missing settings handler: '+helper);
 if(!fs.readFileSync(path.join(process.cwd(),'games.js'),'utf8').includes('p_expected_game_id'))fail('Missing wrong-game room join guard.');
 if (!pkg.dependencies?.['@capacitor/app']) fail('Missing Android native back plugin: @capacitor/app.');
@@ -107,9 +110,11 @@ if (!html.includes('waitForIceGathering(timeoutMs = 10000)') || !html.includes('
 if (!html.includes("supabaseClient.rpc('can_review_marketplace_product'")) fail('Marketplace buyer eligibility must be checked by the privacy-safe RPC.');
 
 const themeCss=read('alwaha-theme-system.css');
-for(const theme of ['default','spring','summer','autumn','winter']) if(!html.includes(`changeAppTheme('${theme}')`) && !experience.includes(`id:'${theme}'`)) fail(`Theme missing: ${theme}`);
-for(const asset of ['bg-spring.webp','bg-summer.webp','bg-autumn.webp','bg-winter.webp']) if(!sw.includes(asset)||!experience.includes(asset)) fail(`Theme asset is not precached and selectable: ${asset}`);
-if(!themeCss.includes('--wa-accent')||!themeCss.includes('#alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop')) fail('Integrated theme palette/backdrop is missing.');
+const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
+if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
+if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
+if(sw.includes('bg-spring.webp')||sw.includes('bg-summer.webp')||sw.includes('bg-autumn.webp')||sw.includes('bg-winter.webp'))fail('Obsolete seasonal wallpaper files remain in the active offline cache list.');
+if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from offline precache.');
 
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
