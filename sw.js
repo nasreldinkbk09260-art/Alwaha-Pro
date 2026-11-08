@@ -20,8 +20,6 @@ const PRECACHE_ASSETS = [
   './assets/sounds/saffron_tide.mp3',
   './assets/sounds/marimba_bloom.mp3',
   './assets/backgrounds/bg-nebula.webp',
-  './assets/backgrounds/bg-aurora.webp',
-  './assets/backgrounds/bg-underwater.webp',
   './assets/vendor/fontawesome/css/all.min.css',
   './assets/vendor/supabase/supabase.js',
   './assets/vendor/cairo/300.css',
