@@ -2991,7 +2991,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const input=document.getElementById('chat-message-input'),peerId=String(currentChatUserId||''),content=input?.value?.trim()||'',replyTarget=currentDirectReplyTarget;
             if(!input||!content||!peerId)return triggerToastNotification('اختر مستخدماً أولاً واكتب رسالتك.','error');
             if(replyTarget&&!directReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');
-            const button=document.querySelector('#active-chat-box .alwaha-chat-composer button');
+            const button=document.querySelector('#active-chat-box .alwaha-chat-composer button'),previousMarkup=button?.innerHTML;
             directMessageSendInFlight=true;if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='جارٍ الإرسال…';}
             try{
                 const user=await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
@@ -3014,7 +3014,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                     if(currentDirectReplyTarget?.id===replyTarget?.id){currentDirectReplyTarget=null;renderDirectReplyPreview();}
                     void loadDirectMessages();
                 }
-            }finally{directMessageSendInFlight=false;if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent='إرسال';}}
+            }finally{directMessageSendInFlight=false;if(button){button.disabled=false;button.removeAttribute('aria-busy');button.innerHTML=previousMarkup||'<i class="fa-solid fa-paper-plane"></i>';}}
         }
 
         async function loadMarketMessages() {
