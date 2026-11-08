@@ -32,7 +32,7 @@ const checks = [
   ['feed post request deadline', "alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null)"],
   ['market inbox has its own UI', 'id="market-conversations-panel"'],
   ['market messages have their own table', 'market_messages'],
-  ['direct chat persists reply ids and renders source-message context',html.includes('setDirectMessageReply')&&html.includes('payload.reply_to_id=currentDirectReplyTarget.id')&&html.includes('reply_to_id&or=')],
+  ['direct chat persists reply ids and renders source-message context',html.includes('setDirectMessageReply')&&html.includes('payload.reply_to_id=replyTarget.id')&&html.includes('reply_to_id&or=')],
   ['market chat persists replies within the selected conversation only',html.includes('setMarketMessageReply')&&html.includes('payload.reply_to_id=currentMarketReplyTarget.id')&&html.includes('market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id')],
   ['friend request acceptance sends one notification to the original requester',friendAcceptMigration.includes("NEW.status='accepted'")&&friendAcceptMigration.includes("'friend_request_accepted'")&&friendAcceptMigration.includes('friend_requests_accept_notify_trigger')&&friendAcceptTest.includes('FRIEND_REQUEST_ACCEPTED_NOTIFICATION=PASS')],
   ['accepted friend notification opens chat and marks only that notice read',html.includes('friend_request_accepted')&&html.includes("markSingleNotificationRead('${escapeJs(n.id)}');openTargetUserDirectChat")],
@@ -42,7 +42,7 @@ const checks = [
   ['market has separate sender', 'async function sendMarketMessage()'],
   ['market conversation is tied to a listing', 'market_conversations?product_id=eq.'],
   ['market seller welcome message is shown after opening chat', 'input.value=`السلام عليكم، هل ما زال المنتج'],
-  ['friend message gate remains', 'hasAcceptedAlwahaFriendship(currentChatUserId)'],
+  ['friend message gate remains', 'hasAcceptedAlwahaFriendship(peerId)'],
   ['notification opens do not auto-clear all unread items', 'markSingleNotificationRead'],
   ['friend request notification actions do not bubble to the parent card', 'event.stopPropagation();respondFriendRequest'],
   ['only the resolved friend request notification is marked read', 'markNotificationsReadSilently(notificationIds)'],
@@ -90,7 +90,7 @@ const marketSendEnd=html.indexOf('async function subscribeToMarketConversation()
 if(marketSendStart<0||marketSendEnd<0||html.slice(marketSendStart,marketSendEnd).includes('hasAcceptedAlwahaFriendship')){console.error('FAIL: market sending must not depend on friend requests');failures++;}
 const friendSendStart=html.indexOf('async function sendLiveChatMessageFromUI()');
 const friendSendEnd=html.indexOf('async function renderConversationsList()',friendSendStart);
-if(friendSendStart<0||friendSendEnd<0||!html.slice(friendSendStart,friendSendEnd).includes('hasAcceptedAlwahaFriendship(currentChatUserId)')){console.error('FAIL: friend chat accepted-friendship guard missing');failures++;}
+if(friendSendStart<0||friendSendEnd<0||!html.slice(friendSendStart,friendSendEnd).includes('hasAcceptedAlwahaFriendship(peerId)')){console.error('FAIL: friend chat accepted-friendship guard missing');failures++;}
 if(!html.includes('data-friend-request-id=\"${escapeJs(friendRequestId)}\"') || !html.includes('status=eq.pending')){console.error('FAIL: friend request response must bind to the pending request and its own notification');failures++;}
 const marketContactStart=html.indexOf('async function startMarketSellerChatInternal(');
 const marketContactEnd=html.indexOf('async function renderConversationsList()',marketContactStart);
