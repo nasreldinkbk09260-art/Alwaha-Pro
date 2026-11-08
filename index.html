@@ -665,13 +665,17 @@ img,video,canvas{max-width:100%}
         <div id="internal-notification-center" style="display:none; background:rgba(20,20,30,0.95); border:1px solid #00ffff; border-radius:10px; margin-bottom:15px; overflow:hidden;"></div>
 
         <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px; margin-bottom:20px;">
-            <textarea id="home-post-textarea" placeholder="بماذا تفكر، أو ما هو سؤالك التقني اليوم؟" class="keyboard-target" style="width:100%; background:transparent; border:none; color:#fff; resize:none; height:70px; font-size:13px; outline:none;"></textarea>
-            <img id="home-post-image-preview" src="" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px; display:none; margin-bottom:10px;">
+            <label for="home-post-textarea" style="display:block;color:#b9ccdd;font-size:11px;margin:0 0 6px;">اكتب منشورك أو سؤالك</label>
+            <textarea id="home-post-textarea" maxlength="20000" placeholder="بماذا تفكر، أو ما هو سؤالك التقني اليوم؟" class="keyboard-target" style="width:100%; background:transparent; border:none; color:#fff; resize:vertical; min-height:70px; max-height:220px; font-size:13px; outline:none;"></textarea>
+            <div id="home-post-image-preview-wrap" style="display:none;position:relative;margin:8px 0 10px;">
+                <img id="home-post-image-preview" src="" alt="معاينة صورة المنشور" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px; display:none;">
+                <button type="button" class="btn-action" aria-label="إزالة صورة المنشور" title="إزالة الصورة من المسودة" onclick="clearHomePostImageDraft()" style="position:absolute;top:7px;left:7px;background:#381727e8;color:#fff;border:1px solid #ff8bad88;border-radius:18px;padding:6px 10px;font-size:10px;">إزالة الصورة ×</button>
+            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.1); margin-top:5px; padding-top:8px;">
-                <button class="btn-action" style="background:transparent; color:#00ffff; font-size:16px;" onclick="previewHomePostImage()">
-                    <i class="fa-solid fa-image"></i>
+                <button type="button" class="btn-action" aria-label="اختيار صورة للمنشور" title="اختيار صورة للمنشور" style="background:transparent; color:#00ffff; font-size:13px;min-height:40px;padding:6px 10px;" onclick="previewHomePostImage()">
+                    <i class="fa-solid fa-image"></i> صورة
                 </button>
-                <button class="btn-action" style="background:linear-gradient(90deg, #00ffff, #3a86ff); color:#000; padding:6px 16px; border-radius:20px; font-size:12px;" onclick="publishNewHomePost()">
+                <button type="button" id="home-post-publish-btn" class="btn-action" style="background:linear-gradient(90deg, #00ffff, #3a86ff); color:#000; padding:7px 18px; border-radius:20px; font-size:12px;min-height:40px;" onclick="publishNewHomePost()">
                     <i class="fa-solid fa-paper-plane"></i> نشر
                 </button>
             </div>
@@ -1261,6 +1265,10 @@ img,video,canvas{max-width:100%}
 
         let pendingHomePostFile = null;
         let pendingHomePostDataUrl = '';
+        let homePostImageSelectionId = 0;
+        let homePostDetailsRequestId = 0;
+        let commentsLoadRequestId = 0;
+        let commentSendInFlight = false;
         let localUploadedAvatarFile = null;
         let marketMultiFilesArray = [];
         let editingMarketProductId = null;
