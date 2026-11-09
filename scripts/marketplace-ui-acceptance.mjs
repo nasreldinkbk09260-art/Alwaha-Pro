@@ -38,6 +38,25 @@ const checks=[
  ['sale form validates warranty and keeps server-authoritative completion RPC',html.includes('market-action-guarantee')&&html.includes('guaranteeDays>3650')&&html.includes("rpc('complete_market_sale'")],
  ['reporting uses an in-app form with bounded reason and no browser prompt',(()=>{const a=html.indexOf('async function reportMarketplaceItem'),b=html.indexOf('async function submitMarketplaceReview',a),s=html.slice(a,b);return html.includes('market-action-report-reason')&&s.includes("openMarketActionForm('report'")&&!s.includes('window.prompt');})()],
  ['market action form supports Android back, safe close, and sign-out cancellation',html.includes("const marketActionForm=document.getElementById('market-action-form-modal')")&&html.includes('closeMarketActionForm(true)')&&html.includes('marketActionFormRequestId++')],
+
+ ['seller items list uses seller-scoped explicit columns and guards stale/account-switched responses',html.includes('products?seller_id=eq.')&&html.includes('marketMyItemsRenderRequestId')&&html.includes('activeUser?.id!==me.id')],
+ ['sold listings cannot be edited and active listings expose archive rather than hard-delete',html.includes("if(product.status==='sold')return triggerToastNotification('لا يمكن تعديل إعلان تم بيعه")&&html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")],
+ ['archived listings can be republished through the lifecycle update path',html.includes('async function reactivateMyProduct')&&html.includes("status:'active',archived_at:null")],
+ ['promotion is scoped through the seller-owned lifecycle update path',html.includes('async function promoteMyProduct')&&html.includes('async function updateMarketProductLifecycle')&&html.includes('seller_id=eq.')],
+ ['market transaction schema is probed before sale and retention controls are enabled',html.includes('async function detectMarketTransactionSchema()')&&html.includes("market_transactions?select=id&limit=0")&&html.includes('listing_snapshot,archived_at,retention_until,retention_notice_sent_at')],
+ ['my listings display an honest coming-soon state when transaction and warranty schema is absent',html.includes('const marketTransactionsReady=await detectMarketTransactionSchema()')&&html.includes('تسجيل البيع قريبًا')&&html.includes('الضمان قريبًا')],
+ ['sale registration fails closed when live transaction schema is absent',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا")],
+ ['sale form rechecks transaction schema before calling the server-authoritative RPC',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا")&&html.includes("supabaseClient.rpc('complete_market_sale'")],
+ ['transaction history displays coming soon instead of a misleading schema error',html.includes("سجل المعاملات والضمان قريبًا. سيظهر بعد اكتمال تحديث قاعدة السوق واعتماد صلاحياته.")],
+ ['receipt confirmation and archive consent are gated until their live schema exists',html.includes("تأكيد الاستلام قريبًا حتى يكتمل تحديث سجل المعاملات")&&html.includes("موافقة حذف الأرشيف قريبًا بعد اكتمال تحديث سياسة الاحتفاظ")],
+ ['market inbox is a dedicated full-screen modal that blocks the background',html.includes("page.setAttribute('aria-modal','true')")&&html.includes("page.className='alwaha-fullscreen-layer'")&&html.includes("document.body.classList.add('modal-active')")],
+ ['market conversation list revalidates the signed-in participant after parallel reads',html.includes('const activeUser=await getCurrentAuthUser();')&&html.includes('activeUser?.id!==me.id')],
+ ['opening a market chat revalidates the signed-in participant against the conversation row',html.includes("if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))")],
+ ['market message sending is single-flight and preserves the draft on failed requests',html.includes('if(marketMessageSendInFlight)return;')&&html.includes('marketMessageSendInFlight=true')&&html.includes("if(input)input.value=''")&&html.includes('بقي النص في خانة الكتابة')],
+ ['market realtime subscription is scoped to the active conversation id',html.includes('market-conversation-\${id}')&&html.includes('currentMarketConversationId===id')],
+ ['market seller call starts from the verified market conversation without friendship gating',html.includes("startAlwahaCall('market','audio',conversationId,sellerId")&&html.includes('async function callMarketSeller')],
+ ['market archive remains a reversible status update, not a frontend hard delete',html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")&&html.includes('async function reactivateMyProduct')]
+
 ];
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
