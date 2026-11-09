@@ -2294,15 +2294,11 @@ async function toggleInternalNotificationCenter() {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لتعديل الخصوصية.');
             if (!user) return;
             const newName = document.getElementById('privacy-new-name')?.value.trim();
-            const hideEmailChk = document.getElementById('privacy-hide-email-chk')?.checked;
-            const hidePhoneChk = document.getElementById('privacy-hide-phone-chk')?.checked;
             const updateData = {};
             if (newName) {
                 updateData.first_name = newName.split(' ')[0];
                 updateData.last_name = newName.split(' ').slice(1).join(' ') || '';
             }
-            if (hideEmailChk !== undefined) updateData.hide_email = hideEmailChk;
-            if (hidePhoneChk !== undefined) updateData.hide_phone = hidePhoneChk;
             if (Object.keys(updateData).length) {
                 const result = await supabaseFetch(`users?id=eq.${encodeURIComponent(user.id)}`, { method:'PATCH', body:JSON.stringify(updateData) });
                 if (!result) return triggerToastNotification('تعذر حفظ إعدادات الخصوصية.', 'error');
@@ -5179,7 +5175,7 @@ function triggerAnimeAiConverterFilter() {
             if(profileUrl&&!/^https?:\/\//i.test(profileUrl)) return triggerToastNotification('الرابط يجب أن يبدأ بـ https:// أو http://.','error');
             const profile=await getCurrentProfile();
             if(!profile?.avatar_url) return triggerToastNotification('ارفع صورة شخصية حقيقية أولاً؛ الصورة الافتراضية لا تكفي للتوثيق.','error');
-            const updated=await supabaseFetch('users?id=eq.'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify({phone,hide_email:true,hide_phone:true}),prefer:'return=representation'});
+            const updated=await supabaseFetch('users?id=eq.'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify({phone}),prefer:'return=representation'});
             if(!updated) return triggerToastNotification('تعذر حفظ رقم التواصل الخاص في الملف.','error');
             const result=await supabaseFetch('verification_requests',{method:'POST',body:JSON.stringify({user_id:user.id,reason,phone,avatar_url:profile.avatar_url,category,profile_url:profileUrl||null,extra_details:extra||null}),prefer:'return=representation'});
             if(!result) return triggerToastNotification('تعذر إرسال الطلب. قد يكون لديك طلب توثيق قيد المراجعة بالفعل.','error');
