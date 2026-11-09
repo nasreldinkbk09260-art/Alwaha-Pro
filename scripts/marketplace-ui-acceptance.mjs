@@ -2,6 +2,9 @@ import fs from 'node:fs';
 const fail=(message)=>{console.error('FAIL:',message);process.exitCode=1;};
 const pass=(message)=>console.log('PASS:',message);
 const html=fs.readFileSync('index.html','utf8');
+const signStart=html.indexOf('async function signOutAlwaha()');
+const signEnd=html.indexOf('async function hydrateAuthProfile',signStart);
+const signSlice=signStart>=0&&signEnd>signStart?html.slice(signStart,signEnd):'';
 const checks=[
  ['buy view has a live text search and explicit distance filter',html.includes('id="market-search-input"')&&html.includes('oninput="searchProducts()"')&&html.includes('id="market-radius-select"')&&html.includes('onchange="searchProducts(true)"')],
  ['changing the distance filter forces a fresh filtered list rather than hiding existing cards',html.includes('function searchProducts(forceRefresh = false)')&&html.includes('if (forceRefresh || !cards.length)')],
