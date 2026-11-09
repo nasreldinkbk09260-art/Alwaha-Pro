@@ -1279,6 +1279,8 @@ img,video,canvas{max-width:100%}
         let marketMyItemsRenderRequestId = 0;
         let marketConversationsRenderRequestId = 0;
         let marketTransactionsRenderRequestId = 0;
+        let marketActionFormRequestId = 0;
+        let marketActionFormBusy = false;
         let marketConversationChannel = null;
         let marketInboxChannel = null;
         let currentActiveCommentPostId = null;
@@ -1946,6 +1948,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             marketConversationsRenderRequestId++;
             marketTransactionsRenderRequestId++;
             marketMessagesRequestId++;
+            marketActionFormRequestId++;
+            if(typeof closeMarketActionForm==='function')closeMarketActionForm(true);
             currentMarketMessages=[];currentMarketReplyTarget=null;marketReplySchemaAvailable=false;
             if(typeof closeMarketConversationChat==='function')closeMarketConversationChat();
             if(typeof closeMarketConversationsPage==='function')closeMarketConversationsPage();
@@ -4308,38 +4312,135 @@ async function submitNewProductToMarket() {
             }
             triggerToastNotification(successMessage,'success');await renderMyPersonalMarketItems();await renderProductsList(document.getElementById('market-search-input')?.value||'');
         }
-        async function markMyProductSold(productId) {
-            const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
-            const rows=await supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,buyer_id,seller_id&limit=500`);
-            const candidates=new Map((Array.isArray(rows)?rows:[]).filter(row=>row.buyer_id&&row.id).map(row=>[String(row.buyer_id),row]));
-            if(!candidates.size)return triggerToastNotification('لا توجد محادثة سوق لهذا الإعلان بعد. لا يمكن تسجيل بيع دون محادثة موثقة.', 'info');
-            const ids=[...candidates.keys()].slice(0,100),users=await supabaseFetch(`user_directory?select=id,first_name,last_name,username&id=in.(${ids.map(encodeURIComponent).join(',')})`);
-            const options=Array.isArray(users)?users.filter(user=>candidates.has(String(user.id))):[];
-            if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من محادثات الإعلان.','error');
-            const selection=window.prompt('اكتب رقم المشتري الذي استلم السلعة:\n'+options.map((user,index)=>`${index+1}. ${[user.first_name,user.last_name].filter(Boolean).join(' ')||user.username||'مستخدم'}`).join('\n'));
-            if(selection===null)return;
-            const buyer=options[Number(selection)-1];if(!buyer)return triggerToastNotification('الاختيار غير صحيح؛ لم يتم تسجيل البيع.','error');
-            const guaranteeInput=window.prompt('مدة الضمان بالأيام (0 = دون ضمان، حتى 3650 يومًا):','0');if(guaranteeInput===null)return;
-            const guaranteeDays=Number(guaranteeInput);if(!Number.isInteger(guaranteeDays)||guaranteeDays<0||guaranteeDays>3650)return triggerToastNotification('مدة الضمان غير صحيحة.','error');
-            const agreementNote=window.prompt('اكتب شروط الاتفاق المختصرة (اختياري):','')||'';
-            if(!window.confirm(`سيُسجل البيع للمشتري المحدد، مع ${guaranteeDays?`ضمان ${guaranteeDays} يومًا`:'دون ضمان وأرشفة سجل المعاملة لمدة 30 يومًا على الأقل'}. هل تؤكد؟`))return;
-            const conversation=candidates.get(String(buyer.id));
-            const {data,error}=await supabaseClient.rpc('complete_market_sale',{p_product_id:Number(productId),p_buyer_id:buyer.id,p_conversation_id:conversation.id,p_guarantee_days:guaranteeDays,p_agreement_note:agreementNote.slice(0,2000)});
-            if(error||!data){console.warn('[Alwaha Market] complete sale failed:',error);return triggerToastNotification(error?.message||'تعذر تسجيل البيع؛ لم يتم تأكيد إنشاء سجل المعاملة.','error');}
-            triggerToastNotification('تم تسجيل البيع وحفظ لقطة الإعلان والاتفاق والضمان في سجل مستقل.','success');
-            await renderMyPersonalMarketItems();await renderMarketTransactionsList();await renderMarketConversationsList();
+        function closeMarketActionForm(force=false) {
+            if(marketActionFormBusy&&!force){triggerToastNotification('جارٍ حفظ الإجراء الحالي؛ انتظر اكتماله قبل الإغلاق.','info');return false;}
+            marketActionFormRequestId++;marketActionFormBusy=false;
+            const modal=document.getElementById('market-action-form-modal');if(modal)modal.remove();
+            if(typeof syncAlwahaModalBodyLock==='function')syncAlwahaModalBodyLock();
+            window.AlwahaModalShell?.sync?.();return true;
         }
+        function openMarketActionForm(mode,data,requestId) {
+            const old=document.getElementById('market-action-form-modal');if(old)old.remove();
+            const modal=document.createElement('div');
+            modal.id='market-action-form-modal';modal.className='alwaha-fullscreen-layer is-open';
+            modal.style.cssText='display:flex;position:fixed;inset:0;z-index:2147483210;width:100vw;height:100dvh;min-height:100dvh;overflow:auto;box-sizing:border-box;background:rgba(3,10,20,.98);padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
+            modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label',mode==='sale'?'تسجيل بيع السلعة':'الإبلاغ عن إعلان');
+            modal.dataset.mode=mode;modal.dataset.requestId=String(requestId);modal.dataset.productId=String(data.productId||'');modal.dataset.sellerId=String(data.sellerId||'');
+            const isSale=mode==='sale';
+            const buyerOptions=isSale?data.buyers.map(user=>`<option value="${escapeHtml(user.id)}" data-conversation-id="${escapeHtml(user.conversationId)}">${escapeHtml(([user.first_name||'',user.last_name||''].join(' ').trim()||user.username||'مستخدم'))}</option>`).join(''):'';
+            const body=isSale?`<form id="market-action-form" novalidate>
+                  <label for="market-action-buyer" style="display:block;color:#9feaff;font-size:12px;margin:10px 0 6px;">المشتري من محادثات الإعلان</label>
+                  <select id="market-action-buyer" required style="width:100%;box-sizing:border-box;background:#0d1c2f;color:#fff;border:1px solid #8bf4ff45;border-radius:11px;padding:12px;font:12px Cairo,sans-serif;">
+                    <option value="">اختر المشتري</option>${buyerOptions}
+                  </select>
+                  <label for="market-action-guarantee" style="display:block;color:#9feaff;font-size:12px;margin:14px 0 6px;">مدة الضمان بالأيام</label>
+                  <input id="market-action-guarantee" type="number" inputmode="numeric" min="0" max="3650" step="1" value="0" required style="width:100%;box-sizing:border-box;background:#0d1c2f;color:#fff;border:1px solid #8bf4ff45;border-radius:11px;padding:12px;font:12px Cairo,sans-serif;">
+                  <p style="color:#9fb1c8;font-size:10px;line-height:1.7;margin:5px 0;">اكتب 0 إذا لم يوجد ضمان. الحد الأقصى 3650 يومًا.</p>
+                  <label for="market-action-agreement" style="display:block;color:#9feaff;font-size:12px;margin:14px 0 6px;">شروط الاتفاق (اختياري)</label>
+                  <textarea id="market-action-agreement" rows="4" maxlength="2000" placeholder="اكتب حالة السلعة أو شروط الضمان المتفق عليها..." style="width:100%;box-sizing:border-box;background:#0d1c2f;color:#fff;border:1px solid #8bf4ff45;border-radius:11px;padding:12px;font:12px Cairo,sans-serif;resize:vertical;"></textarea>
+                  <p style="color:#ffd98a;font-size:10px;line-height:1.8;margin:12px 0;">سيُحفظ الإعلان والاتفاق والضمان في سجل معاملة مستقل. لا يمكن تعديل سجل البيع بعد تأكيده.</p>
+                  <button type="submit" id="market-action-submit" style="width:100%;min-height:46px;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px;font:800 12px Cairo,sans-serif;">تأكيد البيع وحفظ الضمان</button>
+                </form>`:`<form id="market-action-form" novalidate>
+                  <label for="market-action-report-category" style="display:block;color:#9feaff;font-size:12px;margin:10px 0 6px;">نوع البلاغ</label>
+                  <select id="market-action-report-category" required style="width:100%;box-sizing:border-box;background:#0d1c2f;color:#fff;border:1px solid #8bf4ff45;border-radius:11px;padding:12px;font:12px Cairo,sans-serif;">
+                    <option value="احتيال">احتيال أو طلب تحويل مشبوه</option><option value="سلعة مزيفة">سلعة مزيفة أو مضللة</option><option value="سعر مضلل">سعر أو وصف مضلل</option><option value="محتوى مخالف">محتوى مخالف</option><option value="إزعاج">إزعاج أو إعلان مكرر</option><option value="أخرى">سبب آخر</option>
+                  </select>
+                  <label for="market-action-report-reason" style="display:block;color:#9feaff;font-size:12px;margin:14px 0 6px;">تفاصيل البلاغ</label>
+                  <textarea id="market-action-report-reason" rows="5" maxlength="850" required placeholder="اكتب ما حدث بوضوح، ولا تضع كلمات مرور أو رموز تحقق أو بيانات دفع..." style="width:100%;box-sizing:border-box;background:#0d1c2f;color:#fff;border:1px solid #8bf4ff45;border-radius:11px;padding:12px;font:12px Cairo,sans-serif;resize:vertical;"></textarea>
+                  <p style="color:#9fb1c8;font-size:10px;line-height:1.8;margin:8px 0;">سيصل البلاغ للمراجعة الإدارية فقط، ولن تظهر تفاصيله للبائع.</p>
+                  <button type="submit" id="market-action-submit" style="width:100%;min-height:46px;background:#ffb1c5;color:#31101b;border:0;border-radius:12px;padding:11px;font:800 12px Cairo,sans-serif;">إرسال البلاغ للمراجعة</button>
+                </form>`;
+            modal.innerHTML=`<section style="box-sizing:border-box;width:100%;max-width:620px;min-height:100%;margin:0 auto;padding:16px;display:flex;flex-direction:column;background:linear-gradient(160deg,#0d1b2e,#08111f);color:#fff;">
+              <header style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0 15px;border-bottom:1px solid #ffffff18;">
+                <div><strong style="display:block;color:#8bf4ff;font-size:15px;">${isSale?'تسجيل بيع السلعة':'الإبلاغ عن إعلان'}</strong><small style="display:block;color:#9fb1c8;font-size:10px;margin-top:4px;">${escapeHtml(data.title||'إعلان السوق')}</small></div>
+                <button type="button" data-market-action-close aria-label="إغلاق النموذج" style="border:1px solid #ffffff24;background:#ffffff0d;color:#fff;border-radius:10px;padding:8px 12px;font:11px Cairo,sans-serif;">إغلاق ×</button>
+              </header>
+              <main style="flex:1;padding:12px 0;">${body}</main>
+              <p style="color:#71879f;font-size:9px;line-height:1.7;margin-top:8px;">Alwaha-Pro · إجراء آمن داخل السوق</p>
+            </section>`;
+            document.body.appendChild(modal);document.body.classList.add('modal-active');
+            modal.querySelector('[data-market-action-close]')?.addEventListener('click',()=>closeMarketActionForm());
+            modal.addEventListener('click',event=>{if(event.target===modal)closeMarketActionForm();});
+            modal.querySelector('#market-action-form')?.addEventListener('submit',submitMarketActionForm);
+            window.AlwahaModalShell?.sync?.();modal.querySelector('select,textarea,input,button')?.focus({preventScroll:true});
+        }
+        async function submitMarketActionForm(event) {
+            event.preventDefault();
+            const modal=document.getElementById('market-action-form-modal');
+            if(!modal||marketActionFormBusy)return;
+            const requestId=Number(modal.dataset.requestId),mode=modal.dataset.mode;
+            if(requestId!==marketActionFormRequestId)return;
+            const submit=modal.querySelector('#market-action-submit'),close=modal.querySelector('[data-market-action-close]');
+            marketActionFormBusy=true;if(submit){submit.disabled=true;submit.textContent='جارٍ الحفظ...';}if(close)close.disabled=true;
+            try{
+                const me=await requireAuthenticatedUser(mode==='sale'?'سجّل الدخول لتسجيل البيع.':'سجّل الدخول لإرسال بلاغ.');
+                if(requestId!==marketActionFormRequestId||!me)return;
+                const activeUser=await getCurrentAuthUser();
+                if(requestId!==marketActionFormRequestId||activeUser?.id!==me.id)return;
+                const productId=modal.dataset.productId,sellerId=modal.dataset.sellerId;
+                if(mode==='sale'){
+                    if(me.id!==sellerId)return triggerToastNotification('الحساب الحالي ليس مالك الإعلان.','error');
+                    const buyerSelect=modal.querySelector('#market-action-buyer'),selected=buyerSelect?.selectedOptions?.[0],buyerId=buyerSelect?.value,conversationId=selected?.dataset?.conversationId;
+                    const guaranteeDays=Number(modal.querySelector('#market-action-guarantee')?.value),agreementNote=String(modal.querySelector('#market-action-agreement')?.value||'').trim();
+                    if(!buyerId||!conversationId)return triggerToastNotification('اختر المشتري من محادثات الإعلان.','error');
+                    if(!Number.isInteger(guaranteeDays)||guaranteeDays<0||guaranteeDays>3650)return triggerToastNotification('مدة الضمان يجب أن تكون عددًا صحيحًا بين 0 و3650 يومًا.','error');
+                    if(agreementNote.length>2000)return triggerToastNotification('شروط الاتفاق تجاوزت الحد المسموح.','error');
+                    if(!supabaseClient||typeof supabaseClient.rpc!=='function')return triggerToastNotification('خدمة تسجيل البيع غير متاحة حاليًا.','error');
+                    const {data,error}=await supabaseClient.rpc('complete_market_sale',{p_product_id:Number(productId),p_buyer_id:buyerId,p_conversation_id:conversationId,p_guarantee_days:guaranteeDays,p_agreement_note:agreementNote});
+                    if(requestId!==marketActionFormRequestId)return;
+                    if(error||!data){console.warn('[Alwaha Market] complete sale failed:',error);return triggerToastNotification(error?.message||'تعذر تسجيل البيع؛ لم يتم تأكيد إنشاء سجل المعاملة.','error');}
+                    closeMarketActionForm(true);
+                    triggerToastNotification('تم تسجيل البيع وحفظ لقطة الإعلان والاتفاق والضمان في سجل مستقل.','success');
+                    await renderMyPersonalMarketItems();await renderMarketTransactionsList();await renderMarketConversationsList();
+                    return;
+                }
+                if(mode==='report'){
+                    if(me.id===sellerId)return triggerToastNotification('لا يمكنك الإبلاغ عن إعلانك الشخصي.','info');
+                    const category=String(modal.querySelector('#market-action-report-category')?.value||'أخرى'),detail=String(modal.querySelector('#market-action-report-reason')?.value||'').trim();
+                    if(!detail||detail.length>850)return triggerToastNotification('اكتب تفاصيل البلاغ بما لا يتجاوز 850 حرفًا.','error');
+                    const reason=`${category}: ${detail}`.slice(0,1000);
+                    const result=await supabaseFetch('marketplace_reports',{method:'POST',body:JSON.stringify({product_id:productId,seller_id:sellerId,reporter_id:me.id,reason}),prefer:'return=representation'});
+                    if(requestId!==marketActionFormRequestId)return;
+                    if(result===null)return triggerToastNotification('تعذر إرسال البلاغ. تأكد من تحديث قاعدة السوق ثم أعد المحاولة.','error');
+                    closeMarketActionForm(true);
+                    triggerToastNotification('تم إرسال البلاغ للمراجعة. لا تظهر تفاصيله للبائع.','success');
+                }
+            }catch(error){console.warn('[Alwaha Market] action form failed:',error);if(requestId===marketActionFormRequestId)triggerToastNotification(error?.message||'تعذر إكمال الإجراء. حاول مرة أخرى.','error');}
+            finally{
+                if(requestId===marketActionFormRequestId){marketActionFormBusy=false;if(submit){submit.disabled=false;submit.textContent=mode==='sale'?'تأكيد البيع وحفظ الضمان':'إرسال البلاغ للمراجعة';}if(close)close.disabled=false;}
+            }
+        }
+        async function markMyProductSold(productId) {
+            const requestId=++marketActionFormRequestId;
+            const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me||requestId!==marketActionFormRequestId)return;
+            const [productRows,rows]=await Promise.all([
+                supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,title,status&limit=1`),
+                supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,buyer_id,seller_id&limit=500`)
+            ]);
+            if(requestId!==marketActionFormRequestId)return;
+            const activeUser=await getCurrentAuthUser();if(activeUser?.id!==me.id)return;
+            const product=Array.isArray(productRows)?productRows[0]:null;
+            if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه.','error');
+            if(product.status!=='active')return triggerToastNotification('لا يمكن تسجيل البيع إلا لإعلان معروض ونشط.','info');
+            const candidates=new Map((Array.isArray(rows)?rows:[]).filter(row=>row.buyer_id&&row.id&&row.seller_id===me.id).map(row=>[String(row.buyer_id),row]));
+            if(!candidates.size)return triggerToastNotification('لا توجد محادثة سوق لهذا الإعلان بعد. لا يمكن تسجيل بيع دون محادثة موثقة.','info');
+            const ids=[...candidates.keys()].slice(0,100),users=await supabaseFetch(`user_directory?select=id,first_name,last_name,username&id=in.(${ids.map(encodeURIComponent).join(',')})`);
+            if(requestId!==marketActionFormRequestId)return;
+            const currentUser=await getCurrentAuthUser();if(currentUser?.id!==me.id)return;
+            const options=(Array.isArray(users)?users:[]).filter(user=>candidates.has(String(user.id))).map(user=>({...user,conversationId:String(candidates.get(String(user.id)).id)}));
+            if(!options.length)return triggerToastNotification('تعذر تحديد المشتري من محادثات الإعلان.','error');
+            openMarketActionForm('sale',{productId:String(product.id),sellerId:me.id,title:product.title||'إعلان السوق',buyers:options},requestId);
+        }
+        
                 async function archiveMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'archived',archived_at:new Date().toISOString()},'تمت أرشفة الإعلان؛ لن يظهر للمشترين.'); }
         async function reactivateMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'active',archived_at:null,sold_at:null,sold_to:null},'تمت إعادة نشر الإعلان.'); }
         async function promoteMyProduct(productId) { await updateMarketProductLifecycle(productId,{promoted_until:new Date(Date.now()+3*24*60*60*1000).toISOString()},'تم تمييز إعلانك لمدة 3 أيام.'); }
         async function reportMarketplaceItem(productId,sellerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول للإبلاغ عن إعلان.');if(!me)return;
             if(sellerId===me.id)return triggerToastNotification('لا يمكنك الإبلاغ عن إعلانك الشخصي.','info');
-            const reason=window.prompt('سبب الإبلاغ (مثل: احتيال، سلعة مزيفة، سعر مضلل):','سلعة أو إعلان مشبوه');if(reason===null)return;
-            if(!reason.trim())return triggerToastNotification('اكتب سبب الإبلاغ قبل الإرسال.','error');
-            const result=await supabaseFetch('marketplace_reports',{method:'POST',body:JSON.stringify({product_id:productId,seller_id:sellerId,reporter_id:me.id,reason:reason.trim().slice(0,1000)}),prefer:'return=representation'});
-            if(result===null)return triggerToastNotification('تعذر إرسال البلاغ. تأكد من تطبيق تحديث قاعدة السوق ثم أعد المحاولة.','error');
-            triggerToastNotification('تم إرسال البلاغ للمراجعة. لا ترسل بيانات حساسة في البلاغ.','success');
+            const activeUser=await getCurrentAuthUser();if(activeUser?.id!==me.id)return;
+            const requestId=++marketActionFormRequestId;
+            openMarketActionForm('report',{productId:String(productId),sellerId:String(sellerId),title:'تقرير عن إعلان السوق'},requestId);
         }
         async function submitMarketplaceReview(productId,sellerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لتقييم البائع.');if(!me)return;
@@ -4821,6 +4922,8 @@ function triggerAnimeAiConverterFilter() {
         function navigateBack() {
             const exit = document.getElementById('exit-modal-confirmation');
             if (alwahaIsVisible(exit)) { closeExitConfirmationModal(); return; }
+            const marketActionForm=document.getElementById('market-action-form-modal');
+            if (alwahaIsVisible(marketActionForm)) { closeMarketActionForm(); return; }
             const subViews = Array.from(document.querySelectorAll('.sub-profile-view-box')).filter(alwahaIsVisible);
             if (subViews.length) { closeSubProfileView(subViews[subViews.length - 1].id); return; }
             const chat = document.getElementById('active-chat-box');

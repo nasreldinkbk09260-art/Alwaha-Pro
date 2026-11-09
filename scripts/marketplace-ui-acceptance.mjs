@@ -33,6 +33,11 @@ const checks=[
  ['market transaction list re-checks current account after the data request',html.includes('if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;')],
  ['market chat verifies the current account before opening a participant thread',html.includes('if(activeUser?.id!==me.id)return;\n            if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))')],
  ['market message list re-checks the account before marking incoming messages read',html.includes('activeUser?.id!==me.id)return;\n            currentMarketMessages=rows;')],
+ ['sale registration uses an in-app form instead of browser prompt or confirm',html.includes('function openMarketActionForm')&&html.includes('async function submitMarketActionForm')&&(()=>{const a=html.indexOf('async function markMyProductSold'),b=html.indexOf('async function archiveMyProduct',a),s=html.slice(a,b);return !s.includes('window.prompt')&&!s.includes('window.confirm')&&s.includes("openMarketActionForm('sale'");})()],
+ ['sale form only offers buyers with a conversation tied to the seller product',html.includes('market_conversations?product_id=eq.')&&html.includes('data-conversation-id=')&&html.includes('sellerId:me.id')],
+ ['sale form validates warranty and keeps server-authoritative completion RPC',html.includes('market-action-guarantee')&&html.includes('guaranteeDays>3650')&&html.includes("rpc('complete_market_sale'")],
+ ['reporting uses an in-app form with bounded reason and no browser prompt',(()=>{const a=html.indexOf('async function reportMarketplaceItem'),b=html.indexOf('async function submitMarketplaceReview',a),s=html.slice(a,b);return html.includes('market-action-report-reason')&&s.includes("openMarketActionForm('report'")&&!s.includes('window.prompt');})()],
+ ['market action form supports Android back, safe close, and sign-out cancellation',html.includes("const marketActionForm=document.getElementById('market-action-form-modal')")&&html.includes('closeMarketActionForm(true)')&&html.includes('marketActionFormRequestId++')],
 ];
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
