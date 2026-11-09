@@ -5,6 +5,11 @@ BEGIN;
 REVOKE DELETE ON TABLE public.users FROM anon, authenticated;
 DROP POLICY IF EXISTS users_delete_own ON public.users;
 
+-- Contact fields are always private in public profiles; clients cannot opt out.
+UPDATE public.users SET hide_email=true,hide_phone=true
+WHERE hide_email IS DISTINCT FROM true OR hide_phone IS DISTINCT FROM true;
+REVOKE UPDATE (hide_email,hide_phone) ON TABLE public.users FROM authenticated;
+
 -- Clients may submit only the evidence fields for a new pending verification request.
 -- The database supplies id, status='pending', and created_at; review fields stay admin-only.
 REVOKE INSERT ON TABLE public.verification_requests FROM anon, authenticated;
