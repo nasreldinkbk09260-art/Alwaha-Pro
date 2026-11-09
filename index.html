@@ -4443,7 +4443,7 @@ async function submitNewProductToMarket() {
             const requestId=++marketActionFormRequestId;
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me||requestId!==marketActionFormRequestId)return;
             if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا حتى يكتمل تحديث قاعدة السوق.','info');
-            const activeUser=await getCurrentAuthUser();if(requestId!==marketActionFormRequestId||activeUser?.id!==me.id)return;
+            const activeUserBeforeSchema=await getCurrentAuthUser();if(requestId!==marketActionFormRequestId||activeUserBeforeSchema?.id!==me.id)return;
             const [productRows,rows]=await Promise.all([
                 supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,title,status&limit=1`),
                 supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,buyer_id,seller_id&limit=500`)
