@@ -18,6 +18,11 @@ const checks=[
  ['seller listing deletion is archival only and requires a confirmation',html.includes("if(!window.confirm('سيتم إخفاء الإعلان من السوق وأرشفته.")&&html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")],
  ['sold listing snapshot, guarantee and buyer receipt stay in the transaction history',html.includes("rpc('complete_market_sale'")&&html.includes('market_transactions?or=')&&html.includes('confirmMarketTransactionReceipt')],
  ['market chat remains independent from friend-chat gating',(()=>{const start=html.indexOf('async function sendMarketMessage()'),end=html.indexOf('async function subscribeToMarketConversation()',start);return start>=0&&end>start&&!html.slice(start,end).includes('hasAcceptedAlwahaFriendship');})()],
+ ['local buyer search includes the product price',html.includes("data-search=\"${escapeHtml(`${prod.title||''} ${prod.price||''}")],
+ ['private seller item view clears old results before authentication is checked',html.includes("container.innerHTML='<div style=\"text-align:center;color:#9fb1c8;font-size:11px;padding:10px;\">جارٍ التحقق من حسابك...</div>'")],
+ ['sign-out invalidates pending private market requests and clears seller listings',html.includes('marketMyItemsRenderRequestId++;')&&html.includes("privateMarketItems.innerHTML='';")],
+ ['seller has one archive action instead of duplicate delete/archive controls',html.includes('إخفاء وأرشفة')&&!html.includes('onclick=\"archiveMyProduct(')],
+ ['sold and archived seller controls are status-specific',html.includes("product.status==='sold'?'':`")&&html.includes("product.status==='active'?`")&&html.includes('إعادة نشر')],
 ];
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
