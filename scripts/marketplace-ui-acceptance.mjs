@@ -23,6 +23,13 @@ const checks=[
  ['sign-out invalidates pending private market requests and clears seller listings',html.includes('marketMyItemsRenderRequestId++;')&&html.includes("privateMarketItems.innerHTML='';")],
  ['seller has one archive action instead of duplicate delete/archive controls',html.includes('إخفاء وأرشفة')&&!html.includes('onclick=\"archiveMyProduct(')],
  ['sold and archived seller controls are status-specific',html.includes("product.status==='sold'?'':`")&&html.includes("product.status==='active'?`")&&html.includes('إعادة نشر')],
+ ['sign-out invalidates every pending private market list/message request',signSlice.includes('marketMyItemsRenderRequestId++')&&signSlice.includes('marketConversationsRenderRequestId++')&&signSlice.includes('marketTransactionsRenderRequestId++')&&signSlice.includes('marketMessagesRequestId++')],
+ ['sign-out closes the market conversation overlay and full-screen inbox',signSlice.includes('closeMarketConversationChat()')&&signSlice.includes('closeMarketConversationsPage()')],
+ ['sign-out clears private market messages, inbox, transactions and seller listings',signSlice.includes("'market-conversations-container'")&&signSlice.includes("'market-transactions-container'")&&signSlice.includes("'market-chat-messages'")&&signSlice.includes("'my-market-items-container'")],
+ ['market inbox re-checks current account after parallel data requests',html.includes('const activeUser=await getCurrentAuthUser();\n            if(requestId!==marketConversationsRenderRequestId||activeUser?.id!==me.id)return;')],
+ ['market transaction list re-checks current account after the data request',html.includes('if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;')],
+ ['market chat verifies the current account before opening a participant thread',html.includes('if(activeUser?.id!==me.id)return;\n            if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))')],
+ ['market message list re-checks the account before marking incoming messages read',html.includes('activeUser?.id!==me.id)return;\n            currentMarketMessages=rows;')],
 ];
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
