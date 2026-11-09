@@ -15,6 +15,13 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'The incomplete users_delete_own policy must be removed.';
   END IF;
+  IF has_column_privilege('authenticated','public.users','hide_email','UPDATE')
+     OR has_column_privilege('authenticated','public.users','hide_phone','UPDATE') THEN
+    RAISE EXCEPTION 'Contact visibility flags must remain server-controlled and private.';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.users WHERE hide_email IS DISTINCT FROM true OR hide_phone IS DISTINCT FROM true) THEN
+    RAISE EXCEPTION 'All existing profiles must default to private contact details.';
+  END IF;
 
   IF has_column_privilege('authenticated','public.verification_requests','status','INSERT')
      OR has_column_privilege('authenticated','public.verification_requests','created_at','INSERT')
