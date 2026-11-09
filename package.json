@@ -28,7 +28,8 @@
     "audit:navigation-dock": "node scripts/navigation-dock-runtime-test.mjs",
     "audit:home": "node scripts/home-section-acceptance.mjs",
     "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs",
-    "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs"
+    "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs",
+    "audit:profile": "node scripts/profile-ui-acceptance.mjs"
   },
   "engines": {
     "node": ">=22"
