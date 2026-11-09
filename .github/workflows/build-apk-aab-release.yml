@@ -255,6 +255,9 @@ jobs:
       - name: Run UI handler audit
         run: npm run audit:ui
 
+      - name: Run profile registration, login, and privacy acceptance audit
+        run: npm run audit:profile
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 
