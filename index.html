@@ -1309,6 +1309,8 @@ img,video,canvas{max-width:100%}
         let marketSearchLongitude = null;
         let marketLifecycleSchemaReady = null;
         let marketLifecycleSchemaPromise = null;
+        let marketTransactionSchemaReady = null;
+        let marketTransactionSchemaPromise = null;
         let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
         let reelsFeedRequestId = 0;
         let reelPublishInFlight = false;
@@ -3226,6 +3228,7 @@ async function subscribeToMarketConversation() {
             const holder=document.getElementById('market-transactions-container');if(!holder)return;
             const me=await getCurrentAuthUser();if(requestId!==marketTransactionsRenderRequestId)return;if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
+            if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">سجل المعاملات والضمان قريبًا. سيظهر بعد اكتمال تحديث قاعدة السوق واعتماد صلاحياته.</div>';return;}
             const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
             const activeUser=await getCurrentAuthUser();
             if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;
@@ -3246,6 +3249,7 @@ async function subscribeToMarketConversation() {
         }
         async function confirmMarketTransactionReceipt(transactionId) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً.');if(!me)return;
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تأكيد الاستلام قريبًا حتى يكتمل تحديث سجل المعاملات.','info');
             if(!window.confirm('تأكيد الاستلام؟ سيُسجل وقت تأكيدك ضمن سجل المعاملة.'))return;
             const result=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&buyer_confirmed_at=is.null`,{method:'PATCH',body:JSON.stringify({buyer_confirmed_at:new Date().toISOString()}),prefer:'return=representation'});
             if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تسجيل الاستلام. تحقق من صلاحيات قاعدة البيانات.','error');
@@ -3254,6 +3258,7 @@ async function subscribeToMarketConversation() {
 
         async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً لإدارة موافقتك على الأرشيف.');if(!me)return;
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('موافقة حذف الأرشيف قريبًا بعد اكتمال تحديث سياسة الاحتفاظ.','info');
             if(!['conversation','transaction'].includes(recordType)||!recordId)return;
             const message=approve?'لن يُحذف الأرشيف تلقائياً. لا يتم الحذف إلا بعد موافقة الطرفين ومرور 7 أيام كاملة بعد الإشعار. يمكنك إلغاء موافقتك قبل تنفيذ الحذف. هل توافق؟':'سيتم سحب موافقتك، ولن يتم الحذف ما لم يسجل الطرفان الموافقة من جديد. هل تريد المتابعة؟';
             if(!window.confirm(message))return;
@@ -4067,6 +4072,29 @@ async function detectMarketLifecycleSchema() {
             })().catch(()=>false).finally(()=>{marketLifecycleSchemaPromise=null;});
             return marketLifecycleSchemaPromise;
         }
+        async function detectMarketTransactionSchema() {
+            if (marketTransactionSchemaReady === true) return true;
+            if (marketTransactionSchemaReady === false) return false;
+            if (marketTransactionSchemaPromise) return marketTransactionSchemaPromise;
+            marketTransactionSchemaPromise = (async () => {
+                const transactions = await supabaseFetch('market_transactions?select=id&limit=0');
+                if (!Array.isArray(transactions)) {
+                    const status = Number(window.__alwahaLastApiError?.status || 0);
+                    if (status === 400 || status === 404) marketTransactionSchemaReady = false;
+                    return false;
+                }
+                const conversations = await supabaseFetch('market_conversations?select=id,listing_snapshot,archived_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&limit=0');
+                if (!Array.isArray(conversations)) {
+                    const status = Number(window.__alwahaLastApiError?.status || 0);
+                    if (status === 400 || status === 404) marketTransactionSchemaReady = false;
+                    return false;
+                }
+                marketTransactionSchemaReady = true;
+                return true;
+            })().catch(() => false).finally(() => { marketTransactionSchemaPromise = null; });
+            return marketTransactionSchemaPromise;
+        }
+
         function requestLocationOnce(onSuccess,onError) {
             if(!navigator.geolocation)return onError?.(new Error('Geolocation unsupported'));
             navigator.geolocation.getCurrentPosition(position=>onSuccess?.({latitude:position.coords.latitude,longitude:position.coords.longitude,accuracy:position.coords.accuracy}),error=>onError?.(error),{enableHighAccuracy:false,timeout:10000,maximumAge:120000});
@@ -4380,6 +4408,7 @@ async function submitNewProductToMarket() {
                 const productId=modal.dataset.productId,sellerId=modal.dataset.sellerId;
                 if(mode==='sale'){
                     if(me.id!==sellerId)return triggerToastNotification('الحساب الحالي ليس مالك الإعلان.','error');
+                    if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا حتى يكتمل تحديث قاعدة السوق.','info');
                     const buyerSelect=modal.querySelector('#market-action-buyer'),selected=buyerSelect?.selectedOptions?.[0],buyerId=buyerSelect?.value,conversationId=selected?.dataset?.conversationId;
                     const guaranteeDays=Number(modal.querySelector('#market-action-guarantee')?.value),agreementNote=String(modal.querySelector('#market-action-agreement')?.value||'').trim();
                     if(!buyerId||!conversationId)return triggerToastNotification('اختر المشتري من محادثات الإعلان.','error');
@@ -4413,6 +4442,8 @@ async function submitNewProductToMarket() {
         async function markMyProductSold(productId) {
             const requestId=++marketActionFormRequestId;
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me||requestId!==marketActionFormRequestId)return;
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا حتى يكتمل تحديث قاعدة السوق.','info');
+            const activeUser=await getCurrentAuthUser();if(requestId!==marketActionFormRequestId||activeUser?.id!==me.id)return;
             const [productRows,rows]=await Promise.all([
                 supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,title,status&limit=1`),
                 supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,buyer_id,seller_id&limit=500`)
@@ -4471,13 +4502,17 @@ async function renderMyPersonalMarketItems() {
             if(requestId!==marketMyItemsRenderRequestId||activeUser?.id!==me.id)return;
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
+            const marketTransactionsReady=await detectMarketTransactionSchema();
+            if(requestId!==marketMyItemsRenderRequestId)return;
+            const activeUserAfterSchema=await getCurrentAuthUser();
+            if(requestId!==marketMyItemsRenderRequestId||activeUserAfterSchema?.id!==me.id)return;
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div style="color:#ffd700;font-weight:bold;font-size:13px;overflow-wrap:anywhere;">${escapeHtml(product.title||'منتج')}</div><div style="color:#00ff88;font-size:11px;margin-top:4px;">${escapeHtml(product.price||'')}</div><div style="color:#8da2ba;font-size:10px;margin-top:4px;">${escapeHtml(product.category||'أخرى')}</div><div style="color:${product.status==='sold'?'#8cffc1':product.status==='archived'?'#9fb1c8':'#8bf4ff'};font-size:10px;margin-top:5px;">الحالة: ${product.status==='sold'?'تم البيع':product.status==='archived'?'مؤرشف':'معروض'}</div></div>
                 <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">${product.status==='sold'?'':`<button type="button" class="btn-action" style="background:#8bf4ff;color:#091223;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="editMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-pen"></i> تعديل</button>`}${product.status==='active'?`<button type="button" class="btn-action" style="background:#493044;color:#ffd1df;padding:7px 10px;border-radius:6px;font-size:10px;" onclick="deleteMyMarketItem('${escapeJs(product.id)}')"><i class="fa-solid fa-box-archive"></i> إخفاء وأرشفة</button>`:''}</div>
               </div>
               <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">
                 ${product.status==='archived'?`<button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة نشر</button>`:``}
-                ${product.status==='sold'?`<span style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;text-align:center;">بيع مسجل — محفوظ بالضمان</span>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" onclick="markMyProductSold('${escapeJs(product.id)}')">تم البيع</button>`}
+                ${product.status==='sold'?`<span style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;text-align:center;">${marketTransactionsReady?'بيع مسجل — محفوظ بالضمان':'تم البيع — الضمان قريبًا'}</span>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" ${marketTransactionsReady?'':'disabled aria-disabled="true"'} onclick="markMyProductSold('${escapeJs(product.id)}')">${marketTransactionsReady?'تم البيع':'تسجيل البيع قريبًا'}</button>`}
                 ${product.status==='active'?`<button type="button" class="btn-action" style="background:#3b2e16;color:#ffd86b;padding:8px;border-radius:7px;font-size:10px;" onclick="promoteMyProduct('${escapeJs(product.id)}')">ترويج 3 أيام</button>`:''}
                 <button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
               </div>
