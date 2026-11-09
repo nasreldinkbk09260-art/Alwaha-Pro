@@ -123,6 +123,7 @@ jobs:
           test -s alwaha-modal-shell.js
           test -s alwaha-runtime-guard.js
           test -s alwaha-kids-room.js
+          test -s scripts/marketplace-ui-acceptance.mjs
           test -s scripts/compatibility-audit.mjs
           test -s assets/sounds/saffron_tide.mp3
           test -s assets/sounds/marimba_bloom.mp3
@@ -258,6 +259,9 @@ jobs:
 
       - name: Run marketplace column permission audit
         run: npm run audit:marketplace-columns
+
+      - name: Run marketplace purchase and sell acceptance audit
+        run: npm run audit:marketplace-ui
 
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation

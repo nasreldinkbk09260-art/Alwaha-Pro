@@ -706,7 +706,7 @@ img,video,canvas{max-width:100%}
         <div id="market-buy-view">
             <input type="text" id="market-search-input" placeholder="ابحث عن منتج أو تصنيف أو منطقة..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:8px; outline:none;">
             <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-                <select id="market-radius-select" aria-label="نطاق البحث عن المنتجات" style="flex:1;min-width:115px;background:#101a2b;color:#fff;border:1px solid #ffffff2a;border-radius:9px;padding:9px;font-size:11px;">
+                <select id="market-radius-select" aria-label="نطاق البحث عن المنتجات" onchange="searchProducts(true)" style="flex:1;min-width:115px;background:#101a2b;color:#fff;border:1px solid #ffffff2a;border-radius:9px;padding:9px;font-size:11px;">
                     <option value="all">كل المناطق</option><option value="5">ضمن 5 كم</option><option value="10">ضمن 10 كم</option><option value="25">ضمن 25 كم</option><option value="50">ضمن 50 كم</option>
                 </select>
                 <button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:9px;padding:9px 10px;font-size:11px;" onclick="setMarketSearchLocation()"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي</button>
@@ -733,16 +733,16 @@ img,video,canvas{max-width:100%}
         <div id="market-sell-view" style="display:none; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:12px;">
             <h3 id="market-sell-title" style="font-size:14px; color:#ffd700; margin-top:0;">إضافة إعلان جديد في السوق</h3>
             <div style="margin-bottom:10px;">
-                <label style="font-size:11px; color:#aaa;">اسم المنتج أو السلعة</label>
-                <input type="text" id="prod-name" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
+                <label for="prod-name" style="font-size:11px; color:#aaa;">اسم المنتج أو السلعة</label>
+                <input type="text" id="prod-name" maxlength="120" autocomplete="off" aria-label="اسم المنتج أو السلعة" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
             </div>
             <div style="margin-bottom:10px;">
-                <label style="font-size:11px; color:#aaa;">السعر</label>
-                <input type="text" id="prod-price" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
+                <label for="prod-price" style="font-size:11px; color:#aaa;">السعر</label>
+                <input type="text" id="prod-price" maxlength="40" inputmode="decimal" autocomplete="off" aria-label="سعر السلعة" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
             </div>
             <div style="margin-bottom:10px;">
-                <label style="font-size:11px; color:#aaa;">التصنيف</label>
-                <select id="prod-category" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
+                <label for="prod-category" style="font-size:11px; color:#aaa;">التصنيف</label>
+                <select id="prod-category" aria-label="تصنيف السلعة" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; margin-top:4px;">
                     <option value="صيانة هواتف">صيانة هواتف</option>
                     <option value="ماكينات خياطة">ماكينات خياطة</option>
                     <option value="إلكترونيات عامة">إلكترونيات عامة</option>
@@ -750,8 +750,8 @@ img,video,canvas{max-width:100%}
                 </select>
             </div>
             <div style="margin-bottom:10px;">
-                <label style="font-size:11px; color:#aaa;">الوصف والموقع</label>
-                <textarea id="prod-desc-location" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; height:60px; margin-top:4px; resize:none;"></textarea>
+                <label for="prod-desc-location" style="font-size:11px; color:#aaa;">الوصف والموقع</label>
+                <textarea id="prod-desc-location" maxlength="2000" aria-label="وصف السلعة وموقعها" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:8px; border-radius:6px; color:#fff; font-size:12px; height:60px; margin-top:4px; resize:none;"></textarea>
             </div>
             <div style="margin-bottom:10px;">
                 <label for="prod-location-label" style="font-size:11px;color:#aaa;">المنطقة أو المدينة (اختياري)</label>
@@ -1275,6 +1275,8 @@ img,video,canvas{max-width:100%}
         let directMessagesRequestId = 0;
         let directMessageSendInFlight = false;
         let directChatOpenRequestId = 0;
+        let marketProductsRenderRequestId = 0;
+        let marketMyItemsRenderRequestId = 0;
         let marketConversationsRenderRequestId = 0;
         let marketTransactionsRenderRequestId = 0;
         let marketConversationChannel = null;
@@ -4061,10 +4063,19 @@ async function detectMarketLifecycleSchema() {
 
 function handleMarketMultiImages() {
             pickFilesFromDevice({accept:'image/*',multiple:true,onFiles:async files=>{
-                const accepted=files.slice(0,6);
-                marketMultiFilesArray=[...marketMultiFilesArray,...await Promise.all(accepted.map(f=>compressImageFile(f,1200,.8)))].slice(0,6);
-                const container=document.getElementById('prod-images-preview-container');
-                if(container){container.innerHTML='';marketMultiFilesArray.forEach(f=>{const img=document.createElement('img');img.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #00ffff;';img.alt='';const u=URL.createObjectURL(f);img.src=u;img.onload=()=>URL.revokeObjectURL(u);container.appendChild(img);});}
+                const remaining=Math.max(0,6-marketMultiFilesArray.length);
+                if(!remaining)return triggerToastNotification('يمكن إضافة ست صور كحد أقصى للإعلان.','info');
+                const candidates=Array.from(files||[]).filter(file=>file&&typeof file.type==='string'&&file.type.startsWith('image/'));
+                if(!candidates.length)return triggerToastNotification('لم يتم اختيار صور صالحة. اختر ملفات صور فقط.','error');
+                if(candidates.length>remaining)triggerToastNotification('تم تحديد العدد المتبقي فقط؛ الحد الأقصى ست صور.','info');
+                try{
+                    const compressed=await Promise.all(candidates.slice(0,remaining).map(file=>compressImageFile(file,1200,.8)));
+                    const valid=compressed.filter(file=>typeof Blob!=='undefined'&&file instanceof Blob);
+                    if(!valid.length)return triggerToastNotification('تعذر تجهيز الصور المختارة. جرّب صورًا أخرى.','error');
+                    marketMultiFilesArray=[...marketMultiFilesArray,...valid].slice(0,6);
+                    const container=document.getElementById('prod-images-preview-container');
+                    if(container){container.innerHTML='';marketMultiFilesArray.forEach(file=>{const img=document.createElement('img');img.style.cssText='width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #00ffff;';img.alt='معاينة صورة المنتج';const url=URL.createObjectURL(file);const release=()=>URL.revokeObjectURL(url);img.onload=release;img.onerror=release;img.src=url;container.appendChild(img);});}
+                }catch(error){console.warn('[Alwaha Market] image preparation failed:',error);triggerToastNotification('تعذر ضغط الصور للرفع. اختر صورًا أصغر أو بصيغة مدعومة.','error');}
             }});
         }
 
@@ -4087,6 +4098,7 @@ async function submitNewProductToMarket() {
             const category=document.getElementById('prod-category')?.value||'أخرى';
             const desc=document.getElementById('prod-desc-location')?.value.trim()||'';
             if(!name||!price||!desc)return triggerToastNotification('يرجى كتابة كافة البيانات الأساسية للمنتج.','error');
+            if(name.length>120||price.length>40||desc.length>2000)return triggerToastNotification('تجاوز أحد الحقول الحد المسموح؛ اختصر الاسم أو السعر أو الوصف.','error');
             let imageUrls=editingMarketProductId?[...marketEditingExistingImageUrls].slice(0,6):[];
             if(marketMultiFilesArray.length){
                 const uploadedUrls=[];
@@ -4135,11 +4147,11 @@ async function submitNewProductToMarket() {
             switchMarketSubView('buy');renderMyPersonalMarketItems();
         }
 
-        function searchProducts() {
+        function searchProducts(forceRefresh = false) {
             const input = document.getElementById('market-search-input');
             const query = (input?.value || '').trim().toLowerCase();
             const cards = document.querySelectorAll('#market-products-list-container [data-market-card="true"]');
-            if (!cards.length) {
+            if (forceRefresh || !cards.length) {
                 renderProductsList(query);
                 return;
             }
@@ -4162,16 +4174,20 @@ async function submitNewProductToMarket() {
         }
 
         async function renderProductsList(searchQuery = '') {
+            const requestId=++marketProductsRenderRequestId;
             const container=document.getElementById('market-products-list-container');if(!container)return;
             if(!container.querySelector('[data-market-card]'))container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السوق في الخلفية...</div>';
             await detectMarketLifecycleSchema();
+            if(requestId!==marketProductsRenderRequestId)return;
             let products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,image_urls,created_at,status,location_label,latitude,longitude,promoted_until&order=created_at.desc&limit=120');
+            if(requestId!==marketProductsRenderRequestId)return;
             // Backward compatibility: if optional columns/migrations are absent, load legacy products.
             const queryError=window.__alwahaLastApiError||{};
             let usedLegacyMarketQuery=false;
             if(!Array.isArray(products) && (queryError.status===400 || queryError.status===404)) {
                 usedLegacyMarketQuery=true;
                 products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc&limit=120');
+                if(requestId!==marketProductsRenderRequestId)return;
                 if(Array.isArray(products)) products=products.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:p.status||'active'}));
             }
             if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
@@ -4320,14 +4336,21 @@ async function submitNewProductToMarket() {
         }
 
 async function renderMyPersonalMarketItems() {
+            const requestId=++marketMyItemsRenderRequestId;
             const container=document.getElementById('my-market-items-container');if(!container)return;
-            const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');if(!me){container.innerHTML='';return;}
+            const me=await requireAuthenticatedUser('سجل الدخول أولاً لرؤية إعلاناتك.');
+            if(requestId!==marketMyItemsRenderRequestId)return;
+            if(!me){container.innerHTML='';return;}
             container.innerHTML='<div style="text-align:center;color:#00ffff;font-size:12px;padding:10px;">جاري جلب إعلاناتك...</div>';
             let rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until,created_at&order=created_at.desc`);
+            if(requestId!==marketMyItemsRenderRequestId)return;
             if(!Array.isArray(rows)&&[400,404].includes(Number(window.__alwahaLastApiError?.status||0))){
                 rows=await supabaseFetch(`products?seller_id=eq.${encodeURIComponent(me.id)}&select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc`);
+                if(requestId!==marketMyItemsRenderRequestId)return;
                 if(Array.isArray(rows))rows=rows.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:'active'}));
             }
+            const activeUser=await getCurrentAuthUser();
+            if(requestId!==marketMyItemsRenderRequestId||activeUser?.id!==me.id)return;
             if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل إعلاناتك.</div>';return;}
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:20px;">لم تقم بنشر أي إعلانات حتى الآن.</div>';return;}
             container.innerHTML=rows.map(product=>`<div style="background:rgba(255,255,255,.05);border-radius:10px;padding:11px;margin-bottom:10px;border:1px solid #ffffff14;">
@@ -4350,6 +4373,7 @@ async function renderMyPersonalMarketItems() {
                 if(Array.isArray(rows))rows=rows.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:'active'}));
             }
             const product=Array.isArray(rows)?rows[0]:null;if(!product)return triggerToastNotification('لم يتم العثور على إعلان تملكه أو ليست لديك صلاحية تعديله.','error');
+            if(product.status==='sold')return triggerToastNotification('لا يمكن تعديل إعلان تم بيعه؛ تم تثبيت بيانات البيع في سجل المعاملة.','info');
             editingMarketProductId=String(product.id);
             marketEditingExistingImageUrls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
             if(!marketEditingExistingImageUrls.length&&/^https?:\/\//i.test(product.image_url||''))marketEditingExistingImageUrls=[product.image_url];

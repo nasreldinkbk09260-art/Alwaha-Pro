@@ -27,7 +27,8 @@
     "audit:games": "node scripts/game-actions-audit.mjs && node scripts/qr-runtime-test.mjs",
     "audit:navigation-dock": "node scripts/navigation-dock-runtime-test.mjs",
     "audit:home": "node scripts/home-section-acceptance.mjs",
-    "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs"
+    "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs",
+    "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs"
   },
   "engines": {
     "node": ">=22"
