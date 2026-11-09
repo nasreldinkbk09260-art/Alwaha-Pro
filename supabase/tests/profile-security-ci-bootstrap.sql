@@ -19,6 +19,8 @@ CREATE TABLE public.users (
   username text UNIQUE
 );
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+INSERT INTO public.users (id,first_name,hide_email,hide_phone)
+VALUES ('11111111-1111-4111-8111-111111111111','CI Privacy Fixture',false,false);
 GRANT SELECT,DELETE ON public.users TO authenticated;
 GRANT UPDATE (avatar_url,birthdate,first_name,gender,hide_email,hide_phone,last_name,phone)
   ON public.users TO authenticated;
