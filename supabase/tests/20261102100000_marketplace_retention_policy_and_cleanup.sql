@@ -1,4 +1,4 @@
--- Read-only deployment assertions; run after both 20261101210000 and 20261102100000.
+-- Read-only deployment assertions; run after transaction, retention, and final two-party-consent migrations.
 DO $alwaha_test$
 BEGIN
   IF to_regclass('cron.job') IS NULL THEN
