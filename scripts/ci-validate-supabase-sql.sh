@@ -39,7 +39,7 @@ if source.count(line)!=1:
 Path(sys.argv[2]).write_text(source.replace(line,'-- pg_cron extension line omitted in CI fixture; cron API is mocked.'),encoding='utf-8')
 PY
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql"
-psql -v ON_ERROR_STOP=1 -c "DO \$guard\$ BEGIN IF EXISTS (SELECT 1 FROM cron.job WHERE jobname='alwaha-marketplace-retention-daily' AND active) THEN RAISE EXCEPTION 'Retention cron must stay disabled until two-party consent is installed'; END IF; END \$guard\$;"
+psql -v ON_ERROR_STOP=1 -c "DO \$guard\$ BEGIN IF EXISTS (SELECT 1 FROM cron.job WHERE jobname='alwaha-marketplace-retention-daily' AND active) OR has_function_privilege('service_role','public.purge_expired_marketplace_archives(integer)','EXECUTE') THEN RAISE EXCEPTION 'Retention purge must stay disabled until two-party consent is installed'; END IF; END \$guard\$;"
 echo 'APPLY TEST MIGRATION: 20261108110000_marketplace_retention_two_party_consent.sql (final consent + schedule)'
 psql -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/retention-consent-with-cron-test-double.sql"
 
