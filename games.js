@@ -2,6 +2,7 @@
 (() => {
   'use strict';
 
+  const ACTIVE_ROOM_STORAGE_KEY = 'alwaha_game_last_room_v1';
   const GAME_INFO = {
     chess: { title: 'الشطرنج', icon: '♟️', color: '#70d6ff', description: 'شطرنج بقواعد قانونية كاملة، بما فيها الكش والكش مات والتعادل.' },
     ludo: { title: 'ليدو', icon: '🎲', color: '#00e0a4', description: 'ليدو لشخصين: رمي النرد، إخراج القطع، أكل قطع الخصم والوصول إلى النهاية.' },
@@ -32,6 +33,9 @@
       @supports(height:100dvh){.game-modal-overlay{height:100dvh!important}#alwaha-multiplayer-room .game-modal-card{max-height:calc(100dvh - 24px)!important}}
 
       .mp-game-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:12px 0 20px}
+      .mp-room-resume-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px;border:1px solid #70d6ff66;background:linear-gradient(135deg,#12263a,#0b1725);border-radius:14px;margin:10px 0}
+      .mp-room-resume-banner span{font-size:11px;line-height:1.8;color:#e6f4ff;flex:1 1 180px}
+      .mp-room-resume-banner button{margin:0;flex:0 0 auto}
       .mp-game-card{border:1px solid #ffffff20;background:linear-gradient(145deg,#142033,#0c111d);border-radius:16px;padding:14px;min-width:0}
       .mp-game-icon{font-size:34px;margin-bottom:7px}.mp-game-title{font-size:16px;color:#fff;font-weight:900}.mp-game-desc{font-size:11px;line-height:1.8;color:#b7c1d1;min-height:43px;margin:7px 0 11px}
       .mp-action{border:0;border-radius:10px;padding:9px 12px;font-family:inherit;font-weight:800;font-size:11px;cursor:pointer;margin:3px;max-width:100%}
@@ -100,6 +104,72 @@
     return Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
   }
   function roomEndpoint(id) { return `game_rooms?select=*&id=eq.${encodeURIComponent(id)}&limit=1`; }
+  function getLastRoomId() {
+    try {
+      const value = String(localStorage.getItem(ACTIVE_ROOM_STORAGE_KEY) || '').trim();
+      if (/^[0-9a-f-]{36}$/i.test(value)) return value;
+      if (value) localStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+    } catch (_) {}
+    return '';
+  }
+  function rememberLastRoom(roomId) {
+    const value = String(roomId || '').trim();
+    if (!/^[0-9a-f-]{36}$/i.test(value)) return false;
+    try {
+      localStorage.setItem(ACTIVE_ROOM_STORAGE_KEY, value);
+      updateResumeRoomControl();
+      return true;
+    } catch (_) { return false; }
+  }
+  function clearLastRoom() {
+    try { localStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY); } catch (_) {}
+    updateResumeRoomControl();
+  }
+  function updateResumeRoomControl() {
+    const container = $('games-list-container');
+    if (!container) return;
+    const savedId = getLastRoomId();
+    const existing = container.querySelector('[data-mp-resume-banner]');
+    if (!savedId) { existing?.remove(); return; }
+    if (existing) return;
+    const banner = document.createElement('div');
+    banner.className = 'mp-room-resume-banner';
+    banner.dataset.mpResumeBanner = 'true';
+    banner.innerHTML = '<span>لديك غرفة ألعاب سابقة محفوظة على هذا الجهاز.</span><button type="button" class="mp-action mp-create" data-mp-resume aria-label="العودة إلى آخر غرفة ألعاب محفوظة">العودة إلى آخر غرفة</button>';
+    container.prepend(banner);
+  }
+  async function resumeLastRoom(button = null) {
+    const roomId = getLastRoomId();
+    if (!roomId) {
+      updateResumeRoomControl();
+      toast('لا توجد غرفة محفوظة للعودة إليها على هذا الجهاز.', 'info');
+      return;
+    }
+    const releaseAction = beginRoomAction(button, 'جارٍ استعادة الغرفة…');
+    if (!releaseAction) return;
+    try {
+      const user = await requireUser();
+      if (!user) return;
+      if (typeof window.supabaseFetch !== 'function') throw new Error('خدمة استعادة الغرفة غير متاحة الآن. تحقق من الاتصال.');
+      const rows = await window.supabaseFetch(roomEndpoint(roomId), { method: 'GET', prefer: 'return=representation' });
+      const room = normalizeRoom(Array.isArray(rows) ? rows[0] : rows);
+      if (!room || String(room.id) !== roomId) {
+        clearLastRoom();
+        throw new Error('لم تعد الغرفة المحفوظة متاحة. أنشئ غرفة جديدة أو استخدم كود دعوة آخر.');
+      }
+      if (room.player1_id !== user.id && room.player2_id !== user.id) {
+        clearLastRoom();
+        throw new Error('الغرفة المحفوظة لا تخص حساب الدخول الحالي، وتمت إزالة مرجعها من هذا الجهاز.');
+      }
+      SESSION.user = user;
+      openRoom(room, user);
+      toast('تمت العودة إلى غرفتك السابقة.', 'success');
+    } catch (error) {
+      toast(error?.message || 'تعذرت استعادة الغرفة الآن. حاول مرة أخرى.', 'error');
+    } finally {
+      releaseAction();
+    }
+  }
   function beginRoomAction(button, busyLabel) {
     if (SESSION.roomActionBusy) {
       toast('جارٍ تنفيذ طلب لعبة آخر. انتظر اكتماله أولاً.', 'info');
@@ -424,14 +494,16 @@
     const modal = $('alwaha-multiplayer-room'); if (modal) modal.remove();
     document.body.classList.remove('modal-active');
     window.AlwahaModalShell?.sync?.();
+    updateResumeRoomControl();
   }
   function openRoom(room, user) {
     stopPolling(); SESSION.room = room; SESSION.user = user;
+    rememberLastRoom(room.id);
     addStyles();
     let modal = $('alwaha-multiplayer-room');
     if (modal) modal.remove();
     modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay alwaha-fullscreen-layer alwaha-game-page';
-    modal.innerHTML = `<div class="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="إغلاق غرفة اللعبة">إغلاق ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. يجب بقاء التطبيق مفتوحاً والاتصال بالإنترنت لدى اللاعبين.</div></div>`;
+    modal.innerHTML = `<div class="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="العودة إلى قائمة الألعاب مع الاحتفاظ بالغرفة">رجوع إلى الألعاب ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. إغلاق هذه النافذة لا ينهي المباراة؛ يمكنك العودة إليها من قائمة الألعاب. يجب بقاء الاتصال بالإنترنت لدى اللاعبين.</div></div>`;
     modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'mp-room-title'); modal.setAttribute('tabindex', '-1');
     document.body.appendChild(modal); modal.classList.add('is-open'); document.body.classList.add('modal-active');
     window.AlwahaModalShell?.sync?.();
@@ -701,7 +773,10 @@
     if (!container) return;
     const cards = Object.entries(GAME_INFO).map(([id, game]) => '<article class="mp-game-card" style="border-color:' + game.color + '55"><div class="mp-game-icon" aria-hidden="true">' + game.icon + '</div><div class="mp-game-title">' + esc(game.title) + '</div><div class="mp-game-desc" id="mp-desc-' + id + '">' + esc(game.description) + '</div><button type="button" class="mp-action mp-create" data-mp-create="' + id + '" aria-label="إنشاء غرفة ' + esc(game.title) + '" aria-describedby="mp-desc-' + id + '">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="' + id + '" aria-label="الانضمام إلى غرفة ' + esc(game.title) + ' بكود" aria-expanded="false" aria-describedby="mp-desc-' + id + '">الانضمام بكود</button></article>').join('');
     container.innerHTML = `<div class="mp-help" style="font-size:12px">الألعاب الجماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div>`;
+    updateResumeRoomControl();
     container.onclick = (event) => {
+      const resume = event.target.closest('[data-mp-resume]');
+      if (resume) { void resumeLastRoom(resume); return; }
       const create = event.target.closest('[data-mp-create]');
       if (create) { void createRoom(create.dataset.mpCreate, create); return; }
       const scan = event.target.closest('[data-mp-scan]');

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 const fail=m=>{console.error('FAIL: '+m);process.exitCode=1;};
 const pass=m=>console.log('PASS: '+m);
-const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),qrTest=fs.readFileSync('scripts/qr-runtime-test.mjs','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),
+const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),roomMigration=fs.readFileSync('supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql','utf8'),qrTest=fs.readFileSync('scripts/qr-runtime-test.mjs','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),
   edge=fs.readFileSync('supabase/functions/game-actions/index.ts','utf8'),
   migration=fs.readFileSync('supabase/migrations/20261108100000_server_authoritative_game_actions.sql','utf8'),
   sqlTest=fs.readFileSync('supabase/tests/20261108100000_game_actions_security.sql','utf8'),
@@ -54,7 +54,7 @@ const checks=[
   ['last game room persistence stores only a validated UUID locally',games.includes("const ACTIVE_ROOM_STORAGE_KEY = 'alwaha_game_last_room_v1'")&&games.includes('localStorage.setItem(ACTIVE_ROOM_STORAGE_KEY, value)')&&games.includes('/^[0-9a-f-]{36}$/i.test(value)')&&!games.includes('localStorage.setItem(ACTIVE_ROOM_STORAGE_KEY, room.room_code)')],
   ['resume room re-fetches data and verifies authenticated participant membership',games.includes('async function resumeLastRoom(button = null)')&&games.includes('window.supabaseFetch(roomEndpoint(roomId)')&&games.includes('room.player1_id !== user.id && room.player2_id !== user.id')&&games.includes('clearLastRoom();')],
   ['games list exposes a resume button and room modal clarifies close does not cancel',games.includes('data-mp-resume aria-label="العودة إلى آخر غرفة ألعاب محفوظة"')&&games.includes('updateResumeRoomControl();')&&games.includes('إغلاق هذه النافذة لا ينهي المباراة')&&games.includes('window.closeAlwahaGameRoom = closeRoom;')&&games.includes("'[data-mp-resume]'")],
-  ['game resume storage is restricted to the active participant RLS policy',migration.includes('game_rooms_select_participant')&&migration.includes('player1_id = (select auth.uid()) or player2_id = (select auth.uid())')],
+  ['game resume storage is restricted to the active participant RLS policy',roomMigration.includes('game_rooms_select_participant')&&roomMigration.includes('player1_id = (select auth.uid()) or player2_id = (select auth.uid())')],
 ];
 for(const [name,ok] of checks) ok?pass(name):fail(name);
 if(!process.exitCode)console.log('SERVER_AUTHORITATIVE_GAMES_AUDIT=PASS');
