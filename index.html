@@ -881,11 +881,11 @@ img,video,canvas{max-width:100%}
         </div>
 
         <div class="profile-options-menu-list" style="display:flex; flex-direction:column; gap:10px;">
-            <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-register')">
+            <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" id="profile-register-menu-item" onclick="openSubProfileView('sub-prof-register')">
                 <span style="font-size:13px; color:#00ff88;"><i class="fa-solid fa-user-plus"></i> إنشاء حساب جديد</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
-            <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-login')">
+            <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" id="profile-login-menu-item" onclick="openSubProfileView('sub-prof-login')">
                 <span style="font-size:13px; color:#00ffff;"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
@@ -906,7 +906,7 @@ img,video,canvas{max-width:100%}
                 <span style="font-size:13px; color:#e2e8f0;"><i class="fa-solid fa-gear"></i> الضبط والخلفيات</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
-            <button id="alwaha-logout-button" class="btn-action" style="width:100%;margin-top:4px;background:rgba(255,0,85,.12);color:#ff8fa5;border:1px solid #ff6688;padding:12px;border-radius:12px;font-size:12px;" onclick="signOutAlwaha()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+            <button id="alwaha-logout-button" class="btn-action" style="display:none;width:100%;margin-top:4px;background:rgba(255,0,85,.12);color:#ff8fa5;border:1px solid #ff6688;padding:12px;border-radius:12px;font-size:12px;" onclick="signOutAlwaha()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
         </div>
     </section>
 
@@ -943,7 +943,7 @@ img,video,canvas{max-width:100%}
             <label style="font-size:11px; color:#aaa; display:block; margin-bottom:4px;">تاريخ الميلاد</label>
             <input type="date" id="reg-birthdate" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px;">
         </div>
-        <button class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="handleNewUserRegistrationSubmit()">تسجيل الحساب</button>
+        <button class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px;" id="profile-register-submit" onclick="handleNewUserRegistrationSubmit()">تسجيل الحساب</button>
     </div>
 
     <div id="sub-prof-login" class="sub-profile-view-box">
@@ -959,7 +959,7 @@ img,video,canvas{max-width:100%}
             <a href="#" style="color:#ffd700; font-size:11px; text-decoration:none;" onclick="closeSubProfileView('sub-prof-login'); openSubProfileView('sub-prof-recovery')">نسيت كلمة السر؟</a>
         </div>
 
-        <button class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="executeUserLoginAuth()">دخول</button>
+        <button class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" id="profile-login-submit" onclick="executeUserLoginAuth()">دخول</button>
     </div>
 
     <div id="sub-prof-settings" class="sub-profile-view-box">
@@ -1300,6 +1300,8 @@ img,video,canvas{max-width:100%}
         let homePostDeleteInFlight = false;
         let commentSendInFlight = false;
         let localUploadedAvatarFile = null;
+        let profileAuthActionInFlight = false;
+        let profileAuthMenuSyncId = 0;
         let marketMultiFilesArray = [];
         let editingMarketProductId = null;
         let marketEditingExistingImageUrls = [];
@@ -1938,6 +1940,13 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             return user;
         }
 
+        function clearPendingProfileAvatar() {
+            localStorage.removeItem('alwaha_pending_avatar_data');
+            localStorage.removeItem('alwaha_pending_avatar_username');
+            localUploadedAvatarFile = null;
+            localUploadedAvatarBase64 = '';
+        }
+
         async function clearLocalProfileCache() {
             ['alwaha_profile_name','alwaha_profile_email','alwaha_profile_phone','alwaha_profile_avatar','alwaha_profile_gender','alwaha_auth_user_id'].forEach(k => localStorage.removeItem(k));
         }
@@ -1959,6 +1968,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const privateMarketItems=document.getElementById('my-market-items-container');if(privateMarketItems)privateMarketItems.innerHTML='';
             try { await supabaseClient.auth.signOut(); } catch (e) { console.warn(e); }
             await clearLocalProfileCache();
+            clearPendingProfileAvatar();
             currentChatUser = '';
             currentChatUserIdentifier = '';
             currentChatUserId = '';
@@ -1983,14 +1993,20 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 localStorage.setItem('alwaha_profile_gender', profile.gender || authUser.user_metadata?.gender || 'ذكر');
                 localStorage.setItem('alwaha_profile_avatar', profile.avatar_url || getDefaultAvatar(profile.gender || authUser.user_metadata?.gender));
                 const pendingAvatar = localStorage.getItem('alwaha_pending_avatar_data');
-                if (pendingAvatar && !profile.avatar_url) {
+                const pendingUsername = String(localStorage.getItem('alwaha_pending_avatar_username') || '').trim().toLowerCase();
+                const currentUsername = String(profile.username || authUser.user_metadata?.username || '').trim().toLowerCase();
+                if (pendingAvatar && (!pendingUsername || pendingUsername !== currentUsername || profile.avatar_url)) {
+                    clearPendingProfileAvatar();
+                } else if (pendingAvatar && pendingUsername === currentUsername && !profile.avatar_url) {
                     try {
                         const file = dataUrlToFile(pendingAvatar, 'avatar.jpg');
                         const url = await uploadFileToStorage(file, 'avatars', {maxBytes:5*1024*1024});
                         if (url) {
-                            await supabaseFetch(`users?id=eq.${encodeURIComponent(authUser.id)}`, {method:'PATCH', body:JSON.stringify({avatar_url:url})});
-                            localStorage.removeItem('alwaha_pending_avatar_data');
-                            localStorage.setItem('alwaha_profile_avatar', url);
+                            const saved = await supabaseFetch(`users?id=eq.${encodeURIComponent(authUser.id)}`, {method:'PATCH', body:JSON.stringify({avatar_url:url}),prefer:'return=representation'});
+                            if (saved && (!Array.isArray(saved) || saved.length > 0)) {
+                                clearPendingProfileAvatar();
+                                localStorage.setItem('alwaha_profile_avatar', url);
+                            }
                         }
                     } catch (e) { console.warn('Pending avatar upload:', e); }
                 }
@@ -4810,7 +4826,7 @@ function triggerAnimeAiConverterFilter() {
                     if (event === 'SIGNED_OUT') {
                         window.__alwahaPublicReadCache?.clear();
                         clearLocalProfileCache()
-                            .then(() => syncUiWithLoadedProfileData())
+                            .then(() => { clearPendingProfileAvatar(); syncUiWithLoadedProfileData(); })
                             .catch(error => console.warn('[Alwaha Auth] Local cleanup:', error));
                         if (notificationChannel && supabaseClient) {
                             supabaseClient.removeChannel(notificationChannel).catch(() => {});
@@ -5034,6 +5050,21 @@ function triggerAnimeAiConverterFilter() {
                 if (emailChk) emailChk.checked = true;
                 if (phoneChk) phoneChk.checked = true;
             }).catch(()=>{});
+            void syncProfileAuthMenu();
+        }
+
+        async function syncProfileAuthMenu() {
+            const requestId = ++profileAuthMenuSyncId;
+            let user = null;
+            try { user = await getCurrentAuthUser(); } catch (_) {}
+            if (requestId !== profileAuthMenuSyncId) return;
+            const signedIn = Boolean(user?.id);
+            const registerItem = document.getElementById('profile-register-menu-item');
+            const loginItem = document.getElementById('profile-login-menu-item');
+            const logoutButton = document.getElementById('alwaha-logout-button');
+            if (registerItem) { registerItem.style.display = signedIn ? 'none' : 'flex'; registerItem.setAttribute('aria-hidden', String(signedIn)); }
+            if (loginItem) { loginItem.style.display = signedIn ? 'none' : 'flex'; loginItem.setAttribute('aria-hidden', String(signedIn)); }
+            if (logoutButton) { logoutButton.style.display = signedIn ? 'block' : 'none'; logoutButton.setAttribute('aria-hidden', String(!signedIn)); }
         }
                 function normalizeAlwahaPhone(raw, selectedCode, customCode) {
             const source=String(raw||'').trim(); if(!source)return '';
@@ -5045,46 +5076,77 @@ function triggerAnimeAiConverterFilter() {
         }
         function generateAlwahaUsername(){const token=(crypto?.randomUUID?crypto.randomUUID().replace(/-/g,''):Math.random().toString(36).slice(2)+Date.now().toString(36)).slice(0,8).toLowerCase();return 'alwaha_'+token;}
         async function handleNewUserRegistrationSubmit(){
-            if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
-            const firstName=document.getElementById('reg-first-name')?.value.trim()||'',lastName=document.getElementById('reg-last-name')?.value.trim()||'',email=document.getElementById('reg-identifier')?.value.trim().toLowerCase()||'';
-            const usernameField=document.getElementById('reg-username'),username=(usernameField?.value.trim()||generateAlwahaUsername()).toLowerCase();
-            const phoneInput=document.getElementById('reg-phone')?.value.trim()||'',countryCode=document.getElementById('reg-country-code')?.value||'+20',customCode=document.getElementById('reg-country-code-custom')?.value||'',phone=normalizeAlwahaPhone(phoneInput,countryCode,customCode);
-            const password=document.getElementById('reg-password')?.value||'',confirmPassword=document.getElementById('reg-confirm-password')?.value||'',gender=document.getElementById('reg-gender')?.value||'ذكر',birthdate=document.getElementById('reg-birthdate')?.value||'';
-            if(!firstName)return triggerToastNotification('اكتب الاسم الأول على الأقل.','error');
-            if(!/^[a-z0-9_]{3,32}$/.test(username))return triggerToastNotification('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا إنجليزيًا أو رقمًا أو _ فقط.','error');
-            if(usernameField)usernameField.value=username;
-            if(email&&!/^\S+@\S+\.\S+$/.test(email))return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
-            if(phoneInput&&!phone)return triggerToastNotification('مفتاح الدولة أو رقم الهاتف غير صحيح. اختر المفتاح أو اكتب الرقم كاملًا مثل +201xxxxxxxxx.','error');
-            if(password.length<8)return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','error');
-            if(password!==confirmPassword)return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
-            const metadata={username,first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||'',avatar_url:null,hide_email:true,hide_phone:true};
-            if(email){
-                const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:metadata}});
-                if(error)return triggerToastNotification(String(error.message||'').toLowerCase().includes('duplicate key')?'اسم المستخدم مستخدم بالفعل؛ اختر اسمًا آخر.':formatAuthError(error),'error');
-                localStorage.setItem('alwaha_last_username',username);
-                if(data?.session){await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);triggerToastNotification('تم إنشاء الحساب والدخول! اسم المستخدم: @'+username,'success');}
-                else triggerToastNotification('تم إنشاء الحساب. أكّد البريد الإلكتروني، ثم ادخل باستخدام @'+username+' وكلمة المرور.','success');
-            }else{
-                const {data,error}=await supabaseClient.functions.invoke('username-auth',{body:{action:'register',username,password,first_name:firstName,last_name:lastName,gender,birthdate,phone:phone||''}});
-                if(error||!data?.session){console.warn('username-auth registration',error||data?.error);return triggerToastNotification(data?.error||'يلزم نشر خدمة username-auth وتحديث قاعدة البيانات أولًا حتى يعمل التسجيل دون بريد.','error');}
-                const {error:sessionError}=await supabaseClient.auth.setSession({access_token:data.session.access_token,refresh_token:data.session.refresh_token});
-                if(sessionError)return triggerToastNotification('أُنشئ الحساب لكن تعذر فتح الجلسة؛ ادخل باسم المستخدم وكلمة المرور.','error');
-                localStorage.setItem('alwaha_last_username',username);await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
-                triggerToastNotification('🎉 تم إنشاء الحساب والدخول. اسم الدخول: @'+username+'. احتفظ به.','success');
+            if(profileAuthActionInFlight)return;
+            profileAuthActionInFlight=true;
+            const submitButton=document.getElementById('profile-register-submit');
+            if(submitButton){submitButton.disabled=true;submitButton.setAttribute('aria-busy','true');}
+            try {
+                if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
+                const firstName=document.getElementById('reg-first-name')?.value.trim()||'',lastName=document.getElementById('reg-last-name')?.value.trim()||'',email=document.getElementById('reg-identifier')?.value.trim().toLowerCase()||'';
+                const usernameField=document.getElementById('reg-username'),username=(usernameField?.value.trim()||generateAlwahaUsername()).toLowerCase();
+                const phoneInput=document.getElementById('reg-phone')?.value.trim()||'',countryCode=document.getElementById('reg-country-code')?.value||'+20',customCode=document.getElementById('reg-country-code-custom')?.value||'',phone=normalizeAlwahaPhone(phoneInput,countryCode,customCode);
+                const password=document.getElementById('reg-password')?.value||'',confirmPassword=document.getElementById('reg-confirm-password')?.value||'',gender=document.getElementById('reg-gender')?.value||'ذكر',birthdate=document.getElementById('reg-birthdate')?.value||'';
+                if(!firstName)return triggerToastNotification('اكتب الاسم الأول على الأقل.','error');
+                if(!/^[a-z0-9_]{3,32}$/.test(username))return triggerToastNotification('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا إنجليزيًا أو رقمًا أو _ فقط.','error');
+                if(usernameField)usernameField.value=username;
+                if(email&&!/^\S+@\S+\.\S+$/.test(email))return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
+                if(phoneInput&&!phone)return triggerToastNotification('مفتاح الدولة أو رقم الهاتف غير صحيح. اختر المفتاح أو اكتب الرقم كاملًا مثل +201xxxxxxxxx.','error');
+                if(password.length<8)return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','error');
+                if(password!==confirmPassword)return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
+                if(localStorage.getItem('alwaha_pending_avatar_data'))localStorage.setItem('alwaha_pending_avatar_username',username);
+                const metadata={username,first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||'',avatar_url:null,hide_email:true,hide_phone:true};
+                if(email){
+                    const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:metadata}});
+                    if(error)return triggerToastNotification(String(error.message||'').toLowerCase().includes('duplicate key')?'اسم المستخدم مستخدم بالفعل؛ اختر اسمًا آخر.':formatAuthError(error),'error');
+                    localStorage.setItem('alwaha_last_username',username);
+                    if(data?.session){await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);triggerToastNotification('تم إنشاء الحساب والدخول! اسم المستخدم: @'+username,'success');}
+                    else triggerToastNotification('تم إنشاء الحساب. أكّد البريد الإلكتروني، ثم ادخل باستخدام @'+username+' وكلمة المرور.','success');
+                }else{
+                    const {data,error}=await supabaseClient.functions.invoke('username-auth',{body:{action:'register',username,password,first_name:firstName,last_name:lastName,gender,birthdate,phone:phone||''}});
+                    if(error||!data?.session){console.warn('username-auth registration',error||data?.error);return triggerToastNotification(data?.error||'يلزم نشر خدمة username-auth وتحديث قاعدة البيانات أولًا حتى يعمل التسجيل دون بريد.','error');}
+                    const {error:sessionError}=await supabaseClient.auth.setSession({access_token:data.session.access_token,refresh_token:data.session.refresh_token});
+                    if(sessionError)return triggerToastNotification('أُنشئ الحساب لكن تعذر فتح الجلسة؛ ادخل باسم المستخدم وكلمة المرور.','error');
+                    localStorage.setItem('alwaha_last_username',username);await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+                    triggerToastNotification('🎉 تم إنشاء الحساب والدخول. اسم الدخول: @'+username+'. احتفظ به.','success');
+                }
+                localUploadedAvatarBase64='';localUploadedAvatarFile=null;
+                const passwordField=document.getElementById('reg-password'),confirmField=document.getElementById('reg-confirm-password');
+                if(passwordField)passwordField.value='';if(confirmField)confirmField.value='';
+                closeSubProfileView('sub-prof-register');
+            } catch(error) {
+                console.warn('[Alwaha Auth] Registration failed:',error);
+                triggerToastNotification('تعذر إنشاء الحساب الآن. تحقق من الاتصال ثم حاول مرة أخرى.','error');
+            } finally {
+                profileAuthActionInFlight=false;
+                if(submitButton){submitButton.disabled=false;submitButton.removeAttribute('aria-busy');}
             }
-            localUploadedAvatarBase64='';closeSubProfileView('sub-prof-register');
-        }
-        async function executeUserLoginAuth(){
-            if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
-            const rawLoginId=document.getElementById('login-id')?.value.trim()||'',loginId=rawLoginId.startsWith('@')?rawLoginId.slice(1).toLowerCase():rawLoginId,password=document.getElementById('login-password')?.value||'';
-            if(!loginId||!password)return triggerToastNotification('اكتب اسم المستخدم أو البريد الإلكتروني وكلمة المرور.','error');
-            let data=null,error=null;
-            if(loginId.includes('@'))({data,error}=await supabaseClient.auth.signInWithPassword({email:loginId.toLowerCase(),password}));
-            else if(loginId.startsWith('+')||loginId.startsWith('00')){const phone=loginId.startsWith('00')?'+'+loginId.slice(2).replace(/[^0-9]/g,''):loginId.replace(/[^+0-9]/g,'');({data,error}=await supabaseClient.auth.signInWithPassword({phone,password}));if(error)return triggerToastNotification('دخول الهاتف متاح للحسابات القديمة المفعّلة عبر Phone Auth؛ جرّب اسم المستخدم.','error');}
-            else{const result=await supabaseClient.functions.invoke('username-auth',{body:{action:'login',username:loginId.toLowerCase(),password}});if(result.error||!result.data?.session)return triggerToastNotification(result.data?.error||'اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من نشر username-auth وتحديث قاعدة البيانات.','error');const sessionResult=await supabaseClient.auth.setSession({access_token:result.data.session.access_token,refresh_token:result.data.session.refresh_token});if(sessionResult.error)return triggerToastNotification('تعذر استعادة جلسة الدخول؛ حاول مرة أخرى.','error');data={user:result.data.user};}
-            if(error)return triggerToastNotification(formatAuthError(error),'error');await hydrateAuthProfile(data?.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);triggerToastNotification('مرحبًا بعودتك إلى الواحة!','success');closeSubProfileView('sub-prof-login');
         }
 
+        async function executeUserLoginAuth(){
+            if(profileAuthActionInFlight)return;
+            profileAuthActionInFlight=true;
+            const submitButton=document.getElementById('profile-login-submit');
+            if(submitButton){submitButton.disabled=true;submitButton.setAttribute('aria-busy','true');}
+            try {
+                if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
+                const rawLoginId=document.getElementById('login-id')?.value.trim()||'',loginId=rawLoginId.startsWith('@')?rawLoginId.slice(1).toLowerCase():rawLoginId,password=document.getElementById('login-password')?.value||'';
+                if(!loginId||!password)return triggerToastNotification('اكتب اسم المستخدم أو البريد الإلكتروني وكلمة المرور.','error');
+                let data=null,error=null;
+                if(loginId.includes('@'))({data,error}=await supabaseClient.auth.signInWithPassword({email:loginId.toLowerCase(),password}));
+                else if(loginId.startsWith('+')||loginId.startsWith('00')){const phone=loginId.startsWith('00')?'+'+loginId.slice(2).replace(/[^0-9]/g,''):loginId.replace(/[^+0-9]/g,'');({data,error}=await supabaseClient.auth.signInWithPassword({phone,password}));if(error)return triggerToastNotification('دخول الهاتف متاح للحسابات القديمة المفعّلة عبر Phone Auth؛ جرّب اسم المستخدم.','error');}
+                else{const result=await supabaseClient.functions.invoke('username-auth',{body:{action:'login',username:loginId.toLowerCase(),password}});if(result.error||!result.data?.session)return triggerToastNotification(result.data?.error||'اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من نشر username-auth وتحديث قاعدة البيانات.','error');const sessionResult=await supabaseClient.auth.setSession({access_token:result.data.session.access_token,refresh_token:result.data.session.refresh_token});if(sessionResult.error)return triggerToastNotification('تعذر استعادة جلسة الدخول؛ حاول مرة أخرى.','error');data={user:result.data.user};}
+                if(error)return triggerToastNotification(formatAuthError(error),'error');
+                await hydrateAuthProfile(data?.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+                const passwordField=document.getElementById('login-password');if(passwordField)passwordField.value='';
+                triggerToastNotification('مرحبًا بعودتك إلى الواحة!','success');closeSubProfileView('sub-prof-login');
+            } catch(error) {
+                console.warn('[Alwaha Auth] Login failed:',error);
+                triggerToastNotification('تعذر تسجيل الدخول الآن. تحقق من الاتصال ثم حاول مرة أخرى.','error');
+            } finally {
+                profileAuthActionInFlight=false;
+                if(submitButton){submitButton.disabled=false;submitButton.removeAttribute('aria-busy');}
+            }
+        }
 
         async function handleVerificationAvatarPick() {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لرفع الصورة الشخصية.');
