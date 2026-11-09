@@ -230,14 +230,5 @@ $function$;
 REVOKE ALL ON FUNCTION public.purge_expired_marketplace_archives(integer) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.purge_expired_marketplace_archives(integer) TO service_role;
 
-CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
-DO $schedule$
-DECLARE v_job_id bigint;
-BEGIN
-  FOR v_job_id IN SELECT jobid FROM cron.job WHERE jobname='alwaha-marketplace-retention-daily' LOOP
-    PERFORM cron.unschedule(v_job_id);
-  END LOOP;
-  PERFORM cron.schedule('alwaha-marketplace-retention-daily','0 3 * * *','SELECT public.purge_expired_marketplace_archives(500);');
-END;
-$schedule$;
+-- Cleanup scheduling is intentionally deferred until the two-party consent guard is installed.
 COMMIT;
