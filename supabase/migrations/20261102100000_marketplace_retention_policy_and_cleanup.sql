@@ -161,7 +161,7 @@ BEGIN
   ), notices AS (
     INSERT INTO public.notifications(recipient_id,title,body,type,is_read,created_at)
     SELECT r.recipient_id,'تنبيه انتهاء أرشيف معاملة السوق',
-           'ستنتهي أو انتهت مدة الاحتفاظ بسجل المعاملة والرسائل المرتبطة به. يبدأ الحذف بعد 7 أيام من هذا التنبيه. نزّل نسخة احتياطية إذا أردت الاحتفاظ بها.',
+           'ستنتهي أو انتهت مدة الاحتفاظ بسجل المعاملة والرسائل المرتبطة به. لا يحذف الأرشيف إلا بعد موافقة المشتري والبائع ومرور 7 أيام كاملة بعد الإشعار.',
            'market_retention_notice',false,now()
       FROM recipients AS r
     RETURNING id
@@ -196,39 +196,14 @@ BEGIN
    WHERE c.id=due.id;
   GET DIAGNOSTICS v_notified_conversations=ROW_COUNT;
 
-  -- Disputes and transactions whose retention date is still in the future block chat deletion.
-  SELECT COALESCE(array_agg(candidate.id),ARRAY[]::uuid[]) INTO v_ids
-    FROM (
-      SELECT c.id FROM public.market_conversations AS c
-       WHERE c.retention_until IS NOT NULL AND c.retention_until<=now()
-         AND c.retention_notice_sent_at IS NOT NULL
-         AND c.retention_notice_sent_at<=now()-interval '7 days'
-         AND NOT EXISTS (
-           SELECT 1 FROM public.market_transactions AS t WHERE t.conversation_id=c.id
-             AND (t.status='disputed' OR t.retention_until>now())
-         )
-       ORDER BY c.retention_until,c.id FOR UPDATE SKIP LOCKED LIMIT v_limit
-    ) AS candidate;
-  IF cardinality(v_ids)>0 THEN
-    DELETE FROM public.market_conversations AS c WHERE c.id=ANY(v_ids);
-    GET DIAGNOSTICS v_deleted_conversations=ROW_COUNT;
-  END IF;
-
-  WITH expired AS (
-    SELECT t.id FROM public.market_transactions AS t
-     WHERE t.status='archived' AND t.retention_until<=now()
-       AND t.retention_notice_sent_at IS NOT NULL
-       AND t.retention_notice_sent_at<=now()-interval '7 days'
-     ORDER BY t.retention_until,t.id FOR UPDATE SKIP LOCKED LIMIT v_limit
-  )
-  DELETE FROM public.market_transactions AS t USING expired AS e WHERE t.id=e.id;
-  GET DIAGNOSTICS v_deleted_transactions=ROW_COUNT;
+  -- This first-stage migration only sends notices. It never deletes marketplace data.
+  -- The final two-party-consent migration installs the only purge-capable function.
 
   RETURN QUERY SELECT v_notified_conversations,v_notified_transactions,v_deleted_conversations,v_deleted_transactions;
 END;
 $function$;
-REVOKE ALL ON FUNCTION public.purge_expired_marketplace_archives(integer) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.purge_expired_marketplace_archives(integer) TO service_role;
+REVOKE ALL ON FUNCTION public.purge_expired_marketplace_archives(integer) FROM PUBLIC,anon,authenticated,service_role;
+-- service_role execution is granted only by the final two-party-consent migration.
 
 -- Cleanup scheduling is intentionally deferred until the two-party consent guard is installed.
 COMMIT;
