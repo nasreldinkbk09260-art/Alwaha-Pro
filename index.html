@@ -612,11 +612,12 @@ img,video,canvas{max-width:100%}
         <div class="game-modal-card" style="width:min(94vw,520px);max-height:88dvh;overflow:auto;">
             <h3 id="alwaha-privacy-title" style="margin:0 0 10px;color:#8bf4ff;font-size:17px;">الخصوصية والأذونات</h3>
             <p style="font-size:12px;line-height:1.9;color:#d8e7f5;margin:0 0 10px;">نطلب إذن الكاميرا أو الميكروفون فقط عند تشغيل التصوير أو المكالمة، ويظهر طلب Android وقت الاستخدام. اختيار الصور والفيديو يتم من منتقي الهاتف، ولا نطلب الوصول الشامل إلى ملفاتك.</p>
-            <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 10px;">تُحفظ تفضيلات التطبيق والمسودات محليًا عند الإمكان. المنشورات العامة والحسابات والرسائل التي تنشرها تُعالج عبر خوادم الخدمة. التخزين المؤقت المحلي للعرض لا يُعد نسخة احتياطية كاملة ولا يغني عن الخادم.</p>
+            <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 10px;">تُعالج الحسابات والمنشورات العامة والرسائل عبر خوادم الخدمة. البريد الإلكتروني ورقم الهاتف لا يظهران في دليل المستخدم العام، ومحادثات السوق مستقلة عن محادثات الأصدقاء.</p>
+            <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 10px;">النسخة الاحتياطية المشفّرة منفصلة عن ذاكرة العرض المؤقتة: تستخدم تشفير AES-256-GCM ومفتاحًا مشتقًا من عبارة المرور. لا تتضمن كلمات المرور أو رموز الجلسات أو مفاتيح الخدمة أو ملفات الوسائط الثنائية. استعادة اللقطة محليًا لا تعيد كتابة السجلات على الخادم تلقائيًا.</p>
             <p style="font-size:12px;line-height:1.9;color:#a8bacd;margin:0 0 14px;">لا تشارك كلمات المرور أو معلوماتك الحساسة. في السوق، التقِ بالبائع في مكان عام، وافحص السلعة قبل الدفع، وأبلغ عن الاحتيال من داخل التطبيق.</p>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                 <button type="button" class="btn-action" style="flex:1;min-height:44px;background:#8bf4ff;color:#071722;border-radius:11px;padding:10px;font-weight:bold" onclick="acknowledgeAlwahaPrivacyNotice()">فهمت والمتابعة</button>
-                <button type="button" class="btn-action" style="flex:1;min-height:44px;background:#253449;color:#fff;border-radius:11px;padding:10px" onclick="acknowledgeAlwahaPrivacyNotice()">تأجيل الأذونات</button>
+                <button type="button" class="btn-action" style="flex:1;min-height:44px;background:#253449;color:#fff;border-radius:11px;padding:10px" onclick="deferAlwahaPrivacyNotice()">لاحقًا</button>
             </div>
         </div>
     </div>
@@ -893,7 +894,7 @@ img,video,canvas{max-width:100%}
                 <span style="font-size:13px; color:#ffd700;"><i class="fa-solid fa-shield-halved"></i> استعادة كلمة المرور بالبريد</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
-            <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(139,244,255,.06);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff22;color:#8bf4ff;font:inherit;text-align:right;" onclick="showAlwahaPrivacyPolicy()"><span style="font-size:13px;"><i class="fa-solid fa-shield-halved"></i> سياسة الاستخدام والخصوصية والأذونات</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
+            <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(139,244,255,.06);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff22;color:#8bf4ff;font:inherit;text-align:right;" onclick="showAlwahaPrivacyNotice()"><span style="font-size:13px;"><i class="fa-solid fa-shield-halved"></i> معلومات الخصوصية والأذونات</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-privacy')">
                 <span style="font-size:13px; color:#ff00ff;"><i class="fa-solid fa-user-gear"></i> إعدادات الخصوصية والاسم</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
@@ -1001,8 +1002,21 @@ img,video,canvas{max-width:100%}
             <h3 style="color:#ffd700; font-size:16px; margin:0;">استرداد وتأمين الحساب</h3>
             <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-recovery')"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <input type="text" id="recovery-phone-input" placeholder="البريد الإلكتروني لاستعادة كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
-        <button class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="linkPhoneForAccountRecovery()">إرسال رابط استعادة كلمة المرور</button>
+        <input type="email" id="recovery-email-input" autocomplete="email" inputmode="email" placeholder="البريد الإلكتروني المرتبط بالحساب" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <p id="recovery-native-notice" style="display:none;color:#ffd98a;font-size:11px;line-height:1.8;margin:0 0 12px;">استعادة كلمة المرور من تطبيق الهاتف قيد التجهيز؛ لن نرسل رابطًا قد يعيدك إلى عنوان محلي غير قابل للفتح. ستتوفر بعد ربط رابط التطبيق الآمن.</p>
+        <p id="recovery-web-notice" style="color:#a8bacd;font-size:10px;line-height:1.7;margin:0 0 12px;">على نسخة الويب، سنرسل رابطًا إلى بريدك لفتح نموذج تعيين كلمة مرور جديدة.</p>
+        <button id="recovery-submit-button" class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="sendPasswordRecoveryEmail()">إرسال رابط استعادة كلمة المرور</button>
+    </div>
+
+    <div id="sub-prof-password-reset" class="sub-profile-view-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="color:#ffd700; font-size:16px; margin:0;">تعيين كلمة مرور جديدة</h3>
+            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-reset')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p style="color:#a8bacd;font-size:11px;line-height:1.8;margin:0 0 12px;">أدخل كلمة مرور جديدة من 8 إلى 128 حرفًا، ثم أكدها لإكمال استعادة الحساب.</p>
+        <input type="password" id="password-reset-new" autocomplete="new-password" placeholder="كلمة المرور الجديدة" class="keyboard-target" style="width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;">
+        <input type="password" id="password-reset-confirm" autocomplete="new-password" placeholder="تأكيد كلمة المرور الجديدة" class="keyboard-target" style="width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;margin-bottom:14px;">
+        <button id="password-reset-submit" class="btn-action" style="width:100%;background:#ffd700;color:#000;padding:12px;border-radius:8px;font-size:13px;" onclick="submitPasswordRecoveryUpdate()">حفظ كلمة المرور الجديدة</button>
     </div>
 
     <div id="sub-prof-privacy" class="sub-profile-view-box">
@@ -1302,6 +1316,8 @@ img,video,canvas{max-width:100%}
         let localUploadedAvatarFile = null;
         let profileAuthActionInFlight = false;
         let profileAuthMenuSyncId = 0;
+        let passwordRecoverySessionActive = false;
+        let passwordRecoveryUpdateInFlight = false;
         let marketMultiFilesArray = [];
         let editingMarketProductId = null;
         let marketEditingExistingImageUrls = [];
@@ -2279,15 +2295,83 @@ async function toggleInternalNotificationCenter() {
 
         
 
-        async function linkPhoneForAccountRecovery() {
-            const email = document.getElementById('recovery-phone-input')?.value.trim().toLowerCase();
-            if (!email) return triggerToastNotification('أدخل البريد الإلكتروني المرتبط بالحساب.', 'error');
-            if (!/^\S+@\S+\.\S+$/.test(email)) return triggerToastNotification('استرداد كلمة المرور يتم عبر البريد الإلكتروني؛ رقم الهاتف وحده لا يستقبل رابط الاستعادة في هذا الإصدار.', 'error');
-            const redirectTo = window.location.origin + window.location.pathname;
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
-            if (error) return triggerToastNotification(formatAuthError(error), 'error');
-            triggerToastNotification('تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.', 'success');
-            closeSubProfileView('sub-prof-recovery');
+        function isAlwahaNativeAuthEnvironment() {
+            const cap = window.Capacitor;
+            try {
+                return !!(cap && ((typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) ||
+                    (typeof cap.getPlatform === 'function' && ['android','ios'].includes(cap.getPlatform()))));
+            } catch (_) { return false; }
+        }
+
+        function updateRecoveryAvailability() {
+            const native = isAlwahaNativeAuthEnvironment();
+            const button = document.getElementById('recovery-submit-button');
+            const nativeNotice = document.getElementById('recovery-native-notice');
+            const webNotice = document.getElementById('recovery-web-notice');
+            if (button) {
+                button.disabled = native;
+                button.setAttribute('aria-disabled', String(native));
+                button.style.opacity = native ? '.55' : '1';
+            }
+            if (nativeNotice) nativeNotice.style.display = native ? 'block' : 'none';
+            if (webNotice) webNotice.style.display = native ? 'none' : 'block';
+        }
+
+        async function sendPasswordRecoveryEmail() {
+            if (isAlwahaNativeAuthEnvironment()) {
+                updateRecoveryAvailability();
+                return triggerToastNotification('استعادة كلمة المرور من تطبيق الهاتف: قريبًا بعد ربط رابط التطبيق الآمن.','info');
+            }
+            if (!supabaseClient) return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
+            const email = document.getElementById('recovery-email-input')?.value.trim().toLowerCase();
+            if (!email) return triggerToastNotification('أدخل البريد الإلكتروني المرتبط بالحساب.','error');
+            if (!/^\S+@\S+\.\S+$/.test(email)) return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
+            if (!/^https?:$/.test(window.location.protocol)) return triggerToastNotification('رابط استعادة الحساب متاح من نسخة الويب الآمنة فقط.','error');
+            const button = document.getElementById('recovery-submit-button');
+            if (button) { button.disabled = true; button.setAttribute('aria-busy','true'); }
+            try {
+                const redirectTo = window.location.origin + window.location.pathname;
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+                if (error) return triggerToastNotification(formatAuthError(error),'error');
+                const field = document.getElementById('recovery-email-input'); if (field) field.value = '';
+                triggerToastNotification('إذا كان البريد مرتبطًا بحساب، فسيصلك رابط آمن لاستعادة كلمة المرور.','success');
+                closeSubProfileView('sub-prof-recovery');
+            } catch (error) {
+                console.warn('[Alwaha Auth] Password recovery request failed:',error);
+                triggerToastNotification('تعذر إرسال رابط الاستعادة الآن. حاول لاحقًا.','error');
+            } finally {
+                if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+                updateRecoveryAvailability();
+            }
+        }
+
+        async function submitPasswordRecoveryUpdate() {
+            if (passwordRecoveryUpdateInFlight) return;
+            passwordRecoveryUpdateInFlight = true;
+            const button = document.getElementById('password-reset-submit');
+            if (button) { button.disabled = true; button.setAttribute('aria-busy','true'); }
+            try {
+                if (!passwordRecoverySessionActive || !supabaseClient) return triggerToastNotification('افتح رابط الاستعادة الذي وصلك إلى البريد أولًا.','error');
+                const password = document.getElementById('password-reset-new')?.value || '';
+                const confirmation = document.getElementById('password-reset-confirm')?.value || '';
+                if (password.length < 8 || password.length > 128) return triggerToastNotification('كلمة المرور يجب أن تكون بين 8 و128 حرفًا.','error');
+                if (password !== confirmation) return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
+                const { error } = await supabaseClient.auth.updateUser({ password });
+                if (error) return triggerToastNotification(formatAuthError(error),'error');
+                passwordRecoverySessionActive = false;
+                const first = document.getElementById('password-reset-new'), second = document.getElementById('password-reset-confirm');
+                if (first) first.value = ''; if (second) second.value = '';
+                await hydrateAuthProfile();
+                syncUiWithLoadedProfileData();
+                closeSubProfileView('sub-prof-password-reset');
+                triggerToastNotification('تم تحديث كلمة المرور بنجاح.','success');
+            } catch (error) {
+                console.warn('[Alwaha Auth] Password recovery update failed:',error);
+                triggerToastNotification('تعذر تحديث كلمة المرور الآن. حاول مرة أخرى.','error');
+            } finally {
+                passwordRecoveryUpdateInFlight = false;
+                if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+            }
         }
 
         async function savePrivacyProfileUpdates() {
@@ -4847,12 +4931,10 @@ function triggerAnimeAiConverterFilter() {
                         }, 0);
                     }
                     if (event === 'PASSWORD_RECOVERY') {
-                        const newPassword = prompt('أدخل كلمة المرور الجديدة (8 أحرف على الأقل):');
-                        if (newPassword && newPassword.length >= 8) {
-                            supabaseClient.auth.updateUser({ password: newPassword })
-                                .then(({ error }) => triggerToastNotification(error ? formatAuthError(error) : 'تم تحديث كلمة المرور بنجاح.', error ? 'error' : 'success'))
-                                .catch(error => window.AlwahaRuntimeGuard?.record?.('password-recovery-update', error));
-                        }
+                        passwordRecoverySessionActive = true;
+                        openSubProfileView('sub-prof-password-reset');
+                        setTimeout(() => document.getElementById('password-reset-new')?.focus?.({preventScroll:true}), 120);
+                        triggerToastNotification('أدخل كلمة المرور الجديدة لإكمال استعادة الحساب.','info');
                     }
                 }));
             }
@@ -4953,6 +5035,7 @@ function triggerAnimeAiConverterFilter() {
                 if (phone && !phone.value) phone.value = localStorage.getItem('alwaha_profile_phone') || '';
                 syncUiWithLoadedProfileData();
             }
+            if (id === 'sub-prof-recovery') updateRecoveryAvailability();
         }
         function closeSubProfileView(id) {
             const view = document.getElementById(id);
@@ -5263,18 +5346,26 @@ function triggerAnimeAiConverterFilter() {
         async function requestFriendFromProfile(targetId){await sendFriendRequest(targetId);await openPublicUserProfile(targetId);}
         async function respondProfileFriendRequest(requestId,status,targetId){await respondFriendRequest(requestId,status);await openPublicUserProfile(targetId);}
 
-        function showAlwahaPrivacyPolicy() {
+        function showAlwahaPrivacyNotice() {
             const notice=document.getElementById('alwaha-privacy-notice');if(!notice)return;
+            privacyNoticePreviousFocus=document.activeElement;
             notice.style.display='flex';notice.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');
         }
-        function acknowledgeAlwahaPrivacyNotice() {
-            try { localStorage.setItem('alwaha_privacy_notice_ack_v1','2026-10-24'); } catch(error) {}
-            const notice=document.getElementById('alwaha-privacy-notice');if(notice){notice.style.display='none';notice.setAttribute('aria-hidden','true');}
+        function hideAlwahaPrivacyNotice() {
+            const notice=document.getElementById('alwaha-privacy-notice');
+            if(notice){notice.style.display='none';notice.setAttribute('aria-hidden','true');}
             document.body.classList.remove('modal-active');
             try { privacyNoticePreviousFocus?.focus?.({preventScroll:true}); } catch(error) {}
         }
+        function acknowledgeAlwahaPrivacyNotice() {
+            try { localStorage.setItem('alwaha_privacy_notice_ack_v2','2026-11-10'); } catch(error) {}
+            hideAlwahaPrivacyNotice();
+        }
+        function deferAlwahaPrivacyNotice() {
+            hideAlwahaPrivacyNotice();
+        }
         function showAlwahaPrivacyNoticeIfNeeded() {
-            let acknowledged=false;try{acknowledged=localStorage.getItem('alwaha_privacy_notice_ack_v1')==='2026-10-24';}catch(error){}
+            let acknowledged=false;try{acknowledged=localStorage.getItem('alwaha_privacy_notice_ack_v2')==='2026-11-10';}catch(error){}
             if(!acknowledged){const notice=document.getElementById('alwaha-privacy-notice');if(notice){privacyNoticePreviousFocus=document.activeElement;notice.style.display='flex';notice.setAttribute('aria-hidden','false');document.body.classList.add('modal-active');}}
         }
 
