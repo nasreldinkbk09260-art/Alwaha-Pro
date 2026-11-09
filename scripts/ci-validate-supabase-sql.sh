@@ -27,10 +27,9 @@ for migration in \
 done
 
 # The hosted Postgres fixture lacks the Supabase pg_cron extension. Its cron schema
-# is a tiny test double, so remove only CREATE EXTENSION while executing the same
-# retention triggers/functions/job-registration block. Real extension install is
-# still present and statically checked in the release migration.
-python3 - "$ROOT/supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql" "$RUNNER_TEMP/retention-with-cron-test-double.sql" <<'PY'
+# is a tiny test double, so remove CREATE EXTENSION only from the final migration,
+# which schedules cleanup after the two-party consent guard is installed.
+python3 - "$ROOT/supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql" "$RUNNER_TEMP/retention-consent-with-cron-test-double.sql" <<'PY'
 from pathlib import Path
 import sys
 source=Path(sys.argv[1]).read_text()
@@ -39,9 +38,9 @@ if source.count(line)!=1:
     raise SystemExit('Expected one pg_cron extension line in retention migration.')
 Path(sys.argv[2]).write_text(source.replace(line,'-- pg_cron extension line omitted in CI fixture; cron API is mocked.'),encoding='utf-8')
 PY
-psql -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/retention-with-cron-test-double.sql"
-echo 'APPLY TEST MIGRATION: 20261108110000_marketplace_retention_two_party_consent.sql'
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql"
+psql -v ON_ERROR_STOP=1 -c "DO \$guard\$ BEGIN IF EXISTS (SELECT 1 FROM cron.job WHERE jobname='alwaha-marketplace-retention-daily' AND active) THEN RAISE EXCEPTION 'Retention cron must stay disabled until two-party consent is installed'; END IF; END \$guard\$;"
+echo 'APPLY TEST MIGRATION: 20261108110000_marketplace_retention_two_party_consent.sql (final consent + schedule)'
+psql -v ON_ERROR_STOP=1 -f "$RUNNER_TEMP/retention-consent-with-cron-test-double.sql"
 
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102010000_legacy_client_privileges_hardening.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql"
