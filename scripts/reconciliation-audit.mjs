@@ -32,10 +32,10 @@ check('release version 3.0.3 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.3' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.3' && manifest.version === '3.0.3' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.3 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-room-resume'") &&
-  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-final-20261108-three-themes-qr-room-resume') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-room-resume') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261108-three-themes-qr-room-resume'));
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261111-release-gates'") &&
+  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-final-20261111-release-gates') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261111-release-gates') &&
+  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-final-20261111-release-gates'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
@@ -86,8 +86,10 @@ check('market_messages.sender_id foreign-key advisor finding has a migration ind
   nonfriendTest.includes('Missing index for market_messages.sender_id foreign key'));
 
 // Kids mode: real source and call-audio track path are checked separately from device QA.
-check('kids mode requires an active video call and exposes an in-call entry button',
-  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && html.includes('id="kidsModeBtn"') && html.includes('toggleAlwahaKidsMode'));
+check('kids mode is explicitly deferred in the app until real-device acceptance',
+  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && html.includes('id="kidsModeBtn"') &&
+  html.includes('وضع الأطفال — قريبًا') && html.includes('disabled aria-disabled="true"') &&
+  !html.includes('onclick="toggleAlwahaKidsMode()"'));
 check('kids room includes local scene, both video streams, camera filters, toys, balloon, key and door lock',
   kids.includes('kids-video-port') && kids.includes('kids-local-port') && kids.includes('const filters=') &&
   kids.includes('data-toy') && kids.includes('kids-balloon') && kids.includes('kids-key') && kids.includes('kids-lock') && kids.includes('kids-door'));

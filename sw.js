@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261108-three-themes-qr-room-resume';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261111-release-gates';
 const PRECACHE_ASSETS = [
   './',
   './index.html',

@@ -54,7 +54,7 @@ const checks=[
  ['opening a market chat revalidates the signed-in participant against the conversation row',html.includes("if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))")],
  ['market message sending is single-flight and preserves the draft on failed requests',html.includes('if(marketMessageSendInFlight)return;')&&html.includes('marketMessageSendInFlight=true')&&html.includes("if(input)input.value=''")&&html.includes('بقي النص في خانة الكتابة')],
  ['market realtime subscription is scoped to the active conversation id',html.includes('market-conversation-\${id}')&&html.includes('currentMarketConversationId===id')],
- ['market seller call starts from the verified market conversation without friendship gating',html.includes("startAlwahaCall('market','audio',conversationId,sellerId")&&html.includes('async function callMarketSeller')],
+ ['market seller call is explicitly deferred until production Realtime authorization is deployed',html.includes('اتصال صوتي بالبائع — قريبًا')&&html.includes('disabled aria-disabled="true"')&&(()=>{const a=html.indexOf('async function callMarketSeller'),b=html.indexOf('async function updateMarketProductLifecycle',a),s=a>=0&&b>a?html.slice(a,b):'';return s.includes('مكالمات السوق الصوتية قريبًا')&&!s.includes('startAlwahaCall(');})()],
  ['market archive remains a reversible status update, not a frontend hard delete',html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")&&html.includes('async function reactivateMyProduct')]
 
 ];

@@ -858,7 +858,7 @@ img,video,canvas{max-width:100%}
             <button id="speakerRouteBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleCallSpeaker()" aria-pressed="false"><i class="fa-solid fa-ear-listen"></i> تشغيل مكبر الصوت</button>
             <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
             <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
-            <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleAlwahaKidsMode()"><i class="fa-solid fa-wand-magic-sparkles"></i> وضع الأطفال</button>
+            <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;opacity:.6;cursor:not-allowed;" disabled aria-disabled="true" title="قريبًا بعد اختبار وضع الأطفال على الأجهزة"><i class="fa-solid fa-wand-magic-sparkles"></i> وضع الأطفال — قريبًا</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
@@ -1037,31 +1037,18 @@ img,video,canvas{max-width:100%}
 
     <div id="sub-prof-verify" class="sub-profile-view-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب</h3>
+            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب — قريبًا</h3>
             <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <p style="font-size:11px;line-height:1.8;color:#b9c8d9;">أكمل البيانات التالية ليتمكن فريق الإدارة من مراجعة الطلب. رقم الهاتف والبريد لن يظهرا في ملفك العام.</p>
-        <div style="display:flex;align-items:center;gap:12px;margin:12px 0;padding:11px;border:1px solid #8bf4ff30;border-radius:14px;">
-            <img id="verification-avatar-preview" src="icon.png" alt="الصورة الشخصية" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff;">
-            <div style="flex:1;min-width:0;"><strong style="font-size:12px;">الصورة الشخصية</strong><div id="verification-avatar-status" style="font-size:10px;color:#a9bfd2;margin-top:5px;">ارفع صورة حقيقية لإكمال الطلب.</div></div>
-            <button type="button" class="btn-action" onclick="handleVerificationAvatarPick()" style="padding:8px 10px;border-radius:18px;background:#16344a;color:#8bf4ff;border:1px solid #8bf4ff55;">رفع صورة</button>
+        <div role="status" aria-live="polite" style="padding:14px;border:1px solid #8bf4ff30;border-radius:14px;background:#8bf4ff08;color:#c9dceb;font-size:11px;line-height:2;">
+            طلبات التوثيق قيد التطوير حتى تكتمل حماية صلاحيات الإرسال والمراجعة في قاعدة البيانات. لن نجمع رقم هاتف أو صورًا أو مستندات عبر هذا النموذج في الوقت الحالي.
         </div>
-        <label for="verification-phone-input" style="font-size:11px;color:#c6d5e7;">رقم هاتف للتواصل — خاص</label>
-        <input id="verification-phone-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="+201xxxxxxxxx" class="verification-field">
-        <label for="verification-category-input" style="font-size:11px;color:#c6d5e7;">نوع الحساب</label>
-        <select id="verification-category-input" class="verification-field"><option value="شخصي">شخصي</option><option value="صانع محتوى">صانع محتوى</option><option value="نشاط تجاري">نشاط تجاري</option><option value="مؤسسة">مؤسسة / جهة رسمية</option></select>
-        <label for="verification-profile-link" style="font-size:11px;color:#c6d5e7;">رابط موثوق (اختياري)</label>
-        <input id="verification-profile-link" type="url" inputmode="url" placeholder="https://..." class="verification-field">
-        <label for="verification-reason-input" style="font-size:11px;color:#c6d5e7;">سبب طلب التوثيق</label>
-        <textarea id="verification-reason-input" placeholder="اشرح سبب طلب التوثيق..." class="verification-field keyboard-target" style="height:82px;resize:vertical;"></textarea>
-        <textarea id="verification-extra-input" placeholder="تفاصيل إضافية (اختياري)" class="verification-field keyboard-target" style="height:66px;resize:vertical;"></textarea>
-        <button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#a8fff0,#8c83ef);color:#10162a;padding:12px;border-radius:13px;font-weight:bold;" onclick="submitAccountVerificationRequest()">إرسال طلب التوثيق</button>
-        <p style="font-size:10px;color:#8296ad;line-height:1.7;margin-top:10px;">لن تُقبل الصورة الافتراضية بدل الصورة الحقيقية في طلب التوثيق. لا ترفع مستند هوية حساس قبل تخصيص مساحة تخزين خاصة له.</p>
+        <button type="button" disabled aria-disabled="true" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;border:1px solid #8bf4ff33;background:#173044;color:#9fb5ca;font:inherit;">طلبات التوثيق — قريبًا</button>
     </div>
 
     <!-- 6. قسم الألعاب المكتمل -->
     <section id="games-section" class="app-section">
-        <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> ألعاب Alwaha-Pro</h2>
+        <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> الألعاب — جاري التطوير</h2>
         <div id="games-list-container"></div>
     </section>
 
@@ -1139,7 +1126,7 @@ img,video,canvas{max-width:100%}
         <button type="button" class="nav-item market-center" aria-label="السوق" onclick="showSection('market-section', this)"><i class="fa-solid fa-shop"></i><span>السوق</span></button>
         <button type="button" class="nav-item chat" aria-label="المحادثات" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>محادثة</span></button>
         <button type="button" class="nav-item reels" aria-label="الريلز" onclick="showSection('reels-section', this)"><i class="fa-solid fa-clapperboard"></i><span>ريلز</span></button>
-        <button type="button" class="nav-item games-nav" aria-label="الألعاب" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
+        <button type="button" class="nav-item games-nav" aria-label="الألعاب — قريبًا" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب — قريبًا</span></button>
         <button type="button" class="nav-item profile-me" aria-label="حسابي" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>حسابي</span></button>
         <button type="button" class="nav-item notification-nav-item" aria-label="التنبيهات" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i><span>تنبيهات</span><span id="notification-badge-nav" class="alwaha-notification-badge" style="display:none;"></span></button>
     </nav>
@@ -4393,7 +4380,7 @@ async function submitNewProductToMarket() {
                 } catch(error) { console.warn('[Alwaha Market] Review eligibility check failed:',error); }
             }
             const reviewControls=canReview?`<div style="margin-top:12px;border:1px solid #8cffc144;padding:11px;border-radius:11px;"><h4 style="margin:0 0 8px;color:#8cffc1;font-size:12px;">قيّم البائع بعد استلام السلعة</h4><label style="font-size:10px;color:#a9bfd2;display:block;margin-bottom:5px;">التقييم من 1 إلى 5 نجوم</label><select id="market-review-rating-${escapeHtml(product.id)}" style="width:100%;background:#101a2b;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;margin-bottom:7px;"><option value="">اختر التقييم</option><option value="5">★★★★★ ممتاز</option><option value="4">★★★★ جيد جدًا</option><option value="3">★★★ مقبول</option><option value="2">★★ يحتاج تحسين</option><option value="1">★ تجربة سيئة</option></select><textarea id="market-review-text-${escapeHtml(product.id)}" maxlength="1000" rows="3" placeholder="ملاحظاتك (اختياري)" style="width:100%;background:#0b0f19;color:#fff;border:1px solid #ffffff30;border-radius:8px;padding:9px;font:inherit;font-size:11px;"></textarea><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#173a2b;color:#8cffc1;padding:10px;border-radius:9px;" onclick="submitMarketplaceReview('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')">إرسال التقييم</button></div>`:'';
-            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;" onclick="callMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
+            const message=!me?'<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">سجّل الدخول للتواصل مع البائع أو الإبلاغ عن إعلان.</div>':(product.seller_id===me.id?`<div style="color:#9fb1c8;font-size:11px;text-align:center;padding:8px;">هذا إعلانك؛ يمكنك تعديله أو تغيير حالته من «سلعي».</div>`:`<button type="button" class="btn-action" style="width:100%;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#091223;padding:11px;border-radius:10px;font-weight:bold;" onclick="contactMarketSeller('${escapeJs(product.id)}','${escapeJs(product.title||'المنتج')}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-comments"></i> اسأل: هل ما زال المنتج متوفرًا؟</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#174c42;color:#d8fff5;padding:10px;border-radius:10px;opacity:.58;cursor:not-allowed;" disabled aria-disabled="true" title="قريبًا بعد نشر صلاحيات مكالمات السوق واختبارها على جهازين"><i class="fa-solid fa-phone"></i> اتصال صوتي بالبائع — قريبًا</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#253449;color:#fff;padding:10px;border-radius:10px;" onclick="openPublicUserProfile('${escapeJs(product.seller_id)}')"><i class="fa-solid fa-user"></i> عرض ملف البائع</button><button type="button" class="btn-action" style="width:100%;margin-top:7px;background:#401e2d;color:#ffb1c5;padding:10px;border-radius:10px;" onclick="reportMarketplaceItem('${escapeJs(product.id)}','${escapeJs(product.seller_id)}')"><i class="fa-solid fa-flag"></i> الإبلاغ عن إعلان</button>`);
             const extraReview=reviewControls;
             let modal=document.getElementById('market-product-detail-modal');
             if(!modal){modal=document.createElement('div');modal.id='market-product-detail-modal';modal.className='game-modal-overlay alwaha-fullscreen-layer';document.body.appendChild(modal);}
@@ -4419,12 +4406,12 @@ async function submitNewProductToMarket() {
             return startMarketSellerChatInternal(productId,title,sellerId);
         }
         async function callMarketSeller(productId,title,sellerId) {
-            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة مع البائع.');if(!me)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة مع البائع.');
+            if(!me)return;
             if(!sellerId||sellerId===me.id)return triggerToastNotification('لا يمكن الاتصال بحسابك الشخصي.','info');
-            const conversationId=await startMarketSellerChatInternal(productId,title,sellerId);
-            if(!conversationId)return;
-            await startAlwahaCall('market','audio',conversationId,sellerId,`بائع الإعلان: ${title||'منتج'}`);
+            return triggerToastNotification('مكالمات السوق الصوتية قريبًا حتى تُنشر صلاحيات Realtime الخاصة بها ويُختبر الاتصال بين هاتفين.','info');
         }
+
         async function updateMarketProductLifecycle(productId, patch, successMessage) {
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me)return;
             if(!(await detectMarketLifecycleSchema()))return triggerToastNotification('ميزات حالة البيع/الأرشفة/الترويج تحتاج تحديث قاعدة السوق الموجود داخل حزمة الإصلاح. نشر المنتج الأساسي ما زال متاحًا.','error');
@@ -5244,28 +5231,9 @@ function triggerAnimeAiConverterFilter() {
             }});
         }
         async function submitAccountVerificationRequest() {
-            const user=await requireAuthenticatedUser('سجل الدخول أولاً لطلب التوثيق.');
-            if(!user) return;
-            const phoneRaw=document.getElementById('verification-phone-input')?.value.trim()||'';
-            const phone=phoneRaw.replace(/[\s().-]/g,'');
-            const reason=document.getElementById('verification-reason-input')?.value.trim()||'';
-            const category=document.getElementById('verification-category-input')?.value||'شخصي';
-            const profileUrl=document.getElementById('verification-profile-link')?.value.trim()||'';
-            const extra=document.getElementById('verification-extra-input')?.value.trim()||'';
-            if(!/^\+[1-9]\d{7,14}$/.test(phone)) return triggerToastNotification('أدخل رقم هاتف بصيغة دولية صحيحة مثل +201xxxxxxxxx.','error');
-            if(!reason) return triggerToastNotification('اكتب سبب طلب التوثيق أولاً.','error');
-            if(profileUrl&&!/^https?:\/\//i.test(profileUrl)) return triggerToastNotification('الرابط يجب أن يبدأ بـ https:// أو http://.','error');
-            const profile=await getCurrentProfile();
-            if(!profile?.avatar_url) return triggerToastNotification('ارفع صورة شخصية حقيقية أولاً؛ الصورة الافتراضية لا تكفي للتوثيق.','error');
-            const updated=await supabaseFetch('users?id=eq.'+encodeURIComponent(user.id),{method:'PATCH',body:JSON.stringify({phone}),prefer:'return=representation'});
-            if(!updated) return triggerToastNotification('تعذر حفظ رقم التواصل الخاص في الملف.','error');
-            const result=await supabaseFetch('verification_requests',{method:'POST',body:JSON.stringify({user_id:user.id,reason,phone,avatar_url:profile.avatar_url,category,profile_url:profileUrl||null,extra_details:extra||null}),prefer:'return=representation'});
-            if(!result) return triggerToastNotification('تعذر إرسال الطلب. قد يكون لديك طلب توثيق قيد المراجعة بالفعل.','error');
-            localStorage.setItem('alwaha_profile_phone',phone);
-            for(const id of ['verification-phone-input','verification-reason-input','verification-profile-link','verification-extra-input']) { const field=document.getElementById(id); if(field) field.value=''; }
-            triggerToastNotification('تم إرسال طلب التوثيق للمراجعة.','success');
-            closeSubProfileView('sub-prof-verify');
+            return triggerToastNotification('طلبات التوثيق قيد التطوير حتى تكتمل حماية صلاحيات الإرسال والمراجعة على الخادم.','info');
         }
+        
         async function loadAllRegisteredUsersList() {
             const container=document.getElementById('all-users-list');
             if(!container)return;

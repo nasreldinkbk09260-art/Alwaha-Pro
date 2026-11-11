@@ -768,38 +768,19 @@
   }
 
   function renderGamesSection() {
-    addStyles();
     const container = $('games-list-container');
     if (!container) return;
-    const cards = Object.entries(GAME_INFO).map(([id, game]) => '<article class="mp-game-card" style="border-color:' + game.color + '55"><div class="mp-game-icon" aria-hidden="true">' + game.icon + '</div><div class="mp-game-title">' + esc(game.title) + '</div><div class="mp-game-desc" id="mp-desc-' + id + '">' + esc(game.description) + '</div><button type="button" class="mp-action mp-create" data-mp-create="' + id + '" aria-label="إنشاء غرفة ' + esc(game.title) + '" aria-describedby="mp-desc-' + id + '">إنشاء غرفة</button><button type="button" class="mp-action mp-join" data-mp-join="' + id + '" aria-label="الانضمام إلى غرفة ' + esc(game.title) + ' بكود" aria-expanded="false" aria-describedby="mp-desc-' + id + '">الانضمام بكود</button></article>').join('');
-    container.innerHTML = `<div class="mp-help" style="font-size:12px">الألعاب الجماعية أونلاين — أنشئ غرفة وشارك كودها مع صديق على جهاز آخر. يجب أن يكون اللاعبان مسجلين الدخول.</div><div class="mp-game-cards">${cards}</div><div class="mp-status">لا توجد غرف عامة معروضة؛ الانضمام يتم بكود الغرفة لمنع كشف الغرف الخاصة.</div>`;
-    updateResumeRoomControl();
-    container.onclick = (event) => {
-      const resume = event.target.closest('[data-mp-resume]');
-      if (resume) { void resumeLastRoom(resume); return; }
-      const create = event.target.closest('[data-mp-create]');
-      if (create) { void createRoom(create.dataset.mpCreate, create); return; }
-      const scan = event.target.closest('[data-mp-scan]');
-      if (scan) { void startQrScan(scan); return; }
-      const cancelJoin = event.target.closest('[data-mp-cancel-join]');
-      if (cancelJoin) { closeJoinCodeForm(cancelJoin.closest('.mp-join-code-form')); return; }
-      const join = event.target.closest('[data-mp-join]');
-      if (join) { showJoinCodeForm(join.dataset.mpJoin, join); return; }
-    };
-    container.onsubmit = (event) => {
-      const form = event.target.closest('[data-mp-join-form]');
-      if (!form) return;
-      event.preventDefault();
-      const input = form.querySelector('input[name="roomCode"]');
-      void joinRoom(form.dataset.mpJoinForm, form.querySelector('button[type="submit"]'), input?.value || '');
-    };
+    container.innerHTML = `<div class="mp-status" role="status" aria-live="polite" style="padding:18px;text-align:center;line-height:2;">
+      <strong>الألعاب الجماعية — جاري التطوير</strong>
+      <div>سيُعاد تفعيلها بعد نشر خدمة اللعب الآمن game-actions وتطبيق صلاحياتها واختبار إنشاء الغرف والحركات بين جهازين.</div>
+    </div>`;
+    container.onclick = null;
+    container.onsubmit = null;
   }
   window.renderGamesSection = renderGamesSection;
   // Only multiplayer games are exposed in this release candidate.
   window.launchGameEngine = function(gameTitle) {
-    const id = Object.keys(GAME_INFO).find(key => GAME_INFO[key].title === gameTitle);
-    if (id) return createRoom(id);
-    return toast('اختر لعبة جماعية من قسم الألعاب.', 'info');
+    return toast('قسم الألعاب الجماعية جاري التطوير، وسيُعاد تفعيله بعد اكتمال خدمة الخادم واختبار جهازين.', 'info');
   };
   window.closeAlwahaGameRoom = closeRoom;
   window.closeAlwahaGameQrScanner = stopQrScanner;

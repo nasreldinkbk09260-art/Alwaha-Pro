@@ -144,7 +144,7 @@ if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./assets/backgrou
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
 if(!html.includes('market-call-room-')||!html.includes("mode:market?'market':'online'")||!html.includes('complete_market_sale')) fail('3.0.3 market call and transaction workflow are incomplete.');
-if(!html.includes('toggleAlwahaKidsMode')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.3 local experience suite is incomplete.');
+if(!html.includes('id="kidsModeBtn"')||!html.includes('وضع الأطفال — قريبًا')||!html.includes('disabled aria-disabled="true"')||!kidsRoom.includes('window.toggleAlwahaKidsMode=open')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.3 local experience suite must remain packaged while untested kids controls are visibly deferred.');
 if(!fs.existsSync('alwaha-kids-room.js')||!fs.existsSync('alwaha-local-vault.js')||!fs.existsSync('alwaha-experience.js')||!fs.existsSync('alwaha-modal-shell.js')) fail('Missing 3.0.3 local experience modules.');
 const legacyPrivilegesMigration=read('supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql');
 for(const table of ['public.likes','public.profiles','public.ratings']) if(!legacyPrivilegesMigration.includes(table)) fail(`Legacy privilege hardening missing ${table}.`);
