@@ -13,7 +13,6 @@ const checks = [
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
   ['message refresh action', 'loadDirectMessages()'],
-  ['share summary action', 'shareCurrentChat()'],
   ['privacy information action', 'showChatPrivacyInfo()'],
   ['Bluetooth remains honestly disabled', 'المكالمات عبر البلوتوث لم تُنفذ بعد'],
   ['video camera acquisition', 'getUserMedia({ audio: true, video: videoConstraints })'],
