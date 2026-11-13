@@ -148,6 +148,9 @@ jobs:
           test -s supabase/migrations/20261014195540_friend_request_policy_consolidation.sql
           test -s supabase/migrations/20261014232322_notification_fail_safe.sql
           test -s supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql
+          test -s supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql
+          test -s supabase/migrations/20261029035414_marketplace_review_privacy_rpc.sql
+          test -s supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql
           test -s supabase/migrations/20261101022015_marketplace_conversation_messaging.sql
           test -s supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql
           test -s supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql
@@ -701,3 +704,63 @@ jobs:
           path: release/
           if-no-files-found: error
           retention-days: 30
+
+
+  publish-web:
+    name: Publish Alwaha-Pro 3.0.3 website
+    if: github.ref == 'refs/heads/alwaha-pro-3.0.3-three-theme-ux-20261108'
+    needs:
+      - sql-regression
+      - build-android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout verified release source
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Re-run web release preflight
+        run: npm run audit:release
+
+      - name: Build final web application
+        run: npm run build
+
+      - name: Verify exact 3.0.3 website output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/manifest.json
+          test -s dist/sw.js
+          test -s dist/icon.png
+          test -s dist/alwaha-theme-system.css
+          grep -Fq '<title>Alwaha-Pro 3.0.3</title>' dist/index.html
+          node -e "const m=require('./dist/manifest.json'); if(m.version!=='3.0.3') process.exit(1)"
+          echo 'Alwaha-Pro 3.0.3 website output verified.'
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload verified website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/
+
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4

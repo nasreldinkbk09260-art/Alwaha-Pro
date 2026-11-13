@@ -13,6 +13,9 @@ psql -v ON_ERROR_STOP=1 -c 'SELECT version();'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/ci-bootstrap.sql"
 
 for migration in \
+  20261029035135_marketplace_lifecycle_reviews.sql \
+  20261029035414_marketplace_review_privacy_rpc.sql \
+  20261029121330_add_marketplace_foreign_key_indexes.sql \
   20261101022015_marketplace_conversation_messaging.sql \
   20261101022031_marketplace_conversation_policy_owner_fix.sql \
   20261101210000_marketplace_transaction_archive_and_call_auth.sql \
