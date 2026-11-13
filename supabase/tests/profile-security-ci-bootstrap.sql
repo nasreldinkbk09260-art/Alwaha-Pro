@@ -24,6 +24,162 @@ AS $ SELECT EXISTS (
   WHERE u.id=(SELECT auth.uid()) AND u.is_admin IS TRUE
 ) $;
 
+
+CREATE OR REPLACE FUNCTION public.handle_auth_user_update()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.handle_auth_user_update() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.handle_new_auth_user() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.handle_verification_status()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.handle_verification_status() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.notify_on_comment()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.notify_on_comment() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.notify_on_follow()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.notify_on_follow() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.notify_on_friend_request()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.notify_on_friend_request() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.notify_on_like()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.notify_on_like() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.notify_on_message()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.notify_on_message() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.sync_post_like_count()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.sync_post_like_count() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.sync_public_profile_directory()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.sync_public_profile_directory() FROM PUBLIC, anon, authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.sync_reel_like_count()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, pg_temp
+AS $fixture$
+BEGIN
+  RETURN NEW;
+END;
+$fixture$;
+REVOKE ALL ON FUNCTION public.sync_reel_like_count() FROM PUBLIC, anon, authenticated, service_role;
+
 CREATE FUNCTION app_private.is_admin() RETURNS boolean
 LANGUAGE sql STABLE
 AS $$ SELECT EXISTS (
