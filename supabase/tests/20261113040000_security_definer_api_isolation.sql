@@ -29,14 +29,6 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-    WHERE n.nspname='public' AND p.proname='is_admin' AND p.prosecdef
-      AND p.proconfig @> ARRAY['search_path=""']::text[]
-      AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
-      AND NOT has_function_privilege('anon',p.oid,'EXECUTE')
-  ) THEN RAISE EXCEPTION 'Legacy public.is_admin must have an empty search_path and no client execute grant'; END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
     WHERE n.nspname='app_private' AND p.proname='is_admin' AND p.prosecdef
       AND p.proconfig @> ARRAY['search_path=""']::text[]
       AND has_function_privilege('authenticated',p.oid,'EXECUTE')
