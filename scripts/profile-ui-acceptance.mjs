@@ -6,6 +6,8 @@ const auth = read('supabase/functions/username-auth/index.ts');
 const modal = read('alwaha-modal-shell.js');
 const securityMigration = read('supabase/migrations/20261110001000_profile_account_security_hardening.sql');
 const securityTest = read('supabase/tests/20261110001000_profile_account_security_hardening.sql');
+const verificationPrivilegesMigration = read('supabase/migrations/20261113020000_profile_verification_submission_privileges.sql');
+const verificationPrivilegesTest = read('supabase/tests/20261113020000_profile_verification_submission_privileges.sql');
 
 function between(source, start, end) {
   const a = source.indexOf(start);
@@ -20,7 +22,7 @@ const hydrate = between(html, 'async function hydrateAuthProfile', 'function for
 const profileSync = between(html, 'function syncUiWithLoadedProfileData()', 'function normalizeAlwahaPhone');
 const recovery = between(html, 'async function linkPhoneForAccountRecovery()', 'async function savePrivacyProfileUpdates');
 const privacy = between(html, 'async function savePrivacyProfileUpdates()', 'async function handleVerificationAvatarPick');
-const verification = between(html, 'async function submitAccountVerificationRequest()', 'async function loadAllRegisteredUsersList()');
+const verification = between(html, 'async function submitAccountVerificationRequest(event)', 'async function loadAllRegisteredUsersList()');
 const authListener = between(html, "onAuthStateChange((event, session) =>", "});");
 const checks = [
   ['profile register entry opens the dedicated registration view', html.includes('id="profile-register-menu-item"') && html.includes("openSubProfileView('sub-prof-register')")],
@@ -38,7 +40,9 @@ const checks = [
   ['service role secret stays server-side and is not embedded in the client page', auth.includes('SUPABASE_SERVICE_ROLE_KEY') && !html.includes('SUPABASE_SERVICE_ROLE_KEY')],
   ['public profile UI hides email and keeps email/phone privacy locked on', profileSync.includes("emailEl.style.display = 'none'") && profileSync.includes('emailChk.checked = true') && profileSync.includes('emailChk.disabled = true') && profileSync.includes('phoneChk.checked = true') && profileSync.includes('phoneChk.disabled = true') && !privacy.includes('updateData.hide_email') && !privacy.includes('updateData.hide_phone') && !verification.includes('hide_email:true') && !verification.includes('hide_phone:true')],
   ['registration metadata defaults email and phone visibility to private', registration.includes('hide_email:true,hide_phone:true')],
-  ['verification form is visibly deferred and sends no personal data until production insert permissions are hardened', verification.includes('طلبات التوثيق قيد التطوير') && !verification.includes('supabaseFetch') && html.includes('طلبات التوثيق — قريبًا') && html.includes('disabled aria-disabled="true"')],
+  ['verification form submits bounded private request fields and blocks duplicate pending requests', html.includes('id="verification-request-form"') && html.includes('id="verification-category-input"') && html.includes('id="verification-reason-input"') && html.includes('id="verification-profile-url-input"') && verification.includes('verificationRequestInFlight') && verification.includes('status=eq.pending') && verification.includes("supabaseFetch('verification_requests'") && verification.includes("method:'POST'") && verification.includes('profile_url:profileUrl||null') && !verification.includes('status:') && !html.includes('disabled aria-disabled="true"') ],
+  ['verification form keeps phone and evidence private and displays the last review state', html.includes('verification-request-status') && html.includes('لا تُعرض ضمن دليل المستخدمين أو الملف العام') && html.includes('loadMyVerificationRequestStatus') && html.includes("labels={pending:'قيد المراجعة',approved:'تم توثيق الحساب',rejected:'لم تتم الموافقة؛ يمكنك إرسال طلب جديد'}")],
+  ['verification request insertion is limited to user-submitted fields in the production migration and regression test', verificationPrivilegesMigration.includes('REVOKE INSERT ON TABLE public.verification_requests') && verificationPrivilegesMigration.includes('GRANT INSERT (user_id,reason,phone,category,profile_url,extra_details)') && verificationPrivilegesTest.includes("has_column_privilege('authenticated', 'public.verification_requests', 'status', 'INSERT')"))],
   ['profile security migration removes direct user-row deletion and restricts verification inserts', securityMigration.includes('REVOKE DELETE ON TABLE public.users') && securityMigration.includes('DROP POLICY IF EXISTS users_delete_own') && securityMigration.includes('GRANT INSERT (') && securityMigration.includes("status = 'pending'") && securityMigration.includes('reviewed_at IS NULL') && securityMigration.includes('reviewed_by IS NULL') && securityMigration.includes('REVOKE UPDATE (hide_email,hide_phone)') && securityMigration.includes('UPDATE public.users SET hide_email=true,hide_phone=true')],
   ['profile security regression verifies contact details remain hidden in the public directory', securityTest.includes('security_invoker=true') && securityTest.includes('NULL::text AS identifier') && securityTest.includes('NULL::text AS phone')],
   ['profile modal shell contains focus management and background isolation primitives', modal.includes('aria-modal') && modal.includes('focus') && modal.includes('inert')]
