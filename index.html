@@ -50,15 +50,15 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
-    <script src="./production-polish.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-call-feedback.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./compatibility.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-local-vault.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-experience.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-modal-shell.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-kids-room.js?v=3.0.3-core-20261113" defer></script>
-    <script src="./alwaha-smart-assistant.js?v=3.0.3-core-20261113" defer></script>
+    <script src="./production-polish.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-call-feedback.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./compatibility.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-local-vault.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-experience.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-kids-room.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./alwaha-smart-assistant.js?v=3.0.3-core-20261113-security" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -463,7 +463,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <script src="./assets/chess.min.js"></script>
     <script src="./assets/qr/qrcode-generator.min.js" defer></script>
     <script src="./assets/qr/jsQR.min.js" defer></script>
-    <script src="./games.js?v=3.0.3-core-20261113" defer></script>
+    <script src="./games.js?v=3.0.3-core-20261113-security" defer></script>
 
     <style id="alwaha-real-theme-palettes">
 body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){background:radial-gradient(ellipse at 14% 12%,rgba(35,183,211,.16),transparent 38%),radial-gradient(ellipse at 86% 18%,rgba(183,77,126,.17),transparent 42%),radial-gradient(ellipse at 66% 88%,rgba(54,168,157,.10),transparent 38%),linear-gradient(155deg,#06070d 0%,#100b18 52%,#080b12 100%)!important;background-attachment:fixed!important}
@@ -499,7 +499,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </style>
 <script id="alwaha-2-8-8-touch-wallpaper-script">(()=>{const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();</script>
 
-    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-core-20261113"></script>
+    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-core-20261113-security"></script>
 <style id="alwaha-mobile-performance-final">
 @media (max-width: 768px), (pointer: coarse) {
   body:not(.theme-nature):not(.theme-tech):not(.theme-soft), body.theme-nature, body.theme-tech, body.theme-soft { background-attachment: scroll !important; }
@@ -590,7 +590,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
-    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-core-20261113">
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-core-20261113-security">
 </head>
 <body>
 
@@ -1236,7 +1236,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-core-20261113', { scope: './', updateViaCache: 'none' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-core-20261113-security', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
