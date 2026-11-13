@@ -156,6 +156,8 @@ jobs:
           test -s supabase/tests/20261102150000_products_seller_email_privacy.sql
           test -s supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql
           test -s supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql
+          test -s supabase/migrations/20261113010000_marketplace_and_message_write_privileges.sql
+          test -s supabase/tests/20261113010000_marketplace_and_message_write_privileges.sql
           test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
           test -s supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql
           test -s supabase/tests/20261102100000_marketplace_retention_behavior.sql
