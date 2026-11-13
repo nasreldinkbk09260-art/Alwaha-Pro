@@ -4259,7 +4259,8 @@ async function submitNewProductToMarket() {
             // Retry once with core fields only for schema/column errors; never bypass RLS/auth.
             const firstError=window.__alwahaLastApiError||{};
             if(result===null && marketLifecycleSchemaReady===true && firstError.status===400 && /column|schema cache|does not exist|unknown field/i.test(firstError.message||'')) {
-                const corePayload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||''};
+                const corePayload={title:name,price,category,description:desc,image_url:imageUrls[0]||''};
+                if(!isEditing)corePayload.seller_id=user.id;
                 result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(corePayload),prefer:'return=minimal'});
             }
             if(result===null||(isEditing&&Array.isArray(result)&&result.length===0)){
