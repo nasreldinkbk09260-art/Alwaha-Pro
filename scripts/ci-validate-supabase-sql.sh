@@ -77,6 +77,9 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113030000_marketplace_chat
 echo 'APPLY TEST MIGRATION: 20261113040000_security_definer_api_isolation.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261113040000_security_definer_api_isolation.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113040000_security_definer_api_isolation.sql"
+echo 'APPLY TEST MIGRATION: 20261113050000_trigger_definer_empty_search_path.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113050000_trigger_definer_empty_search_path.sql"
 
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
