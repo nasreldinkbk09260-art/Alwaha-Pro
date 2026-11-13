@@ -16,6 +16,14 @@ CREATE POLICY users_update_own ON public.users
 CREATE POLICY users_delete_own ON public.users
   FOR DELETE TO authenticated USING ((SELECT auth.uid())=id);
 
+-- Existing public helper present before the API-isolation migration.
+CREATE FUNCTION public.is_admin() RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO ''
+AS $ SELECT EXISTS (
+  SELECT 1 FROM public.users AS u
+  WHERE u.id=(SELECT auth.uid()) AND u.is_admin IS TRUE
+) $;
+
 CREATE FUNCTION app_private.is_admin() RETURNS boolean
 LANGUAGE sql STABLE
 AS $$ SELECT EXISTS (
