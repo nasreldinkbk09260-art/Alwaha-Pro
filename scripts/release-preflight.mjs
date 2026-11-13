@@ -68,11 +68,13 @@ if (!buildWeb.includes("path.join(root, 'scripts', 'native-back-handler.mjs')") 
 if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler is not precached by the service worker.');
 if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.3 local experience modules are not precached.');
 if (!sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard is not precached.');
-if (!html.includes('src="./alwaha-runtime-guard.js"') || html.includes('alwaha-runtime-guard.js?v=')) fail('Runtime resilience guard must use the exact precached local path.');
-for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js']) if (!html.includes('src="./'+asset+'"') || html.includes(asset+'?v=')) fail('Offline script URL does not match its service-worker precache entry: '+asset);
+if (!html.includes('src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113"') || !sw.includes("'./alwaha-runtime-guard.js?v=3.0.3-core-20261113'") || !sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard must use the versioned precached path with offline retry fallback.');
+for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js']) if (!html.includes('src="./'+asset+'?v=3.0.3-core-20261113"') || !sw.includes("'./"+asset+"?v=3.0.3-core-20261113'") || !sw.includes("'./"+asset+"'")) fail('Offline script URL does not match versioned and fallback service-worker precache entries: '+asset);
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
 if (!workflow.includes('npm run audit:runtime') || pkg.scripts?.['audit:runtime'] !== 'node scripts/runtime-boot-audit.mjs') fail('Startup/runtime audit is not wired into release CI.');
+if (!workflow.includes('npm run audit:offline-cache') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs') fail('Offline cache budget/reconnect audit is not wired into release CI.');
+
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
 if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
 if (!nativeBack.includes('window.alwahaExitNativeApp = () => App.exitApp()') || !html.includes('window.alwahaExitNativeApp')) fail('Android exit confirmation does not invoke the native exit action.');
@@ -139,7 +141,7 @@ const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m
 if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
 if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
 if(sw.includes('bg-spring.webp')||sw.includes('bg-summer.webp')||sw.includes('bg-autumn.webp')||sw.includes('bg-winter.webp'))fail('Obsolete seasonal wallpaper files remain in the active offline cache list.');
-if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from offline precache.');
+if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./alwaha-theme-system.css?v=3.0.3-core-20261113'")||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from offline precache.');
 
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
