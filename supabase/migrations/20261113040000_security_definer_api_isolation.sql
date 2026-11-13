@@ -3,7 +3,7 @@
 BEGIN;
 
 CREATE SCHEMA IF NOT EXISTS app_private;
-REVOKE ALL ON SCHEMA app_private FROM PUBLIC, anon;
+REVOKE ALL ON SCHEMA app_private FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA app_private TO authenticated, service_role;
 
 CREATE OR REPLACE FUNCTION app_private.is_admin()
