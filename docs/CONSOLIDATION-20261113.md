@@ -5,7 +5,7 @@ This document records the reviewed work consolidated into the current 3.0.3 work
 ## 1. Source-branch reconciliation
 
 - Current working branch: `alwaha-pro-3.0.3-three-theme-ux-20261108`.
-- It contains the full history of `alwaha-pro-3.0.3-final-rebuild-20261107` and is ahead by 207 commits at the last comparison (0 commits behind).
+- It contains the full history of `alwaha-pro-3.0.3-final-rebuild-20261107` and is ahead of that baseline with 0 commits behind.
 - It contains all commits from `alwaha-pro-3.0.2-release-r7.5-20261103` (0 commits behind).
 - The R7.4.2 line diverges by three commits. Those three unique commits were reviewed separately and were not copied wholesale: their older seasonal image-theme approach and deletion/retention behavior were not accepted over the current lighter theme and two-party retention design.
 - Build53 offline-cache work and the R7.5.1 runtime-loop repair were incorporated as code-level changes into the current branch; the old repair worktrees/scripts are not treated as separate release sources.
@@ -103,6 +103,7 @@ These are known follow-up items, not completed features:
 
 ## 10. Release state
 
+- Capacitor identity is preserved: `appId=pro.alwaha.app`, `appName=Alwaha-Pro`, `webDir=dist`.
 - The current GitHub workflow is Build Only; it does not publish a release or deploy the app.
 - A previous build-305 artifact was signed and its included hashes were verified, but it predates the latest consolidation/security commits and must not be distributed as the final build.
 - No final APK/AAB built from the current branch head has been verified yet.
