@@ -8,7 +8,7 @@
     "start": "npx serve .",
     "build": "node scripts/build-web.mjs",
     "cap:sync": "npx cap sync",
-    "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache",
+    "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache && npm run audit:security-definers",
     "prebuild": "node scripts/vendor-assets.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
@@ -30,7 +30,8 @@
     "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs",
     "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs",
     "audit:profile": "node scripts/profile-ui-acceptance.mjs",
-    "audit:offline-cache": "node scripts/offline-cache-audit.mjs"
+    "audit:offline-cache": "node scripts/offline-cache-audit.mjs",
+    "audit:security-definers": "node scripts/security-definer-audit.mjs"
   },
   "engines": {
     "node": ">=22"
