@@ -1,0 +1,25 @@
+import fs from 'node:fs';
+import process from 'node:process';
+const read=p=>fs.readFileSync(p,'utf8');
+const html=read('index.html'),sw=read('sw.js'),vault=read('alwaha-local-vault.js');
+const pkg=JSON.parse(read('package.json')),workflow=read('.github/workflows/build-apk-aab-release.yml');
+const version='3.0.3-core-20261113',cache='alwaha-pro-v3.0.3-final-20261113-core-consolidated';
+const assets=['production-polish.js','alwaha-call-feedback.js','compatibility.js','alwaha-local-vault.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-kids-room.js','alwaha-smart-assistant.js','games.js','alwaha-native-back-handler.js'];
+let failed=0;
+const check=(label,ok)=>{if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}};
+check('public feed cache is a dedicated IndexedDB database',html.includes("ALWAHA_PUBLIC_CACHE_DB = 'alwaha-public-feed-cache-v1'")&&html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)'));
+check('public feed cache is bounded by entry bytes, total bytes, and entry count',html.includes('ALWAHA_PUBLIC_CACHE_MAX_ENTRY_BYTES = 2 * 1024 * 1024')&&html.includes('ALWAHA_PUBLIC_CACHE_MAX_TOTAL_BYTES = 12 * 1024 * 1024')&&html.includes('ALWAHA_PUBLIC_CACHE_MAX_ENTRIES = 80'));
+check('oversized public records are skipped and old entries are evicted',html.includes('if(bytes>ALWAHA_PUBLIC_CACHE_MAX_ENTRY_BYTES)return false')&&html.includes('totalBytes+rowBytes>ALWAHA_PUBLIC_CACHE_MAX_TOTAL_BYTES')&&html.includes('store.delete(row.key)'));
+check('only explicitly public tables are persisted; private message/notification tables are excluded',html.includes("new Set(['posts','reels','products','post_like_counts','reel_like_counts'])")&&html.includes('isPublicCommentThread')&&!html.includes("new Set(['posts','reels','products','messages','market_messages','notifications'])"));
+check('public product cache field allowlist excludes email and phone',/products:\s*\[[^\]]*'seller_id'[^\]]*'promoted_until'\]/.test(html)&&!(/products:\s*\[[^\]]*seller_email|products:\s*\[[^\]]*phone/.test(html)));
+check('reconnect forces a background refresh even before memory TTL expiry',html.includes('shouldRefreshAlwahaPublicCacheAfterReconnect(cacheKey)')&&html.includes('memory.expiresAt<=now || reconnectRefresh')&&html.includes('|| reconnectRefresh)queueAlwahaPublicRefresh'));
+check('reconnect keeps cached public rows visible while refresh runs',html.includes('window.__alwahaOnlineRefreshPulse=Date.now()||1')&&html.includes('__alwahaPublicRefreshStarted?.clear?.()'));
+check('Service Worker excludes Auth, REST, Storage and Functions endpoints',sw.includes('url.pathname')&&sw.includes('rest\\/v1')&&sw.includes('functions\\/v1')&&sw.includes("request.headers.has('Authorization')"));
+check('public image cache is bounded to 2 MiB per image and 40 images',sw.includes('size<=2*1024*1024')&&sw.includes('media.length-40'));
+check('all first-party modules use versioned URLs and have offline fallback entries',assets.every(asset=>html.includes('src="./'+asset+'?v='+version+'"')&&sw.includes("'./"+asset+"?v="+version+"'")&&sw.includes("'./"+asset+"'"))&&html.includes('href="./alwaha-theme-system.css?v='+version+'"')&&sw.includes("'./alwaha-theme-system.css?v="+version+"'"));
+check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+version+"', { scope: './', updateViaCache: 'none' });"));
+check('encrypted backup vault remains separate from public display cache',vault.includes("DB_NAME='alwaha-pro-local-vault-v1'")&&vault.includes('AES-GCM')&&!vault.includes('ALWAHA_PUBLIC_CACHE_DB'));
+check('R7.5.1 runtime observer loop protections remain present',read('alwaha-modal-shell.js').includes('hasRelevantMutation(records)')&&read('alwaha-modal-shell.js').includes('scheduleSync()')&&read('alwaha-modal-shell.js').includes('nodeContainsLayer')&&read('alwaha-experience.js').includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel'));
+check('offline cache audit is part of npm and Android CI',pkg.scripts?.['audit:offline-cache']==='node scripts/offline-cache-audit.mjs'&&workflow.includes('npm run audit:offline-cache'));
+if(failed){console.error('OFFLINE_CACHE_AUDIT=FAIL ('+failed+')');process.exit(1);}
+console.log('OFFLINE_CACHE_AUDIT=PASS');
