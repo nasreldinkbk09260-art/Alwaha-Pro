@@ -64,6 +64,10 @@ echo 'APPLY TEST MIGRATION: 20261110001000_profile_account_security_hardening.sq
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261110001000_profile_account_security_hardening.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261110001000_profile_account_security_hardening.sql"
 
+echo 'APPLY TEST MIGRATION: 20261113010000_marketplace_and_message_write_privileges.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261113010000_marketplace_and_message_write_privileges.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113010000_marketplace_and_message_write_privileges.sql"
+
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102130000_admin_action_logs_source_recovery.sql"
