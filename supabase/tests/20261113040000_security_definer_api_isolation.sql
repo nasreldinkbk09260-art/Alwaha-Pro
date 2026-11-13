@@ -4,7 +4,9 @@ DECLARE
   v_exposed text := current_setting('pgrst.db_schemas',true);
 BEGIN
   IF NOT has_schema_privilege('authenticated','app_private','USAGE')
-     OR has_schema_privilege('anon','app_private','USAGE') THEN
+     OR has_schema_privilege('anon','app_private','USAGE')
+     OR has_schema_privilege('authenticated','app_private','CREATE')
+     OR has_schema_privilege('anon','app_private','CREATE') THEN
     RAISE EXCEPTION 'app_private schema usage grants are incorrect';
   END IF;
   IF v_exposed IS NOT NULL AND v_exposed ILIKE '%app_private%' THEN
@@ -24,6 +26,14 @@ BEGIN
      OR to_regprocedure('public.can_reply_to_market_message(uuid,uuid,uuid)') IS NOT NULL THEN
     RAISE EXCEPTION 'RLS helper functions must not remain in public';
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname='public' AND p.proname='is_admin' AND p.prosecdef
+      AND p.proconfig @> ARRAY['search_path=""']::text[]
+      AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
+      AND NOT has_function_privilege('anon',p.oid,'EXECUTE')
+  ) THEN RAISE EXCEPTION 'Legacy public.is_admin must have an empty search_path and no client execute grant'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
