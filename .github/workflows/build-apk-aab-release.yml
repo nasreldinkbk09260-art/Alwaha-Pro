@@ -721,7 +721,7 @@ jobs:
       pages: write
       id-token: write
     environment:
-      name: github-pages
+      name: alwaha-pro-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout verified release source
