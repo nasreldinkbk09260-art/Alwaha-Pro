@@ -163,6 +163,9 @@ jobs:
           test -s supabase/tests/20261113020000_profile_verification_submission_privileges.sql
           test -s supabase/migrations/20261113030000_marketplace_chat_notification_column_privileges.sql
           test -s supabase/tests/20261113030000_marketplace_chat_notification_column_privileges.sql
+          test -s supabase/migrations/20261113040000_security_definer_api_isolation.sql
+          test -s supabase/tests/20261113040000_security_definer_api_isolation.sql
+          test -s scripts/security-definer-audit.mjs
           test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
           test -s supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql
           test -s supabase/tests/20261102100000_marketplace_retention_behavior.sql
