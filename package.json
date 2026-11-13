@@ -29,7 +29,8 @@
     "audit:home": "node scripts/home-section-acceptance.mjs",
     "audit:smart-assistant": "node scripts/smart-assistant-runtime-test.mjs",
     "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs",
-    "audit:profile": "node scripts/profile-ui-acceptance.mjs"
+    "audit:profile": "node scripts/profile-ui-acceptance.mjs",
+    "audit:offline-cache": "node scripts/offline-cache-audit.mjs"
   },
   "engines": {
     "node": ">=22"
