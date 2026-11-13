@@ -6,7 +6,7 @@ const checks=[
  ['native bridge registers plugin',fs.readFileSync('scripts/native-back-handler.mjs','utf8').includes("registerPlugin('AlwahaAudioRoute')")],
  ['native plugin shares the installed APK securely',fs.readFileSync('scripts/android/AlwahaAudioRoutePlugin.java','utf8').includes('FileProvider.getUriForFile')&&fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8').includes('alwaha_file_paths.xml')],
  ['call UI exposes speaker toggle',html.includes('onclick="toggleCallSpeaker()"')],
- ['call feedback module is loaded and precached',fs.existsSync('alwaha-call-feedback.js')&&html.includes('src="./alwaha-call-feedback.js"')&&sw.includes("'./alwaha-call-feedback.js'")],
+ ['call feedback module is loaded and precached',fs.existsSync('alwaha-call-feedback.js')&&html.includes('src="./alwaha-call-feedback.js?v=3.0.3-core-20261113-security"')&&sw.includes("'./alwaha-call-feedback.js'")&&sw.includes("'./alwaha-call-feedback.js?v=3.0.3-core-20261113-security'" )],
  ['outgoing call starts a local ringback tone',html.includes("AlwahaCallFeedback?.start('ringback')")],
  ['generic call ends normalize to remote-ended while preserving explicit outcomes',html.includes("const endState=['declined','busy','no-answer','unavailable'].includes(data.reason)?data.reason:'remote-ended'")&&html.includes("reason:'declined'")],
  ['cancel before answer immediately stops the incoming ring and closes pending state',html.includes("payload.type==='end'&&this.pendingIncoming?.sessionId===payload.sessionId")&&html.includes('handlePendingIncomingEnd(payload)')],
