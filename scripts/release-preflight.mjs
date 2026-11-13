@@ -8,6 +8,9 @@ const polish=read('production-polish.js');
 const sw=read('sw.js');
 const buildWeb=read('scripts/build-web.mjs');
 const nativeBack=read('scripts/native-back-handler.mjs');
+const marketplaceWriteMigration=read('supabase/migrations/20261113030000_marketplace_chat_notification_column_privileges.sql');
+const marketplaceWriteTest=read('supabase/tests/20261113030000_marketplace_chat_notification_column_privileges.sql');
+const sqlCi=read('scripts/ci-validate-supabase-sql.sh');
 const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), kidsRoom=read('alwaha-kids-room.js');
 if(!localVault.includes("appVersion:'3.0.3'"))fail('Encrypted backup metadata must record the final app version 3.0.3.');
 for(const id of ['home-section','market-section','chat-section','reels-section','games-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
@@ -177,6 +180,7 @@ if(!fs.existsSync('scripts/adaptive-video-quality-runtime-test.mjs') || !workflo
 if(!workflow.includes('npm audit --audit-level=high')) fail('Dependency vulnerability audit is not wired into release CI.');
 if(!fs.existsSync('supabase/tests/20261102010000_legacy_client_privileges_hardening.sql') || !fs.existsSync('supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql')) fail('Supabase regression assertion files are missing.');
 if(!fs.existsSync('scripts/marketplace-column-audit.mjs'))fail('scripts/marketplace-column-audit.mjs is missing.');
+if(!marketplaceWriteMigration.includes('REVOKE INSERT ON TABLE public.market_messages')||!marketplaceWriteMigration.includes('GRANT UPDATE (is_read) ON TABLE public.notifications TO authenticated')||!marketplaceWriteTest.includes('notifications update grants must be limited to is_read')||!sqlCi.includes('20261113030000_marketplace_chat_notification_column_privileges.sql')||!workflow.includes('test -s supabase/tests/20261113030000_marketplace_chat_notification_column_privileges.sql'))fail('Marketplace/chat/notification column privilege hardening is not covered by SQL CI.');
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 if(!workflow.includes('alwaha-pro-3.0.3-final-rebuild-20261107'))fail('Android build workflow is not wired to the final rebuild branch.');
 if (process.exitCode) throw new Error('Alwaha-Pro 3.0.3 release preflight failed.');
