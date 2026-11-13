@@ -1,23 +1,7 @@
 -- CI-only profile/auth schema fixture. Never applied to a Supabase project.
 CREATE SCHEMA IF NOT EXISTS app_private;
 
-CREATE TABLE public.users (
-  id uuid PRIMARY KEY,
-  first_name text NOT NULL DEFAULT '',
-  last_name text NOT NULL DEFAULT '',
-  identifier text,
-  phone text,
-  gender text NOT NULL DEFAULT 'ذكر',
-  birthdate date,
-  avatar_url text,
-  is_verified boolean NOT NULL DEFAULT false,
-  is_admin boolean NOT NULL DEFAULT false,
-  hide_email boolean NOT NULL DEFAULT true,
-  hide_phone boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  username text UNIQUE
-);
+-- public.users is created once in ci-bootstrap.sql for shared test fixtures.
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.users (id,first_name,hide_email,hide_phone)
 VALUES ('11111111-1111-4111-8111-111111111111','CI Privacy Fixture',false,false);
