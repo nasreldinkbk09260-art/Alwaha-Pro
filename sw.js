@@ -15,6 +15,18 @@ const PRECACHE_ASSETS = [
   './alwaha-kids-room.js',
   './alwaha-smart-assistant.js',
   './alwaha-theme-system.css',
+  './production-polish.js?v=3.0.3-core-20261113',
+  './alwaha-call-feedback.js?v=3.0.3-core-20261113',
+  './compatibility.js?v=3.0.3-core-20261113',
+  './alwaha-local-vault.js?v=3.0.3-core-20261113',
+  './alwaha-experience.js?v=3.0.3-core-20261113',
+  './alwaha-modal-shell.js?v=3.0.3-core-20261113',
+  './alwaha-runtime-guard.js?v=3.0.3-core-20261113',
+  './alwaha-kids-room.js?v=3.0.3-core-20261113',
+  './alwaha-smart-assistant.js?v=3.0.3-core-20261113',
+  './games.js?v=3.0.3-core-20261113',
+  './alwaha-native-back-handler.js?v=3.0.3-core-20261113',
+  './alwaha-theme-system.css?v=3.0.3-core-20261113',
   './alwaha-native-back-handler.js',
   './assets/chess.min.js',
   './assets/qr/qrcode-generator.min.js',
@@ -108,8 +120,8 @@ self.addEventListener('fetch', (event) => {
       const network=fetch(request).then(async response=>{
         const type=response.headers.get('content-type')||'';
         const size=Number(response.headers.get('content-length')||0);
-        if(response.ok && /^image\//i.test(type) && (size>0 && size<=8*1024*1024)) {
-          try { await cache.put(request,response.clone()); const keys=await cache.keys(); const media=keys.filter(k=>new URL(k.url).origin===publicStorageOrigin&&new URL(k.url).pathname.startsWith('/storage/v1/object/public/')); for(const old of media.slice(0,Math.max(0,media.length-160)))await cache.delete(old); } catch(e) {}
+        if(response.ok && /^image\//i.test(type) && (size>0 && size<=2*1024*1024)) {
+          try { await cache.put(request,response.clone()); const keys=await cache.keys(); const media=keys.filter(k=>new URL(k.url).origin===publicStorageOrigin&&new URL(k.url).pathname.startsWith('/storage/v1/object/public/')); for(const old of media.slice(0,Math.max(0,media.length-40)))await cache.delete(old); } catch(e) {}
         }
         return response;
       }).catch(()=>cached);
