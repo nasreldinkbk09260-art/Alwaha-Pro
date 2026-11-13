@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261111-release-gates';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261113-core-consolidated';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
