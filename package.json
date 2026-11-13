@@ -8,7 +8,7 @@
     "start": "npx serve .",
     "build": "node scripts/build-web.mjs",
     "cap:sync": "npx cap sync",
-    "audit:release": "node scripts/release-preflight.mjs && node scripts/offline-cache-audit.mjs",
+    "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache",
     "prebuild": "node scripts/vendor-assets.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
