@@ -27,8 +27,7 @@ const checks=[
  ['runtime audit is wired into npm and Android CI',pkg.scripts?.['audit:runtime']==='node scripts/runtime-boot-audit.mjs'&&wf.includes('npm run audit:runtime')],
  ['service-worker update bypasses HTTP cache and uses a versioned registration',html.includes("navigator.serviceWorker.register('./sw.js?v=3.0.3-core-20261113-security', { scope: './', updateViaCache: 'none' });")],
  ['modal mutation observer filters relevant layers and coalesces updates',modal.includes('hasRelevantMutation(records)')&&modal.includes('scheduleSync()')&&modal.includes('nodeContainsLayer')&&modal.includes('if(changed)window.AlwahaExperience?.syncDock?.()')],
- ['navigation handle label updates are idempotent',experience.includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel')&&!experience.includes('new MutationObserver')]
-
+ ['navigation handle label updates are idempotent',experience.includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel')&&!experience.includes('new MutationObserver')],
  ['service-worker uses the final 3.0.3 cache namespace',sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261113-security-hardening'")],
 ];
 for(const [name,ok] of checks)ok?pass(name):fail(name);
