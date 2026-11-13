@@ -4243,7 +4243,9 @@ async function submitNewProductToMarket() {
             await detectMarketLifecycleSchema();
             // Keep the core marketplace compatible with older production schemas.
             // Optional lifecycle/gallery columns are only sent when the schema probe succeeds.
-            const payload={seller_id:user.id,title:name,price,category,description:desc,image_url:imageUrls[0]||''};
+            const isEditing=!!editingMarketProductId;
+            const payload={title:name,price,category,description:desc,image_url:imageUrls[0]||''};
+            if(!isEditing)payload.seller_id=user.id;
             const locationLabel=document.getElementById('prod-location-label')?.value.trim()||'';
             if (marketLifecycleSchemaReady === true) {
                 payload.image_urls=imageUrls;
@@ -4251,7 +4253,6 @@ async function submitNewProductToMarket() {
                 payload.latitude=Number.isFinite(marketProductLatitude)?marketProductLatitude:null;
                 payload.longitude=Number.isFinite(marketProductLongitude)?marketProductLongitude:null;
             }
-            const isEditing=!!editingMarketProductId;
             const endpoint=isEditing?`products?id=eq.${encodeURIComponent(editingMarketProductId)}&seller_id=eq.${encodeURIComponent(user.id)}`:'products';
             let result=await supabaseFetch(endpoint,{method:isEditing?'PATCH':'POST',body:JSON.stringify(payload),prefer:'return=minimal'});
             // Some deployed databases have the base products table but not optional columns.
@@ -4547,7 +4548,7 @@ async function submitNewProductToMarket() {
         }
         
                 async function archiveMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'archived',archived_at:new Date().toISOString()},'تمت أرشفة الإعلان؛ لن يظهر للمشترين.'); }
-        async function reactivateMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'active',archived_at:null,sold_at:null,sold_to:null},'تمت إعادة نشر الإعلان.'); }
+        async function reactivateMyProduct(productId) { await updateMarketProductLifecycle(productId,{status:'active',archived_at:null},'تمت إعادة نشر الإعلان.'); }
         async function promoteMyProduct(productId) { await updateMarketProductLifecycle(productId,{promoted_until:new Date(Date.now()+3*24*60*60*1000).toISOString()},'تم تمييز إعلانك لمدة 3 أيام.'); }
         async function reportMarketplaceItem(productId,sellerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول للإبلاغ عن إعلان.');if(!me)return;
