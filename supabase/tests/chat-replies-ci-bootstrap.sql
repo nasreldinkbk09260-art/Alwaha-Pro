@@ -5,6 +5,14 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.messages TO authenticated;
 GRANT USAGE,SELECT ON SEQUENCE public.messages_id_seq TO authenticated;
 GRANT SELECT ON public.friend_requests TO authenticated;
+DROP POLICY IF EXISTS friend_requests_insert_requester ON public.friend_requests;
+CREATE POLICY friend_requests_insert_requester ON public.friend_requests
+FOR INSERT TO authenticated
+WITH CHECK (
+  requester_id=(SELECT auth.uid())
+  AND requester_id<>target_id
+  AND status='pending'
+);
 DROP POLICY IF EXISTS messages_select_participant ON public.messages;
 CREATE POLICY messages_select_participant ON public.messages FOR SELECT TO authenticated USING ((SELECT auth.uid())=sender_id OR (SELECT auth.uid())=receiver_id);
 DROP POLICY IF EXISTS messages_insert_sender_accepted_friends ON public.messages;

@@ -53,6 +53,10 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102150000_products_seller_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/chat-replies-ci-bootstrap.sql"
+echo 'APPLY BASELINE MIGRATION: 20261014195445_friend_request_column_privileges.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261014195445_friend_request_column_privileges.sql"
+echo 'APPLY BASELINE MIGRATION: 20261014195540_friend_request_policy_consolidation.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261014195540_friend_request_policy_consolidation.sql"
 echo 'APPLY TEST MIGRATION: 20261108120000_real_chat_message_replies.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261108120000_real_chat_message_replies.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261108120000_message_reply_scope.sql"

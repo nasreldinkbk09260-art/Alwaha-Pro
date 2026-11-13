@@ -151,6 +151,8 @@ jobs:
           test -s supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql
           test -s supabase/migrations/20261029035414_marketplace_review_privacy_rpc.sql
           test -s supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql
+          test -s supabase/migrations/20261014195445_friend_request_column_privileges.sql
+          test -s supabase/migrations/20261014195540_friend_request_policy_consolidation.sql
           test -s supabase/migrations/20261101022015_marketplace_conversation_messaging.sql
           test -s supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql
           test -s supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql
