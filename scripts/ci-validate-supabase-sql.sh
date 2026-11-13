@@ -74,6 +74,9 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113020000_profile_verifica
 echo 'APPLY TEST MIGRATION: 20261113030000_marketplace_chat_notification_column_privileges.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261113030000_marketplace_chat_notification_column_privileges.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113030000_marketplace_chat_notification_column_privileges.sql"
+echo 'APPLY TEST MIGRATION: 20261113040000_security_definer_api_isolation.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261113040000_security_definer_api_isolation.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113040000_security_definer_api_isolation.sql"
 
 # Restore the separately maintained admin audit-log schema in the CI fixture.
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
