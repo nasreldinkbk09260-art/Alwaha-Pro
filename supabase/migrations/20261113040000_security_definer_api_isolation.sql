@@ -260,11 +260,13 @@ CREATE OR REPLACE FUNCTION public.join_game_room(
   p_room_code text, p_expected_game_id text DEFAULT NULL::text
 )
 RETURNS public.game_rooms
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path TO ''
 AS $function$
-  SELECT app_private.join_game_room(p_room_code,p_expected_game_id);
+BEGIN
+  RETURN app_private.join_game_room(p_room_code,p_expected_game_id);
+END;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.can_review_marketplace_product(
@@ -288,6 +290,9 @@ GRANT EXECUTE ON FUNCTION public.approve_market_archive_deletion(text,uuid,boole
 GRANT EXECUTE ON FUNCTION public.complete_market_sale(bigint,uuid,uuid,integer,text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.join_game_room(text,text) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.can_review_marketplace_product(bigint,uuid) TO authenticated, service_role;
+
+ALTER FUNCTION public.is_admin() SET search_path TO '';
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC, anon, authenticated, service_role;
 
 DROP POLICY IF EXISTS messages_insert_sender_accepted_friends ON public.messages;
 CREATE POLICY messages_insert_sender_accepted_friends ON public.messages
