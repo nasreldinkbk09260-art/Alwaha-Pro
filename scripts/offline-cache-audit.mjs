@@ -20,6 +20,6 @@ check('all first-party modules use versioned URLs and have offline fallback entr
 check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+version+"', { scope: './', updateViaCache: 'none' });"));
 check('encrypted backup vault remains separate from public display cache',vault.includes("DB_NAME='alwaha-pro-local-vault-v1'")&&vault.includes('AES-GCM')&&!vault.includes('ALWAHA_PUBLIC_CACHE_DB'));
 check('R7.5.1 runtime observer loop protections remain present',read('alwaha-modal-shell.js').includes('hasRelevantMutation(records)')&&read('alwaha-modal-shell.js').includes('scheduleSync()')&&read('alwaha-modal-shell.js').includes('nodeContainsLayer')&&read('alwaha-experience.js').includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel'));
-check('offline cache audit is part of npm and Android CI',pkg.scripts?.['audit:offline-cache']==='node scripts/offline-cache-audit.mjs'&&workflow.includes('npm run audit:offline-cache'));
+check('offline cache audit is part of npm release and Android CI',pkg.scripts?.['audit:offline-cache']==='node scripts/offline-cache-audit.mjs'&&pkg.scripts?.['audit:release']?.includes('audit:offline-cache')&&workflow.includes('npm run audit:offline-cache'));
 if(failed){console.error('OFFLINE_CACHE_AUDIT=FAIL ('+failed+')');process.exit(1);}
 console.log('OFFLINE_CACHE_AUDIT=PASS');
