@@ -1038,13 +1038,29 @@ img,video,canvas{max-width:100%}
 
     <div id="sub-prof-verify" class="sub-profile-view-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب — قريبًا</h3>
+            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب</h3>
             <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div role="status" aria-live="polite" style="padding:14px;border:1px solid #8bf4ff30;border-radius:14px;background:#8bf4ff08;color:#c9dceb;font-size:11px;line-height:2;">
-            طلبات التوثيق قيد التطوير حتى تكتمل حماية صلاحيات الإرسال والمراجعة في قاعدة البيانات. لن نجمع رقم هاتف أو صورًا أو مستندات عبر هذا النموذج في الوقت الحالي.
-        </div>
-        <button type="button" disabled aria-disabled="true" style="width:100%;margin-top:12px;padding:12px;border-radius:12px;border:1px solid #8bf4ff33;background:#173044;color:#9fb5ca;font:inherit;">طلبات التوثيق — قريبًا</button>
+        <p id="verification-request-status" role="status" aria-live="polite" style="padding:12px;border:1px solid #8bf4ff30;border-radius:12px;background:#8bf4ff08;color:#c9dceb;font-size:11px;line-height:1.9;">يمكنك إرسال طلب واحد قيد المراجعة. لن تظهر بيانات الاتصال في ملفك العام.</p>
+        <form id="verification-request-form" onsubmit="submitAccountVerificationRequest(event)" novalidate>
+            <label for="verification-category-input" style="display:block;color:#bfeaff;font-size:11px;margin-top:12px;">نوع الحساب</label>
+            <select id="verification-category-input" class="verification-field" required>
+                <option value="شخصي">حساب شخصي</option>
+                <option value="شركة/مؤسسة">شركة أو مؤسسة</option>
+                <option value="صانع محتوى">صانع محتوى</option>
+                <option value="متجر/نشاط تجاري">متجر أو نشاط تجاري</option>
+            </select>
+            <label for="verification-reason-input" style="display:block;color:#bfeaff;font-size:11px;">سبب طلب التوثيق</label>
+            <textarea id="verification-reason-input" class="verification-field" rows="4" minlength="20" maxlength="1000" required placeholder="اكتب سبب طلب التوثيق وما يثبت أصالة الحساب (20 إلى 1000 حرف)."></textarea>
+            <label for="verification-phone-input" style="display:block;color:#bfeaff;font-size:11px;">رقم تواصل اختياري</label>
+            <input id="verification-phone-input" class="verification-field" type="tel" inputmode="tel" maxlength="32" autocomplete="tel" placeholder="رقم الهاتف للتواصل معك عند الحاجة">
+            <label for="verification-profile-url-input" style="display:block;color:#bfeaff;font-size:11px;">رابط إثبات اختياري</label>
+            <input id="verification-profile-url-input" class="verification-field" type="url" maxlength="500" inputmode="url" placeholder="https://...">
+            <label for="verification-extra-details-input" style="display:block;color:#bfeaff;font-size:11px;">تفاصيل إضافية (اختياري)</label>
+            <textarea id="verification-extra-details-input" class="verification-field" rows="3" maxlength="2000" placeholder="أي معلومات تساعد الإدارة في مراجعة الطلب."></textarea>
+            <p style="color:#9fb6c9;font-size:10px;line-height:1.8;">المعلومات التي ترسلها هنا مخصصة لمراجعة الإدارة، ولا تُعرض ضمن دليل المستخدمين أو الملف العام. لا تضع كلمات مرور أو رموز تحقق أو بيانات مالية.</p>
+            <button type="submit" id="verification-submit-button" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1px solid #8bf4ff55;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;font:800 12px Cairo,sans-serif;">إرسال طلب التوثيق</button>
+        </form>
     </div>
 
     <!-- 6. الألعاب الجماعية مؤجلة لحين نشر خدمة الخادم واختبارها؛ لا تعرض هذه النسخة أي زر تشغيل مباشر -->
@@ -5023,6 +5039,7 @@ function triggerAnimeAiConverterFilter() {
                 const phone = document.getElementById('verification-phone-input');
                 if (phone && !phone.value) phone.value = localStorage.getItem('alwaha_profile_phone') || '';
                 syncUiWithLoadedProfileData();
+                void loadMyVerificationRequestStatus();
             }
             if (id === 'sub-prof-recovery') updateRecoveryAvailability();
         }
@@ -5233,8 +5250,66 @@ function triggerAnimeAiConverterFilter() {
                 } catch (error) { console.warn(error); triggerToastNotification('تعذر رفع الصورة؛ تحقق من الاتصال ثم حاول مجدداً.','error'); }
             }});
         }
-        async function submitAccountVerificationRequest() {
-            return triggerToastNotification('طلبات التوثيق قيد التطوير حتى تكتمل حماية صلاحيات الإرسال والمراجعة على الخادم.','info');
+        let verificationRequestInFlight = false;
+        async function loadMyVerificationRequestStatus() {
+            const statusEl=document.getElementById('verification-request-status');
+            if(!statusEl)return;
+            const user=await getCurrentAuthUser();
+            if(!user){statusEl.textContent='سجّل الدخول أولاً لإرسال طلب توثيق.';return;}
+            const rows=await supabaseFetch(`verification_requests?user_id=eq.${encodeURIComponent(user.id)}&select=status,created_at&order=created_at.desc&limit=1`);
+            const active=await getCurrentAuthUser();
+            if(active?.id!==user.id)return;
+            if(!Array.isArray(rows)){statusEl.textContent='تعذر تحميل حالة طلبك. تحقق من الاتصال ثم أعد المحاولة.';return;}
+            if(!rows.length){statusEl.textContent='لا يوجد طلب سابق. يمكنك إرسال طلب واحد قيد المراجعة.';return;}
+            const latest=rows[0],labels={pending:'قيد المراجعة',approved:'تم توثيق الحساب',rejected:'لم تتم الموافقة؛ يمكنك إرسال طلب جديد'};
+            const date=latest.created_at?new Date(latest.created_at).toLocaleDateString('ar-EG'):'';
+            statusEl.textContent=`حالة آخر طلب: ${labels[latest.status]||'تم تحديث الحالة'}${date?' · '+date:''}`;
+        }
+        async function submitAccountVerificationRequest(event) {
+            event?.preventDefault?.();
+            if(verificationRequestInFlight)return;
+            const user=await requireAuthenticatedUser('سجّل الدخول أولاً لإرسال طلب التوثيق.');
+            if(!user)return;
+            const category=String(document.getElementById('verification-category-input')?.value||'شخصي').trim();
+            const reason=String(document.getElementById('verification-reason-input')?.value||'').trim();
+            const phone=String(document.getElementById('verification-phone-input')?.value||'').trim();
+            const profileUrl=String(document.getElementById('verification-profile-url-input')?.value||'').trim();
+            const extra=String(document.getElementById('verification-extra-details-input')?.value||'').trim();
+            if(!['شخصي','شركة/مؤسسة','صانع محتوى','متجر/نشاط تجاري'].includes(category))return triggerToastNotification('اختر نوع حساب صحيح.','error');
+            if(reason.length<20||reason.length>1000)return triggerToastNotification('سبب التوثيق يجب أن يكون بين 20 و1000 حرف.','error');
+            if(phone.length>32)return triggerToastNotification('رقم التواصل أطول من الحد المسموح.','error');
+            if(profileUrl.length>500||(profileUrl&&!/^https?:\/\//i.test(profileUrl)))return triggerToastNotification('رابط الإثبات يجب أن يبدأ بـ https:// أو http://.','error');
+            if(extra.length>2000)return triggerToastNotification('التفاصيل الإضافية تجاوزت 2000 حرف.','error');
+            const form=document.getElementById('verification-request-form');
+            const button=document.getElementById('verification-submit-button');
+            const statusEl=document.getElementById('verification-request-status');
+            verificationRequestInFlight=true;
+            if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='جارٍ إرسال الطلب…';}
+            try{
+                const active=await getCurrentAuthUser();
+                if(active?.id!==user.id)return;
+                const pending=await supabaseFetch(`verification_requests?user_id=eq.${encodeURIComponent(user.id)}&status=eq.pending&select=id&limit=1`);
+                const current=await getCurrentAuthUser();
+                if(current?.id!==user.id)return;
+                if(!Array.isArray(pending))return triggerToastNotification('تعذر التحقق من طلب سابق؛ لم نرسل بيانات مكررة.','error');
+                if(pending.length){
+                    if(statusEl)statusEl.textContent='لديك طلب توثيق قيد المراجعة بالفعل. انتظر رد الإدارة.';
+                    return triggerToastNotification('لديك طلب توثيق قيد المراجعة بالفعل.','info');
+                }
+                const payload={user_id:user.id,reason,category,phone:phone||null,profile_url:profileUrl||null,extra_details:extra||null};
+                const result=await supabaseFetch('verification_requests',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+                if(!Array.isArray(result)||!result.length){
+                    const error=window.__alwahaLastApiError||{};
+                    return triggerToastNotification(error.status===409?'يوجد طلب توثيق قيد المراجعة بالفعل.':'تعذر إرسال الطلب؛ لم يتم حفظه. تحقق من البيانات والاتصال ثم أعد المحاولة.','error');
+                }
+                form?.reset();
+                if(statusEl)statusEl.textContent='تم إرسال طلبك بنجاح. سيظهر هنا عند تحديث حالة المراجعة.';
+                triggerToastNotification('تم إرسال طلب التوثيق إلى الإدارة.','success');
+                void loadMyVerificationRequestStatus();
+            }finally{
+                verificationRequestInFlight=false;
+                if(button){button.disabled=false;button.removeAttribute('aria-busy');button.textContent='إرسال طلب التوثيق';}
+            }
         }
         
         async function loadAllRegisteredUsersList() {
