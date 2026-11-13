@@ -122,6 +122,7 @@ jobs:
           test -s alwaha-experience.js
           test -s alwaha-modal-shell.js
           test -s alwaha-runtime-guard.js
+          test -s scripts/offline-cache-audit.mjs
           test -s alwaha-kids-room.js
           test -s scripts/marketplace-ui-acceptance.mjs
           test -s docs/MARKETPLACE-CHECKPOINT-20261109-AR.md
@@ -237,6 +238,9 @@ jobs:
 
       - name: Run startup/runtime resilience audit
         run: npm run audit:runtime
+
+      - name: Run offline cache budget and reconnect audit
+        run: npm run audit:offline-cache
 
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
