@@ -73,8 +73,7 @@ for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
 if (!workflow.includes('npm run audit:runtime') || pkg.scripts?.['audit:runtime'] !== 'node scripts/runtime-boot-audit.mjs') fail('Startup/runtime audit is not wired into release CI.');
-if (!workflow.includes('npm run audit:offline-cache') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs') fail('Offline cache budget/reconnect audit is not wired into release CI.');
-if (!pkg.scripts?.['audit:release']?.includes('audit:offline-cache')) fail('The local release audit command must include the offline cache audit.');
+if (!workflow.includes('npm run audit:release') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs' || !pkg.scripts?.['audit:release']?.includes('audit:offline-cache')) fail('Offline cache budget/reconnect audit is not wired into the single release gate.');
 
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
 if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
