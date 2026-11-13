@@ -50,15 +50,15 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
-    <script src="./production-polish.js" defer></script>
-    <script src="./alwaha-call-feedback.js" defer></script>
-    <script src="./compatibility.js" defer></script>
-    <script src="./alwaha-local-vault.js" defer></script>
-    <script src="./alwaha-experience.js" defer></script>
-    <script src="./alwaha-modal-shell.js" defer></script>
-    <script src="./alwaha-runtime-guard.js" defer></script>
-    <script src="./alwaha-kids-room.js" defer></script>
-    <script src="./alwaha-smart-assistant.js" defer></script>
+    <script src="./production-polish.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-call-feedback.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./compatibility.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-local-vault.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-experience.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-kids-room.js?v=3.0.3-core-20261113 defer></script>
+    <script src="./alwaha-smart-assistant.js?v=3.0.3-core-20261113 defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -463,7 +463,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <script src="./assets/chess.min.js"></script>
     <script src="./assets/qr/qrcode-generator.min.js" defer></script>
     <script src="./assets/qr/jsQR.min.js" defer></script>
-    <script src="./games.js" defer></script>
+    <script src="./games.js?v=3.0.3-core-20261113 defer></script>
 
     <style id="alwaha-real-theme-palettes">
 body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){background:radial-gradient(ellipse at 14% 12%,rgba(35,183,211,.16),transparent 38%),radial-gradient(ellipse at 86% 18%,rgba(183,77,126,.17),transparent 42%),radial-gradient(ellipse at 66% 88%,rgba(54,168,157,.10),transparent 38%),linear-gradient(155deg,#06070d 0%,#100b18 52%,#080b12 100%)!important;background-attachment:fixed!important}
@@ -499,7 +499,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </style>
 <script id="alwaha-2-8-8-touch-wallpaper-script">(()=>{const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();</script>
 
-    <script defer src="./alwaha-native-back-handler.js"></script>
+    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-core-20261113></script>
 <style id="alwaha-mobile-performance-final">
 @media (max-width: 768px), (pointer: coarse) {
   body:not(.theme-nature):not(.theme-tech):not(.theme-soft), body.theme-nature, body.theme-tech, body.theme-soft { background-attachment: scroll !important; }
@@ -590,7 +590,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
-    <link rel="stylesheet" href="./alwaha-theme-system.css">
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-core-20261113>
 </head>
 <body>
 
@@ -1236,7 +1236,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-core-20261113', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
@@ -1688,6 +1688,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         const ALWAHA_PUBLIC_CACHE_MEMORY_TTL = 20000;
         const ALWAHA_PUBLIC_CACHE_REFRESH_GAP = 20000;
         window.__alwahaPublicRefreshStarted ||= new Map();
+        window.__alwahaOnlineRefreshPulse ||= 0;
+        window.__alwahaPublicRefreshSeen ||= new Map();
 
         function openAlwahaPublicCacheDb() {
             return new Promise((resolve,reject)=>{
@@ -1701,12 +1703,39 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             let db;try{db=await openAlwahaPublicCacheDb();if(!db)return null;return await new Promise(resolve=>{const req=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readonly').objectStore(ALWAHA_PUBLIC_CACHE_STORE).get(key);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);});}catch(e){return null;}finally{try{db?.close();}catch(e){}}
         }
         async function writeAlwahaPublicCache(key,value) {
-            let db;try{
-                const serialized=JSON.stringify(value);if(serialized.length>650000)return;
-                db=await openAlwahaPublicCacheDb();if(!db)return;
-                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite');tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE).put({key,value,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
-                await new Promise(resolve=>{const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE),req=store.getAll();req.onsuccess=()=>{const rows=(req.result||[]).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));rows.slice(120).forEach(row=>store.delete(row.key));};tx.oncomplete=resolve;tx.onerror=resolve;tx.onabort=resolve;});
-            }catch(e){/* Some WebViews deny persistence; keep the in-memory/network path available. */}finally{try{db?.close();}catch(e){}}
+            const ALWAHA_PUBLIC_CACHE_MAX_ENTRY_BYTES = 2 * 1024 * 1024;
+            const ALWAHA_PUBLIC_CACHE_MAX_TOTAL_BYTES = 12 * 1024 * 1024;
+            const ALWAHA_PUBLIC_CACHE_MAX_ENTRIES = 80;
+            function alwahaPublicCacheByteLength(serialized) {
+                try { return typeof Blob === 'function' ? new Blob([serialized]).size : serialized.length * 2; }
+                catch (error) { return serialized.length * 2; }
+            }
+            let db;
+            try {
+                const serialized=JSON.stringify(value),bytes=alwahaPublicCacheByteLength(serialized);
+                if(bytes>ALWAHA_PUBLIC_CACHE_MAX_ENTRY_BYTES)return false;
+                db=await openAlwahaPublicCacheDb();if(!db)return false;
+                await new Promise((resolve,reject)=>{
+                    const tx=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readwrite'),store=tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE),req=store.getAll();
+                    req.onsuccess=()=>{
+                        const rows=(req.result||[]).filter(row=>row.key!==key).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
+                        let totalBytes=bytes,keptEntries=0;const keep=new Set([key]);
+                        for(const row of rows){
+                            if(keptEntries>=ALWAHA_PUBLIC_CACHE_MAX_ENTRIES-1)continue;
+                            let rowBytes=Number(row.bytes||0);
+                            if(!rowBytes){const rowJson=JSON.stringify(row.value===undefined?null:row.value)||'null';rowBytes=alwahaPublicCacheByteLength(rowJson);}
+                            if(totalBytes+rowBytes>ALWAHA_PUBLIC_CACHE_MAX_TOTAL_BYTES)continue;
+                            keep.add(row.key);totalBytes+=rowBytes;keptEntries++;
+                        }
+                        for(const row of rows)if(!keep.has(row.key))store.delete(row.key);
+                        store.put({key,value,updatedAt:Date.now(),bytes});
+                    };
+                    req.onerror=()=>reject(req.error||new Error('Public cache read failed'));
+                    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Public cache write failed'));tx.onabort=()=>reject(tx.error||new Error('Public cache write aborted'));
+                });
+                return true;
+            }catch(error){console.warn('[Alwaha Public Cache] bounded write skipped:',error?.name||error);return false;}
+            finally{try{db?.close();}catch(error){}}
         }
         const ALWAHA_PUBLIC_CACHE_FIELDS = {
             posts: ['id','author_id','author_name','post_type','content','image_url','created_at'],
@@ -1734,6 +1763,13 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             Promise.resolve().then(()=>supabaseFetch(endpoint,{...options,__alwahaBackgroundRefresh:true})).catch(()=>{});
         }
 
+        function shouldRefreshAlwahaPublicCacheAfterReconnect(cacheKey) {
+            const pulse=Number(window.__alwahaOnlineRefreshPulse||0);
+            if(!pulse)return false;
+            const seen=window.__alwahaPublicRefreshSeen;
+            if(seen.get(cacheKey)===pulse)return false;
+            seen.set(cacheKey,pulse);return true;
+        }
         async function supabaseFetch(endpoint, options = {}) {
             const {__alwahaBackgroundRefresh=false,...fetchOptions}=options;
             const requestMethod = String(fetchOptions.method || 'GET').toUpperCase();
@@ -1749,17 +1785,17 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
             // Offline-first: show the last public feed snapshot immediately, then refresh quietly.
             if(cacheable && !__alwahaBackgroundRefresh) {
-                const now=Date.now();
+                const now=Date.now(),reconnectRefresh=shouldRefreshAlwahaPublicCacheAfterReconnect(cacheKey);
                 const memory=apiCache.get(cacheKey);
                 if(memory && Array.isArray(memory.value)) {
-                    if(memory.expiresAt<=now)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    if(memory.expiresAt<=now || reconnectRefresh)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
                     return JSON.parse(JSON.stringify(memory.value));
                 }
                 const persisted=await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                 if(persisted && Array.isArray(persisted.value)) {
                     const value=JSON.parse(JSON.stringify(persisted.value));
                     apiCache.set(cacheKey,{expiresAt:now+ALWAHA_PUBLIC_CACHE_MEMORY_TTL,value});
-                    if(now-Number(persisted.updatedAt||0)>=ALWAHA_PUBLIC_CACHE_MEMORY_TTL)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    if(now-Number(persisted.updatedAt||0)>=ALWAHA_PUBLIC_CACHE_MEMORY_TTL || reconnectRefresh)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
                     return value;
                 }
             }
@@ -1862,6 +1898,10 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             },0);
         });
         window.addEventListener('online',()=>{
+            window.__alwahaOnlineRefreshPulse=Date.now()||1;
+            window.__alwahaPublicRefreshStarted?.clear?.();
+            window.__alwahaPublicRefreshSeen?.clear?.();
+            // Keep cached rows visible while the public data refreshes in the background.
             if(document.querySelector('#home-section.active-section'))renderHomePostsFeed();
             if(document.querySelector('#reels-section.active-section'))renderReelsFeed();
             if(document.querySelector('#market-section.active-section'))renderProductsList(document.getElementById('market-search-input')?.value||'');
