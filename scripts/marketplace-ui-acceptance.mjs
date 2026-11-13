@@ -2,6 +2,8 @@ import fs from 'node:fs';
 const fail=(message)=>{console.error('FAIL:',message);process.exitCode=1;};
 const pass=(message)=>console.log('PASS:',message);
 const html=fs.readFileSync('index.html','utf8');
+const writeMigration=fs.readFileSync('supabase/migrations/20261113030000_marketplace_chat_notification_column_privileges.sql','utf8');
+const writeTest=fs.readFileSync('supabase/tests/20261113030000_marketplace_chat_notification_column_privileges.sql','utf8');
 const signStart=html.indexOf('async function signOutAlwaha()');
 const signEnd=html.indexOf('async function hydrateAuthProfile',signStart);
 const signSlice=signStart>=0&&signEnd>signStart?html.slice(signStart,signEnd):'';
@@ -56,7 +58,12 @@ const checks=[
  ['market message sending is single-flight and preserves the draft on failed requests',html.includes('if(marketMessageSendInFlight)return;')&&html.includes('marketMessageSendInFlight=true')&&html.includes("if(input)input.value=''")&&html.includes('بقي النص في خانة الكتابة')],
  ['market realtime subscription is scoped to the active conversation id',html.includes('market-conversation-\${id}')&&html.includes('currentMarketConversationId===id')],
  ['market seller call is explicitly deferred until production Realtime authorization is deployed',html.includes('اتصال صوتي بالبائع — قريبًا')&&html.includes('disabled aria-disabled="true"')&&(()=>{const a=html.indexOf('async function callMarketSeller'),b=html.indexOf('async function updateMarketProductLifecycle',a),s=a>=0&&b>a?html.slice(a,b):'';return s.includes('مكالمات السوق الصوتية قريبًا')&&!s.includes('startAlwahaCall(');})()],
- ['market archive remains a reversible status update, not a frontend hard delete',html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")&&html.includes('async function reactivateMyProduct')]
+ ['market archive remains a reversible status update, not a frontend hard delete',html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")&&html.includes('async function reactivateMyProduct')],
+ ['friend request creation relies on the database pending default rather than client-controlled status',html.includes("JSON.stringify({requester_id:user.id,target_id:targetId})")&&!html.includes("JSON.stringify({requester_id:user.id,target_id:targetId,status:'pending'})")],
+ ['market conversation and message inserts are limited to participant/content columns',writeMigration.includes('REVOKE INSERT ON TABLE public.market_conversations')&&writeMigration.includes('GRANT INSERT (product_id, buyer_id, seller_id)')&&writeMigration.includes('REVOKE INSERT ON TABLE public.market_messages')&&writeMigration.includes('GRANT INSERT (conversation_id, sender_id, message, reply_to_id)')&&writeTest.includes("has_column_privilege('authenticated','public.market_conversations','listing_snapshot','INSERT')")&&writeTest.includes("has_column_privilege('authenticated','public.market_messages','read_at','INSERT')")],
+ ['marketplace reports and reviews cannot self-assign moderation or creation timestamps',writeMigration.includes('GRANT INSERT (product_id, seller_id, reporter_id, reason)')&&writeMigration.includes('GRANT INSERT (product_id, seller_id, reviewer_id, rating, review)')&&writeTest.includes("has_column_privilege('authenticated','public.marketplace_reports','status','INSERT')")&&writeTest.includes("has_column_privilege('authenticated','public.marketplace_reviews','created_at','INSERT')")],
+ ['notifications can only update the read flag while participant policies remain in place',writeMigration.includes('GRANT UPDATE (is_read) ON TABLE public.notifications TO authenticated')&&writeTest.includes("has_column_privilege('authenticated','public.notifications','title','UPDATE')")&&writeTest.includes("notifications_update_own")]
+
 
 ];
 for(const [label,ok] of checks)ok?pass(label):fail(label);
