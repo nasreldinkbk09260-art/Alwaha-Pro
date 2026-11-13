@@ -3,7 +3,7 @@ import process from 'node:process';
 const read=p=>fs.readFileSync(p,'utf8');
 const html=read('index.html'),sw=read('sw.js'),vault=read('alwaha-local-vault.js');
 const pkg=JSON.parse(read('package.json')),workflow=read('.github/workflows/build-apk-aab-release.yml');
-const version='3.0.3-core-20261113',cache='alwaha-pro-v3.0.3-final-20261113-core-consolidated';
+const version='3.0.3-core-20261113-security',cache='alwaha-pro-v3.0.3-final-20261113-security-hardening';
 const assets=['production-polish.js','alwaha-call-feedback.js','compatibility.js','alwaha-local-vault.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-kids-room.js','alwaha-smart-assistant.js','games.js','alwaha-native-back-handler.js'];
 let failed=0;
 const check=(label,ok)=>{if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}};
