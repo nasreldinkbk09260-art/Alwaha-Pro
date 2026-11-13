@@ -163,6 +163,7 @@ const retentionMigration=read('supabase/migrations/20261102100000_marketplace_re
 const profileSecurityMigration=read('supabase/migrations/20261110001000_profile_account_security_hardening.sql');
 const profileSecurityTest=read('supabase/tests/20261110001000_profile_account_security_hardening.sql');
 const profileSecurityFixture=read('supabase/tests/profile-security-ci-bootstrap.sql');
+const sharedCiBootstrap=read('supabase/tests/ci-bootstrap.sql');
 const profileAudit=read('scripts/profile-ui-acceptance.mjs');
 const retentionConsentMigration=read('supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql');
 for(const marker of ['purge_expired_marketplace_archives',"interval '30 days'","interval '7 days'",'market_product_sync_conversation_retention_delete','REVOKE ALL ON FUNCTION public.purge_expired_marketplace_archives']) if(!retentionMigration.includes(marker)) fail(`Marketplace retention policy missing: ${marker}`);
@@ -177,7 +178,7 @@ if(!workflow.includes('npm run audit:marketplace-columns') || pkg.scripts?.['aud
 if(!workflow.includes('npm run audit:ui') || pkg.scripts?.['audit:ui']!=='node scripts/ui-handler-audit.mjs') fail('Full UI handler audit is not wired into release CI.');
 if(!workflow.includes('npm run audit:profile') || pkg.scripts?.['audit:profile']!=='node scripts/profile-ui-acceptance.mjs' || !profileAudit.includes('PROFILE_UI_ACCEPTANCE=')) fail('Profile registration/login acceptance audit is not wired into release CI.');
 if(!profileSecurityMigration.includes('DROP POLICY IF EXISTS users_delete_own') || !profileSecurityMigration.includes('REVOKE DELETE ON TABLE public.users') || !profileSecurityMigration.includes('REVOKE UPDATE (hide_email,hide_phone)') || !profileSecurityMigration.includes("status = 'pending'") || !profileSecurityMigration.includes('reviewed_by IS NULL')) fail('Profile account and verification insert hardening migration is incomplete.');
-if(!profileSecurityTest.includes('has_table_privilege') || !profileSecurityTest.includes('has_column_privilege') || !profileSecurityFixture.includes('CREATE TABLE public.users') || !profileSecurityFixture.includes('CREATE TABLE public.verification_requests')) fail('Profile security SQL regression fixture or assertions are missing.');
+if(!profileSecurityTest.includes('has_table_privilege') || !profileSecurityTest.includes('has_column_privilege') || !sharedCiBootstrap.includes('CREATE TABLE public.users') || !profileSecurityFixture.includes('CREATE TABLE public.verification_requests')) fail('Profile security SQL regression fixture or assertions are missing.');
 if(!read('scripts/ci-validate-supabase-sql.sh').includes('20261110001000_profile_account_security_hardening.sql') || !read('scripts/ci-validate-supabase-sql.sh').includes('profile-security-ci-bootstrap.sql')) fail('Profile security migration is not covered by disposable PostgreSQL CI.');
 if(!workflow.includes('npm run audit:themes') || pkg.scripts?.['audit:themes']!=='node scripts/theme-runtime-test.mjs') fail('Theme runtime audit is not wired into release CI.');
 if(!workflow.includes('npm run audit:field-repair') || pkg.scripts?.['audit:field-repair']!=='node scripts/field-repair-audit.mjs') fail('Field repair regression audit is not wired into release CI.');
