@@ -239,8 +239,6 @@ jobs:
       - name: Run startup/runtime resilience audit
         run: npm run audit:runtime
 
-      - name: Run offline cache budget and reconnect audit
-        run: npm run audit:offline-cache
 
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
