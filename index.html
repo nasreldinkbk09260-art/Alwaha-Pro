@@ -706,7 +706,7 @@ img,video,canvas{max-width:100%}
         </div>
 
         <div id="market-buy-view">
-            <input type="text" id="market-search-input" placeholder="ابحث عن منتج أو تصنيف أو منطقة..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:8px; outline:none;">
+            <input type="search" id="market-search-input" name="alwaha-market-public-search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="ابحث عن منتج أو تصنيف أو منطقة..." oninput="searchProducts()" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:8px; outline:none;">
             <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
                 <select id="market-radius-select" aria-label="نطاق البحث عن المنتجات" onchange="searchProducts(true)" style="flex:1;min-width:115px;background:#101a2b;color:#fff;border:1px solid #ffffff2a;border-radius:9px;padding:9px;font-size:11px;">
                     <option value="all">كل المناطق</option><option value="5">ضمن 5 كم</option><option value="10">ضمن 10 كم</option><option value="25">ضمن 25 كم</option><option value="50">ضمن 50 كم</option>
@@ -804,7 +804,7 @@ img,video,canvas{max-width:100%}
                 <button class="subview-back-btn" onclick="collapseChatSubWindows()" aria-label="رجوع"><i class="fa-solid fa-arrow-right"></i></button>
                 <strong style="color:#00ffff;font-size:13px;">دليل المستخدمين</strong>
             </div>
-            <input type="text" id="chat-search-users-input" placeholder="بحث بالاسم أو رقم الهاتف..." oninput="searchUsersByPhoneOrName(this.value)" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px; outline:none;">
+            <input type="search" id="chat-search-users-input" name="alwaha-chat-user-search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="بحث بالاسم أو رقم الهاتف..." oninput="searchUsersByPhoneOrName(this.value)" class="keyboard-target" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px; outline:none;">
             <div id="all-users-list"></div>
         </div>
     </section>
@@ -2007,7 +2007,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         }
 
         async function clearLocalProfileCache() {
-            ['alwaha_profile_name','alwaha_profile_email','alwaha_profile_phone','alwaha_profile_avatar','alwaha_profile_gender','alwaha_auth_user_id'].forEach(k => localStorage.removeItem(k));
+            ['alwaha_profile_name','alwaha_profile_phone','alwaha_profile_avatar','alwaha_profile_gender','alwaha_auth_user_id','alwaha_profile_email'].forEach(k => localStorage.removeItem(k));
         }
 
         async function signOutAlwaha() {
@@ -2046,7 +2046,6 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const profile = await getCurrentProfile();
             if (profile) {
                 localStorage.setItem('alwaha_profile_name', `${profile.first_name || ''} ${profile.last_name || ''}`.trim());
-                localStorage.setItem('alwaha_profile_email', profile.identifier || authUser.email || '');
                 localStorage.setItem('alwaha_auth_user_id', authUser.id);
                 localStorage.setItem('alwaha_profile_phone', profile.phone || '');
                 localStorage.setItem('alwaha_profile_gender', profile.gender || authUser.user_metadata?.gender || 'ذكر');
@@ -2070,7 +2069,6 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     } catch (e) { console.warn('Pending avatar upload:', e); }
                 }
             } else {
-                localStorage.setItem('alwaha_profile_email', authUser.email || '');
                 localStorage.setItem('alwaha_auth_user_id', authUser.id);
                 localStorage.setItem('alwaha_profile_name', [authUser.user_metadata?.first_name, authUser.user_metadata?.last_name].filter(Boolean).join(' ') || 'مستخدم');
                 localStorage.setItem('alwaha_profile_gender', authUser.user_metadata?.gender || 'ذكر');
@@ -3078,6 +3076,22 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 node.style.display = text.includes(filter) ? 'flex' : 'none';
             });
         }
+
+        // Prevent browsers/password managers from placing a saved email into public search boxes.
+        // An email that was autofilled before this script runs is cleared once; search boxes are
+        // intentionally not an account identifier or a contact-information display.
+        function hardenAlwahaPublicSearchInputs() {
+            for (const id of ['chat-search-users-input','market-search-input']) {
+                const input=document.getElementById(id);
+                if(!input)continue;
+                for(const [key,value] of Object.entries({
+                    autocomplete:'off',autocorrect:'off',autocapitalize:'off',spellcheck:'false'
+                }))input.setAttribute(key,value);
+                if(String(input.value||'').includes('@'))input.value='';
+            }
+            try { localStorage.removeItem('alwaha_profile_email'); } catch (_) {}
+        }
+        hardenAlwahaPublicSearchInputs();
 
         async function subscribeToDirectMessages() {
             const me = await getCurrentAuthUser();
