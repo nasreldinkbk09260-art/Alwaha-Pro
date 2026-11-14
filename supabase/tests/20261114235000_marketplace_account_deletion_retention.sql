@@ -28,7 +28,7 @@ BEGIN
      OR NOT pg_get_functiondef('app_private.detach_marketplace_user_before_auth_delete()'::regprocedure) ILIKE '%delete_approved_by_seller_at%' THEN
     RAISE EXCEPTION 'Auth deletion retention trigger is incomplete';
   END IF;
-  IF NOT pg_get_functiondef('public.purge_expired_marketplace_archives(integer)'::regprocedure) ILIKE '%recipient_id IS NOT NULL%' THEN
+  IF NOT pg_get_functiondef('public.purge_expired_marketplace_archives(integer)'::regprocedure) ILIKE '%d.buyer_id IS NOT NULL%' OR NOT pg_get_functiondef('public.purge_expired_marketplace_archives(integer)'::regprocedure) ILIKE '%d.seller_id IS NOT NULL%' THEN
     RAISE EXCEPTION 'Retention scheduler must skip notifications for deleted participants';
   END IF;
 
