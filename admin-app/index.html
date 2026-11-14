@@ -16,10 +16,11 @@
 <form id="loginForm"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required><div style="height:14px"></div><button class="primary" type="submit" style="width:100%">تسجيل الدخول</button></form><div id="loginMsg" class="notice hidden"></div></section>
 <section id="dashboard" class="hidden">
  <div class="panel"><div class="top"><div><h2>لوحة التحكم</h2><div id="who" class="muted"></div></div><button id="logout" class="secondary">خروج آمن</button></div><div id="msg" class="notice hidden"></div><div class="stats"><div class="stat"><span class="muted">إجمالي الحسابات</span><strong id="usersCount">—</strong></div><div class="stat"><span class="muted">طلبات معلّقة</span><strong id="pendingCount">—</strong></div></div></div>
- <div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="audit">سجل التدقيق</button></div>
+ <div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="audit">سجل التدقيق</button><button class="secondary" data-tab="maintenance">تنظيف التجارب</button></div>
  <section id="requestsPane" class="panel"><div class="top"><h2>طلبات التوثيق</h2><button id="refreshRequests" class="secondary">تحديث</button></div><div id="requestsList" class="muted">جارٍ التحميل…</div></section>
  <section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section>
  <section id="auditPane" class="panel hidden"><div class="top"><h2>سجل الإجراءات الإدارية</h2><button id="refreshAudit" class="secondary">تحديث</button></div><div id="auditList" class="muted">جارٍ التحميل…</div><button id="loadMoreAudit" class="secondary hidden" style="width:100%;margin-top:10px">تحميل سجلات أقدم</button></section>
+ <section id="maintenancePane" class="panel hidden"><h2>تنظيف ملفات التجارب</h2><div class="notice">هذا الإجراء يحذف فقط 18 ملفاً محدداً من ملفات الاختبار القديمة في مخزن media، بعد التحقق من أن مالكيها ليسوا حسابات موجودة. لا يحذف ملفات حساب الإدارة أو أي ملف جديد أو أي ملفات مستخدمين مستقبليين.</div><p class="muted">الحذف نهائي ويجري عبر Supabase Storage API؛ سيتم تسجيل العملية في سجل التدقيق.</p><button id="purgeTestMedia" class="reject" style="width:100%">حذف ملفات التجارب الـ18 نهائياً</button></section>
 </section>
 <p class="muted" style="text-align:center">مفتاح service_role لا يوجد في هذا التطبيق. كل إجراء إداري يمر عبر Edge Function موثقة وتُسجل نتيجته في سجل التدقيق.</p>
 </main>
@@ -73,7 +74,18 @@ $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const butt
 $('logout').addEventListener('click',async()=>{await db.auth.signOut();showLogin()});
 $('refreshRequests').addEventListener('click',requests);$('refreshUsers').addEventListener('click',loadUsers);$('refreshAudit').addEventListener('click',()=>loadAuditLogs(true));$('loadMoreAudit').addEventListener('click',()=>loadAuditLogs(false));
 $('search').addEventListener('input',()=>{clearTimeout(userSearchTimer);userSearchTimer=setTimeout(loadUsers,300)});
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit')}));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit');$('maintenancePane').classList.toggle('hidden',b.dataset.tab!=='maintenance')}));
+$('purgeTestMedia').addEventListener('click',async()=>{
+ if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}
+ if(!confirm('تأكيد نهائي: حذف 18 ملفاً تجريبياً قديماً فقط من التخزين؟ لا يمكن التراجع عن الحذف.'))return;
+ const button=$('purgeTestMedia');button.disabled=true;
+ try{
+  const result=await adminApi('purge_test_media',{confirmPurge:'PURGE_TEST_MEDIA_20261114'});
+  message('msg',`اكتمل تنظيف الوسائط: ${Number(result.removedCount??0)} من ${Number(result.requestedCount??18)} ملفاً. راجع سجل التدقيق.`, 'success');
+  await loadAuditLogs(true);
+ }catch(error){message('msg',error.message||'تعذر حذف ملفات التجارب.','error')}
+ finally{button.disabled=false}
+});
 $('requestsList').addEventListener('click',async e=>{const b=e.target.closest('button[data-id]');if(!b)return;if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}const status=b.dataset.status,id=b.dataset.id;if(!confirm(status==='approved'?'الموافقة على التوثيق؟':'رفض طلب التوثيق؟'))return;b.disabled=true;try{await adminApi('review_verification',{id,status});message('msg','تم تسجيل القرار عبر خدمة الإدارة.','success');await refresh()}catch(error){message('msg',error.message||'فشل تحديث طلب التوثيق.','error');b.disabled=false}});
 db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT')showLogin()});
 (async()=>{const {data,error}=await db.auth.getSession();if(error){message('loginMsg','تعذر استعادة الجلسة.','error');return}if(data.session)try{await verifyAdmin(data.session)}catch(error){await db.auth.signOut();showLogin();message('loginMsg',error.message||'تعذر التحقق من صلاحية المدير.','error')}})();
