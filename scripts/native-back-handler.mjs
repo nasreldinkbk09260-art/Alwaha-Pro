@@ -5,10 +5,12 @@ const AlwahaAudioRoute = registerPlugin('AlwahaAudioRoute');
 window.alwahaAudioRoute = AlwahaAudioRoute;
 
 function handleAndroidBack() {
-  if (typeof window.navigateBack === 'function') {
+  if (typeof window.dispatchAlwahaBack === 'function') {
+    window.dispatchAlwahaBack('capacitor-android');
+  } else if (typeof window.navigateBack === 'function') {
     window.navigateBack();
   } else {
-    console.warn('[Alwaha-Pro] navigateBack is not available yet.');
+    console.warn('[Alwaha-Pro] Android back handler is waiting for navigation initialization.');
   }
 }
 
