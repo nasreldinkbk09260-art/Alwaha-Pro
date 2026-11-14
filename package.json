@@ -23,7 +23,7 @@
     "audit:reconciliation": "node scripts/reconciliation-audit.mjs",
     "audit:fullscreen-ui": "node scripts/fullscreen-ui-audit.mjs",
     "audit:themes": "node scripts/theme-runtime-test.mjs",
-    "audit:runtime": "node scripts/runtime-boot-audit.mjs",
+    "audit:runtime": "node scripts/runtime-boot-audit.mjs && node scripts/back-navigation-runtime-test.mjs",
     "audit:games": "node scripts/game-actions-audit.mjs && node scripts/qr-runtime-test.mjs",
     "audit:navigation-dock": "node scripts/navigation-dock-runtime-test.mjs",
     "audit:home": "node scripts/home-section-acceptance.mjs",
