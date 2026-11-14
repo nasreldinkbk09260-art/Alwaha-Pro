@@ -32,9 +32,9 @@ const TEST_MEDIA_OBJECTS = [
 ] as const;
 const TEST_MEDIA_PURGE_CONFIRMATION = 'PURGE_TEST_MEDIA_20261114';
 
-type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_audit_logs' | 'purge_test_media';
+type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_content_reports' | 'review_content_report' | 'list_audit_logs' | 'purge_test_media';
 const allowedActions = new Set<AdminAction>([
-  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_audit_logs', 'purge_test_media',
+  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_content_reports', 'review_content_report', 'list_audit_logs', 'purge_test_media',
 ]);
 
 function asObject(value: unknown): Record<string, unknown> {
@@ -115,6 +115,10 @@ Deno.serve(async (req: Request) => {
       !['all', 'pending', 'approved', 'rejected'].includes(requestStatus)) {
     return json({ error: 'حالة الطلب غير صالحة.' }, 400);
   }
+  if (action === 'list_content_reports' &&
+      !['all', 'pending', 'under_review', 'actioned', 'dismissed'].includes(requestStatus)) {
+    return json({ error: 'حالة البلاغ غير صالحة.' }, 400);
+  }
   let reviewId = '';
   let reviewStatus = '';
   if (action === 'review_verification') {
@@ -128,19 +132,33 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'قرار التوثيق غير صالح.' }, 400);
     }
   }
+  let reportId = '';
+  let reportReviewStatus = '';
+  if (action === 'review_content_report') {
+    reportId = String(body.id ?? '');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reportId)) {
+      return json({ error: 'معرّف البلاغ غير صالح.' }, 400);
+    }
+    reportReviewStatus = String(body.status || '');
+    if (!['under_review', 'actioned', 'dismissed'].includes(reportReviewStatus)) {
+      return json({ error: 'قرار مراجعة البلاغ غير صالح.' }, 400);
+    }
+  }
 
   const auditDetails: Record<string, unknown> = {};
   if (action === 'list_users') Object.assign(auditDetails, { offset, limit, filtered: Boolean(query) });
   if (action === 'list_verification_requests') Object.assign(auditDetails, { status: requestStatus, offset, limit });
   if (action === 'list_audit_logs') Object.assign(auditDetails, { offset, limit });
   if (action === 'review_verification') Object.assign(auditDetails, { status: reviewStatus });
+  if (action === 'list_content_reports') Object.assign(auditDetails, { status: requestStatus, offset, limit });
+  if (action === 'review_content_report') Object.assign(auditDetails, { status: reportReviewStatus });
   if (action === 'purge_test_media') Object.assign(auditDetails, {
     bucket: 'media', scope: 'fixed_test_only_orphaned_objects', requestedCount: TEST_MEDIA_OBJECTS.length,
   });
   const { data: audit, error: auditInsertError } = await server.from('admin_action_logs').insert({
     actor_user_id: user.id,
     action,
-    target_id: action === 'review_verification' ? reviewId : action === 'purge_test_media' ? 'media:test-assets-20261114' : null,
+    target_id: action === 'review_verification' ? reviewId : action === 'review_content_report' ? reportId : action === 'purge_test_media' ? 'media:test-assets-20261114' : null,
     outcome: 'pending',
     details: auditDetails,
   }).select('id').single();
@@ -160,13 +178,13 @@ Deno.serve(async (req: Request) => {
     let result: Record<string, unknown>;
 
     if (action === 'summary') {
-      const [u, p] = await Promise.all([
+      const [u, p, r] = await Promise.all([
         server.from('users').select('id', { count: 'exact', head: true }),
-        server.from('verification_requests').select('id', { count: 'exact', head: true })
-          .eq('status', 'pending'),
+        server.from('verification_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        server.from('content_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       ]);
-      if (u.error || p.error) throw new Error('summary_query_failed');
-      result = { usersCount: u.count ?? 0, pendingCount: p.count ?? 0 };
+      if (u.error || p.error || r.error) throw new Error('summary_query_failed');
+      result = { usersCount: u.count ?? 0, pendingCount: p.count ?? 0, pendingReportsCount: r.count ?? 0 };
     } else if (action === 'list_users') {
       const columns = 'id,first_name,last_name,identifier,username,is_verified,is_admin,created_at';
       let rows: Record<string, unknown>[] = [];
@@ -202,6 +220,26 @@ Deno.serve(async (req: Request) => {
       if (error) throw new Error('verification_query_failed');
       const page = data || [];
       result = { requests: page.slice(0, limit), offset, limit, hasMore: page.length > limit };
+    } else if (action === 'list_content_reports') {
+      let q = server.from('content_reports')
+        .select('id,reporter_id,target_type,target_id,target_user_id,reason,details,status,reviewed_by,reviewed_at,created_at')
+        .order('created_at', { ascending: false });
+      if (requestStatus !== 'all') q = q.eq('status', requestStatus);
+      const { data, error } = await q.range(offset, offset + limit);
+      if (error) throw new Error('content_reports_query_failed');
+      const page = data || [];
+      result = { reports: page.slice(0, limit), offset, limit, hasMore: page.length > limit };
+    } else if (action === 'review_content_report') {
+      const { data, error } = await server.from('content_reports')
+        .update({ status: reportReviewStatus, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+        .eq('id', reportId).in('status', ['pending', 'under_review'])
+        .select('id,status,reviewed_by,reviewed_at').maybeSingle();
+      if (error) throw new Error('content_report_review_failed');
+      if (!data) {
+        await finishAudit('denied', { ...auditDetails, reason: 'report_not_pending_or_not_found' });
+        return json({ error: 'البلاغ غير موجود أو تمت مراجعته مسبقًا؛ حدّث القائمة.' }, 409);
+      }
+      result = { reviewedReport: data };
     } else if (action === 'list_audit_logs') {
       const { data, error } = await server.from('admin_action_logs')
         .select('id,actor_user_id,action,target_id,outcome,details,created_at')

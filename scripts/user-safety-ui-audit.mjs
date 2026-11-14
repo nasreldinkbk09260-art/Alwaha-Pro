@@ -1,0 +1,22 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const html=read('index.html'),api=read('supabase/functions/user-safety/index.ts'),adminApi=read('supabase/functions/admin-api/index.ts'),adminHtml=read('admin-app/index.html'),migration=read('supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql'),config=read('supabase/config.toml');
+let checks=0,failed=0;
+function check(name,ok){checks++;if(ok)console.log('PASS: '+name);else{failed++;console.error('FAIL: '+name)}}
+check('user safety client uses authenticated Edge Function',html.includes("functions.invoke('user-safety'")&&html.includes('callAlwahaUserSafety'));
+check('report flow accepts only user/post/reel/comment targets',html.includes("['user','post','reel','comment']")&&html.includes('submitAlwahaContentReport'));
+check('public profile provides report, block and unblock controls',html.includes("reportAlwahaContent(\\'user\\'")&&html.includes('setAlwahaUserBlock')&&html.includes('blockedMe'));
+check('blocked profiles hide friend, follow and direct-message controls',html.includes('interactionBlocked')&&html.includes('safeFriend')&&html.includes('safeFollow')&&html.includes('safeMessage'));
+check('home post reports do not remove or replace the share action',html.includes("reportAlwahaContent(\\'post\\'")&&html.includes('shareTextContent('));
+check('reels provide report action',html.includes("reportAlwahaContent(\\'reel\\'"));
+check('comments provide report action for other users',html.includes("reportAlwahaContent(\\'comment\\'")&&html.includes('commentsViewer'));
+check('safety Edge Function validates token server-side and uses fixed actions',api.includes('auth.getUser(tokenMatch[1].trim())')&&api.includes('report_content')&&api.includes('block_user')&&api.includes('unblock_user')&&config.includes('[functions.user-safety]'));
+check('report service limits daily volume and duplicate open reports',api.includes('86400000')&&api.includes('>= 10')&&api.includes('duplicate'));
+check('block service removes relationships but retains direct and marketplace messages',api.includes("from('friend_requests').delete()")&&api.includes("from('follows').delete()")&&!api.includes("from('messages').delete()")&&!api.includes("from('market_transactions').delete()"));
+check('database safety tables have RLS and deny direct client table access',migration.includes('ALTER TABLE public.user_blocks ENABLE ROW LEVEL SECURITY')&&migration.includes('ALTER TABLE public.content_reports ENABLE ROW LEVEL SECURITY')&&migration.includes('REVOKE ALL ON TABLE public.content_reports FROM PUBLIC,anon,authenticated'));
+check('database block policies protect communication and content interaction',migration.includes('messages_insert_sender_accepted_friends')&&migration.includes('market_messages_insert_participant')&&migration.includes('friend_requests_insert_requester')&&migration.includes('can_interact_with_content'));
+check('admin API restricts report queue and review to is_admin with audit',adminApi.includes('list_content_reports')&&adminApi.includes('review_content_report')&&adminApi.includes('if (!profile?.is_admin)')&&adminApi.includes('finishAudit'));
+check('admin dashboard contains review queue and status filters',adminHtml.includes('reportsPane')&&adminHtml.includes('list_content_reports')&&adminHtml.includes('review_content_report')&&adminHtml.includes('reportStatus'));
+check('admin dashboard never deletes report targets automatically',!adminHtml.includes("delete_content_report")&&!adminHtml.includes("deleteReportedContent"));
+console.log('USER_SAFETY_UI_AUDIT='+(failed?'FAIL':'PASS')+' ('+checks+' checks)');
+if(failed)process.exit(1);

@@ -31,7 +31,8 @@
     "audit:marketplace-ui": "node scripts/marketplace-ui-acceptance.mjs",
     "audit:profile": "node scripts/profile-ui-acceptance.mjs",
     "audit:offline-cache": "node scripts/offline-cache-audit.mjs",
-    "audit:security-definers": "node scripts/security-definer-audit.mjs"
+    "audit:security-definers": "node scripts/security-definer-audit.mjs",
+    "audit:user-safety": "node scripts/user-safety-ui-audit.mjs"
   },
   "engines": {
     "node": ">=22"

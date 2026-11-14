@@ -294,6 +294,9 @@ jobs:
       - name: Run retention, kids-room, and backup audit
         run: npm run audit:retention-kids-vault
 
+      - name: Run user reporting, blocking and moderation audit
+        run: npm run audit:user-safety
+
       - name: Run standalone admin security audit
         run: npm run audit:admin
 
