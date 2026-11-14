@@ -19,6 +19,7 @@ on:
       - alwaha-pro-3.0.2-release-r7.5-20261103
       - alwaha-pro-3.0.3-final-rebuild-20261107
       - alwaha-pro-3.0.3-three-theme-ux-20261108
+      - alwaha-pro-3.0.3-launch-cleanup-20261114
   workflow_dispatch:
 
 permissions:
