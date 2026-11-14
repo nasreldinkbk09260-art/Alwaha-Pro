@@ -80,7 +80,8 @@ if (!html.includes('src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113-securit
 for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js']) if (!html.includes('src="./'+asset+'?v=3.0.3-core-20261113-security"') || !sw.includes("'./"+asset+"?v=3.0.3-core-20261113-security'") || !sw.includes("'./"+asset+"'")) fail('Offline script URL does not match versioned and fallback service-worker precache entries: '+asset);
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
-if (!workflow.includes('npm run audit:runtime') || pkg.scripts?.['audit:runtime'] !== 'node scripts/runtime-boot-audit.mjs') fail('Startup/runtime audit is not wired into release CI.');
+const runtimeAuditCommand = pkg.scripts?.['audit:runtime'] || '';
+if (!workflow.includes('npm run audit:runtime') || !runtimeAuditCommand.includes('node scripts/runtime-boot-audit.mjs') || !runtimeAuditCommand.includes('node scripts/back-navigation-runtime-test.mjs')) fail('Startup/runtime and back-navigation regression audits are not wired into release CI.');
 if (!workflow.includes('npm run audit:release') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs' || !pkg.scripts?.['audit:release']?.includes('audit:offline-cache')) fail('Offline cache budget/reconnect audit is not wired into the single release gate.');
 
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
