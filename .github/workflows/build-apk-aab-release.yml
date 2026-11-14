@@ -1,4 +1,4 @@
-name: Alwaha-Pro • Android APK/AAB (Build Only)
+name: Alwaha-Pro • APK/AAB CI + main-only website publish
 # This branch includes exit-dialog persistence and fullscreen modal recovery regression tests.\n# CI gates include the added back-navigation runtime acceptance scenarios.\n# Keep branch validation aligned with the latest runtime test harness.
 # Runtime test harness newline matcher has been normalized.
 # Fullscreen audit follows the shared modal-stack close behavior.
@@ -7,22 +7,7 @@ on:
   push:
     branches:
       - main
-      - alwaha-build-only-repair-20261011-121903
-      - alwaha-games-release-2.8.3
-      - alwaha-production-completion-20261014
-      - alwaha-social-completion-2.8.5
-      - alwaha-social-polish-2.8.6
-      - alwaha-social-ultimate-2.8.8
-      - alwaha-social-ultimate-3.0.0
-      - alwaha-social-ultimate-3.0.1
-      - alwaha-social-3.0.1-mobile-performance-20261020
-      - alwaha-pro-3.0.2-release-20261102
-      - alwaha-pro-3.0.2-release-r7.3-20261102
-      - alwaha-pro-3.0.2-release-r7.4-20261102
-      - alwaha-pro-3.0.2-release-r7.5-20261103
-      - alwaha-pro-3.0.3-final-rebuild-20261107
-      - alwaha-pro-3.0.3-three-theme-ux-20261108
-      - alwaha-pro-3.0.3-launch-cleanup-20261114
+      - alwaha-pro-3.0.3-dev
   workflow_dispatch:
 
 permissions:
@@ -717,7 +702,7 @@ jobs:
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.3 website
-    if: github.ref == 'refs/heads/alwaha-pro-3.0.3-launch-cleanup-20261114'
+    if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android

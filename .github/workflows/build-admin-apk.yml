@@ -2,10 +2,8 @@ name: Alwaha Admin • Independent Android APK/AAB
 on:
   push:
     branches:
-      - alwaha-admin-app-1.0.0
-      - alwaha-pro-3.0.2-release-20261102
-      - alwaha-pro-3.0.3-final-rebuild-20261107
-      - alwaha-pro-3.0.3-launch-cleanup-20261114
+      - main
+      - alwaha-pro-3.0.3-dev
     paths:
       - 'admin-app/**'
       - 'supabase/functions/admin-api/**'

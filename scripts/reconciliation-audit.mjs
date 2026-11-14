@@ -16,7 +16,6 @@ const experience = read('alwaha-experience.js');
 const themeCss = read('alwaha-theme-system.css');
 const native = read('scripts/android/AlwahaAudioRoutePlugin.java');
 const workflow = read('.github/workflows/build-apk-aab-release.yml');
-const pages = read('.github/workflows/pages-web-300.yml');
 const migrationGuard = read('.github/workflows/supabase-migrations.yml');
 const marketSql = read('supabase/migrations/20261101022015_marketplace_conversation_messaging.sql');
 const ownerSql = read('supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql');
@@ -129,11 +128,17 @@ check('nav drag has a lightweight comic follower with falling/recovered hat or s
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
-// No accidental deployment on push from a test/release branch.
-check('APK/AAB build workflow is wired to 3.0.3 final rebuild branch', workflow.includes('alwaha-pro-3.0.3-final-rebuild-20261107'));
-check('web build workflow is manual build-only and has no deployment job',
-  /^on:\s*\n\s*workflow_dispatch:/m.test(pages) && !/^\s*push:/m.test(pages) &&
-  !/uses:\s*actions\/deploy-pages|deploy-pages|pages-build-deployment/i.test(pages));
+// One maintained development branch; publish the public site from main only.
+const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
+check('APK/AAB workflow watches only main and the single 3.0.3 development branch',
+  pushBranchBlock.includes('      - main') &&
+  pushBranchBlock.includes('      - alwaha-pro-3.0.3-dev') &&
+  (pushBranchBlock.match(/^\s+- /gm) || []).length === 2);
+check('public website publication is gated to main',
+  workflow.includes("if: github.ref == 'refs/heads/main'") &&
+  workflow.includes('name: Publish Alwaha-Pro 3.0.3 website'));
+check('obsolete 3.0.0 web-build workflow is retired',
+  !fs.existsSync('.github/workflows/pages-web-300.yml'));
 check('Supabase migration workflow remains manual and non-deploying',
   /^on:\s*\n\s*workflow_dispatch:/m.test(migrationGuard) && migrationGuard.includes('will not run supabase db push'));
 check('missing historical production migrations remain an explicit deployment blocker',
