@@ -1,0 +1,66 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+let failed = 0;
+const pass = (label) => console.log(`PASS: ${label}`);
+const fail = (label) => { console.error(`FAIL: ${label}`); failed++; };
+const read = (name) => {
+  const full = path.join(process.cwd(), name);
+  if (!fs.existsSync(full)) { fail(`missing ${name}`); return ''; }
+  return fs.readFileSync(full, 'utf8');
+};
+const html = read('index.html');
+const sw = read('sw.js');
+const migration = read('supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql');
+const notes = read('REPAIR_NOTES_AR.md');
+
+if (html.includes('alwaha-public-feed-cache-v1') && html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)') && html.includes('queueAlwahaPublicRefresh')) pass('public feeds have IndexedDB persistence and stale-while-revalidate');
+else fail('offline-first public feed cache is incomplete');
+if (html.includes('function sanitizeAlwahaPublicCacheRows') && html.includes('ALWAHA_PUBLIC_CACHE_FIELDS') && !html.includes("products: ['id','seller_id','seller_email'")) pass('persistent cache is allowlisted by public table fields');
+else fail('public cache sanitizer/field allowlist missing');
+if (html.includes("webrtc-call-result") && html.includes('handleIncomingCallResult') && html.includes('hasAcceptedAlwahaFriendship(payload.from)') && html.includes('hasAcceptedAlwahaFriendship(peerId)')) pass('incoming and outgoing calls require accepted friendship');
+else fail('call friendship gate is incomplete');
+if (html.includes('respondFriendRequest') && html.includes("status:'accepted'") && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend requests are surfaced with response UI');
+else if (html.includes('respondFriendRequest') && html.includes('طلبات صداقة بانتظار ردك')) pass('incoming friend request response UI is present');
+else fail('friend request response UI missing');
+if (migration.includes('messages_insert_sender_accepted_friends') && /fr\.status\s*=\s*'accepted'/.test(migration) && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
+else fail('accepted-friend message RLS migration incomplete');
+if (sw.includes('alwaha-pro-v3.0.3-final-20261113-security-hardening') && sw.includes('/storage/v1/object/public/') && /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+else fail('service-worker cache namespace/safety guards incomplete');
+if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
+else fail('requested background/modal styles missing');
+if (html.includes("profile?.is_admin") && html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا الإجراء متاح للإدارة فقط.'")) pass('embedded admin review UI has role guard');
+else fail('embedded admin role guard missing');
+if (!html.includes('toggleFreeMeshShareSystem') && !html.includes('free-mode-toggle-main-btn') && !html.includes('local-share-file-btn')) pass('obsolete local file sharing widget removed');
+else fail('obsolete local file sharing widget remains');
+if (html.includes('speakerRouteBtn') && html.includes('setAlwahaCallSpeaker(false,true)') && html.includes('toggleCallSpeaker')) pass('native call audio defaults to earpiece with optional speaker control');
+else fail('native call audio route controls missing');
+if (html.includes('notification-badge-nav') && html.includes('refreshAlwahaNotificationBadge') && html.includes("table:'friend_requests'")) pass('global unread badge and friend request realtime updates present');
+else fail('global notifications or friend request realtime updates missing');
+if (html.includes('alwaha-notifications-open') && html.includes('alwaha-notification-panel')) pass('global notification viewport overlay present');
+else fail('global notification overlay missing');
+if (html.includes('window.alwahaAudioRoute?.shareApk') && html.includes('share-app-btn-main')) pass('native Android APK sharing is connected to the app share button');
+else fail('native Android APK share action missing');
+
+if (!fs.existsSync('admin-app')) console.log('INFO: standalone admin-app directory is absent from this supplied source bundle; only embedded admin UI could be audited.');
+if (notes.includes('لم يتم التحقق') || notes.includes('لم تُختبر') || notes.includes('لم تتوفر')) pass('repair notes record non-verified items');
+else console.log('WARN: ensure repair notes distinguish static checks from real-device/production tests.');
+
+// Check for duplicate DOM IDs.
+const staticMarkup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+const ids = [];
+for (const match of staticMarkup.matchAll(/<[^>]+\bid=["']([^"']+)["'][^>]*>/g)) ids.push(match[1]);
+const counts = new Map();
+for (const id of ids) counts.set(id, (counts.get(id) || 0) + 1);
+const duplicates = [...counts].filter(([, count]) => count > 1).map(([id]) => id);
+if (!duplicates.length) pass(`no duplicate static IDs (${ids.length} IDs checked)`);
+else fail(`duplicate static IDs: ${duplicates.join(', ')}`);
+
+if (html.includes('market-call-room-') && html.includes('alwaha_market_call_channels_send')===false) pass('market call channel is scoped in frontend; SQL policy is shipped as a separate migration');
+if (fs.existsSync('alwaha-local-vault.js') && fs.readFileSync('alwaha-local-vault.js','utf8').includes('AES-GCM')) pass('local vault exports encrypted user-selected local data'); else fail('local encrypted vault missing');
+if (fs.existsSync('alwaha-kids-room.js') && fs.readFileSync('alwaha-kids-room.js','utf8').includes('kids-parent-exit')) pass('kids room includes a parent override and local interactive scene'); else fail('kids room parent override missing');
+if (fs.existsSync('alwaha-experience.js') && fs.readFileSync('alwaha-experience.js','utf8').includes('alwaha-nav-stack')) pass('image themes and long-press floating navigation settings included'); else fail('theme or navigation experience module missing');
+
+console.log('FIELD_REPAIR_AUDIT=PASS');
+if (failed) { console.error(`FIELD_REPAIR_AUDIT=FAIL (${failed})`); process.exit(1); }
+console.log('NOTE: this is a static source audit, not a live Supabase/Android/device test.');

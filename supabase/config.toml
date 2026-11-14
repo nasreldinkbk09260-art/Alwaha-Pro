@@ -1,1 +1,13 @@
 project_id = "kjuixjdtqwcsnxefftrt"
+
+[functions.username-auth]
+verify_jwt = false
+
+[functions.call-config]
+verify_jwt = true
+
+[functions.admin-api]
+verify_jwt = true
+
+[functions.game-actions]
+verify_jwt = true

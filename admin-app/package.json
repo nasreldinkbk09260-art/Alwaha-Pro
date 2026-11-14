@@ -1,0 +1,10 @@
+{
+  "name": "alwaha-admin-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"build": "node build.mjs"},
+  "dependencies": {"@capacitor/android": "8.5.2", "@capacitor/core": "8.5.2", "sharp": "0.34.5"},
+  "devDependencies": {"@capacitor/cli": "8.5.2"},
+  "engines": {"node": ">=22"}
+}

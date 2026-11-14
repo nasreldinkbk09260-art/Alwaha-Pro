@@ -10,3 +10,10 @@ android/keystore.properties
 android/release-key.jks
 .DS_Store
 npm-debug.log*
+admin-app/node_modules/
+admin-app/dist/
+admin-app/android/
+admin-app/ios/
+admin-app/release/
+admin-app/keystore.properties
+admin-app/*.jks

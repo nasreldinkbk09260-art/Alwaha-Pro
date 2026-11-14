@@ -1,0 +1,24 @@
+name: Alwaha-Pro - Supabase migration history guard (no apply)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  history-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+      - name: Verify migration history is ready before any deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'This workflow is intentionally non-deploying. It will not run supabase db push.'
+          for file in supabase/migrations/20261011184718_alwaha_profile_privacy_clean_start.sql supabase/migrations/20261011184813_verification_request_profile_requirements.sql; do
+            if [ ! -s "$file" ]; then
+              echo "BLOCKED: production has an applied migration whose original source is missing locally: $file" >&2
+              echo 'Restore and review the original migration source before enabling deployment.' >&2
+              exit 1
+            fi
+          done
+          echo 'Historical migration sources are present. A human review and a separate dry run are still required.'
