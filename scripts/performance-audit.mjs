@@ -61,8 +61,11 @@ if (workflow.includes("Alwaha-Pro-3.0.3.apk") &&
   pass("workflow output names match 3.0.3");
 else fail("workflow APK/AAB output names mismatch");
 
-if (workflow.includes("alwaha-pro-3.0.3-final-rebuild-20261107")) pass("workflow includes the final rebuild branch");
-else fail("workflow does not include the final rebuild branch");
+const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
+const maintainedBranches = [...pushBranchBlock.matchAll(/^\\s+- ([^\\s]+)/gm)].map((match) => match[1]);
+if (maintainedBranches.length === 2 && maintainedBranches.includes("main") && maintainedBranches.includes("alwaha-pro-3.0.3-dev"))
+  pass("workflow includes only main and the consolidated development branch");
+else fail("workflow branch allowlist must contain only main and alwaha-pro-3.0.3-dev");
 
 if (workflow.includes("npm run audit:performance"))
   pass("workflow invokes performance audit");
