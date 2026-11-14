@@ -25,10 +25,10 @@ check('admin app build and separate Android workflow exist',fs.existsSync('admin
 check('admin Android configurator enforces separate package and target API 36',fs.existsSync('admin-app/scripts/configure-android-release.py')&&read('admin-app/scripts/configure-android-release.py').includes('targetSdkVersion')&&read('admin-app/scripts/configure-android-release.py').includes('pro.alwaha.admin'));
 check('admin audit-log source migration is included in PostgreSQL CI with privilege regression test',read('scripts/ci-validate-supabase-sql.sh').includes('admin_action_logs_source_recovery.sql')&&fs.existsSync('supabase/tests/20261102130000_admin_action_logs_source_recovery.sql'));
 
-const purgePaths = [...api.matchAll(/"([0-9a-f-]{36}\\/(?:avatars|posts|products|reels)\\/[^"]+)"/g)];
+const purgePaths = [...api.matchAll(/"([0-9a-f-]{36}\/(?:avatars|posts|products|reels)\/[^"]+)"/g)];
 check('test-media cleanup is limited to the exact 18 inventoried orphan paths',purgePaths.length===18);
 check('admin cleanup requires a fixed explicit confirmation token',api.includes("body.confirmPurge !== TEST_MEDIA_PURGE_CONFIRMATION")&&api.includes("PURGE_TEST_MEDIA_20261114"));
-check('test-media cleanup uses Supabase Storage API, not SQL metadata deletion',api.includes("server.storage.from('media').remove([...TEST_MEDIA_OBJECTS])")&&!/delete\\s+from\\s+storage\\.objects/i.test(api));
+check('test-media cleanup uses Supabase Storage API, not SQL metadata deletion',api.includes("server.storage.from('media').remove([...TEST_MEDIA_OBJECTS])")&&!/delete\s+from\s+storage\.objects/i.test(api));
 check('cleanup stays behind JWT and server-side admin authorization',api.indexOf('auth.getUser(token)')<api.indexOf("server.storage.from('media').remove")&&api.indexOf("if (!profile?.is_admin)")<api.indexOf("server.storage.from('media').remove"));
 check('maintenance UI asks for confirmation and calls only the fixed cleanup action',html.includes('purgeTestMedia')&&html.includes('تأكيد نهائي')&&html.includes("adminApi('purge_test_media'"));
 check('archive purge and audit-action SQL migrations are committed',fs.existsSync('supabase/migrations/20261114153423_purge_test_legacy_archives_20261114.sql')&&fs.existsSync('supabase/migrations/20261114153527_admin_api_test_media_cleanup_action_20261114.sql'));
