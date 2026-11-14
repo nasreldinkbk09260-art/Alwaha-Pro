@@ -15,7 +15,10 @@ function extract(startText,endText){
 
 const navCode=extract('function navigateBack() {','window.navigateBack = navigateBack;');
 const dispatchCode=extract('let lastAlwahaBackAt = 0;','window.dispatchAlwahaBack = dispatchAlwahaBack;');
-const popCode=extract('function handlePopState() {','        }');
+const popStart=html.indexOf('function handlePopState() {');
+const popEnd=html.indexOf('\\n        }\\n        function syncUiWithLoadedProfileData',popStart);
+if(popStart<0||popEnd<0)fail('Could not isolate the complete popstate handler.');
+const popCode=html.slice(popStart,popEnd+'\\n        }'.length);
 
 function makeHarness({exitVisible=false,layers=[]}={}){
   let lockSyncs=0,modalSyncs=0,closedExit=0,backDispatches=0;
