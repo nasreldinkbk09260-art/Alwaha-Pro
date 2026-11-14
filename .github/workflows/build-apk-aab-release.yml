@@ -713,14 +713,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download and verify this run's Android artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download this run's verified Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Alwaha-Pro-3.0.3-build-${{ github.run_number }}
+          path: release-artifact
+      - name: Verify downloaded release files
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p release-artifact
-          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "Alwaha-Pro-3.0.3-build-$GITHUB_RUN_NUMBER" --dir release-artifact
           test -s release-artifact/Alwaha-Pro-3.0.3.apk
           test -s release-artifact/SHA256SUMS.txt
           (cd release-artifact && sha256sum --check SHA256SUMS.txt)
