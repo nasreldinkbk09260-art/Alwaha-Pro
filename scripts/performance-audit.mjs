@@ -62,7 +62,7 @@ if (workflow.includes("Alwaha-Pro-3.0.3.apk") &&
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
-const maintainedBranches = [...pushBranchBlock.matchAll(/^\\s+- ([^\\s]+)/gm)].map((match) => match[1]);
+const maintainedBranches = pushBranchBlock.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim());
 if (maintainedBranches.length === 2 && maintainedBranches.includes("main") && maintainedBranches.includes("alwaha-pro-3.0.3-dev"))
   pass("workflow includes only main and the consolidated development branch");
 else fail("workflow branch allowlist must contain only main and alwaha-pro-3.0.3-dev");
