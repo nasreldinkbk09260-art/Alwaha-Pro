@@ -10,9 +10,31 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: corsHeaders });
 
-type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_audit_logs';
+const TEST_MEDIA_OBJECTS = [
+  "0294e707-23a7-432b-b6a4-a3974f0722d1/products/9151ec12-9f90-4d20-9cc8-37ed27621cc8.jpg",
+  "16f1efcd-4d24-4bda-a6ea-1586fe36a30b/products/794d9372-1f7e-4912-a094-756b9e4ed67a.jpg",
+  "61f76c4c-1ddc-4627-966e-30573ff594c3/reels/459bdcbe-e40d-4bf1-937a-15f7c0bee8b6.mp4",
+  "65a272fc-4c34-4658-be60-e72229e802a3/avatars/6062cb06-9ac9-453d-8115-6a75eb204eac.jpg",
+  "65a272fc-4c34-4658-be60-e72229e802a3/avatars/b3a1d7f4-a953-4bd6-b687-eec40b81e9af.jpg",
+  "97e19be3-5fe4-4388-953c-cceadaadf52b/products/ab28bb39-c819-45ff-bad9-b4c9b1d47ff9.jpg",
+  "97e19be3-5fe4-4388-953c-cceadaadf52b/products/fe49d57d-53ac-455f-afa3-e7c3574eaa3c.jpg",
+  "ab919b98-2fa7-41dc-afb0-ae5aecaf0c22/avatars/91b8a12d-5984-4523-b82c-44aaa551fcba.jpg",
+  "ab919b98-2fa7-41dc-afb0-ae5aecaf0c22/avatars/a8e03a92-d9ea-414b-a5bf-a911eaf40136.jpg",
+  "ab919b98-2fa7-41dc-afb0-ae5aecaf0c22/posts/0a161ee9-27e6-4b2f-a4e4-b8aa4cd11f2d.jpg",
+  "ab919b98-2fa7-41dc-afb0-ae5aecaf0c22/products/84335437-d9fd-4481-8f57-18cc4d18b2ae.jpg",
+  "bf50b2a7-6960-425f-83c3-f746b360a100/avatars/6955e40a-a248-426f-8276-4266b134834a.jpg",
+  "cbb082e5-c921-4753-844d-aaff30837b58/products/5b00e8ab-24d0-413a-ae6b-ae4199a52923.jpg",
+  "cbb082e5-c921-4753-844d-aaff30837b58/products/9af1be8d-ed59-4a5e-88d2-0e1230a3e02d.jpg",
+  "cbb082e5-c921-4753-844d-aaff30837b58/products/f6b6da2d-4fb0-4c23-ac38-5c90379614e3.jpg",
+  "f9fe4f8d-2f35-481c-8e2d-6489a176a4b6/posts/27696d0b-6f23-4b7d-84ba-d06d4af5e259.jpg",
+  "fdeae4c4-5f31-4c0b-8c46-d8f21b63a89a/avatars/1eece8ae-e315-4505-93e9-4cfb2944060b.jpg",
+  "fdeae4c4-5f31-4c0b-8c46-d8f21b63a89a/avatars/27d5054e-9ed3-458e-a6d2-8adc0f9ce8bf.jpg"
+] as const;
+const TEST_MEDIA_PURGE_CONFIRMATION = 'PURGE_TEST_MEDIA_20261114';
+
+type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_audit_logs' | 'purge_test_media';
 const allowedActions = new Set<AdminAction>([
-  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_audit_logs',
+  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_audit_logs', 'purge_test_media',
 ]);
 
 function asObject(value: unknown): Record<string, unknown> {
@@ -81,6 +103,9 @@ Deno.serve(async (req: Request) => {
   }
   const action = String(body.action || '') as AdminAction;
   if (!allowedActions.has(action)) return json({ error: 'الإجراء غير مدعوم.' }, 400);
+  if (action === 'purge_test_media' && body.confirmPurge !== TEST_MEDIA_PURGE_CONFIRMATION) {
+    return json({ error: 'يلزم تأكيد صريح قبل حذف ملفات التجارب.' }, 400);
+  }
 
   const offset = boundedInteger(body.offset, 0, 0, 100_000);
   const limit = boundedInteger(body.limit, 50, 1, 100);
@@ -109,10 +134,13 @@ Deno.serve(async (req: Request) => {
   if (action === 'list_verification_requests') Object.assign(auditDetails, { status: requestStatus, offset, limit });
   if (action === 'list_audit_logs') Object.assign(auditDetails, { offset, limit });
   if (action === 'review_verification') Object.assign(auditDetails, { status: reviewStatus });
+  if (action === 'purge_test_media') Object.assign(auditDetails, {
+    bucket: 'media', scope: 'fixed_test_only_orphaned_objects', requestedCount: TEST_MEDIA_OBJECTS.length,
+  });
   const { data: audit, error: auditInsertError } = await server.from('admin_action_logs').insert({
     actor_user_id: user.id,
     action,
-    target_id: action === 'review_verification' ? reviewId : null,
+    target_id: action === 'review_verification' ? reviewId : action === 'purge_test_media' ? 'media:test-assets-20261114' : null,
     outcome: 'pending',
     details: auditDetails,
   }).select('id').single();
@@ -182,6 +210,10 @@ Deno.serve(async (req: Request) => {
       if (error) throw new Error('audit_log_query_failed');
       const page = data || [];
       result = { entries: page.slice(0, limit), offset, limit, hasMore: page.length > limit };
+    } else if (action === 'purge_test_media') {
+      const { data, error } = await server.storage.from('media').remove([...TEST_MEDIA_OBJECTS]);
+      if (error) throw new Error('test_media_storage_remove_failed');
+      result = { removedCount: (data || []).length, requestedCount: TEST_MEDIA_OBJECTS.length };
     } else {
       const { data, error } = await server.from('verification_requests')
         .update({ status: reviewStatus, reviewed_by: user.id })
@@ -195,7 +227,10 @@ Deno.serve(async (req: Request) => {
       result = { reviewedRequest: data };
     }
 
-    const auditOk = await finishAudit('success', auditDetails);
+    const completionDetails = action === 'purge_test_media'
+      ? { ...auditDetails, removedCount: result.removedCount ?? 0 }
+      : auditDetails;
+    const auditOk = await finishAudit('success', completionDetails);
     if (!auditOk) {
       console.error('admin-api request completed, but audit finalization failed');
       return json({ ...result, warning: 'تمت العملية لكن تعذر تأكيد سجل التدقيق؛ راجع سجل الخادم.' }, 200);
