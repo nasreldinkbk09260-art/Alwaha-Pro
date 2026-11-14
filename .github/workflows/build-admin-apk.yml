@@ -1,4 +1,5 @@
 name: Alwaha Admin • Independent Android APK/AAB
+# Admin builds are maintained only on main and alwaha-pro-3.0.3-dev.
 on:
   push:
     branches:
