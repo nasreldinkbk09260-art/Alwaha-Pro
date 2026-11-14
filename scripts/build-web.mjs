@@ -19,6 +19,11 @@ for (const file of required) {
   fs.copyFileSync(path.join(root, file), path.join(dist, file));
 }
 
+const officialSite = path.join(root, 'official-site');
+const officialIndex = path.join(officialSite, 'index.html');
+if (!fs.existsSync(officialIndex)) throw new Error('Missing official-site/index.html.');
+fs.cpSync(officialSite, path.join(dist, 'official'), { recursive: true });
+
 for (const folder of ['assets', 'images', 'img', 'media', 'fonts']) {
   const source = path.join(root, folder);
   if (fs.existsSync(source)) {
