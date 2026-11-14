@@ -55,12 +55,18 @@ Deno.serve(async (req: Request) => {
         const { data, error } = await db.from('users').select('id').eq('id', targetId).maybeSingle();
         if (error || !data) return json({ error: 'لم يتم العثور على الحساب.' }, 404);
         ownerId = String(data.id);
+      } else if (targetType === 'post') {
+        const { data, error } = await db.from('posts').select('id,author_id').eq('id', targetId).maybeSingle();
+        if (error || !data) return json({ error: 'لم يتم العثور على المنشور.' }, 404);
+        ownerId = data.author_id ? String(data.author_id) : null;
+      } else if (targetType === 'reel') {
+        const { data, error } = await db.from('reels').select('id,author_id').eq('id', targetId).maybeSingle();
+        if (error || !data) return json({ error: 'لم يتم العثور على الريلز.' }, 404);
+        ownerId = data.author_id ? String(data.author_id) : null;
       } else {
-        const table = targetType === 'post' ? 'posts' : targetType === 'reel' ? 'reels' : 'comments';
-        const ownerColumn = targetType === 'comment' ? 'user_id' : 'author_id';
-        const { data, error } = await db.from(table).select('id,' + ownerColumn).eq('id', targetId).maybeSingle();
-        if (error || !data) return json({ error: 'لم يتم العثور على المحتوى.' }, 404);
-        ownerId = data[ownerColumn] ? String(data[ownerColumn]) : null;
+        const { data, error } = await db.from('comments').select('id,user_id').eq('id', targetId).maybeSingle();
+        if (error || !data) return json({ error: 'لم يتم العثور على التعليق.' }, 404);
+        ownerId = data.user_id ? String(data.user_id) : null;
       }
       if (!ownerId) return json({ error: 'تعذر تحديد صاحب المحتوى.' }, 409);
       if (ownerId === user.id) return json({ error: 'لا يمكنك الإبلاغ عن حسابك أو محتواك.' }, 400);
