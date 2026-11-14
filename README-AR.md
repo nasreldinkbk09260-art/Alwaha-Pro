@@ -5,8 +5,8 @@
 ## روابط المستخدمين
 - **التطبيق عبر المتصفح:** https://nasreldinkbk09260-art.github.io/Alwaha-Pro/
 - **الموقع الرسمي ودليل الاستخدام:** https://nasreldinkbk09260-art.github.io/Alwaha-Pro/official/
-- **تنزيل APK لأجهزة Android:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-3.0.3.apk
-- **بصمة APK SHA-256:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-3.0.3.apk.sha256
+- **تنزيل APK لأجهزة Android:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-Android.apk
+- **بصمة APK SHA-256:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-Android.apk.sha256
 - **الإصدارات الرسمية:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases
 
 ينشأ الإصدار العام تلقائيًا من `main` فقط بعد اجتياز فحوص SQL والأمان والتوافق والأداء وبناء Android والتحقق من توقيع APK. يعمل فرع `alwaha-pro-3.0.3-dev` للتطوير والتحقق، ولا ينشر إصدارًا عامًا أو Pages.

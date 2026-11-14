@@ -725,7 +725,8 @@ jobs:
           test -s release-artifact/Alwaha-Pro-3.0.3.apk
           test -s release-artifact/SHA256SUMS.txt
           (cd release-artifact && sha256sum --check SHA256SUMS.txt)
-          (cd release-artifact && sha256sum Alwaha-Pro-3.0.3.apk > Alwaha-Pro-3.0.3.apk.sha256)
+          cp release-artifact/Alwaha-Pro-3.0.3.apk release-artifact/Alwaha-Pro-Android.apk
+          (cd release-artifact && sha256sum Alwaha-Pro-Android.apk > Alwaha-Pro-Android.apk.sha256)
       - name: Create the public latest release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -733,9 +734,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v$APP_VERSION-build-$GITHUB_RUN_NUMBER"
-          APK="release-artifact/Alwaha-Pro-3.0.3.apk"
-          CHECKSUM="release-artifact/Alwaha-Pro-3.0.3.apk.sha256"
+          TAG="v$APP_VERSION"
+          APK="release-artifact/Alwaha-Pro-Android.apk"
+          CHECKSUM="release-artifact/Alwaha-Pro-Android.apk.sha256"
           NOTES="Alwaha-Pro $APP_VERSION Android release (Build #$GITHUB_RUN_NUMBER).
 
           Source commit: $GITHUB_SHA
@@ -744,9 +745,14 @@ jobs:
           This APK was built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums.
 
           The AAB is reserved for store distribution and is not attached as a direct-install APK."
-          gh release create "$TAG" "$APK" "$CHECKSUM" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION - Build #$GITHUB_RUN_NUMBER" --notes "$NOTES" --latest
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-3.0.3.apk'
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-3.0.3.apk.sha256'
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" "$CHECKSUM" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+          else
+            gh release create "$TAG" "$APK" "$CHECKSUM" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk'
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk.sha256'
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.3 website
