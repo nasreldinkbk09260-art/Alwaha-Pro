@@ -4828,6 +4828,9 @@ function triggerAnimeAiConverterFilter() {
             const modal=document.getElementById('exit-modal-confirmation');
             if(modal){modal.style.display='none';modal.setAttribute('aria-hidden','true');}
             document.body.classList.remove('alwaha-exit-confirm-open');
+            if (exitModalHistoryGuarded) {
+                try { history.replaceState({alwahaGuard:true}, '', location.href); } catch (error) {}
+            }
             exitModalHistoryGuarded=false;
         }
         async function confirmExitApp() {
@@ -4935,7 +4938,7 @@ function triggerAnimeAiConverterFilter() {
                 console.info('[Alwaha Startup] History guard unavailable:', error?.message || error);
             }
             window.addEventListener('popstate', handlePopState);
-            const handleSystemBack = () => { if (typeof navigateBack === 'function') navigateBack(); };
+            const handleSystemBack = () => { dispatchAlwahaBack('system-back'); };
             document.addEventListener('backbutton', handleSystemBack, false);
             window.addEventListener('keydown', event => {
                 if (event.key === 'Escape') {
@@ -5097,7 +5100,7 @@ function triggerAnimeAiConverterFilter() {
         }
         function navigateBack() {
             const exit = document.getElementById('exit-modal-confirmation');
-            if (alwahaIsVisible(exit)) { closeExitConfirmationModal(); return; }
+            if (alwahaIsVisible(exit)) { return; }
             const marketActionForm=document.getElementById('market-action-form-modal');
             if (alwahaIsVisible(marketActionForm)) { closeMarketActionForm(); return; }
             const subViews = Array.from(document.querySelectorAll('.sub-profile-view-box')).filter(alwahaIsVisible);
@@ -5125,12 +5128,23 @@ function triggerAnimeAiConverterFilter() {
             if (alwahaIsVisible(gameQrScanner) && typeof window.closeAlwahaGameQrScanner === 'function') { window.closeAlwahaGameQrScanner(); return; }
             const gameRoom = document.getElementById('alwaha-multiplayer-room');
             if (alwahaIsVisible(gameRoom) && typeof window.closeAlwahaGameRoom === 'function') { window.closeAlwahaGameRoom(); return; }
-            for (const selector of ['#internal-notification-center','#floating-options-menu','#floating-add-menu','.game-modal-overlay']) {
-                const box = document.querySelector(selector);
-                if (!alwahaIsVisible(box)) continue;
-                box.style.display = 'none';
-                document.body.classList.remove('modal-active');
-                return;
+            const backLayers = Array.from(document.querySelectorAll(
+                '#internal-notification-center,#floating-options-menu,#floating-add-menu,.game-modal-overlay,.alwaha-fullscreen-layer,.modal-overlay'
+            )).filter(layer => alwahaIsVisible(layer));
+            if (backLayers.length) {
+                const topLayer = backLayers.reduce((top, layer) => {
+                    const z = Number.parseInt(getComputedStyle(layer).zIndex, 10) || 0;
+                    const topZ = top ? (Number.parseInt(getComputedStyle(top).zIndex, 10) || 0) : -1;
+                    return !top || z >= topZ ? layer : top;
+                }, null);
+                if (topLayer) {
+                    topLayer.style.display = 'none';
+                    topLayer.classList?.remove('is-open','alwaha-notifications-open','active');
+                    topLayer.setAttribute?.('aria-hidden','true');
+                    if (typeof syncAlwahaModalBodyLock === 'function') syncAlwahaModalBodyLock();
+                    window.AlwahaModalShell?.sync?.();
+                    return;
+                }
             }
             if (Array.from(document.querySelectorAll('.chat-tab-content')).some(alwahaIsVisible)) {
                 if (typeof collapseChatSubWindows === 'function') collapseChatSubWindows();
@@ -5146,11 +5160,25 @@ function triggerAnimeAiConverterFilter() {
             if (exit) showExitConfirmationModal();
         }
         window.navigateBack = navigateBack;
+        let lastAlwahaBackAt = 0;
+        function dispatchAlwahaBack(source='system') {
+            const now = Date.now();
+            if (now - lastAlwahaBackAt < 240) return false;
+            lastAlwahaBackAt = now;
+            if (typeof navigateBack === 'function') navigateBack();
+            return true;
+        }
+        window.dispatchAlwahaBack = dispatchAlwahaBack;
 
         function handlePopState() {
-            exitModalHistoryGuarded=false;
+            const exitModal = document.getElementById('exit-modal-confirmation');
+            if (alwahaIsVisible(exitModal)) {
+                exitModalHistoryGuarded = true;
+                try { history.pushState({alwahaExitGuard:true}, '', location.href); } catch (e) {}
+                return;
+            }
             try { history.pushState({alwahaGuard:true}, '', location.href); } catch (e) {}
-            navigateBack();
+            dispatchAlwahaBack('browser-popstate');
         }
         function syncUiWithLoadedProfileData() {
             const name = localStorage.getItem('alwaha_profile_name') || 'زائر Alwaha-Pro';
