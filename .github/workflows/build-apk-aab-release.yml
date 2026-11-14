@@ -1,5 +1,5 @@
 name: Alwaha-Pro • Android APK/AAB (Build Only)
-# This branch includes exit-dialog persistence and fullscreen modal recovery regression tests.
+# This branch includes exit-dialog persistence and fullscreen modal recovery regression tests.\n# CI gates include the added back-navigation runtime acceptance scenarios.
 
 on:
   push:
