@@ -99,3 +99,6 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114230000_user_safety_repo
 echo 'APPLY TEST MIGRATION: 20261114235000_marketplace_account_deletion_retention.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114235000_marketplace_account_deletion_retention.sql"
+echo 'APPLY TEST MIGRATION: 20261115193000_exclude_admin_public_profiles.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115193000_exclude_admin_public_profiles.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115193000_exclude_admin_public_profiles.sql"

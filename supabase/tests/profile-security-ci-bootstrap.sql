@@ -217,11 +217,28 @@ CREATE POLICY verification_update_admin ON public.verification_requests
 CREATE UNIQUE INDEX verification_one_pending_per_user_idx
   ON public.verification_requests(user_id) WHERE status='pending';
 
-CREATE VIEW public.public_profiles WITH (security_invoker=true) AS
-SELECT id,first_name,last_name,avatar_url,is_verified,created_at,gender,username
+-- Model the deployed public_profiles TABLE (not a view) so its RLS can be
+-- exercised directly by the public-directory privacy regression test.
+CREATE TABLE public.public_profiles (
+  id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+  first_name text NOT NULL DEFAULT '',
+  last_name text NOT NULL DEFAULT '',
+  avatar_url text,
+  is_verified boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  gender text NOT NULL DEFAULT 'ذكر',
+  username text NOT NULL DEFAULT ''
+);
+INSERT INTO public.public_profiles(id,first_name,last_name,avatar_url,is_verified,created_at,gender,username)
+SELECT id,first_name,last_name,avatar_url,is_verified,created_at,gender,coalesce(username,'')
 FROM public.users;
+ALTER TABLE public.public_profiles ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.public_profiles FROM PUBLIC,anon,authenticated;
+GRANT SELECT ON TABLE public.public_profiles TO authenticated;
+CREATE POLICY public_profiles_select_authenticated ON public.public_profiles
+  FOR SELECT TO authenticated USING (true);
 CREATE VIEW public.user_directory WITH (security_invoker=true) AS
 SELECT id,first_name,last_name,NULL::text AS identifier,NULL::text AS phone,
        avatar_url,is_verified,created_at,gender,username
 FROM public.public_profiles;
-GRANT SELECT ON public.public_profiles,public.user_directory TO authenticated;
+GRANT SELECT ON public.user_directory TO authenticated;
