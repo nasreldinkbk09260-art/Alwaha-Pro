@@ -4,7 +4,11 @@ const fail = (message) => { console.error('FAIL:', message); process.exitCode = 
 const read = (file) => { const full=path.join(process.cwd(),file); if(!fs.existsSync(full)){fail(`Missing required file: ${file}`);return '';} return fs.readFileSync(full,'utf8'); };
 const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('package.json')||'{}'), cap=JSON.parse(read('capacitor.config.json')||'{}'), lock=JSON.parse(read('package-lock.json')||'{}'), manifest=JSON.parse(read('manifest.json')||'{}');
 const userSafetyUiAudit=read('scripts/user-safety-ui-audit.mjs');if(!userSafetyUiAudit.includes('USER_SAFETY_UI_AUDIT='))fail('User safety UI audit missing.');
-const accountRetention=read('supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql');for(const marker of ['ON DELETE SET NULL','BEFORE DELETE ON auth.users','detach_marketplace_user_before_auth_delete','listing_snapshot','delete_approved_by_buyer_at','delete_approved_by_seller_at'])if(!accountRetention.includes(marker))fail('Marketplace account deletion retention missing: '+marker);
+const accountRetention=read('supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql');
+for(const marker of ['ON DELETE SET NULL','BEFORE DELETE ON auth.users','detach_marketplace_user_before_auth_delete','delete_approved_by_buyer_at','delete_approved_by_seller_at'])if(!accountRetention.includes(marker))fail('Marketplace account deletion retention missing: '+marker);
+const listingSnapshotMigration=read('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql');
+const accountRetentionTest=read('supabase/tests/20261114235000_marketplace_account_deletion_retention.sql');
+if(!listingSnapshotMigration.includes('listing_snapshot')||!accountRetentionTest.includes("listing_snapshot->>'title'"))fail('Marketplace account deletion must preserve and test the pre-existing listing snapshot.');
 const userSafetySource=read('supabase/functions/user-safety/index.ts');
 for(const action of ['report_content','block_user','unblock_user','block_status','list_my_blocks'])if(!userSafetySource.includes(action))fail('User safety API action missing: '+action);
 const configText=read('supabase/config.toml');if(!configText.includes('[functions.user-safety]')||!configText.includes('verify_jwt = true'))fail('User safety Edge Function must require JWT verification.');
