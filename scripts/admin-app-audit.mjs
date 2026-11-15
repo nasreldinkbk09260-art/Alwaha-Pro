@@ -13,6 +13,7 @@ check('admin frontend loads the pinned local Supabase SDK without a runtime CDN 
 check('main app Supabase SDK asset is present for deterministic admin packaging',fs.existsSync('assets/vendor/supabase/supabase.js'));
 check('admin frontend does not query privileged tables directly',!(/db\.from\(['"](?:users|verification_requests|admin_action_logs)['"]\)/.test(html)));
 check('admin frontend does not embed service-role credentials',!html.includes('SUPABASE_SERVICE_ROLE_KEY')&&!/eyJ[^'"\s]+service_role/.test(html));
+check('admin UI includes report moderation queue with list and review actions',html.includes('reportsPane')&&html.includes("adminApi('list_content_reports'")&&html.includes("adminApi('review_content_report'"));
 check('admin UI includes requests, users and audit-log views',html.includes('requestsPane')&&html.includes('usersPane')&&html.includes('auditPane')&&html.includes("adminApi('list_audit_logs'"));
 check('admin UI does not expose local-network controls',!html.includes('شبكة محلية')&&!html.includes('شبكة قريبة')&&!html.includes('toggleFreeMeshShareSystem'));
 check('admin API verifies the supplied JWT on the server',api.includes('auth.getUser(token)'));

@@ -15,9 +15,10 @@
 <section id="login" class="panel"><h2>دخول المدير</h2><p class="muted">استخدم حساب المدير. صلاحية الإدارة يتحقق منها الخادم في كل طلب؛ إظهار اللوحة وحده لا يمنح أي صلاحية.</p>
 <form id="loginForm"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required><div style="height:14px"></div><button class="primary" type="submit" style="width:100%">تسجيل الدخول</button></form><div id="loginMsg" class="notice hidden"></div></section>
 <section id="dashboard" class="hidden">
- <div class="panel"><div class="top"><div><h2>لوحة التحكم</h2><div id="who" class="muted"></div></div><button id="logout" class="secondary">خروج آمن</button></div><div id="msg" class="notice hidden"></div><div class="stats"><div class="stat"><span class="muted">إجمالي الحسابات</span><strong id="usersCount">—</strong></div><div class="stat"><span class="muted">طلبات معلّقة</span><strong id="pendingCount">—</strong></div></div></div>
- <div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="audit">سجل التدقيق</button><button class="secondary" data-tab="maintenance">تنظيف التجارب</button></div>
+ <div class="panel"><div class="top"><div><h2>لوحة التحكم</h2><div id="who" class="muted"></div></div><button id="logout" class="secondary">خروج آمن</button></div><div id="msg" class="notice hidden"></div><div class="stats"><div class="stat"><span class="muted">إجمالي الحسابات</span><strong id="usersCount">—</strong></div><div class="stat"><span class="muted">طلبات معلّقة</span><strong id="pendingCount">—</strong></div><div class="stat"><span class="muted">بلاغات معلّقة</span><strong id="pendingReportsCount">—</strong></div></div></div>
+ <div class="tabs"><button class="secondary active" data-tab="requests">طلبات التوثيق</button><button class="secondary" data-tab="reports">بلاغات المستخدمين</button><button class="secondary" data-tab="users">الحسابات</button><button class="secondary" data-tab="audit">سجل التدقيق</button><button class="secondary" data-tab="maintenance">تنظيف التجارب</button></div>
  <section id="requestsPane" class="panel"><div class="top"><h2>طلبات التوثيق</h2><button id="refreshRequests" class="secondary">تحديث</button></div><div id="requestsList" class="muted">جارٍ التحميل…</div></section>
+ <section id="reportsPane" class="panel hidden"><div class="top"><h2>بلاغات الحسابات والمحتوى</h2><button id="refreshReports" class="secondary">تحديث</button></div><p class="muted">صندوق مراجعة إداري. لا تحذف هذه اللوحة المحتوى أو الحسابات تلقائيًا؛ القرارات تُحفظ في سجل التدقيق.</p><label for="reportStatus">تصفية البلاغات حسب الحالة</label><select id="reportStatus" style="width:100%;padding:11px;border-radius:10px;background:#091321;color:#fff;border:1px solid #344866;"><option value="pending">معلّقة</option><option value="under_review">قيد المراجعة</option><option value="actioned">تمت المعالجة</option><option value="dismissed">مرفوضة</option><option value="all">الكل</option></select><div style="height:10px"></div><div id="reportsList" class="muted">جارٍ تحميل البلاغات…</div><button id="loadMoreReports" class="secondary hidden" style="width:100%;margin-top:10px">تحميل بلاغات أقدم</button></section>
  <section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section>
  <section id="auditPane" class="panel hidden"><div class="top"><h2>سجل الإجراءات الإدارية</h2><button id="refreshAudit" class="secondary">تحديث</button></div><div id="auditList" class="muted">جارٍ التحميل…</div><button id="loadMoreAudit" class="secondary hidden" style="width:100%;margin-top:10px">تحميل سجلات أقدم</button></section>
  <section id="maintenancePane" class="panel hidden"><h2>تنظيف ملفات التجارب</h2><div class="notice">هذا الإجراء يحذف فقط 18 ملفاً محدداً من ملفات الاختبار القديمة في مخزن media، بعد التحقق من أن مالكيها ليسوا حسابات موجودة. لا يحذف ملفات حساب الإدارة أو أي ملف جديد أو أي ملفات مستخدمين مستقبليين.</div><p class="muted">الحذف نهائي ويجري عبر Supabase Storage API؛ سيتم تسجيل العملية في سجل التدقيق.</p><button id="purgeTestMedia" class="reject" style="width:100%">حذف ملفات التجارب الـ18 نهائياً</button></section>
@@ -29,7 +30,7 @@
 const URL='https://kjuixjdtqwcsnxefftrt.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0';
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}}),$=id=>document.getElementById(id);
-let profile=null,users=[],userSearchTimer=null,usersSequence=0,auditOffset=0,auditHasMore=false;
+let profile=null,users=[],userSearchTimer=null,usersSequence=0,auditOffset=0,auditHasMore=false,reportsOffset=0,reportsHasMore=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt=v=>v?new Date(v).toLocaleString('ar'):'—';
 function message(id,text,kind=''){const e=$(id);e.textContent=text;e.className='notice '+kind;e.classList.remove('hidden')}
@@ -40,7 +41,7 @@ async function adminApi(action,fields={}){
  if(error){let detail=error.message||'تعذر الاتصال بخدمة الإدارة.';try{const payload=await error.context?.json();if(payload?.error)detail=payload.error}catch{}throw new Error(detail)}
  if(data?.error)throw new Error(data.error);return data||{};
 }
-function applySummary(data){$('usersCount').textContent=Number(data.usersCount??0).toLocaleString('ar');$('pendingCount').textContent=Number(data.pendingCount??0).toLocaleString('ar')}
+function applySummary(data){$('usersCount').textContent=Number(data.usersCount??0).toLocaleString('ar');$('pendingCount').textContent=Number(data.pendingCount??0).toLocaleString('ar');$('pendingReportsCount').textContent=Number(data.pendingReportsCount??0).toLocaleString('ar')}
 async function verifyAdmin(session){
  if(!session?.user?.id){showLogin();return}
  const summary=await adminApi('summary');profile={id:session.user.id,is_admin:true};$('who').textContent=session.user.email||'مدير معتمد';showDashboard();applySummary(summary);await refresh();
@@ -61,6 +62,20 @@ async function loadUsers(){
  $('usersList').innerHTML=notice+users.map(u=>`<article class="item"><div class="top"><h3>${esc(((u.first_name||'')+' '+(u.last_name||'')).trim()||'حساب بلا اسم')}</h3><span class="status">${u.is_admin?'مدير':u.is_verified?'موثّق':'غير موثّق'}</span></div><div class="muted">المعرّف: ${esc(u.identifier||'—')}<br>اسم المستخدم: ${esc(u.username||'—')}<br>تاريخ الإنشاء: ${esc(dt(u.created_at))}</div></article>`).join('');
  }catch(e){if(sequence!==usersSequence)return;users=[];$('usersList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل الحسابات.')}</div>`}
 }
+async function loadReports(reset=true){
+ if(reset){reportsOffset=0;$('reportsList').textContent='جارٍ تحميل البلاغات…'}
+ const status=$('reportStatus').value;
+ try{
+  const result=await adminApi('list_content_reports',{status,offset:reportsOffset,limit:50});
+  const rows=Array.isArray(result.reports)?result.reports:[];
+  const typeLabel={user:'حساب',post:'منشور',reel:'ريلز',comment:'تعليق'};
+  const reasonLabel={spam:'إزعاج أو رسائل مزعجة',harassment:'مضايقة أو إساءة',inappropriate:'محتوى غير لائق',violence:'عنف أو تهديد',fraud:'احتيال أو تضليل',other:'سبب آخر'};
+  const statusLabel={pending:'معلّق',under_review:'قيد المراجعة',actioned:'تمت المعالجة',dismissed:'مرفوض'};
+  const markup=rows.map(r=>'<article class="item"><div class="top"><h3>بلاغ عن '+esc(typeLabel[r.target_type]||r.target_type)+' · '+esc(r.id)+'</h3><span class="status">'+esc(statusLabel[r.status]||r.status)+'</span></div><div class="muted">الوقت: '+esc(dt(r.created_at))+'<br>صاحب المحتوى: '+esc(String(r.target_user_id||'—').slice(0,8))+'…<br>مقدم البلاغ: '+esc(String(r.reporter_id||'—').slice(0,8))+'…<br>معرّف المحتوى: '+esc(r.target_id||'—')+'<br>السبب: '+esc(reasonLabel[r.reason]||r.reason)+'</div><p>'+esc(r.details||'لم تُضف تفاصيل.')+'</p>'+(r.status==='dismissed'||r.status==='actioned'?'':'<div class="actions"><button class="secondary" data-report-id="'+esc(r.id)+'" data-status="under_review">بدء المراجعة</button><button class="approve" data-report-id="'+esc(r.id)+'" data-status="actioned">تأكيد المعالجة</button><button class="reject" data-report-id="'+esc(r.id)+'" data-status="dismissed">رفض البلاغ</button></div>')+'</article>').join('');
+  if(reset)$('reportsList').innerHTML=markup||'<div class="muted">لا توجد بلاغات بهذه الحالة.</div>';else $('reportsList').insertAdjacentHTML('beforeend',markup);
+  reportsOffset+=rows.length;reportsHasMore=Boolean(result.hasMore);$('loadMoreReports').classList.toggle('hidden',!reportsHasMore);
+ }catch(e){if(reset)$('reportsList').innerHTML='<div class="notice error">'+esc(e.message||'تعذر تحميل البلاغات.')+'</div>';message('msg',e.message||'تعذر تحميل البلاغات.','error')}
+}
 async function loadAuditLogs(reset=true){
  if(reset){auditOffset=0;$('auditList').textContent='جارٍ التحميل…'}
  try{const result=await adminApi('list_audit_logs',{offset:auditOffset,limit:50});const rows=Array.isArray(result.entries)?result.entries:[];
@@ -69,12 +84,12 @@ async function loadAuditLogs(reset=true){
  auditOffset+=rows.length;auditHasMore=Boolean(result.hasMore);$('loadMoreAudit').classList.toggle('hidden',!auditHasMore);
  }catch(e){if(reset)$('auditList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل سجل التدقيق.')}</div>`;message('msg',e.message||'تعذر تحميل سجل التدقيق.','error')}
 }
-async function refresh(){await Promise.all([counts(),requests(),loadUsers(),loadAuditLogs(true)])}
+async function refresh(){await Promise.all([counts(),requests(),loadReports(true),loadUsers(),loadAuditLogs(true)])}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=$('loginForm').querySelector('button');button.disabled=true;try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await verifyAdmin(data.session)}catch(error){await db.auth.signOut();showLogin();message('loginMsg',error.message||'تعذر تسجيل الدخول أو لا توجد صلاحية إدارية.','error')}finally{button.disabled=false}});
 $('logout').addEventListener('click',async()=>{await db.auth.signOut();showLogin()});
-$('refreshRequests').addEventListener('click',requests);$('refreshUsers').addEventListener('click',loadUsers);$('refreshAudit').addEventListener('click',()=>loadAuditLogs(true));$('loadMoreAudit').addEventListener('click',()=>loadAuditLogs(false));
+$('refreshRequests').addEventListener('click',requests);$('refreshReports').addEventListener('click',()=>loadReports(true));$('reportStatus').addEventListener('change',()=>loadReports(true));$('loadMoreReports').addEventListener('click',()=>loadReports(false));$('refreshUsers').addEventListener('click',loadUsers);$('refreshAudit').addEventListener('click',()=>loadAuditLogs(true));$('loadMoreAudit').addEventListener('click',()=>loadAuditLogs(false));
 $('search').addEventListener('input',()=>{clearTimeout(userSearchTimer);userSearchTimer=setTimeout(loadUsers,300)});
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit');$('maintenancePane').classList.toggle('hidden',b.dataset.tab!=='maintenance')}));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('reportsPane').classList.toggle('hidden',b.dataset.tab!=='reports');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit');$('maintenancePane').classList.toggle('hidden',b.dataset.tab!=='maintenance');if(b.dataset.tab==='reports')loadReports(true)}));
 $('purgeTestMedia').addEventListener('click',async()=>{
  if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}
  if(!confirm('تأكيد نهائي: حذف 18 ملفاً تجريبياً قديماً فقط من التخزين؟ لا يمكن التراجع عن الحذف.'))return;
@@ -85,6 +100,16 @@ $('purgeTestMedia').addEventListener('click',async()=>{
   await loadAuditLogs(true);
  }catch(error){message('msg',error.message||'تعذر حذف ملفات التجارب.','error')}
  finally{button.disabled=false}
+});
+$('reportsList').addEventListener('click',async e=>{
+ const b=e.target.closest('button[data-report-id]');if(!b)return;
+ if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}
+ const id=b.dataset.reportId,status=b.dataset.status;
+ const label=status==='under_review'?'بدء المراجعة':status==='actioned'?'تأكيد معالجة البلاغ':'رفض البلاغ';
+ if(!confirm(label+'؟ سيُسجل القرار في سجل التدقيق، ولن يحذف النظام المحتوى تلقائيًا.'))return;
+ b.disabled=true;
+ try{await adminApi('review_content_report',{id,status});message('msg','تم حفظ قرار مراجعة البلاغ.','success');await Promise.all([loadReports(true),counts(),loadAuditLogs(true)])}
+ catch(error){message('msg',error.message||'تعذر تحديث البلاغ.','error');b.disabled=false}
 });
 $('requestsList').addEventListener('click',async e=>{const b=e.target.closest('button[data-id]');if(!b)return;if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}const status=b.dataset.status,id=b.dataset.id;if(!confirm(status==='approved'?'الموافقة على التوثيق؟':'رفض طلب التوثيق؟'))return;b.disabled=true;try{await adminApi('review_verification',{id,status});message('msg','تم تسجيل القرار عبر خدمة الإدارة.','success');await refresh()}catch(error){message('msg',error.message||'فشل تحديث طلب التوثيق.','error');b.disabled=false}});
 db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT')showLogin()});

@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.game-actions]
 verify_jwt = true
+
+[functions.user-safety]
+verify_jwt = true
+
+[functions.account-deletion]
+verify_jwt = true

@@ -53,6 +53,7 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102150000_products_seller_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102170000_marketplace_nonfriend_conversation.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/chat-replies-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/user-safety-ci-bootstrap.sql"
 echo 'APPLY BASELINE MIGRATION: 20261014195445_friend_request_column_privileges.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261014195445_friend_request_column_privileges.sql"
 echo 'APPLY BASELINE MIGRATION: 20261014195540_friend_request_policy_consolidation.sql'
@@ -92,3 +93,19 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261113050000_trigger_definer_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261102130000_admin_action_logs_source_recovery.sql"
 echo 'SUPABASE_SQL_REGRESSION=PASS (PostgreSQL fixture; pg_cron API mocked, not a Supabase project test)'
+echo 'APPLY TEST MIGRATION: 20261114230000_user_safety_reports_and_blocks.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114230000_user_safety_reports_and_blocks.sql"
+echo 'APPLY TEST MIGRATION: 20261114235000_marketplace_account_deletion_retention.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114235000_marketplace_account_deletion_retention.sql"
+echo 'APPLY TEST MIGRATION: 20261115193000_exclude_admin_public_profiles.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115193000_exclude_admin_public_profiles.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115193000_exclude_admin_public_profiles.sql"
+echo 'APPLY TEST MIGRATION: 20261115200000_user_consent_policy_acceptance.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115200000_user_consent_policy_acceptance.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115200000_user_consent_policy_acceptance.sql"
+echo 'APPLY TEST MIGRATION: 20261115201000_content_reports_fk_indexes.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115201000_content_reports_fk_indexes.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115201000_content_reports_fk_indexes.sql"
+

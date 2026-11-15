@@ -96,6 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s index.html
+          test -s official-site/index.html
           test -s manifest.json
           test -s sw.js
           test -s icon.png
@@ -164,6 +165,19 @@ jobs:
           test -s supabase/tests/20261113040000_security_definer_api_isolation.sql
           test -s scripts/security-definer-audit.mjs
           test -s supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql
+          test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
+          test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
+          test -s supabase/functions/user-safety/index.ts
+          test -s supabase/functions/account-deletion/index.ts
+          test -s supabase/migrations/20261115200000_user_consent_policy_acceptance.sql
+          test -s supabase/tests/20261115200000_user_consent_policy_acceptance.sql
+          test -s supabase/migrations/20261115201000_content_reports_fk_indexes.sql
+          test -s supabase/tests/20261115201000_content_reports_fk_indexes.sql
+          test -s official-site/privacy.html
+          test -s official-site/terms.html
+          test -s official-site/delete-account.html
+          test -s official-site/alwaha-public-config.js
+          test -s scripts/account-deletion-audit.mjs
           test -s supabase/tests/20261113050000_trigger_definer_empty_search_path.sql
           test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
           test -s supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql
@@ -280,12 +294,24 @@ jobs:
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation
 
+      - name: Type-check authenticated user safety API
+        run: deno check --node-modules-dir=auto supabase/functions/user-safety/index.ts
+
       - name: Type-check server-authoritative game Edge Function
         run: deno check --node-modules-dir=auto supabase/functions/game-actions/index.ts
       - name: Run server-authoritative multiplayer game audit
         run: npm run audit:games
       - name: Run retention, kids-room, and backup audit
         run: npm run audit:retention-kids-vault
+
+      - name: Run user reporting, blocking and moderation audit
+        run: npm run audit:user-safety
+
+      - name: Run account deletion, terms and privacy audit
+        run: npm run audit:account-deletion
+
+      - name: Type-check authenticated account deletion API
+        run: deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts
 
       - name: Run standalone admin security audit
         run: npm run audit:admin
@@ -304,6 +330,7 @@ jobs:
           set -euo pipefail
           npm run build
           test -s dist/index.html
+          test -s dist/official/index.html
           test -s dist/manifest.json
           test -s dist/sw.js
           test -s dist/icon.png
@@ -700,12 +727,65 @@ jobs:
           retention-days: 30
 
 
+  publish-release:
+    name: Publish verified public Android APK release
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - sql-regression
+      - build-android
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download this run's verified Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Alwaha-Pro-3.0.3-build-${{ github.run_number }}
+          path: release-artifact
+      - name: Verify downloaded release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s release-artifact/Alwaha-Pro-3.0.3.apk
+          test -s release-artifact/SHA256SUMS.txt
+          (cd release-artifact && sha256sum --check SHA256SUMS.txt)
+          cp release-artifact/Alwaha-Pro-3.0.3.apk release-artifact/Alwaha-Pro-Android.apk
+          (cd release-artifact && sha256sum Alwaha-Pro-Android.apk > Alwaha-Pro-Android.apk.sha256)
+      - name: Create the public latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ env.APP_VERSION }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v$APP_VERSION"
+          APK="release-artifact/Alwaha-Pro-Android.apk"
+          CHECKSUM="release-artifact/Alwaha-Pro-Android.apk.sha256"
+          NOTES="Alwaha-Pro $APP_VERSION Android release (Build #$GITHUB_RUN_NUMBER).
+
+          Source commit: $GITHUB_SHA
+          Workflow run: $GITHUB_RUN_ID
+
+          This APK was built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums.
+
+          The AAB is reserved for store distribution and is not attached as a direct-install APK."
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" "$CHECKSUM" --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+          else
+            gh release create "$TAG" "$APK" "$CHECKSUM" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk'
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk.sha256'
+
   publish-web:
     name: Publish Alwaha-Pro 3.0.3 website
     if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android
+      - publish-release
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -744,6 +824,7 @@ jobs:
           test -s dist/icon.png
           test -s dist/alwaha-theme-system.css
           grep -Fq '<title>Alwaha-Pro 3.0.3</title>' dist/index.html
+          grep -Fq '<title>Alwaha-Pro | الموقع الرسمي</title>' dist/official/index.html
           node -e "const m=require('./dist/manifest.json'); if(m.version!=='3.0.3') process.exit(1)"
           echo 'Alwaha-Pro 3.0.3 website output verified.'
 
