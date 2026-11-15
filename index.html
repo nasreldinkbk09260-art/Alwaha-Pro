@@ -907,6 +907,7 @@ img,video,canvas{max-width:100%}
                 <span style="font-size:13px; color:#e2e8f0;"><i class="fa-solid fa-gear"></i> الضبط والخلفيات</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
+            <button id="alwaha-delete-account-button" class="btn-action" style="display:none;width:100%;margin-top:4px;background:rgba(255,130,90,.10);color:#ffc0a8;border:1px solid #ff9a7955;padding:12px;border-radius:12px;font-size:12px;" onclick="deleteMyAlwahaAccount()" aria-hidden="true"><i class="fa-solid fa-user-xmark"></i> حذف حسابي وبياناتي</button>
             <button id="alwaha-logout-button" class="btn-action" style="display:none;width:100%;margin-top:4px;background:rgba(255,0,85,.12);color:#ff8fa5;border:1px solid #ff6688;padding:12px;border-radius:12px;font-size:12px;" onclick="signOutAlwaha()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
         </div>
     </section>
@@ -944,6 +945,10 @@ img,video,canvas{max-width:100%}
             <label style="font-size:11px; color:#aaa; display:block; margin-bottom:4px;">تاريخ الميلاد</label>
             <input type="date" id="reg-birthdate" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px;">
         </div>
+        <label for="reg-terms-consent" style="display:flex;gap:9px;align-items:flex-start;color:#c7d7e7;font-size:11px;line-height:1.8;margin:10px 0 14px;">
+            <input id="reg-terms-consent" type="checkbox" required style="flex:0 0 auto;margin-top:5px;">
+            <span>أوافق على <a href="./official/terms.html" target="_blank" rel="noopener noreferrer" style="color:#8bf4ff;text-decoration:underline;">شروط الاستخدام</a> و<a href="./official/privacy.html" target="_blank" rel="noopener noreferrer" style="color:#8bf4ff;text-decoration:underline;">سياسة الخصوصية</a>، وأفهم أن سجلات السوق اللازمة للضمان قد يحتفظ بها بعد حذف الحساب وفق سياسة الاحتفاظ.</span>
+        </label>
         <button class="btn-action" style="width:100%; background:#00ff88; color:#000; padding:12px; border-radius:8px; font-size:13px;" id="profile-register-submit" onclick="handleNewUserRegistrationSubmit()">تسجيل الحساب</button>
     </div>
 
@@ -2006,6 +2011,39 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function clearLocalProfileCache() {
             ['alwaha_profile_name','alwaha_profile_phone','alwaha_profile_avatar','alwaha_profile_gender','alwaha_auth_user_id','alwaha_profile_email'].forEach(k => localStorage.removeItem(k));
+        }
+
+        let accountDeletionInFlight = false;
+        async function deleteMyAlwahaAccount() {
+            if (accountDeletionInFlight) return;
+            const user = await requireAuthenticatedUser('سجّل الدخول أولًا لحذف حسابك.');
+            if (!user) return;
+            const profile = await getCurrentProfile();
+            if (!profile || profile.is_admin === true) return triggerToastNotification('حساب الإدارة لا يُحذف من مسار المستخدمين.','error');
+            if (!window.confirm('سيُحذف حسابك ومنشوراتك وريلزك وتعليقاتك والملفات غير المرتبطة بسجلات السوق. قد تبقى لقطات الإعلان ومحادثات السوق اللازمة للضمان والاحتفاظ، مع فصل هويتك عنها. النسخ الاحتياطية المحلية على هذا الجهاز لا تُحذف تلقائيًا. هل تريد المتابعة؟')) return;
+            const password = window.prompt('للتأكد من ملكية الحساب، أدخل كلمة المرور الحالية. لن تُحفظ كلمة المرور.');
+            if (!password) return;
+            accountDeletionInFlight = true;
+            const button = document.getElementById('alwaha-delete-account-button');
+            if (button) { button.disabled = true; button.setAttribute('aria-busy','true'); }
+            try {
+                const { data, error } = await supabaseClient.functions.invoke('account-deletion', { body: { password } });
+                if (error || !data?.ok) {
+                    console.warn('[Alwaha Account Deletion] Request failed:', error || data?.error);
+                    return triggerToastNotification(data?.error || 'تعذر إكمال حذف الحساب الآن. حاول مرة أخرى.','error');
+                }
+                try { await supabaseClient.auth.signOut({scope:'local'}); } catch (_) {}
+                clearLocalProfileCache();
+                localStorage.removeItem('alwaha_last_username');
+                window.alert('تم حذف الحساب. أُبقيت سجلات السوق المطلوبة للضمان بعد فصل هويتك عنها.');
+                window.location.reload();
+            } catch (error) {
+                console.warn('[Alwaha Account Deletion] Request failed:', error);
+                triggerToastNotification('تعذر إكمال حذف الحساب الآن. تحقق من الاتصال ثم حاول مرة أخرى.','error');
+            } finally {
+                accountDeletionInFlight = false;
+                if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+            }
         }
 
         async function signOutAlwaha() {
@@ -5241,9 +5279,14 @@ function triggerAnimeAiConverterFilter() {
             const registerItem = document.getElementById('profile-register-menu-item');
             const loginItem = document.getElementById('profile-login-menu-item');
             const logoutButton = document.getElementById('alwaha-logout-button');
+            const deleteButton = document.getElementById('alwaha-delete-account-button');
+            let canDeleteAccount = false;
+            if (signedIn) { try { const profile = await getCurrentProfile(); canDeleteAccount = !!profile && profile.is_admin !== true; } catch (_) {} }
+            if (requestId !== profileAuthMenuSyncId) return;
             if (registerItem) { registerItem.style.display = signedIn ? 'none' : 'flex'; registerItem.setAttribute('aria-hidden', String(signedIn)); }
             if (loginItem) { loginItem.style.display = signedIn ? 'none' : 'flex'; loginItem.setAttribute('aria-hidden', String(signedIn)); }
             if (logoutButton) { logoutButton.style.display = signedIn ? 'block' : 'none'; logoutButton.setAttribute('aria-hidden', String(!signedIn)); }
+            if (deleteButton) { deleteButton.style.display = canDeleteAccount ? 'block' : 'none'; deleteButton.setAttribute('aria-hidden', String(!canDeleteAccount)); }
         }
                 function normalizeAlwahaPhone(raw, selectedCode, customCode) {
             const source=String(raw||'').trim(); if(!source)return '';
@@ -5268,13 +5311,14 @@ function triggerAnimeAiConverterFilter() {
                 if(!firstName)return triggerToastNotification('اكتب الاسم الأول على الأقل.','error');
                 if(!/^[a-z0-9_]{3,32}$/.test(username))return triggerToastNotification('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا إنجليزيًا أو رقمًا أو _ فقط.','error');
                 if(usernameField)usernameField.value=username;
+                if(!document.getElementById('reg-terms-consent')?.checked)return triggerToastNotification('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.','error');
                 if(!email)return triggerToastNotification('أدخل بريدًا إلكترونيًا حقيقيًا تستطيع فتحه؛ نحتاجه لتأكيد الحساب واستعادة كلمة المرور.','error');
                 if(!/^\S+@\S+\.\S+$/.test(email))return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
                 if(phoneInput&&!phone)return triggerToastNotification('مفتاح الدولة أو رقم الهاتف غير صحيح. اختر المفتاح أو اكتب الرقم كاملًا مثل +201xxxxxxxxx.','error');
                 if(password.length<8)return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','error');
                 if(password!==confirmPassword)return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
                 if(localStorage.getItem('alwaha_pending_avatar_data'))localStorage.setItem('alwaha_pending_avatar_username',username);
-                const metadata={username,first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||'',avatar_url:null,hide_email:true,hide_phone:true};
+                const metadata={username,first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||'',avatar_url:null,hide_email:true,hide_phone:true,alwaha_terms_version:'2026-11-15',alwaha_privacy_version:'2026-11-15'};
                 const {data,error}=await supabaseClient.auth.signUp({
                     email,password,
                     options:{data:metadata,emailRedirectTo:'https://nasreldinkbk09260-art.github.io/Alwaha-Pro/'}
