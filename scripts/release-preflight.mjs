@@ -15,7 +15,7 @@ const consentMigration=read('supabase/migrations/20261115200000_user_consent_pol
 const consentTest=read('supabase/tests/20261115200000_user_consent_policy_acceptance.sql');
 const accountDeletion=read('supabase/functions/account-deletion/index.ts');
 const accountDeletionAudit=read('scripts/account-deletion-audit.mjs');
-for(const marker of ['user_consents','BEFORE INSERT ON auth.users','AFTER INSERT ON auth.users','2026-11-15'])if(!consentMigration.includes(marker))fail('Signup consent migration missing: '+marker);
+for(const marker of ['user_consents','CREATE OR REPLACE FUNCTION public.handle_new_auth_user()','Alwaha terms and privacy consent are required before account creation','2026-11-15'])if(!consentMigration.includes(marker))fail('Signup consent migration missing: '+marker);
 if(!consentTest.includes('ALWAHA_USER_CONSENT_AUDIT=PASS'))fail('User consent regression test missing.');
 for(const marker of ['auth.getUser(token)','auth.signInWithPassword','admin.auth.admin.deleteUser(user.id)','storage.from(ref.bucket).copy(ref.path, destination)','storage.from(bucket).remove','profile.is_admin === true','marketplace-archive/'])if(!accountDeletion.includes(marker))fail('Secure account deletion API missing: '+marker);
 if(!accountDeletionAudit.includes('ACCOUNT_DELETION_AUDIT=PASS'))fail('Account deletion audit missing.');
