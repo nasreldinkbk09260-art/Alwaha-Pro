@@ -1365,10 +1365,8 @@ img,video,canvas{max-width:100%}
             let backdrop=document.getElementById('alwaha-theme-backdrop');
             if(!backdrop){backdrop=document.createElement('div');backdrop.id='alwaha-theme-backdrop';backdrop.setAttribute('aria-hidden','true');document.body.insertBefore(backdrop,document.body.firstChild);}
             if(backdrop.dataset.theme!==selectedTheme)backdrop.dataset.theme=selectedTheme;
-            const themeColors={default:'#10070d',oasis:'#143a43',abyss:'#062b45'};
+            // The app theme must not change browser/Android host chrome colours.
             const themeNames={default:'الواحة الأصلية المطوّرة',oasis:'الواحة الغامرة',abyss:'العالم الزجاجي'};
-            const chrome=document.querySelector('meta[name="theme-color"]');
-            if(chrome&&chrome.content!==themeColors[selectedTheme])chrome.setAttribute('content',themeColors[selectedTheme]);
             try{if(localStorage.getItem('alwaha_theme')!==selectedTheme)localStorage.setItem('alwaha_theme',selectedTheme);}catch(error){console.warn('Unable to persist theme selection:',error);}
             document.querySelectorAll('[data-theme-choice]').forEach(button=>{
                 const active=button.dataset.themeChoice===selectedTheme,pressed=active?'true':'false';

@@ -33,7 +33,11 @@ BEGIN
   END IF;
 
   INSERT INTO auth.users(id) VALUES(v_buyer),(v_seller);
-  INSERT INTO public.users(id,first_name,username) VALUES(v_buyer,'Buyer','retention_buyer'),(v_seller,'Seller','retention_seller');
+  -- auth.users AFTER INSERT trigger may already have created these profile rows.
+  INSERT INTO public.users(id,first_name,username)
+  VALUES(v_buyer,'Buyer','retention_buyer'),(v_seller,'Seller','retention_seller')
+  ON CONFLICT (id) DO UPDATE
+    SET first_name=EXCLUDED.first_name,username=EXCLUDED.username;
   INSERT INTO public.products(seller_id,title,price,category,description,seller_email,status)
     VALUES(v_seller,'Warranty snapshot product','120','test','retained snapshot','seller@example.invalid','active')
     RETURNING id INTO v_product;
