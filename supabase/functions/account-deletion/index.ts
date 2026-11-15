@@ -128,7 +128,7 @@ async function archiveMarketplaceReferences(
     const { data: existing, error: listError } = await db.storage.from(ref.bucket)
       .list('marketplace-archive', { limit: 5, search: fileName });
     if (listError) throw new Error('account_deletion_marketplace_archive_check_failed');
-    const alreadyArchived = (existing || []).some(item => item.name === fileName && (item.id || item.metadata));
+    const alreadyArchived = (existing || []).some((item: { name: string; id?: string | null; metadata?: unknown }) => item.name === fileName && (item.id || item.metadata));
     if (!alreadyArchived) {
       const { error: copyError } = await db.storage.from(ref.bucket).copy(ref.path, destination);
       if (copyError) throw new Error('account_deletion_marketplace_media_archive_failed');
