@@ -19,8 +19,7 @@ $function$;
 
 REVOKE ALL ON FUNCTION app_private.can_view_public_profile(uuid)
   FROM PUBLIC, anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION app_private.can_view_public_profile(uuid)
-  TO authenticated;
+GRANT EXECUTE ON FUNCTION app_private.can_view_public_profile(uuid) TO authenticated;
 
 DROP POLICY IF EXISTS public_profiles_select_authenticated ON public.public_profiles;
 DROP POLICY IF EXISTS public_profiles_select_non_admin_authenticated ON public.public_profiles;
