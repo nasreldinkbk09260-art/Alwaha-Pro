@@ -17,10 +17,10 @@ const accountDeletion=read('supabase/functions/account-deletion/index.ts');
 const accountDeletionAudit=read('scripts/account-deletion-audit.mjs');
 for(const marker of ['user_consents','BEFORE INSERT ON auth.users','AFTER INSERT ON auth.users','2026-11-15'])if(!consentMigration.includes(marker))fail('Signup consent migration missing: '+marker);
 if(!consentTest.includes('ALWAHA_USER_CONSENT_AUDIT=PASS'))fail('User consent regression test missing.');
-for(const marker of ['auth.getUser(token)','auth.signInWithPassword','admin.auth.admin.deleteUser(user.id)','storage.from(bucket).remove','profile.is_admin===true'])if(!accountDeletion.includes(marker))fail('Secure account deletion API missing: '+marker);
+for(const marker of ['auth.getUser(token)','auth.signInWithPassword','admin.auth.admin.deleteUser(user.id)','storage.from(ref.bucket).copy(ref.path, destination)','storage.from(bucket).remove','profile.is_admin === true','marketplace-archive/'])if(!accountDeletion.includes(marker))fail('Secure account deletion API missing: '+marker);
 if(!accountDeletionAudit.includes('ACCOUNT_DELETION_AUDIT=PASS'))fail('Account deletion audit missing.');
 for(const page of ['official-site/privacy.html','official-site/terms.html','official-site/delete-account.html','official-site/alwaha-public-config.js'])if(!fs.existsSync(page))fail('Missing public legal/delete page: '+page);
-if(!workflow.includes('npm run audit:account-deletion')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts'))fail('Account deletion checks missing from release CI.');
+
 
 for(const marker of ['app_private.can_view_public_profile','CREATE POLICY public_profiles_select_non_admin_authenticated','GRANT EXECUTE ON FUNCTION app_private.can_view_public_profile(uuid) TO authenticated'])if(!publicDirectoryPrivacyMigration.includes(marker))fail('Public directory admin privacy hardening missing: '+marker);
 if(!publicDirectoryPrivacyTest.includes('direct public_profiles RLS')||!publicDirectoryPrivacyTest.includes('user_directory')||!publicDirectoryPrivacyTest.includes('admin profile must not be visible'))fail('Public directory admin privacy regression test is incomplete.');
@@ -28,6 +28,7 @@ const userSafetySource=read('supabase/functions/user-safety/index.ts');
 for(const action of ['report_content','block_user','unblock_user','block_status','list_my_blocks'])if(!userSafetySource.includes(action))fail('User safety API action missing: '+action);
 const configText=read('supabase/config.toml');if(!configText.includes('[functions.user-safety]')||!configText.includes('verify_jwt = true'))fail('User safety Edge Function must require JWT verification.');
 const workflow=read('.github/workflows/build-apk-aab-release.yml');
+if(!workflow.includes('npm run audit:account-deletion')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts'))fail('Account deletion checks missing from release CI.');
 const polish=read('production-polish.js');
 const sw=read('sw.js');
 const buildWeb=read('scripts/build-web.mjs');
