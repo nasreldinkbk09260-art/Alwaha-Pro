@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8');
+const html=read('index.html'),api=read('supabase/functions/account-deletion/index.ts');
+const privacy=read('official-site/privacy.html'),terms=read('official-site/terms.html'),del=read('official-site/delete-account.html');
+const cfg=read('official-site/alwaha-public-config.js'),consent=read('supabase/migrations/20261115200000_user_consent_policy_acceptance.sql');
+let total=0,failed=0;const check=(name,ok)=>{total++;if(ok)console.log('PASS: '+name);else{failed++;console.error('FAIL: '+name);}};
+check('in-app deletion authenticated/admin-protected',html.includes('deleteMyAlwahaAccount')&&html.includes('profile.is_admin === true')&&html.includes("functions.invoke('account-deletion'"));
+check('external deletion verifies password and explicit confirmation',del.includes('delete-email')&&del.includes('delete-password')&&del.includes('delete-confirm')&&del.includes("functions.invoke('account-deletion'"));
+check('server deletion validates token and re-authenticates',api.includes('auth.getUser(token)')&&api.includes('auth.signInWithPassword')&&api.includes('admin.auth.admin.deleteUser(user.id)'));
+check('admin deletion blocked at API and DB trigger',api.includes('profile.is_admin===true')&&read('supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql').includes('Admin accounts cannot be deleted'));
+check('marketplace snapshot retention safeguarded',api.includes('market_conversations')&&api.includes('market_transactions')&&api.includes('listing_snapshot')&&api.includes('keep.has(bucket+'));
+check('Storage API used for owned media cleanup',api.includes('.storage.from(bucket).list')&&api.includes('.storage.from(bucket).remove'));
+check('posts/reels/comments cleanup',api.includes("from('posts').delete()")&&api.includes("from('reels').delete()")&&api.includes("from('comments').delete()"));
+check('privacy and terms cover media/UGC/safety/warranty',privacy.includes('ملفات الوسائط')&&privacy.includes('الضمان')&&terms.includes('المحتوى الذي ينشئ')&&terms.includes('الإبلاغ والحظر'));
+check('signup requires versioned legal consent',html.includes('reg-terms-consent')&&html.includes("alwaha_terms_version:'2026-11-15'")&&consent.includes('require_current_user_consent'));
+check('public config has publishable anon key only',cfg.includes('supabaseAnonKey')&&!cfg.includes('service_role')&&!cfg.includes('SERVICE_ROLE'));
+if(failed)throw new Error('ACCOUNT_DELETION_AUDIT failed '+failed+'/'+total);
+console.log('ACCOUNT_DELETION_AUDIT=PASS ('+total+' checks)');
