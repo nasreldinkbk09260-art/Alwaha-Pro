@@ -69,7 +69,7 @@ async function sha256(value: string): Promise<string> {
   return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 async function collectRows(
-  db: ReturnType<typeof createClient>,
+  db: any,
   table: string,
   columns: string,
   apply: (query: any) => any,
@@ -85,7 +85,7 @@ async function collectRows(
   }
 }
 async function listOwnedObjects(
-  db: ReturnType<typeof createClient>,
+  db: any,
   bucket: string,
   prefix: string,
   output: string[],
@@ -111,7 +111,7 @@ async function listOwnedObjects(
   }
 }
 async function archiveMarketplaceReferences(
-  db: ReturnType<typeof createClient>,
+  db: any,
   references: Map<string, StorageReference>,
 ): Promise<Map<string, string>> {
   const replacements = new Map<string, string>();
@@ -140,7 +140,7 @@ async function archiveMarketplaceReferences(
   return replacements;
 }
 async function deleteOwnedObjects(
-  db: ReturnType<typeof createClient>,
+  db: any,
   userId: string,
 ): Promise<number> {
   let removed = 0;
@@ -156,7 +156,7 @@ async function deleteOwnedObjects(
   return removed;
 }
 async function deleteCommentsForTargets(
-  db: ReturnType<typeof createClient>,
+  db: any,
   targetType: string,
   ids: string[],
 ): Promise<void> {
