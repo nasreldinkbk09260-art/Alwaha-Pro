@@ -168,6 +168,16 @@ jobs:
           test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/functions/user-safety/index.ts
+          test -s supabase/functions/account-deletion/index.ts
+          test -s supabase/migrations/20261115200000_user_consent_policy_acceptance.sql
+          test -s supabase/tests/20261115200000_user_consent_policy_acceptance.sql
+          test -s supabase/migrations/20261115201000_content_reports_fk_indexes.sql
+          test -s supabase/tests/20261115201000_content_reports_fk_indexes.sql
+          test -s official-site/privacy.html
+          test -s official-site/terms.html
+          test -s official-site/delete-account.html
+          test -s official-site/alwaha-public-config.js
+          test -s scripts/account-deletion-audit.mjs
           test -s supabase/tests/20261113050000_trigger_definer_empty_search_path.sql
           test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
           test -s supabase/tests/20261102100000_marketplace_retention_policy_and_cleanup.sql
@@ -296,6 +306,12 @@ jobs:
 
       - name: Run user reporting, blocking and moderation audit
         run: npm run audit:user-safety
+
+      - name: Run account deletion, terms and privacy audit
+        run: npm run audit:account-deletion
+
+      - name: Type-check authenticated account deletion API
+        run: deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts
 
       - name: Run standalone admin security audit
         run: npm run audit:admin

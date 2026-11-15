@@ -102,3 +102,10 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114235000_marketplace_acco
 echo 'APPLY TEST MIGRATION: 20261115193000_exclude_admin_public_profiles.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115193000_exclude_admin_public_profiles.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115193000_exclude_admin_public_profiles.sql"
+echo 'APPLY TEST MIGRATION: 20261115200000_user_consent_policy_acceptance.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115200000_user_consent_policy_acceptance.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115200000_user_consent_policy_acceptance.sql"
+echo 'APPLY TEST MIGRATION: 20261115201000_content_reports_fk_indexes.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261115201000_content_reports_fk_indexes.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261115201000_content_reports_fk_indexes.sql"
+

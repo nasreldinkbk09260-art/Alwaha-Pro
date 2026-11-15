@@ -11,6 +11,17 @@ const accountRetentionTest=read('supabase/tests/20261114235000_marketplace_accou
 if(!listingSnapshotMigration.includes('listing_snapshot')||!accountRetentionTest.includes("listing_snapshot->>'title'"))fail('Marketplace account deletion must preserve and test the pre-existing listing snapshot.');
 const publicDirectoryPrivacyMigration=read('supabase/migrations/20261115193000_exclude_admin_public_profiles.sql');
 const publicDirectoryPrivacyTest=read('supabase/tests/20261115193000_exclude_admin_public_profiles.sql');
+const consentMigration=read('supabase/migrations/20261115200000_user_consent_policy_acceptance.sql');
+const consentTest=read('supabase/tests/20261115200000_user_consent_policy_acceptance.sql');
+const accountDeletion=read('supabase/functions/account-deletion/index.ts');
+const accountDeletionAudit=read('scripts/account-deletion-audit.mjs');
+for(const marker of ['user_consents','BEFORE INSERT ON auth.users','AFTER INSERT ON auth.users','2026-11-15'])if(!consentMigration.includes(marker))fail('Signup consent migration missing: '+marker);
+if(!consentTest.includes('ALWAHA_USER_CONSENT_AUDIT=PASS'))fail('User consent regression test missing.');
+for(const marker of ['auth.getUser(token)','auth.signInWithPassword','admin.auth.admin.deleteUser(user.id)','storage.from(bucket).remove','profile.is_admin===true'])if(!accountDeletion.includes(marker))fail('Secure account deletion API missing: '+marker);
+if(!accountDeletionAudit.includes('ACCOUNT_DELETION_AUDIT=PASS'))fail('Account deletion audit missing.');
+for(const page of ['official-site/privacy.html','official-site/terms.html','official-site/delete-account.html','official-site/alwaha-public-config.js'])if(!fs.existsSync(page))fail('Missing public legal/delete page: '+page);
+if(!workflow.includes('npm run audit:account-deletion')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts'))fail('Account deletion checks missing from release CI.');
+
 for(const marker of ['app_private.can_view_public_profile','CREATE POLICY public_profiles_select_non_admin_authenticated','GRANT EXECUTE ON FUNCTION app_private.can_view_public_profile(uuid) TO authenticated'])if(!publicDirectoryPrivacyMigration.includes(marker))fail('Public directory admin privacy hardening missing: '+marker);
 if(!publicDirectoryPrivacyTest.includes('direct public_profiles RLS')||!publicDirectoryPrivacyTest.includes('user_directory')||!publicDirectoryPrivacyTest.includes('admin profile must not be visible'))fail('Public directory admin privacy regression test is incomplete.');
 const userSafetySource=read('supabase/functions/user-safety/index.ts');
