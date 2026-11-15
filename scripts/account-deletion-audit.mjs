@@ -12,7 +12,7 @@ check('marketplace snapshot retention safeguarded',api.includes('market_conversa
 check('Storage API archives retained market media without user ownership before deleting user originals',api.includes('.storage.from(ref.bucket).copy(ref.path, destination)')&&api.includes('marketplace-archive/')&&api.includes('.storage.from(bucket).remove')&&api.includes('getPublicUrl(destination)'));
 check('posts/reels/comments cleanup',api.includes("from('posts').delete()")&&api.includes("from('reels').delete()")&&api.includes("from('comments').delete()"));
 check('privacy and terms cover media/UGC/safety/warranty',privacy.includes('ملفات الوسائط')&&privacy.includes('الضمان')&&terms.includes('المحتوى الذي ينشئ')&&terms.includes('الإبلاغ والحظر'));
-check('signup requires versioned legal consent',html.includes('reg-terms-consent')&&html.includes("alwaha_terms_version:'2026-11-15'")&&consent.includes('require_current_user_consent'));
+check('signup requires versioned legal consent',html.includes('reg-terms-consent')&&html.includes("alwaha_terms_version:'2026-11-15'")&&consent.includes('public.handle_new_auth_user()')&&consent.includes('alwaha_terms_version'));
 check('public config has publishable anon key only',cfg.includes('supabaseAnonKey')&&!cfg.includes('service_role')&&!cfg.includes('SERVICE_ROLE'));
 if(failed)throw new Error('ACCOUNT_DELETION_AUDIT failed '+failed+'/'+total);
 console.log('ACCOUNT_DELETION_AUDIT=PASS ('+total+' checks)');
