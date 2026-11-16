@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alwaha-pro-v3.0.3-final-20261113-security-hardening';
+const CACHE_NAME = 'alwaha-pro-v3.0.3-username-signup-20261116';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
