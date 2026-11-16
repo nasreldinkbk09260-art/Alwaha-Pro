@@ -730,7 +730,7 @@ jobs:
             printf 'signature_verified=true\n'
           } > release/APK-SIGNING-CERTIFICATE.txt
           git archive --format=zip --prefix=Alwaha-Pro-3.0.3/ HEAD > release/Alwaha-Pro-3.0.3-Final-Source.zip
-          printf 'version=3.0.3\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON"
+          printf 'version=3.0.3\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON" > release/BUILD-INFO.txt
           (
             cd release
             sha256sum Alwaha-Pro-3.0.3.apk Alwaha-Pro-3.0.3.aab Alwaha-Pro-3.0.3-Final-Source.zip BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
