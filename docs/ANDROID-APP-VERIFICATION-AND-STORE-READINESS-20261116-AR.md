@@ -26,7 +26,7 @@
 
 الطريق المناسب:
 - إذا كان التوزيع عبر Google Play وخارجه معًا: استخدم Google Play Console لإدارة التحقق وتسجيل package names.
-- إذا بقي التوزيع خارج Google Play فقط: استخدم Android Developer Console، واختَر Full Distribution للمشروع العام واسع التوزيع. يوجد مسار Limited Distribution مجاني ومحدود إلى 20 جهازًا، لكنه لا يناسب إطلاق تطبيق اجتماعي للجمهور.
+- إذا بقي التوزيع خارج Google Play فقط: استخدم Android Developer Console، واختَر Full Distribution للمشروع العام واسع التوزيع. يوجد مسار Limited Distribution مجاني ومخصص لمجموعة صغيرة موثوقة، لكنه لا يناسب إطلاق تطبيق اجتماعي للجمهور. لا تعتمد على مسار Limited Distribution للتوزيع العام.
 - سجل الحزمة `pro.alwaha.app` مع بصمة SHA-256 لشهادة توقيع التطبيق.
 - لأن الحزمة استُخدمت بالفعل خارج المتجر، قد يطلب Android Developer Console إثبات ملكية المفتاح: يزوّدك Console بقيمة verification token؛ توضع في `adi-registration.properties` داخل assets، ثم يُبنى APK موقع بالمفتاح الخاص الحالي ويُرفع لإكمال إثبات الملكية.
 - لا تغير package name ولا تنشئ مفتاح توقيع جديدًا. فقدان مفتاح التوقيع الحالي أو استبداله قد يمنع تحديث نسخ APK المثبتة.
