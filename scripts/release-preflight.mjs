@@ -31,6 +31,7 @@ const configText=read('supabase/config.toml');if(!configText.includes('[function
 const workflow=read('.github/workflows/build-apk-aab-release.yml');
 if(!workflow.includes('npm run audit:account-deletion')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/account-deletion/index.ts'))fail('Account deletion checks missing from release CI.');
 if(!workflow.includes('--print-certs')||!workflow.includes('APK-SIGNING-CERTIFICATE.txt')||!workflow.includes('certificate_sha256='))fail('Public APK signing certificate metadata is not included in the verified build/release artifacts.');
+if(!workflow.includes('> release/BUILD-INFO.txt')||!workflow.includes('BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt'))fail('Build metadata and certificate must both be written and included in the verified checksum manifest.');
 if(!officialSite.includes('APK-SIGNING-CERTIFICATE.txt')||!officialSite.includes('Alwaha-Pro-Android.apk.sha256'))fail('Official site must expose the APK signing certificate fingerprint and checksum verification links.');
 
 const polish=read('production-polish.js');
