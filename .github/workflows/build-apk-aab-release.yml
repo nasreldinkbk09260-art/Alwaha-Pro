@@ -81,6 +81,8 @@ jobs:
 
       - name: Type-check authenticated admin API
         run: deno check --node-modules-dir=auto supabase/functions/admin-api/index.ts
+      - name: Type-check username registration and login API
+        run: deno check --node-modules-dir=auto supabase/functions/username-auth/index.ts
 
       - name: Setup Node.js
         uses: actions/setup-node@v7.1.0
