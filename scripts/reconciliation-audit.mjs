@@ -128,12 +128,13 @@ check('nav drag has a lightweight comic follower with falling/recovered hat or s
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
-// One maintained development branch; publish the public site from main only.
+// Two maintained application branches plus one short-lived, explicitly named Android verification prep branch; publish from main only.
 const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
-check('APK/AAB workflow watches only main and the single 3.0.3 development branch',
-  pushBranchBlock.includes('      - main') &&
-  pushBranchBlock.includes('      - alwaha-pro-3.0.3-dev') &&
-  (pushBranchBlock.match(/^\s+- /gm) || []).length === 2);
+const workflowBranches = pushBranchBlock.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2).trim());
+const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-3.0.3-android-verification-20261116'];
+check('APK/AAB workflow watches only main, the maintained development branch, and the isolated Android verification prep branch',
+  workflowBranches.length === expectedWorkflowBranches.length &&
+  expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
 check('public website publication is gated to main',
   workflow.includes("if: github.ref == 'refs/heads/main'") &&
   workflow.includes('name: Publish Alwaha-Pro 3.0.3 website'));
