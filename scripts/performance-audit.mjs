@@ -63,9 +63,10 @@ else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
 const maintainedBranches = pushBranchBlock.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim());
-if (maintainedBranches.length === 2 && maintainedBranches.includes("main") && maintainedBranches.includes("alwaha-pro-3.0.3-dev"))
-  pass("workflow includes only main and the consolidated development branch");
-else fail("workflow branch allowlist must contain only main and alwaha-pro-3.0.3-dev");
+const expectedBranches = ["main", "alwaha-pro-3.0.3-dev", "alwaha-pro-3.0.3-android-verification-20261116"];
+if (maintainedBranches.length === expectedBranches.length && expectedBranches.every((name) => maintainedBranches.includes(name)))
+  pass("workflow includes only main, the consolidated development branch, and the isolated Android verification preparation branch");
+else fail("workflow branch allowlist must contain only the two maintained branches and the named Android verification preparation branch");
 
 if (workflow.includes("npm run audit:performance"))
   pass("workflow invokes performance audit");
