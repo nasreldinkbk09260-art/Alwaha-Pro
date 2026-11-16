@@ -131,7 +131,7 @@ check('persisted nav position/order/hidden/stack controls exist', experience.inc
 // Two maintained application branches plus one short-lived, explicitly named Android verification prep branch; publish from main only.
 const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
 const workflowBranches = pushBranchBlock.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2).trim());
-const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-3.0.3-android-verification-20261116'];
+const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-3.0.3-android-verification-20261116','alwaha-pro-3.0.3-username-registration-20261116'];
 check('APK/AAB workflow watches only main, the maintained development branch, and the isolated Android verification prep branch',
   workflowBranches.length === expectedWorkflowBranches.length &&
   expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
