@@ -9,6 +9,7 @@ on:
       - main
       - alwaha-pro-3.0.3-dev
       - alwaha-pro-3.0.3-android-verification-20261116
+      - alwaha-pro-3.0.3-official-site-local-supabase-20261116
   workflow_dispatch:
 
 permissions:
