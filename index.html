@@ -50,15 +50,15 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
-    <script src="./production-polish.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-call-feedback.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./compatibility.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-local-vault.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-experience.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-modal-shell.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-runtime-guard.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-kids-room.js?v=3.0.3-core-20261113-security" defer></script>
-    <script src="./alwaha-smart-assistant.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./production-polish.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-call-feedback.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./compatibility.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-local-vault.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-experience.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-runtime-guard.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-kids-room.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./alwaha-smart-assistant.js?v=3.0.3-username-signup-20261116" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -463,7 +463,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <script src="./assets/chess.min.js"></script>
     <script src="./assets/qr/qrcode-generator.min.js" defer></script>
     <script src="./assets/qr/jsQR.min.js" defer></script>
-    <script src="./games.js?v=3.0.3-core-20261113-security" defer></script>
+    <script src="./games.js?v=3.0.3-username-signup-20261116" defer></script>
 
     <style id="alwaha-real-theme-palettes">
 body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){background:radial-gradient(ellipse at 14% 12%,rgba(35,183,211,.16),transparent 38%),radial-gradient(ellipse at 86% 18%,rgba(183,77,126,.17),transparent 42%),radial-gradient(ellipse at 66% 88%,rgba(54,168,157,.10),transparent 38%),linear-gradient(155deg,#06070d 0%,#100b18 52%,#080b12 100%)!important;background-attachment:fixed!important}
@@ -499,7 +499,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </style>
 <script id="alwaha-2-8-8-touch-wallpaper-script">(()=>{const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();</script>
 
-    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-core-20261113-security"></script>
+    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-username-signup-20261116"></script>
 <style id="alwaha-mobile-performance-final">
 @media (max-width: 768px), (pointer: coarse) {
   body:not(.theme-nature):not(.theme-tech):not(.theme-soft), body.theme-nature, body.theme-tech, body.theme-soft { background-attachment: scroll !important; }
@@ -590,7 +590,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
-    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-core-20261113-security">
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-username-signup-20261116">
 </head>
 <body>
 
@@ -927,11 +927,11 @@ img,video,canvas{max-width:100%}
                 </button>
             </div>
         </div>
-        <input type="text" id="reg-first-name" placeholder="الاسم الأول" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="text" id="reg-first-name" placeholder="الاسم (مطلوب)" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="text" id="reg-last-name" placeholder="اسم العائلة" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="text" id="reg-username" placeholder="اسم المستخدم للدخول (اختياري — يُنشأ تلقائيًا)" autocomplete="username" autocapitalize="none" class="keyboard-target" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid #444;padding:10px;border-radius:8px;color:#fff;font-size:12px;margin-bottom:5px;direction:ltr;text-align:left;">
-        <div style="font-size:10px;color:#8ba3ba;margin:0 0 10px;line-height:1.7;">اسم المستخدم هو اسم الدخول الذي يمكنك استخدامه بدل البريد، لكن البريد الإلكتروني الحقيقي مطلوب لتأكيد الحساب واستعادة كلمة المرور.</div>
-        <input type="email" id="reg-identifier" placeholder="البريد الإلكتروني (مطلوب للتأكيد والاستعادة)" autocomplete="email" required class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <div style="font-size:10px;color:#8ba3ba;margin:0 0 10px;line-height:1.7;">اسم المستخدم هو وسيلة الدخول الأساسية. البريد الإلكتروني والهاتف اختياريان؛ البريد الموثّق فقط يتيح استعادة كلمة المرور عبر البريد.</div>
+        <input type="email" id="reg-identifier" placeholder="البريد الإلكتروني (اختياري)" autocomplete="email" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;direction:ltr;"><select id="reg-country-code" aria-label="مفتاح الدولة" style="width:48%;min-width:0;background:#0a0a0a;border:1px solid #444;padding:10px 5px;border-radius:8px;color:#fff;font-size:11px;"><option value="+20" selected>مصر (+20)</option><option value="+966">السعودية (+966)</option><option value="+971">الإمارات (+971)</option><option value="+965">الكويت (+965)</option><option value="+974">قطر (+974)</option><option value="+973">البحرين (+973)</option><option value="+968">عمان (+968)</option><option value="+967">اليمن (+967)</option><option value="+962">الأردن (+962)</option><option value="+970">فلسطين (+970)</option><option value="+964">العراق (+964)</option><option value="+961">لبنان (+961)</option><option value="+963">سوريا (+963)</option><option value="+249">السودان (+249)</option><option value="+218">ليبيا (+218)</option><option value="+216">تونس (+216)</option><option value="+213">الجزائر (+213)</option><option value="+212">المغرب (+212)</option><option value="+222">موريتانيا (+222)</option><option value="+252">الصومال (+252)</option><option value="+253">جيبوتي (+253)</option><option value="+269">جزر القمر (+269)</option><option value="+1">الولايات المتحدة / كندا (+1)</option><option value="+44">المملكة المتحدة (+44)</option><option value="+353">أيرلندا (+353)</option><option value="+33">فرنسا (+33)</option><option value="+49">ألمانيا (+49)</option><option value="+39">إيطاليا (+39)</option><option value="+34">إسبانيا (+34)</option><option value="+351">البرتغال (+351)</option><option value="+31">هولندا (+31)</option><option value="+32">بلجيكا (+32)</option><option value="+41">سويسرا (+41)</option><option value="+43">النمسا (+43)</option><option value="+46">السويد (+46)</option><option value="+47">النرويج (+47)</option><option value="+45">الدنمارك (+45)</option><option value="+358">فنلندا (+358)</option><option value="+354">آيسلندا (+354)</option><option value="+48">بولندا (+48)</option><option value="+420">التشيك (+420)</option><option value="+421">سلوفاكيا (+421)</option><option value="+36">المجر (+36)</option><option value="+40">رومانيا (+40)</option><option value="+359">بلغاريا (+359)</option><option value="+30">اليونان (+30)</option><option value="+380">أوكرانيا (+380)</option><option value="+7">روسيا (+7)</option><option value="+90">تركيا (+90)</option><option value="+994">أذربيجان (+994)</option><option value="+995">جورجيا (+995)</option><option value="+374">أرمينيا (+374)</option><option value="+998">أوزبكستان (+998)</option><option value="+996">قيرغيزستان (+996)</option><option value="+992">طاجيكستان (+992)</option><option value="+993">تركمانستان (+993)</option><option value="+27">جنوب أفريقيا (+27)</option><option value="+234">نيجيريا (+234)</option><option value="+233">غانا (+233)</option><option value="+254">كينيا (+254)</option><option value="+251">إثيوبيا (+251)</option><option value="+256">أوغندا (+256)</option><option value="+255">تنزانيا (+255)</option><option value="+250">رواندا (+250)</option><option value="+221">السنغال (+221)</option><option value="+225">ساحل العاج (+225)</option><option value="+237">الكاميرون (+237)</option><option value="+244">أنغولا (+244)</option><option value="+258">موزمبيق (+258)</option><option value="+260">زامبيا (+260)</option><option value="+263">زيمبابوي (+263)</option><option value="+264">ناميبيا (+264)</option><option value="+267">بوتسوانا (+267)</option><option value="+261">مدغشقر (+261)</option><option value="+230">موريشيوس (+230)</option><option value="+291">إريتريا (+291)</option><option value="+211">جنوب السودان (+211)</option><option value="+224">غينيا (+224)</option><option value="+223">مالي (+223)</option><option value="+227">النيجر (+227)</option><option value="+226">بوركينا فاسو (+226)</option><option value="+229">بنين (+229)</option><option value="+228">توغو (+228)</option><option value="+241">الغابون (+241)</option><option value="+242">الكونغو (+242)</option><option value="+243">الكونغو الديمقراطية (+243)</option><option value="+265">ملاوي (+265)</option><option value="+266">ليسوتو (+266)</option><option value="+268">إسواتيني (+268)</option><option value="+232">سيراليون (+232)</option><option value="+231">ليبيريا (+231)</option><option value="+220">غامبيا (+220)</option><option value="+245">غينيا بيساو (+245)</option><option value="+238">الرأس الأخضر (+238)</option><option value="+248">سيشل (+248)</option><option value="+235">تشاد (+235)</option><option value="+236">أفريقيا الوسطى (+236)</option><option value="+240">غينيا الاستوائية (+240)</option><option value="+239">ساو تومي وبرينسيب (+239)</option><option value="+257">بوروندي (+257)</option><option value="+91">الهند (+91)</option><option value="+92">باكستان (+92)</option><option value="+880">بنغلاديش (+880)</option><option value="+94">سريلانكا (+94)</option><option value="+977">نيبال (+977)</option><option value="+975">بوتان (+975)</option><option value="+960">المالديف (+960)</option><option value="+86">الصين (+86)</option><option value="+852">هونغ كونغ (+852)</option><option value="+853">ماكاو (+853)</option><option value="+81">اليابان (+81)</option><option value="+82">كوريا الجنوبية (+82)</option><option value="+850">كوريا الشمالية (+850)</option><option value="+65">سنغافورة (+65)</option><option value="+60">ماليزيا (+60)</option><option value="+62">إندونيسيا (+62)</option><option value="+63">الفلبين (+63)</option><option value="+66">تايلاند (+66)</option><option value="+84">فيتنام (+84)</option><option value="+855">كمبوديا (+855)</option><option value="+856">لاوس (+856)</option><option value="+95">ميانمار (+95)</option><option value="+673">بروناي (+673)</option><option value="+670">تيمور الشرقية (+670)</option><option value="+886">تايوان (+886)</option><option value="+976">منغوليا (+976)</option><option value="+61">أستراليا (+61)</option><option value="+64">نيوزيلندا (+64)</option><option value="+679">فيجي (+679)</option><option value="+675">بابوا غينيا الجديدة (+675)</option><option value="+685">ساموا (+685)</option><option value="+676">تونغا (+676)</option><option value="+677">جزر سليمان (+677)</option><option value="+678">فانواتو (+678)</option><option value="+674">ناورو (+674)</option><option value="+680">بالاو (+680)</option><option value="+686">كيريباتي (+686)</option><option value="+691">ميكرونيزيا (+691)</option><option value="+692">جزر مارشال (+692)</option><option value="+688">توفالو (+688)</option><option value="+687">كاليدونيا الجديدة (+687)</option><option value="+689">بولينيزيا الفرنسية (+689)</option><option value="+52">المكسيك (+52)</option><option value="+55">البرازيل (+55)</option><option value="+54">الأرجنتين (+54)</option><option value="+56">تشيلي (+56)</option><option value="+57">كولومبيا (+57)</option><option value="+58">فنزويلا (+58)</option><option value="+51">بيرو (+51)</option><option value="+593">الإكوادور (+593)</option><option value="+591">بوليفيا (+591)</option><option value="+595">باراغواي (+595)</option><option value="+598">أوروغواي (+598)</option><option value="+592">غويانا (+592)</option><option value="+597">سورينام (+597)</option><option value="+502">غواتيمالا (+502)</option><option value="+506">كوستاريكا (+506)</option><option value="+507">بنما (+507)</option><option value="+504">هندوراس (+504)</option><option value="+503">السلفادور (+503)</option><option value="+505">نيكاراغوا (+505)</option><option value="+501">بليز (+501)</option><option value="+53">كوبا (+53)</option><option value="+509">هايتي (+509)</option><option value="+1">جمهورية الدومينيكان (+1)</option><option value="+1">جامايكا (+1)</option><option value="+1">ترينيداد وتوباغو (+1)</option><option value="+1">جزر البهاما (+1)</option><option value="+1">باربادوس (+1)</option><option value="+1">بورتوريكو (+1)</option><option value="+1">غرينادا (+1)</option><option value="+1">سانت لوسيا (+1)</option><option value="+1">أنتيغوا وبربودا (+1)</option><option value="+1">دومينيكا (+1)</option><option value="+1">سانت فنسنت (+1)</option><option value="+1">سانت كيتس ونيفيس (+1)</option><option value="+972">إسرائيل (+972)</option><option value="+98">إيران (+98)</option><option value="+93">أفغانستان (+93)</option><option value="custom">مفتاح مخصص لأي دولة…</option></select><input type="tel" id="reg-phone" placeholder="رقم الهاتف (اختياري)" autocomplete="tel-national" inputmode="tel" class="keyboard-target" style="flex:1;min-width:0;background:rgba(0,0,0,0.3);border:1px solid #444;padding:10px;border-radius:8px;color:#fff;font-size:12px;"></div>
         <input type="tel" id="reg-country-code-custom" placeholder="اكتب مفتاح الدولة مثل +974" inputmode="tel" style="display:none;width:100%;background:rgba(0,0,0,0.3);border:1px solid #444;padding:10px;border-radius:8px;color:#fff;font-size:12px;margin-bottom:10px;direction:ltr;text-align:left;">
         <input type="password" id="reg-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
@@ -1241,7 +1241,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-core-20261113-security', { scope: './', updateViaCache: 'none' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-username-signup-20261116', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
@@ -5304,41 +5304,101 @@ function triggerAnimeAiConverterFilter() {
             if(submitButton){submitButton.disabled=true;submitButton.setAttribute('aria-busy','true');}
             try {
                 if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
-                const firstName=document.getElementById('reg-first-name')?.value.trim()||'',lastName=document.getElementById('reg-last-name')?.value.trim()||'',email=document.getElementById('reg-identifier')?.value.trim().toLowerCase()||'';
-                const usernameField=document.getElementById('reg-username'),username=(usernameField?.value.trim()||generateAlwahaUsername()).toLowerCase();
-                const phoneInput=document.getElementById('reg-phone')?.value.trim()||'',countryCode=document.getElementById('reg-country-code')?.value||'+20',customCode=document.getElementById('reg-country-code-custom')?.value||'',phone=normalizeAlwahaPhone(phoneInput,countryCode,customCode);
-                const password=document.getElementById('reg-password')?.value||'',confirmPassword=document.getElementById('reg-confirm-password')?.value||'',gender=document.getElementById('reg-gender')?.value||'ذكر',birthdate=document.getElementById('reg-birthdate')?.value||'';
-                if(!firstName)return triggerToastNotification('اكتب الاسم الأول على الأقل.','error');
+                const firstName=document.getElementById('reg-first-name')?.value.trim()||'';
+                const lastName=document.getElementById('reg-last-name')?.value.trim()||'';
+                const email=document.getElementById('reg-identifier')?.value.trim().toLowerCase()||'';
+                const usernameField=document.getElementById('reg-username');
+                const username=(usernameField?.value.trim()||generateAlwahaUsername()).toLowerCase();
+                const phoneInput=document.getElementById('reg-phone')?.value.trim()||'';
+                const countryCode=document.getElementById('reg-country-code')?.value||'+20';
+                const customCode=document.getElementById('reg-country-code-custom')?.value||'';
+                const phone=normalizeAlwahaPhone(phoneInput,countryCode,customCode);
+                const password=document.getElementById('reg-password')?.value||'';
+                const confirmPassword=document.getElementById('reg-confirm-password')?.value||'';
+                const gender=document.getElementById('reg-gender')?.value||'ذكر';
+                const birthdate=document.getElementById('reg-birthdate')?.value||'';
+
+                if(!firstName)return triggerToastNotification('اكتب اسمك أولاً.','error');
                 if(!/^[a-z0-9_]{3,32}$/.test(username))return triggerToastNotification('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا إنجليزيًا أو رقمًا أو _ فقط.','error');
                 if(usernameField)usernameField.value=username;
-                if(!document.getElementById('reg-terms-consent')?.checked)return triggerToastNotification('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.','error');
-                if(!email)return triggerToastNotification('أدخل بريدًا إلكترونيًا حقيقيًا تستطيع فتحه؛ نحتاجه لتأكيد الحساب واستعادة كلمة المرور.','error');
-                if(!/^\S+@\S+\.\S+$/.test(email))return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
+                if(email&&!/^\S+@\S+\.\S+$/.test(email))return triggerToastNotification('صيغة البريد الإلكتروني غير صحيحة.','error');
                 if(phoneInput&&!phone)return triggerToastNotification('مفتاح الدولة أو رقم الهاتف غير صحيح. اختر المفتاح أو اكتب الرقم كاملًا مثل +201xxxxxxxxx.','error');
-                if(password.length<8)return triggerToastNotification('كلمة المرور يجب أن تكون 8 أحرف على الأقل.','error');
+                if(password.length<8||password.length>128)return triggerToastNotification('كلمة المرور يجب أن تكون من 8 إلى 128 حرفًا.','error');
                 if(password!==confirmPassword)return triggerToastNotification('كلمتا المرور غير متطابقتين.','error');
+                if(!document.getElementById('reg-terms-consent')?.checked)return triggerToastNotification('يجب الموافقة على شروط الاستخدام وسياسة الخصوصية قبل إنشاء الحساب.','error');
+                if(birthdate&&!/^\d{4}-\d{2}-\d{2}$/.test(birthdate))return triggerToastNotification('صيغة تاريخ الميلاد غير صحيحة.','error');
+
                 if(localStorage.getItem('alwaha_pending_avatar_data'))localStorage.setItem('alwaha_pending_avatar_username',username);
-                const metadata={username,first_name:firstName,last_name:lastName,gender,birthdate:birthdate||null,phone:phone||'',avatar_url:null,hide_email:true,hide_phone:true,alwaha_terms_version:'2026-11-15',alwaha_privacy_version:'2026-11-15'};
-                const {data,error}=await supabaseClient.auth.signUp({
-                    email,password,
-                    options:{data:metadata,emailRedirectTo:'https://nasreldinkbk09260-art.github.io/Alwaha-Pro/'}
-                });
-                if(error)return triggerToastNotification(String(error.message||'').toLowerCase().includes('duplicate key')?'اسم المستخدم مستخدم بالفعل؛ اختر اسمًا آخر.':formatAuthError(error),'error');
-                localStorage.setItem('alwaha_last_username',username);
-                if(data?.session){
-                    await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();
-                    await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
-                    triggerToastNotification('تم إنشاء الحساب والدخول! اسم المستخدم: @'+username,'success');
+                const metadata={
+                    username,first_name:firstName,last_name:lastName,gender,
+                    birthdate:birthdate||null,phone:phone||'',avatar_url:null,
+                    hide_email:true,hide_phone:true,
+                    alwaha_terms_version:'2026-11-15',
+                    alwaha_privacy_version:'2026-11-15'
+                };
+
+                if(email){
+                    const {data,error}=await supabaseClient.auth.signUp({
+                        email,password,
+                        options:{data:metadata,emailRedirectTo:'https://nasreldinkbk09260-art.github.io/Alwaha-Pro/'}
+                    });
+                    if(error)return triggerToastNotification(
+                        String(error.message||'').toLowerCase().includes('duplicate key')
+                            ?'اسم المستخدم مستخدم بالفعل؛ اختر اسمًا آخر.'
+                            :formatAuthError(error),'error'
+                    );
+                    localStorage.setItem('alwaha_last_username',username);
+                    if(data?.session){
+                        await hydrateAuthProfile(data.user);syncUiWithLoadedProfileData();
+                        await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+                        triggerToastNotification('تم إنشاء الحساب والدخول! اسم المستخدم: @'+username,'success');
+                    }else{
+                        triggerToastNotification('تم إنشاء الحساب. افتح رسالة تأكيد البريد الإلكتروني ثم ادخل باسم المستخدم @'+username+'.','success');
+                    }
                 }else{
-                    triggerToastNotification('تم إنشاء الحساب. افتح رسالة تأكيد البريد الإلكتروني أولًا، ثم ادخل باسم المستخدم @'+username+' وكلمة المرور.','success');
+                    const result=await supabaseClient.functions.invoke('username-auth',{
+                        body:{
+                            action:'register',username,password,first_name:firstName,last_name:lastName,
+                            phone:phone||'',gender,birthdate:birthdate||null,
+                            alwaha_terms_version:'2026-11-15',
+                            alwaha_privacy_version:'2026-11-15'
+                        }
+                    });
+                    if(result.error){
+                        let serverMessage='';
+                        try{
+                            const response=result.error.context;
+                            if(response&&typeof response.json==='function'){
+                                const payload=await response.json();
+                                serverMessage=String(payload?.error||'');
+                            }
+                        }catch(_){}
+                        return triggerToastNotification(serverMessage||'تعذر إنشاء الحساب الآن. تحقق من الاتصال وحاول مرة أخرى.','error');
+                    }
+                    if(!result.data?.session?.access_token||!result.data?.session?.refresh_token){
+                        return triggerToastNotification(result.data?.error||'لم تكتمل جلسة الحساب. حاول تسجيل الدخول باسم المستخدم.','error');
+                    }
+                    const {data:sessionData,error:sessionError}=await supabaseClient.auth.setSession({
+                        access_token:result.data.session.access_token,
+                        refresh_token:result.data.session.refresh_token
+                    });
+                    if(sessionError)return triggerToastNotification('تعذر فتح جلسة الحساب. جرّب تسجيل الدخول باسم المستخدم.','error');
+                    localStorage.setItem('alwaha_last_username',username);
+                    await hydrateAuthProfile(sessionData?.user||result.data.user);
+                    syncUiWithLoadedProfileData();
+                    await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
+                    triggerToastNotification('تم إنشاء الحساب والدخول بنجاح! اسم المستخدم: @'+username,'success');
                 }
+
                 localUploadedAvatarBase64='';localUploadedAvatarFile=null;
-                const passwordField=document.getElementById('reg-password'),confirmField=document.getElementById('reg-confirm-password');
-                if(passwordField)passwordField.value='';if(confirmField)confirmField.value='';
+                const passwordField=document.getElementById('reg-password');
+                const confirmField=document.getElementById('reg-confirm-password');
+                if(passwordField)passwordField.value='';
+                if(confirmField)confirmField.value='';
                 closeSubProfileView('sub-prof-register');
             } catch(error) {
                 console.warn('[Alwaha Auth] Registration failed:',error);
-                triggerToastNotification('تعذر إنشاء الحساب الآن. تحقق من الاتصال ثم حاول مرة أخرى.','error');
+                triggerToastNotification('تعذر إنشاء الحساب الآن. تحقق من الاتصال وحاول مرة أخرى.','error');
             } finally {
                 profileAuthActionInFlight=false;
                 if(submitButton){submitButton.disabled=false;submitButton.removeAttribute('aria-busy');}

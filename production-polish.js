@@ -25,46 +25,47 @@
 
     if (email) {
       email.type = 'email';
-      email.required = true;
+      email.required = false;
       email.autocomplete = 'email';
       email.inputMode = 'email';
-      email.placeholder = 'البريد الإلكتروني الحقيقي (مطلوب للتأكيد والاستعادة)';
-      email.setAttribute('aria-label', 'البريد الإلكتروني لتأكيد الحساب واستعادة كلمة المرور');
+      email.placeholder = 'البريد الإلكتروني (اختياري — للتأكيد والاستعادة)';
+      email.setAttribute('aria-label', 'البريد الإلكتروني الاختياري');
       email.spellcheck = false;
     }
 
     const intro = document.createElement('div');
     intro.className = 'alwaha-reg-intro';
-    intro.innerHTML = '<strong>أهلًا بك في الواحة 🌿</strong><span>اكتب اسمك واسم المستخدم والبريد الإلكتروني الحقيقي وكلمة المرور. البريد مطلوب لتأكيد الحساب واستعادة كلمة المرور؛ الهاتف والصورة وبقية بيانات الملف اختيارية.</span>';
+    intro.innerHTML = '<strong>أهلًا بك في الواحة 🌿</strong><span>أنشئ حسابك بالاسم واسم المستخدم وكلمة المرور وتأكيدها فقط. البريد الإلكتروني والهاتف اختياريان، ويمكن تركهما فارغين.</span>';
     form.insertBefore(intro, firstName);
-    firstName.placeholder = 'اسمك (مطلوب)';
+    firstName.placeholder = 'الاسم الظاهر (مطلوب)';
     firstName.autocomplete = 'given-name';
     firstName.setAttribute('aria-label', 'اسمك');
     firstName.required = true;
     password.placeholder = 'كلمة المرور — 8 أحرف على الأقل';
     password.autocomplete = 'new-password';
+    password.required = true;
 
-    // Keep the existing submit handler compatible while removing the extra visible field.
+    // Keep a real, separate confirmation field. Never mirror the password into it.
     if (confirm) {
-      confirm.value = '';
-      confirm.required = false;
-      confirm.style.display = 'none';
-      confirm.setAttribute('aria-hidden', 'true');
-      confirm.autocomplete = 'off';
+      confirm.required = true;
+      confirm.style.display = '';
+      confirm.removeAttribute('aria-hidden');
+      confirm.autocomplete = 'new-password';
+      confirm.placeholder = 'أعد كتابة كلمة المرور للتأكيد';
     }
 
     const details = document.createElement('details');
     details.className = 'alwaha-reg-optional';
     details.id = 'alwaha-reg-optional';
     const summary = document.createElement('summary');
-    summary.textContent = 'بيانات إضافية (اختياري) — الهاتف، الصورة، ومعلومات الملف';
+    summary.textContent = 'بيانات إضافية (اختياري) — البريد، الهاتف، الصورة، ومعلومات الملف';
     const hint = document.createElement('p');
     hint.className = 'alwaha-reg-optional-hint';
-    hint.textContent = 'البريد الإلكتروني ظاهر ومطلوب؛ يمكنك ترك الهاتف والصورة وبقية بيانات الملف فارغة.';
+    hint.textContent = 'يمكن إنشاء الحساب دون بريد أو هاتف. من لا يضيف بريدًا موثقًا لن يستطيع طلب إعادة تعيين كلمة المرور عبر البريد؛ احفظ كلمة مرورك جيدًا.';
     const fields = document.createElement('div');
     fields.className = 'alwaha-reg-optional-fields';
     details.append(summary, hint, fields);
-    for (const node of [avatar, lastName, phoneRow, customCode, gender, birthdateBlock]) {
+    for (const node of [email, avatar, lastName, phoneRow, customCode, gender, birthdateBlock]) {
       if (node && node !== button && node !== details && node.parentElement) fields.appendChild(node);
     }
     form.insertBefore(details, button);
@@ -98,9 +99,39 @@
         '#sub-prof-register .alwaha-reg-optional-hint{color:#829cb1;font-size:10px;line-height:1.7;margin:9px 0}' +
         '#sub-prof-register .alwaha-reg-optional-fields{padding-top:4px}' +
         '#sub-prof-register #reg-username{direction:ltr;text-align:left}' +
-        '#sub-prof-register #reg-avatar-preview{margin-top:8px}';
+        '#sub-prof-register #reg-avatar-preview{margin-top:8px}' +
+        '#sub-prof-register .alwaha-password-wrap{position:relative;width:100%;margin:0 0 10px}' +
+        '#sub-prof-register .alwaha-password-wrap input{width:100%;margin:0!important;padding-inline-end:76px!important}' +
+        '#sub-prof-register .alwaha-password-toggle{position:absolute;inset-inline-end:7px;top:50%;transform:translateY(-50%);border:1px solid #8bbcff55;border-radius:8px;background:#13283b;color:#bce4ff;padding:5px 9px;font:700 10px Cairo,sans-serif;min-width:54px;min-height:30px}' +
+        '#sub-prof-register .alwaha-password-toggle:focus-visible{outline:2px solid #8bf4ff;outline-offset:2px}';
       document.head.appendChild(style);
     }
+    function attachPasswordToggle(input, label) {
+      if (!input || input.dataset.visibilityToggle === '1') return;
+      const wrapper = document.createElement('div');
+      wrapper.className = 'alwaha-password-wrap';
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'alwaha-password-toggle';
+      toggle.textContent = 'إظهار';
+      toggle.setAttribute('aria-label', 'إظهار ' + label);
+      toggle.setAttribute('aria-controls', input.id);
+      toggle.setAttribute('aria-pressed', 'false');
+      toggle.addEventListener('click', () => {
+        const reveal = input.type === 'password';
+        input.type = reveal ? 'text' : 'password';
+        toggle.textContent = reveal ? 'إخفاء' : 'إظهار';
+        toggle.setAttribute('aria-label', (reveal ? 'إخفاء ' : 'إظهار ') + label);
+        toggle.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+      });
+      wrapper.appendChild(toggle);
+      input.dataset.visibilityToggle = '1';
+    }
+    attachPasswordToggle(password, 'كلمة المرور');
+    attachPasswordToggle(confirm, 'تأكيد كلمة المرور');
+
     form.dataset.polishApplied = '1';
   }
 
@@ -109,12 +140,10 @@
   if (typeof nativeRegister === 'function') {
     window.handleNewUserRegistrationSubmit = async function (...args) {
       if (registrationInFlight) return undefined;
-      const confirm = $('reg-confirm-password');
       const form = $('sub-prof-register');
       const button = form && form.querySelector('button[onclick="handleNewUserRegistrationSubmit()"]');
       const originalText = button ? button.textContent : '';
       registrationInFlight = true;
-      if (confirm && !confirm.value) confirm.value = $('reg-password')?.value || '';
       if (button) {
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
@@ -127,7 +156,6 @@
         if (typeof window.triggerToastNotification === 'function') window.triggerToastNotification('تعذر إكمال التسجيل الآن. تحقق من الاتصال وحاول مرة أخرى.', 'error');
         return undefined;
       } finally {
-        if (confirm) confirm.value = '';
         if (button) {
           button.disabled = false;
           button.removeAttribute('aria-busy');

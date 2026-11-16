@@ -45,7 +45,85 @@ Deno.serve(async (req: Request) => {
   const client = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   if (action === 'register') {
-    return json({ error: 'إنشاء الحساب يتطلب بريدًا إلكترونيًا حقيقيًا قابلًا للاستلام. استخدم نموذج التسجيل في التطبيق لتأكيد البريد.' }, 400);
+    const firstName = String(body.first_name || '').trim().slice(0, 80);
+    const lastName = String(body.last_name || '').trim().slice(0, 80);
+    const phone = String(body.phone || '').trim();
+    const gender = String(body.gender || 'ذكر');
+    const birthdate = body.birthdate == null ? null : String(body.birthdate);
+    const termsVersion = String(body.alwaha_terms_version || '');
+    const privacyVersion = String(body.alwaha_privacy_version || '');
+
+    if (!firstName) return json({ error: 'اكتب الاسم أولًا.' }, 400);
+    if (password.length < 8 || password.length > 128) return json({ error: 'كلمة المرور يجب أن تكون من 8 إلى 128 حرفًا.' }, 400);
+    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) return json({ error: 'رقم الهاتف غير صحيح.' }, 400);
+    if (birthdate && !/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) return json({ error: 'تاريخ الميلاد غير صحيح.' }, 400);
+    if (termsVersion !== '2026-11-15' || privacyVersion !== '2026-11-15') {
+      return json({ error: 'يجب الموافقة على أحدث شروط الاستخدام وسياسة الخصوصية.' }, 400);
+    }
+
+    const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown-client';
+    const ip = forwarded.split(',')[0].trim().slice(0, 120);
+    const ipHash = await sha256(ip + ':register');
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await admin.from('username_signup_attempts')
+      .select('id', { count: 'exact', head: true }).eq('ip_hash', ipHash).gte('created_at', since);
+    if (countError) return json({ error: 'تعذر التحقق من محاولات التسجيل؛ حاول لاحقًا.' }, 503);
+    if ((count || 0) >= 8) return json({ error: 'تم تجاوز عدد محاولات إنشاء الحساب من هذا الاتصال. حاول بعد ساعة.' }, 429);
+    const { error: attemptError } = await admin.from('username_signup_attempts').insert({ ip_hash: ipHash });
+    if (attemptError) return json({ error: 'تعذر بدء التسجيل الآن.' }, 503);
+
+    const { data: existing, error: lookupError } = await admin.from('users')
+      .select('id').eq('username', username).limit(1).maybeSingle();
+    if (lookupError) return json({ error: 'تعذر التحقق من اسم المستخدم الآن.' }, 503);
+    if (existing) return json({ error: 'اسم المستخدم مستخدم بالفعل. غيّره ثم حاول مرة أخرى.' }, 409);
+
+    const metadata = {
+      username,
+      first_name: firstName,
+      last_name: lastName,
+      gender: gender === 'أنثى' ? 'أنثى' : 'ذكر',
+      birthdate: birthdate || null,
+      phone: phone || '',
+      avatar_url: null,
+      hide_email: true,
+      hide_phone: true,
+      alwaha_terms_version: termsVersion,
+      alwaha_privacy_version: privacyVersion,
+    };
+
+    // Supabase password identities require email or phone. This reserved .invalid
+    // address is an internal, non-deliverable Auth identifier, never a contact email.
+    const internalAuthEmail = 'user.' + crypto.randomUUID() + '@auth.alwaha.invalid';
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email: internalAuthEmail,
+      password,
+      email_confirm: true,
+      user_metadata: metadata,
+    });
+    if (createError || !created.user) {
+      const message = String(createError?.message || '').toLowerCase();
+      if (message.includes('duplicate key') || message.includes('users_username_lower_unique_idx')) {
+        return json({ error: 'اسم المستخدم مستخدم بالفعل. غيّره ثم حاول مرة أخرى.' }, 409);
+      }
+      console.warn('Username-only account creation failed:', createError?.code || 'auth_create_failed');
+      return json({ error: 'تعذر إنشاء الحساب الآن. حاول مرة أخرى بعد قليل.' }, 503);
+    }
+
+    const { data: signedIn, error: signInError } = await client.auth.signInWithPassword({
+      email: internalAuthEmail,
+      password,
+    });
+    if (signInError || !signedIn.session) {
+      try {
+        await admin.auth.admin.deleteUser(created.user.id);
+      } catch (_) {
+        console.error('Failed to roll back an incomplete username-only signup.');
+      }
+      console.warn('Username-only session creation failed:', signInError?.code || 'session_missing');
+      return json({ error: 'تعذر فتح جلسة الحساب. حاول إنشاء الحساب مرة أخرى.' }, 503);
+    }
+
+    return json({ session: signedIn.session, user: signedIn.user, username });
   }
 
   if (action === 'login') {
