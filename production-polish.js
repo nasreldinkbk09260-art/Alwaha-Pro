@@ -23,9 +23,19 @@
     const phoneRow = countryCode?.parentElement || null;
     const birthdateBlock = birthdate?.parentElement || null;
 
+    if (email) {
+      email.type = 'email';
+      email.required = true;
+      email.autocomplete = 'email';
+      email.inputMode = 'email';
+      email.placeholder = 'البريد الإلكتروني الحقيقي (مطلوب للتأكيد والاستعادة)';
+      email.setAttribute('aria-label', 'البريد الإلكتروني لتأكيد الحساب واستعادة كلمة المرور');
+      email.spellcheck = false;
+    }
+
     const intro = document.createElement('div');
     intro.className = 'alwaha-reg-intro';
-    intro.innerHTML = '<strong>أهلًا بك في الواحة 🌿</strong><span>اكتب اسمك وكلمة المرور فقط؛ اسم المستخدم جاهز تلقائيًا ويمكنك تغييره. البريد والهاتف اختياريان.</span>';
+    intro.innerHTML = '<strong>أهلًا بك في الواحة 🌿</strong><span>اكتب اسمك واسم المستخدم والبريد الإلكتروني الحقيقي وكلمة المرور. البريد مطلوب لتأكيد الحساب واستعادة كلمة المرور؛ الهاتف والصورة وبقية بيانات الملف اختيارية.</span>';
     form.insertBefore(intro, firstName);
     firstName.placeholder = 'اسمك (مطلوب)';
     firstName.autocomplete = 'given-name';
@@ -47,14 +57,14 @@
     details.className = 'alwaha-reg-optional';
     details.id = 'alwaha-reg-optional';
     const summary = document.createElement('summary');
-    summary.textContent = 'بيانات إضافية (اختياري) — البريد، الهاتف، الصورة، معلومات الملف';
+    summary.textContent = 'بيانات إضافية (اختياري) — الهاتف، الصورة، ومعلومات الملف';
     const hint = document.createElement('p');
     hint.className = 'alwaha-reg-optional-hint';
-    hint.textContent = 'يمكنك ترك هذه البيانات فارغة؛ لا نحتاج البريد أو الهاتف لإنشاء الحساب.';
+    hint.textContent = 'البريد الإلكتروني ظاهر ومطلوب؛ يمكنك ترك الهاتف والصورة وبقية بيانات الملف فارغة.';
     const fields = document.createElement('div');
     fields.className = 'alwaha-reg-optional-fields';
     details.append(summary, hint, fields);
-    for (const node of [avatar, lastName, email, phoneRow, customCode, gender, birthdateBlock]) {
+    for (const node of [avatar, lastName, phoneRow, customCode, gender, birthdateBlock]) {
       if (node && node !== button && node !== details && node.parentElement) fields.appendChild(node);
     }
     form.insertBefore(details, button);
