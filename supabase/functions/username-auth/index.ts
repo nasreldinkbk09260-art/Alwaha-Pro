@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
 
     const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown-client';
     const ip = forwarded.split(',')[0].trim().slice(0, 120);
-    const ipHash = await sha256(\`\${ip}:register\`);
+    const ipHash = await sha256(ip + ':register');
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count, error: countError } = await admin.from('username_signup_attempts')
       .select('id', { count: 'exact', head: true }).eq('ip_hash', ipHash).gte('created_at', since);
@@ -93,7 +93,7 @@ Deno.serve(async (req: Request) => {
 
     // Supabase password identities require email or phone. This reserved .invalid
     // address is an internal, non-deliverable Auth identifier, never a contact email.
-    const internalAuthEmail = \`user.\${crypto.randomUUID()}@auth.alwaha.invalid\`;
+    const internalAuthEmail = 'user.' + crypto.randomUUID() + '@auth.alwaha.invalid';
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email: internalAuthEmail,
       password,
