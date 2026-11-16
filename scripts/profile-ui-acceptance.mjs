@@ -2,6 +2,7 @@ import fs from 'node:fs';
 
 const read = (file) => fs.readFileSync(file, 'utf8');
 const html = read('index.html');
+const polish = read('production-polish.js');
 const auth = read('supabase/functions/username-auth/index.ts');
 const modal = read('alwaha-modal-shell.js');
 const securityMigration = read('supabase/migrations/20261110001000_profile_account_security_hardening.sql');
