@@ -33,10 +33,20 @@
       email.spellcheck = false;
     }
 
+    if (avatar) {
+      avatar.classList.add('alwaha-reg-avatar');
+      if (!avatar.querySelector('.alwaha-reg-avatar-label')) {
+        const avatarLabel = document.createElement('span');
+        avatarLabel.className = 'alwaha-reg-avatar-label';
+        avatarLabel.textContent = 'الصورة الشخصية (اختياري)';
+        avatar.appendChild(avatarLabel);
+      }
+      form.insertBefore(avatar, firstName);
+    }
     const intro = document.createElement('div');
     intro.className = 'alwaha-reg-intro';
     intro.innerHTML = '<strong>أهلًا بك في الواحة 🌿</strong><span>أنشئ حسابك بالاسم واسم المستخدم وكلمة المرور وتأكيدها فقط. البريد الإلكتروني والهاتف اختياريان، ويمكن تركهما فارغين.</span>';
-    form.insertBefore(intro, firstName);
+    form.insertBefore(intro, firstName.nextSibling);
     firstName.placeholder = 'الاسم الظاهر (مطلوب)';
     firstName.autocomplete = 'given-name';
     firstName.setAttribute('aria-label', 'اسمك');
@@ -58,21 +68,23 @@
     details.className = 'alwaha-reg-optional';
     details.id = 'alwaha-reg-optional';
     const summary = document.createElement('summary');
-    summary.textContent = 'بيانات إضافية (اختياري) — البريد، الهاتف، الصورة، ومعلومات الملف';
+    summary.textContent = 'بيانات إضافية (اختياري) — البريد، الهاتف، وبقية معلومات الملف';
     const hint = document.createElement('p');
     hint.className = 'alwaha-reg-optional-hint';
     hint.textContent = 'يمكن إنشاء الحساب دون بريد أو هاتف. من لا يضيف بريدًا موثقًا لن يستطيع طلب إعادة تعيين كلمة المرور عبر البريد؛ احفظ كلمة مرورك جيدًا.';
     const fields = document.createElement('div');
     fields.className = 'alwaha-reg-optional-fields';
     details.append(summary, hint, fields);
-    for (const node of [email, avatar, lastName, phoneRow, customCode, gender, birthdateBlock]) {
+    for (const node of [email, lastName, phoneRow, customCode, gender, birthdateBlock]) {
       if (node && node !== button && node !== details && node.parentElement) fields.appendChild(node);
     }
     form.insertBefore(details, button);
     // Keep the login handle visible beside the name and password; suggest one automatically.
     form.insertBefore(username, password);
     if (usernameHelp) form.insertBefore(usernameHelp, password);
-    username.placeholder = 'اسم المستخدم (جاهز تلقائيًا ويمكنك تغييره)';
+    username.placeholder = 'اسم المستخدم (مطلوب — جاهز تلقائيًا ويمكنك تغييره)';
+    username.required = true;
+    username.setAttribute('aria-required', 'true');
     username.autocomplete = 'username';
     username.autocapitalize = 'none';
     username.spellcheck = false;
@@ -98,6 +110,8 @@
         '#sub-prof-register .alwaha-reg-optional[open] summary:after{content:"－"}' +
         '#sub-prof-register .alwaha-reg-optional-hint{color:#829cb1;font-size:10px;line-height:1.7;margin:9px 0}' +
         '#sub-prof-register .alwaha-reg-optional-fields{padding-top:4px}' +
+        '#sub-prof-register .alwaha-reg-avatar{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 0 12px}' +
+        '#sub-prof-register .alwaha-reg-avatar-label{color:#8fa9bc;font-size:10px}' +
         '#sub-prof-register #reg-username{direction:ltr;text-align:left}' +
         '#sub-prof-register #reg-avatar-preview{margin-top:8px}' +
         '#sub-prof-register .alwaha-password-wrap{position:relative;width:100%;margin:0 0 10px}' +
@@ -268,7 +282,17 @@
     if (note) note.textContent = 'اختر بين ملفي Saffron Tide وMarimba Bloom الكاملين المحفوظين محلياً ضمن التطبيق. زر التجربة يشغّل الملف المختار حتى نهايته؛ وتكرار التشغيل يقتصر على رنين المكالمة الواردة. تنبيه النظام عند إغلاق التطبيق بالكامل يحتاج إشعارات أصلية.';
     if (button) button.innerHTML = '<i class="fa-solid fa-music"></i> تجربة النغمة الفضائية';
   }
+  function loadProfileEditorModule() {
+    if (document.querySelector('script[data-alwaha-profile-editor]')) return;
+    const script = document.createElement('script');
+    script.src = './alwaha-profile-editor.js?v=3.0.3-account-password-change-20261117';
+    script.dataset.alwahaProfileEditor = '1';
+    script.onload = () => window.AlwahaProfileEditor?.initialize?.();
+    script.onerror = () => console.warn('[Alwaha Profile] Could not load the local profile editor module.');
+    document.head.appendChild(script);
+  }
   enhanceRegistrationForm();
+  loadProfileEditorModule();
   polishSoundDescription();
 
   // Local audio assets are intentionally not precached; the selected track loads only on demand.
