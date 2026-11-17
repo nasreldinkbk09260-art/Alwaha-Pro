@@ -70,6 +70,8 @@ const checks = [
   ['profile update never accepts admin, verification, identifier or contact-visibility fields', !profileUpdate.includes("'is_admin'") && !profileUpdate.includes("'is_verified'") && !profileUpdate.includes("'identifier'") && !profileUpdate.includes("'hide_email'") && !profileUpdate.includes("'hide_phone'")],
   ['legacy profile-name and verification-avatar actions now use the same protected update endpoint', profileEditor.includes('window.savePrivacyProfileUpdates = async function') && profileEditor.includes('window.handleVerificationAvatarPick = async function')],
   ['profile editor module is built and precached; server function requires JWT and CI type-checks it', read('scripts/build-web.mjs').includes('alwaha-profile-editor.js') && read('sw.js').includes("'./alwaha-profile-editor.js'") && read('supabase/config.toml').includes('[functions.profile-update]\nverify_jwt = true') && read('.github/workflows/build-apk-aab-release.yml').includes('deno check --node-modules-dir=auto supabase/functions/profile-update/index.ts')]
+,
+  ['gender remains genuinely optional during signup and profile editing; placeholder email domains are rejected', html.includes('<option value="" selected>— النوع اختياري —</option>') && html.includes("const gender=document.getElementById('reg-gender')?.value||'';") && profileEditor.includes('value="">— النوع اختياري —</option>') && profileUpdate.includes('update.gender = value || null') && profileUpdate.includes("email.endsWith('.invalid')")]
 ];
 
 let failed = 0;
