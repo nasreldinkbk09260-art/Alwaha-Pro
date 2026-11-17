@@ -63,7 +63,7 @@ else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
 const maintainedBranches = pushBranchBlock.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim());
-const expectedBranches = ["main", "alwaha-pro-3.0.3-dev", "alwaha-pro-3.0.3-android-verification-20261116", "alwaha-pro-3.0.3-username-registration-20261116", "alwaha-pro-3.0.3-account-deletion-username-20261117", "alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117"];
+const expectedBranches = ["main", "alwaha-pro-3.0.3-dev", "alwaha-pro-3.0.3-android-verification-20261116", "alwaha-pro-3.0.3-username-registration-20261116", "alwaha-pro-3.0.3-account-deletion-username-20261117", "alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117", "alwaha-pro-3.0.3-account-password-change-20261117"];
 if (maintainedBranches.length === expectedBranches.length && expectedBranches.every((name) => maintainedBranches.includes(name)))
   pass("workflow includes main and only explicitly maintained validation/preparation branches");
 else fail("workflow branch allowlist contains an unexpected, missing, or unapproved branch");
