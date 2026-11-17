@@ -15,6 +15,7 @@ on:
       - alwaha-pro-3.0.3-account-password-change-20261117
       - alwaha-pro-3.0.3-home-feed-cache-repair-20261117
       - alwaha-pro-3.0.3-profile-onboarding-editor-20261117
+      - alwaha-pro-3.0.3-child-safety-hardening-20261117
   workflow_dispatch:
 
 permissions:
