@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       if (dupError) throw new Error('report_duplicate_check_failed');
       if (openReport) return json({ok:true,duplicate:true,message:'يوجد بلاغ مفتوح عن هذا المحتوى بالفعل.'});
       const { error: insertError } = await db.from('content_reports').insert({
-        reporter_id:user.id,target_type:targetType,target_id:targetId,target_user_id:ownerId,reason,details,status:'pending'
+        reporter_id:user.id,target_type:targetType,target_id:targetId,target_user_id:ownerId,reason,details,status:'pending',priority:reason==='child_safety'?100:0
       });
       if (insertError) {
         if (insertError.code==='23505') return json({ok:true,duplicate:true,message:'يوجد بلاغ مفتوح عن هذا المحتوى بالفعل.'});
