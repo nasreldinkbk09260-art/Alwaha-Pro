@@ -222,8 +222,8 @@ Deno.serve(async (req: Request) => {
       result = { requests: page.slice(0, limit), offset, limit, hasMore: page.length > limit };
     } else if (action === 'list_content_reports') {
       let q = server.from('content_reports')
-        .select('id,reporter_id,target_type,target_id,target_user_id,reason,details,status,reviewed_by,reviewed_at,created_at')
-        .order('created_at', { ascending: false });
+        .select('id,reporter_id,target_type,target_id,target_user_id,reason,details,status,priority,reviewed_by,reviewed_at,created_at')
+        .order('priority', { ascending: false }).order('created_at', { ascending: true });
       if (requestStatus !== 'all') q = q.eq('status', requestStatus);
       const { data, error } = await q.range(offset, offset + limit);
       if (error) throw new Error('content_reports_query_failed');
