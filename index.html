@@ -2528,16 +2528,16 @@ async function toggleInternalNotificationCenter() {
                         throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
                     }
                     session = result.data.session;
-                } else if (profile.username) {
-                    const result = await supabaseClient.functions.invoke('username-auth', {
-                        body: { action: 'login', username: String(profile.username).trim().toLowerCase(), password: currentPassword }
-                    });
+                } else if (user.phone) {
+                    const result = await supabaseClient.auth.signInWithPassword({ phone: user.phone, password: currentPassword });
                     if (result.error || !result.data?.session || result.data?.user?.id !== user.id) {
                         throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
                     }
                     session = result.data.session;
-                } else if (user.phone) {
-                    const result = await supabaseClient.auth.signInWithPassword({ phone: user.phone, password: currentPassword });
+                } else if (profile.username) {
+                    const result = await supabaseClient.functions.invoke('username-auth', {
+                        body: { action: 'login', username: String(profile.username).trim().toLowerCase(), password: currentPassword }
+                    });
                     if (result.error || !result.data?.session || result.data?.user?.id !== user.id) {
                         throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
                     }
