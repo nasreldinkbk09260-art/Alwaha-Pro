@@ -50,15 +50,15 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
 
     <!-- Supabase JS: تحميل متزامن حتى تكون Realtime وWebRTC جاهزتين قبل محرك التطبيق -->
     <script src="./assets/vendor/supabase/supabase.js"></script>
-    <script src="./production-polish.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-call-feedback.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./compatibility.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-local-vault.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-experience.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-modal-shell.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-runtime-guard.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-kids-room.js?v=3.0.3-username-signup-20261116" defer></script>
-    <script src="./alwaha-smart-assistant.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./production-polish.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-call-feedback.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./compatibility.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-local-vault.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-experience.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-modal-shell.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-runtime-guard.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-kids-room.js?v=3.0.3-account-password-change-20261117" defer></script>
+    <script src="./alwaha-smart-assistant.js?v=3.0.3-account-password-change-20261117" defer></script>
     <style>
         /* إضافات الإصدار المطوّر */
         .btn-glow-cyan {
@@ -463,7 +463,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opac
     <script src="./assets/chess.min.js"></script>
     <script src="./assets/qr/qrcode-generator.min.js" defer></script>
     <script src="./assets/qr/jsQR.min.js" defer></script>
-    <script src="./games.js?v=3.0.3-username-signup-20261116" defer></script>
+    <script src="./games.js?v=3.0.3-account-password-change-20261117" defer></script>
 
     <style id="alwaha-real-theme-palettes">
 body:not(.theme-oasis):not(.theme-abyss):not(.theme-nature):not(.theme-tech):not(.theme-soft){background:radial-gradient(ellipse at 14% 12%,rgba(35,183,211,.16),transparent 38%),radial-gradient(ellipse at 86% 18%,rgba(183,77,126,.17),transparent 42%),radial-gradient(ellipse at 66% 88%,rgba(54,168,157,.10),transparent 38%),linear-gradient(155deg,#06070d 0%,#100b18 52%,#080b12 100%)!important;background-attachment:fixed!important}
@@ -499,7 +499,7 @@ body>*:not(#alwaha-touch-atmosphere){position:relative;z-index:1}
 </style>
 <script id="alwaha-2-8-8-touch-wallpaper-script">(()=>{const start=()=>{if(!document.body||document.getElementById('alwaha-touch-atmosphere'))return;const layer=document.createElement('div');layer.id='alwaha-touch-atmosphere';layer.setAttribute('aria-hidden','true');layer.innerHTML='<div class="alwaha-wave"></div><div class="alwaha-wave wave-two"></div>';document.body.prepend(layer);};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();})();</script>
 
-    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-username-signup-20261116"></script>
+    <script defer src="./alwaha-native-back-handler.js?v=3.0.3-account-password-change-20261117"></script>
 <style id="alwaha-mobile-performance-final">
 @media (max-width: 768px), (pointer: coarse) {
   body:not(.theme-nature):not(.theme-tech):not(.theme-soft), body.theme-nature, body.theme-tech, body.theme-soft { background-attachment: scroll !important; }
@@ -590,7 +590,7 @@ img,video,canvas{max-width:100%}
 .alwaha-notification-badge{position:absolute;top:-5px;right:-7px;min-width:17px;height:17px;padding:0 4px;border-radius:12px;background:#ff315d;color:#fff;font-size:9px;line-height:17px;font-weight:900;text-align:center;box-shadow:0 1px 5px #0009}
 .notification-nav-item{position:relative}
 </style>
-    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-username-signup-20261116">
+    <link rel="stylesheet" href="./alwaha-theme-system.css?v=3.0.3-account-password-change-20261117">
 </head>
 <body>
 
@@ -894,6 +894,10 @@ img,video,canvas{max-width:100%}
                 <span style="font-size:13px; color:#ffd700;"><i class="fa-solid fa-shield-halved"></i> استعادة كلمة المرور بالبريد</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
+            <div id="alwaha-password-change-menu-item" class="profile-menu-btn" style="background:rgba(139,244,255,.06); padding:12px; border-radius:8px; display:none; justify-content:space-between; align-items:center; border:1px solid #8bf4ff22;" onclick="openSubProfileView('sub-prof-password-change')" aria-hidden="true">
+                <span style="font-size:13px; color:#8bf4ff;"><i class="fa-solid fa-key"></i> تغيير كلمة المرور من داخل الحساب</span>
+                <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
+            </div>
             <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(139,244,255,.06);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff22;color:#8bf4ff;font:inherit;text-align:right;" onclick="showAlwahaPrivacyNotice()"><span style="font-size:13px;"><i class="fa-solid fa-shield-halved"></i> معلومات الخصوصية والأذونات</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-privacy')">
                 <span style="font-size:13px; color:#ff00ff;"><i class="fa-solid fa-user-gear"></i> إعدادات الخصوصية والاسم</span>
@@ -1011,6 +1015,31 @@ img,video,canvas{max-width:100%}
         <p id="recovery-native-notice" style="display:none;color:#ffd98a;font-size:11px;line-height:1.8;margin:0 0 12px;">سنرسل رابطًا آمنًا إلى بريدك. افتحه في المتصفح لتعيين كلمة مرور جديدة، ثم عُد إلى التطبيق وسجّل الدخول.</p>
         <p id="recovery-web-notice" style="color:#a8bacd;font-size:10px;line-height:1.7;margin:0 0 12px;">على نسخة الويب، سنرسل رابطًا إلى بريدك لفتح نموذج تعيين كلمة مرور جديدة.</p>
         <button id="recovery-submit-button" class="btn-action" style="width:100%; background:#ffd700; color:#000; padding:12px; border-radius:8px; font-size:13px;" onclick="sendPasswordRecoveryEmail()">إرسال رابط استعادة كلمة المرور</button>
+    </div>
+
+    <div id="sub-prof-password-change" class="sub-profile-view-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="color:#8bf4ff; font-size:16px; margin:0;">تغيير كلمة المرور</h3>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-change')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p style="color:#a8bacd;font-size:11px;line-height:1.8;margin:0 0 12px;">أثبت ملكية الحساب بكلمة المرور الحالية، ثم أدخل كلمة جديدة وأكدها. يعمل هذا الخيار لحسابات اسم المستخدم حتى عندما لا يوجد بريد إلكتروني.</p>
+        <label for="account-current-password" style="display:block;color:#c8d7e6;font-size:11px;margin-bottom:5px;">كلمة المرور الحالية</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input id="account-current-password" type="password" required autocomplete="current-password" class="keyboard-target" style="flex:1;min-width:0;width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;" placeholder="كلمة المرور الحالية">
+            <button type="button" onclick="toggleAccountPasswordVisibility('account-current-password',this,'كلمة المرور الحالية')" aria-controls="account-current-password" aria-pressed="false" style="padding:8px 10px;border:1px solid #8bf4ff55;border-radius:8px;background:#13283b;color:#bce4ff;font-size:11px;">إظهار</button>
+        </div>
+        <label for="account-new-password" style="display:block;color:#c8d7e6;font-size:11px;margin-bottom:5px;">كلمة المرور الجديدة</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+            <input id="account-new-password" type="password" required autocomplete="new-password" class="keyboard-target" style="flex:1;min-width:0;width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;" placeholder="8 أحرف على الأقل">
+            <button type="button" onclick="toggleAccountPasswordVisibility('account-new-password',this,'كلمة المرور الجديدة')" aria-controls="account-new-password" aria-pressed="false" style="padding:8px 10px;border:1px solid #8bf4ff55;border-radius:8px;background:#13283b;color:#bce4ff;font-size:11px;">إظهار</button>
+        </div>
+        <label for="account-confirm-password" style="display:block;color:#c8d7e6;font-size:11px;margin-bottom:5px;">تأكيد كلمة المرور الجديدة</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;">
+            <input id="account-confirm-password" type="password" required autocomplete="new-password" class="keyboard-target" style="flex:1;min-width:0;width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;" placeholder="أعد كتابة كلمة المرور الجديدة">
+            <button type="button" onclick="toggleAccountPasswordVisibility('account-confirm-password',this,'تأكيد كلمة المرور الجديدة')" aria-controls="account-confirm-password" aria-pressed="false" style="padding:8px 10px;border:1px solid #8bf4ff55;border-radius:8px;background:#13283b;color:#bce4ff;font-size:11px;">إظهار</button>
+        </div>
+        <p style="color:#f1d8a4;font-size:10px;line-height:1.7;margin:0 0 12px;">احفظ كلمة المرور الجديدة في مكان آمن. الحساب الذي لا يملك بريدًا حقيقيًا موثّقًا لا يستطيع استخدام الاستعادة بالبريد عند نسيانها.</p>
+        <button id="account-password-change-submit" type="button" class="btn-action" style="width:100%;background:#8bf4ff;color:#071525;padding:12px;border-radius:8px;font-size:13px;" onclick="submitAccountPasswordChange()">التحقق وحفظ كلمة المرور</button>
     </div>
 
     <div id="sub-prof-password-reset" class="sub-profile-view-box">
@@ -1241,7 +1270,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-username-signup-20261116', { scope: './', updateViaCache: 'none' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.3-account-password-change-20261117', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
@@ -1326,6 +1355,7 @@ img,video,canvas{max-width:100%}
         let profileAuthMenuSyncId = 0;
         let passwordRecoverySessionActive = false;
         let passwordRecoveryUpdateInFlight = false;
+        let accountPasswordChangeInFlight = false;
         let marketMultiFilesArray = [];
         let editingMarketProductId = null;
         let marketEditingExistingImageUrls = [];
@@ -2449,6 +2479,101 @@ async function toggleInternalNotificationCenter() {
             } finally {
                 passwordRecoveryUpdateInFlight = false;
                 if (button) { button.disabled = false; button.removeAttribute('aria-busy'); }
+            }
+        }
+
+        function toggleAccountPasswordVisibility(inputId, button, label) {
+            const input = document.getElementById(inputId);
+            if (!input || !button) return;
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            button.textContent = reveal ? 'إخفاء' : 'إظهار';
+            button.setAttribute('aria-label', (reveal ? 'إخفاء ' : 'إظهار ') + label);
+            button.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+        }
+
+        async function submitAccountPasswordChange() {
+            if (accountPasswordChangeInFlight) return;
+            accountPasswordChangeInFlight = true;
+            const button = document.getElementById('account-password-change-submit');
+            const originalText = button?.textContent || 'التحقق وحفظ كلمة المرور';
+            const currentField = document.getElementById('account-current-password');
+            const newField = document.getElementById('account-new-password');
+            const confirmField = document.getElementById('account-confirm-password');
+            if (button) {
+                button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
+                button.textContent = 'جارٍ التحقق والحفظ...';
+            }
+            try {
+                if (!supabaseClient) throw new Error('خدمة الحساب غير متاحة الآن.');
+                const currentPassword = currentField?.value || '';
+                const newPassword = newField?.value || '';
+                const confirmation = confirmField?.value || '';
+                if (currentPassword.length < 8 || currentPassword.length > 128) throw new Error('أدخل كلمة المرور الحالية بصورة صحيحة.');
+                if (newPassword.length < 8 || newPassword.length > 128) throw new Error('كلمة المرور الجديدة يجب أن تكون بين 8 و128 حرفًا.');
+                if (newPassword !== confirmation) throw new Error('كلمتا المرور الجديدتان غير متطابقتين.');
+                if (newPassword === currentPassword) throw new Error('اختر كلمة مرور جديدة مختلفة عن الحالية.');
+
+                const user = await getCurrentAuthUser();
+                if (!user?.id) throw new Error('سجّل الدخول أولًا لتغيير كلمة المرور.');
+                const profile = await getCurrentProfile();
+                if (!profile || profile.id !== user.id) throw new Error('تعذر التحقق من ملف الحساب الحالي.');
+
+                let session = null;
+                const internalUsernameIdentity = typeof user.email === 'string' && user.email.toLowerCase().endsWith('@auth.alwaha.invalid');
+                if (user.email && !internalUsernameIdentity) {
+                    const result = await supabaseClient.auth.signInWithPassword({ email: user.email, password: currentPassword });
+                    if (result.error || !result.data?.session || result.data?.user?.id !== user.id) {
+                        throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
+                    }
+                    session = result.data.session;
+                } else if (user.phone) {
+                    const result = await supabaseClient.auth.signInWithPassword({ phone: user.phone, password: currentPassword });
+                    if (result.error || !result.data?.session || result.data?.user?.id !== user.id) {
+                        throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
+                    }
+                    session = result.data.session;
+                } else if (profile.username) {
+                    const result = await supabaseClient.functions.invoke('username-auth', {
+                        body: { action: 'login', username: String(profile.username).trim().toLowerCase(), password: currentPassword }
+                    });
+                    if (result.error || !result.data?.session || result.data?.user?.id !== user.id) {
+                        throw new Error('لم يتم التحقق من كلمة المرور الحالية لهذا الحساب.');
+                    }
+                    session = result.data.session;
+                } else {
+                    throw new Error('لا توجد وسيلة دخول يمكن التحقق منها لهذا الحساب.');
+                }
+
+                if (session.user?.id !== user.id) throw new Error('تغيّرت هوية جلسة التحقق؛ أوقفنا تغيير كلمة المرور لحماية الحساب.');
+                const restored = await supabaseClient.auth.setSession({
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token
+                });
+                if (restored.error || restored.data?.session?.user?.id !== user.id) {
+                    throw new Error('تعذر تثبيت جلسة التحقق للحساب الصحيح.');
+                }
+
+                const changed = await supabaseClient.auth.updateUser({ password: newPassword });
+                if (changed.error) throw changed.error;
+                await hydrateAuthProfile(changed.data?.user || user);
+                syncUiWithLoadedProfileData();
+                closeSubProfileView('sub-prof-password-change');
+                triggerToastNotification('تم تحديث كلمة المرور بنجاح. استخدم الكلمة الجديدة في تسجيل الدخول القادم.', 'success');
+            } catch (error) {
+                console.warn('[Alwaha Auth] Password change failed:', error?.code || 'password_change_failed');
+                triggerToastNotification(error?.message || 'تعذر تغيير كلمة المرور الآن. حاول مرة أخرى.', 'error');
+            } finally {
+                if (currentField) currentField.value = '';
+                if (newField) newField.value = '';
+                if (confirmField) confirmField.value = '';
+                accountPasswordChangeInFlight = false;
+                if (button) {
+                    button.disabled = false;
+                    button.removeAttribute('aria-busy');
+                    button.textContent = originalText;
+                }
             }
         }
 
@@ -5152,6 +5277,17 @@ function triggerAnimeAiConverterFilter() {
         }
         function closeSubProfileView(id) {
             const view = document.getElementById(id);
+            if (id === 'sub-prof-password-change') {
+                for (const fieldId of ['account-current-password','account-new-password','account-confirm-password']) {
+                    const field = document.getElementById(fieldId);
+                    if (field) { field.value = ''; field.type = 'password'; }
+                }
+                const passwordView = document.getElementById(id);
+                passwordView?.querySelectorAll('button[aria-controls]').forEach(toggle => {
+                    toggle.textContent = 'إظهار';
+                    toggle.setAttribute('aria-pressed','false');
+                });
+            }
             if (view) view.style.display = 'none';
             window.alwahaModalHistory = (window.alwahaModalHistory || []).filter(item => item !== id);
             if (history.state?.alwahaModal === id) {
@@ -5280,6 +5416,7 @@ function triggerAnimeAiConverterFilter() {
             const loginItem = document.getElementById('profile-login-menu-item');
             const logoutButton = document.getElementById('alwaha-logout-button');
             const deleteButton = document.getElementById('alwaha-delete-account-button');
+            const passwordChangeButton = document.getElementById('alwaha-password-change-menu-item');
             let canDeleteAccount = false;
             if (signedIn) { try { const profile = await getCurrentProfile(); canDeleteAccount = !!profile && profile.is_admin !== true; } catch (_) {} }
             if (requestId !== profileAuthMenuSyncId) return;
@@ -5287,6 +5424,7 @@ function triggerAnimeAiConverterFilter() {
             if (loginItem) { loginItem.style.display = signedIn ? 'none' : 'flex'; loginItem.setAttribute('aria-hidden', String(signedIn)); }
             if (logoutButton) { logoutButton.style.display = signedIn ? 'block' : 'none'; logoutButton.setAttribute('aria-hidden', String(!signedIn)); }
             if (deleteButton) { deleteButton.style.display = canDeleteAccount ? 'block' : 'none'; deleteButton.setAttribute('aria-hidden', String(!canDeleteAccount)); }
+            if (passwordChangeButton) { passwordChangeButton.style.display = signedIn ? 'flex' : 'none'; passwordChangeButton.setAttribute('aria-hidden', String(!signedIn)); }
         }
                 function normalizeAlwahaPhone(raw, selectedCode, customCode) {
             const source=String(raw||'').trim(); if(!source)return '';

@@ -31,10 +31,10 @@ check('release version 3.0.3 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.3' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.3' && manifest.version === '3.0.3' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.3 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-username-signup-20261116'") &&
-  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-username-signup-20261116') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-username-signup-20261116') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-username-signup-20261116'));
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-account-password-change-20261117'") &&
+  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-account-password-change-20261117') &&
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-account-password-change-20261117') &&
+  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-account-password-change-20261117'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
@@ -131,7 +131,7 @@ check('persisted nav position/order/hidden/stack controls exist', experience.inc
 // Maintained application branches plus explicitly named validation branches; publish from main only.
 const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
 const workflowBranches = pushBranchBlock.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2).trim());
-const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-3.0.3-android-verification-20261116','alwaha-pro-3.0.3-username-registration-20261116','alwaha-pro-3.0.3-account-deletion-username-20261117','alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117'];
+const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-3.0.3-android-verification-20261116','alwaha-pro-3.0.3-username-registration-20261116','alwaha-pro-3.0.3-account-deletion-username-20261117','alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117','alwaha-pro-3.0.3-account-password-change-20261117'];
 check('APK/AAB workflow watches main and only explicitly maintained validation/preparation branches',
   workflowBranches.length === expectedWorkflowBranches.length &&
   expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
