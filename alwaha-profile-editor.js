@@ -77,7 +77,7 @@
           <label for="profile-edit-username">اسم المستخدم <b>(مطلوب)</b></label><input id="profile-edit-username" type="text" minlength="3" maxlength="32" pattern="[a-z0-9_]{3,32}" autocomplete="username" autocapitalize="none" spellcheck="false" dir="ltr" required><p class="alwaha-profile-editor-hint">من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا أو _، ويجب أن يكون غير مستخدم.</p>
           <label for="profile-edit-email">البريد الإلكتروني <small>(اختياري)</small></label><input id="profile-edit-email" type="email" maxlength="254" autocomplete="email" inputmode="email"><p class="alwaha-profile-editor-hint">إضافة بريد جديد ترسل رسالة تأكيد. لا يصبح البريد صالحًا للاستعادة قبل تأكيده؛ اتركه كما هو إذا لم ترد تغييره.</p>
           <label for="profile-edit-phone">رقم الهاتف <small>(اختياري)</small></label><input id="profile-edit-phone" type="tel" maxlength="32" autocomplete="tel" inputmode="tel" placeholder="مثال: +201xxxxxxxxx" dir="ltr"><p class="alwaha-profile-editor-hint">رقم خاص لا يُستخدم لتسجيل الدخول أو استعادة كلمة المرور.</p>
-          <label for="profile-edit-gender">النوع <small>(اختياري)</small></label><select id="profile-edit-gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
+          <label for="profile-edit-gender">النوع <small>(اختياري)</small></label><select id="profile-edit-gender"><option value="">— النوع اختياري —</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
           <label for="profile-edit-birthdate">تاريخ الميلاد <small>(اختياري)</small></label><input id="profile-edit-birthdate" type="date" autocomplete="bday">
           <button type="submit" id="profile-edit-save-button"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
         </form>\`;
@@ -154,7 +154,7 @@
     const authEmail = String(user.email || '').trim();
     set('profile-edit-email', authEmail.toLowerCase().endsWith('@auth.alwaha.invalid') ? '' : authEmail);
     set('profile-edit-phone', profile.phone || '');
-    set('profile-edit-gender', profile.gender === 'أنثى' ? 'أنثى' : 'ذكر');
+    set('profile-edit-gender', ['ذكر','أنثى'].includes(profile.gender) ? profile.gender : '');
     set('profile-edit-birthdate', profile.birthdate || '');
     const avatar = $('profile-edit-avatar-preview');
     if (avatar) {
@@ -182,14 +182,14 @@
     const email = String($('profile-edit-email')?.value || '').trim().toLowerCase();
     const rawPhone = String($('profile-edit-phone')?.value || '').trim();
     const phone = rawPhone ? window.normalizeAlwahaPhone?.(rawPhone, '+20', '') : '';
-    const gender = String($('profile-edit-gender')?.value || 'ذكر');
+    const gender = String($('profile-edit-gender')?.value || '');
     const birthdate = String($('profile-edit-birthdate')?.value || '').trim();
     if (!firstName || firstName.length > 80) return toast('اكتب الاسم الظاهر، وبحد أقصى 80 حرفًا.', 'error');
     if (lastName.length > 80) return toast('اسم العائلة أطول من الحد المسموح.', 'error');
     if (!/^[a-z0-9_]{3,32}$/.test(username)) return toast('اسم المستخدم يجب أن يكون من 3 إلى 32 حرفًا إنجليزيًا صغيرًا أو رقمًا أو _.', 'error');
     if (email && !/^\S+@\S+\.\S+$/.test(email)) return toast('صيغة البريد الإلكتروني غير صحيحة.', 'error');
     if (rawPhone && !phone) return toast('اكتب رقم الهاتف بصيغة دولية صحيحة مثل +201xxxxxxxxx.', 'error');
-    if (!['ذكر', 'أنثى'].includes(gender)) return toast('اختر قيمة صحيحة للنوع.', 'error');
+    if (gender && !['ذكر', 'أنثى'].includes(gender)) return toast('اختر قيمة صحيحة للنوع.', 'error');
     if (birthdate) {
       const date = new Date(birthdate + 'T00:00:00Z');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(birthdate) || Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== birthdate || date.getTime() > Date.now()) {
@@ -203,7 +203,7 @@
     try {
       const result = await window.alwahaInvokeEdgeFunction('profile-update', {
         first_name: firstName, last_name: lastName, username, email,
-        phone: phone || '', gender, birthdate: birthdate || null,
+        phone: phone || '', gender: gender || null, birthdate: birthdate || null,
       });
       safeSet('alwaha_last_username', username);
       await window.hydrateAuthProfile?.(user);
