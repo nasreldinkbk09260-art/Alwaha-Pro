@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
       const since = new Date(Date.now() - 86400000).toISOString();
       const { count, error: rateError } = await db.from('content_reports').select('id',{count:'exact',head:true}).eq('reporter_id',user.id).gte('created_at',since);
       if (rateError) throw new Error('report_rate_check_failed');
-      if ((count || 0) >= 10 && reason !== 'child_safety') return json({ error: 'وصلت إلى الحد اليومي للبلاغات. حاول بعد 24 ساعة.' },429);
+      if ((count || 0) >= 10) return json({ error: 'وصلت إلى الحد اليومي للبلاغات. حاول بعد 24 ساعة.' },429);
       const { data: openReport, error: dupError } = await db.from('content_reports').select('id')
         .eq('reporter_id',user.id).eq('target_type',targetType).eq('target_id',targetId)
         .in('status',['pending','under_review']).maybeSingle();
