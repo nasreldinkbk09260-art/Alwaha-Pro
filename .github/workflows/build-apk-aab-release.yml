@@ -14,6 +14,7 @@ on:
       - alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117
       - alwaha-pro-3.0.3-account-password-change-20261117
       - alwaha-pro-3.0.3-home-feed-cache-repair-20261117
+      - alwaha-pro-3.0.3-profile-onboarding-editor-20261117
   workflow_dispatch:
 
 permissions:
@@ -87,6 +88,8 @@ jobs:
         run: deno check --node-modules-dir=auto supabase/functions/admin-api/index.ts
       - name: Type-check username registration and login API
         run: deno check --node-modules-dir=auto supabase/functions/username-auth/index.ts
+      - name: Type-check authenticated profile update API
+        run: deno check --node-modules-dir=auto supabase/functions/profile-update/index.ts
 
       - name: Setup Node.js
         uses: actions/setup-node@v7.1.0
@@ -176,6 +179,7 @@ jobs:
           test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/functions/user-safety/index.ts
+          test -s supabase/functions/profile-update/index.ts
           test -s supabase/functions/account-deletion/index.ts
           test -s supabase/migrations/20261117010000_storage_upload_ownership.sql
           test -s supabase/tests/20261117010000_storage_upload_ownership.sql
