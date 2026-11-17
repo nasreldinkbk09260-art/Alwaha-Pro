@@ -12,7 +12,7 @@ BEGIN
  OR NOT has_table_privilege('service_role','public.support_tickets','UPDATE') THEN RAISE EXCEPTION 'service role grants missing'; END IF;
  IF NOT EXISTS(SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='support_tickets_queue_idx')
  OR NOT EXISTS(SELECT 1 FROM pg_indexes WHERE schemaname='public' AND indexname='support_tickets_user_created_idx') THEN RAISE EXCEPTION 'indexes missing'; END IF;
- INSERT INTO auth.users(id) VALUES(v_user);
+ INSERT INTO auth.users(id,raw_user_meta_data) VALUES(v_user,'{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb);
  INSERT INTO public.support_tickets(user_id,category,subject,description,priority,triage_label)
  VALUES(v_user,'bug','اختبار بلاغ الدعم','اختبار حفظ سجل الدعم في بيئة الاختبار فقط',35,'possible_crash') RETURNING id INTO v_ticket;
  DELETE FROM auth.users WHERE id=v_user;
