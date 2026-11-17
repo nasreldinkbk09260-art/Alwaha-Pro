@@ -75,9 +75,9 @@ Deno.serve(async (req: Request) => {
     update.phone = value;
   }
   if ('gender' in body) {
-    const value = String(body.gender ?? 'ذكر');
-    if (!['ذكر', 'أنثى'].includes(value)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
-    update.gender = value;
+    const value = String(body.gender ?? '').trim();
+    if (value && !['ذكر', 'أنثى'].includes(value)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
+    update.gender = value || null;
   }
   if ('birthdate' in body) {
     const value = body.birthdate == null ? '' : String(body.birthdate).trim();
@@ -102,6 +102,7 @@ Deno.serve(async (req: Request) => {
   if ('email' in body) {
     const email = String(body.email ?? '').trim().toLowerCase();
     if (email && !/^\S+@\S+\.\S+$/.test(email)) return json({ error: 'صيغة البريد الإلكتروني غير صحيحة.' }, 400);
+    if (email && email.endsWith('.invalid')) return json({ error: 'أدخل بريدًا حقيقيًا يمكنك استلام رسالة التأكيد عليه.' }, 400);
     if (email && email !== String(user.email || '').trim().toLowerCase()) requestedEmail = email;
   }
 
