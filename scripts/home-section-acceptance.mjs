@@ -34,6 +34,10 @@ check('publish retains draft on failed upload or row creation',html.includes('ب
 check('publish clears text and image only after successful insert',/if\(textEl\)textEl\.value='';[\s\S]{0,350}pendingHomePostFile=null/.test(html));
 
 check('feed request has deadline and a single-flight guard',html.includes("alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null)")&&html.includes('window.__alwahaHomeFeedInFlight'));
+check('one-time cleanup invalidates only the legacy home-post cache snapshot',html.includes("ALWAHA_HOME_POST_CACHE_KEY = 'posts?select=*&order=created_at.desc&limit=100'")&&html.includes("ALWAHA_HOME_POST_CACHE_RESET_MARKER = 'alwaha_home_post_cache_reset_20261117'")&&html.includes('resetLegacyHomePostCacheOnce')&&html.includes("tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE).delete(ALWAHA_HOME_POST_CACHE_KEY)")&&!html.includes("deleteDatabase(ALWAHA_PUBLIC_CACHE_DB)"));
+check('online home feed bypasses stale cached posts and stale offline fallback',html.includes("const shouldBypassHomePostCache = tableName === 'posts' && navigator.onLine !== false;")&&(html.match(/shouldBypassHomePostCache/g)||[]).length>=4&&html.includes('await resetLegacyHomePostCacheOnce()'));
+check('offline fallback remains scoped so marketplace and reels keep their cached data',html.includes("safePublicTables.has(tableName)")&&html.includes("if (cacheable && !__alwahaBackgroundRefresh && !shouldBypassHomePostCache)"));
+
 check('feed ignores stale responses and reports errors with retry',html.includes('requestId !== alwahaHomeFeedRequestId')&&html.includes('renderHomeFeedProblem(container)')&&html.includes('onclick="renderHomePostsFeed()"'));
 check('post cards have keyboard accessibility',html.includes('tabindex="0" aria-label="منشور')&&html.includes('handleHomePostCardKeydown'));
 check('post action taps do not open the post-detail card',html.includes("closest?.('button,a,input,textarea,select,label,[data-post-action]')"));

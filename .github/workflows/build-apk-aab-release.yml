@@ -13,6 +13,7 @@ on:
       - alwaha-pro-3.0.3-account-deletion-username-20261117
       - alwaha-pro-3.0.3-storage-upload-ownership-r2-20261117
       - alwaha-pro-3.0.3-account-password-change-20261117
+      - alwaha-pro-3.0.3-home-feed-cache-repair-20261117
   workflow_dispatch:
 
 permissions:
