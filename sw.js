@@ -1,3 +1,4 @@
+// Profile editor and registration layout update 2026-11-17.
 const CACHE_NAME = 'alwaha-pro-v3.0.3-account-password-change-20261117';
 const PRECACHE_ASSETS = [
   './',
@@ -6,6 +7,7 @@ const PRECACHE_ASSETS = [
   './icon.png',
   './games.js',
   './production-polish.js',
+  './alwaha-profile-editor.js',
   './alwaha-call-feedback.js',
   './compatibility.js',
   './alwaha-local-vault.js',
@@ -16,6 +18,7 @@ const PRECACHE_ASSETS = [
   './alwaha-smart-assistant.js',
   './alwaha-theme-system.css',
   './production-polish.js?v=3.0.3-account-password-change-20261117',
+  './alwaha-profile-editor.js?v=3.0.3-account-password-change-20261117',
   './alwaha-call-feedback.js?v=3.0.3-account-password-change-20261117',
   './compatibility.js?v=3.0.3-account-password-change-20261117',
   './alwaha-local-vault.js?v=3.0.3-account-password-change-20261117',
