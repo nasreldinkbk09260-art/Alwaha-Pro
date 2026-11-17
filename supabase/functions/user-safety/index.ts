@@ -10,7 +10,7 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: corsHeaders });
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const targetTypes = new Set(['user','post','reel','comment']);
-const reasons = new Set(['spam','harassment','inappropriate','violence','fraud','other']);
+const reasons = new Set(['spam','harassment','inappropriate','violence','fraud','child_safety','other']);
 type Body = Record<string, unknown>;
 const asBody = (value: unknown): Body => value && typeof value === 'object' && !Array.isArray(value) ? value as Body : {};
 
@@ -73,7 +73,7 @@ Deno.serve(async (req: Request) => {
       const since = new Date(Date.now() - 86400000).toISOString();
       const { count, error: rateError } = await db.from('content_reports').select('id',{count:'exact',head:true}).eq('reporter_id',user.id).gte('created_at',since);
       if (rateError) throw new Error('report_rate_check_failed');
-      if ((count || 0) >= 10) return json({ error: 'وصلت إلى الحد اليومي للبلاغات. حاول بعد 24 ساعة.' },429);
+      if ((count || 0) >= 10 && reason !== 'child_safety') return json({ error: 'وصلت إلى الحد اليومي للبلاغات. حاول بعد 24 ساعة.' },429);
       const { data: openReport, error: dupError } = await db.from('content_reports').select('id')
         .eq('reporter_id',user.id).eq('target_type',targetType).eq('target_id',targetId)
         .in('status',['pending','under_review']).maybeSingle();
