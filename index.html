@@ -1732,6 +1732,40 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('IndexedDB unavailable'));
             });
         }
+        const ALWAHA_HOME_POST_CACHE_KEY = 'posts?select=*&order=created_at.desc&limit=100';
+        const ALWAHA_HOME_POST_CACHE_RESET_MARKER = 'alwaha_home_post_cache_reset_20261117';
+        let alwahaHomePostCacheResetPromise = null;
+
+        // Remove only the legacy home-post snapshot; preserve cached market listings and reels.
+        function resetLegacyHomePostCacheOnce() {
+            if (!alwahaHomePostCacheResetPromise) {
+                alwahaHomePostCacheResetPromise = (async () => {
+                    try { if (localStorage.getItem(ALWAHA_HOME_POST_CACHE_RESET_MARKER) === '1') return true; } catch (error) {}
+                    let db;
+                    try {
+                        db = await openAlwahaPublicCacheDb();
+                        if (db) {
+                            await new Promise((resolve, reject) => {
+                                const tx = db.transaction(ALWAHA_PUBLIC_CACHE_STORE, 'readwrite');
+                                tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE).delete(ALWAHA_HOME_POST_CACHE_KEY);
+                                tx.oncomplete = resolve;
+                                tx.onerror = () => reject(tx.error || new Error('Home post cache reset failed'));
+                                tx.onabort = () => reject(tx.error || new Error('Home post cache reset aborted'));
+                            });
+                        }
+                        try { localStorage.setItem(ALWAHA_HOME_POST_CACHE_RESET_MARKER, '1'); } catch (error) {}
+                        return true;
+                    } catch (error) {
+                        console.warn('[Alwaha Public Cache] legacy home post snapshot reset skipped:', error?.name || error);
+                        return false;
+                    } finally {
+                        try { db?.close(); } catch (error) {}
+                    }
+                })();
+            }
+            return alwahaHomePostCacheResetPromise;
+        }
+
         async function readAlwahaPublicCache(key) {
             let db;try{db=await openAlwahaPublicCacheDb();if(!db)return null;return await new Promise(resolve=>{const req=db.transaction(ALWAHA_PUBLIC_CACHE_STORE,'readonly').objectStore(ALWAHA_PUBLIC_CACHE_STORE).get(key);req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);});}catch(e){return null;}finally{try{db?.close();}catch(e){}}
         }
@@ -1816,8 +1850,11 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const cacheKey = cacheable ? String(endpoint) : '';
             if (requestMethod !== 'GET') apiCache.clear();
 
-            // Offline-first: show the last public feed snapshot immediately, then refresh quietly.
-            if(cacheable && !__alwahaBackgroundRefresh) {
+            const shouldBypassHomePostCache = tableName === 'posts' && navigator.onLine !== false;
+            if (tableName === 'posts' && !__alwahaBackgroundRefresh) await resetLegacyHomePostCacheOnce();
+
+            // Keep offline snapshots for reels and marketplace, but validate the home feed against Supabase online.
+            if(cacheable && !__alwahaBackgroundRefresh && !shouldBypassHomePostCache) {
                 const now=Date.now(),reconnectRefresh=shouldRefreshAlwahaPublicCacheAfterReconnect(cacheKey);
                 const memory=apiCache.get(cacheKey);
                 if(memory && Array.isArray(memory.value)) {
@@ -1880,7 +1917,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     const serverMessage = (data && typeof data === 'object') ? (data.message || data.error_description || data.hint || data.details || data.error || '') : String(data || '');
                     window.__alwahaLastApiError = { status: response.status, message: String(serverMessage).slice(0, 240), code: data && typeof data === 'object' ? String(data.code || '') : '' };
                     if(!__alwahaBackgroundRefresh)console.warn('Supabase Status:', response.status, data);
-                    if (cacheable && !__alwahaBackgroundRefresh) {
+                    if (cacheable && !__alwahaBackgroundRefresh && !shouldBypassHomePostCache) {
                         const fallback = await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                         if (fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                     }
@@ -1901,7 +1938,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 if (timeoutId) clearTimeout(timeoutId);
                 window.__alwahaLastApiError = { status: 0, message: error?.name === 'AbortError' ? 'انتهت مهلة الاتصال' : 'تعذر الاتصال بالخادم', code: error?.name || 'NETWORK_ERROR' };
                 if(!__alwahaBackgroundRefresh)console.warn('Supabase Request Error:', error);
-                if(cacheable) {
+                if(cacheable && !shouldBypassHomePostCache) {
                     const fallback = await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                     if(fallback && Array.isArray(fallback.value)) return JSON.parse(JSON.stringify(fallback.value));
                 }
