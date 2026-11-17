@@ -2176,7 +2176,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 localStorage.setItem('alwaha_auth_user_id', authUser.id);
                 localStorage.setItem('alwaha_profile_name', [authUser.user_metadata?.first_name, authUser.user_metadata?.last_name].filter(Boolean).join(' ') || 'مستخدم');
                 localStorage.setItem('alwaha_profile_gender', authUser.user_metadata?.gender || '');
-                localStorage.setItem('alwaha_profile_avatar', getDefaultAvatar(authUser.user_metadata?.gender || 'ذكر'));
+                localStorage.setItem('alwaha_profile_avatar', getDefaultAvatar(authUser.user_metadata?.gender || ''));
             }
             syncUiWithLoadedProfileData();
             return profile;

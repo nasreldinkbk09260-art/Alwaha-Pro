@@ -56,7 +56,8 @@ Deno.serve(async (req: Request) => {
     if (!firstName) return json({ error: 'اكتب الاسم أولًا.' }, 400);
     if (password.length < 8 || password.length > 128) return json({ error: 'كلمة المرور يجب أن تكون من 8 إلى 128 حرفًا.' }, 400);
     if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) return json({ error: 'رقم الهاتف غير صحيح.' }, 400);
-    if (birthdate && !/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) return json({ error: 'تاريخ الميلاد غير صحيح.' }, 400);\n    if (gender && !['ذكر', 'أنثى'].includes(gender)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
+    if (birthdate && !/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) return json({ error: 'تاريخ الميلاد غير صحيح.' }, 400);
+    if (gender && !['ذكر', 'أنثى'].includes(gender)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
     if (termsVersion !== '2026-11-15' || privacyVersion !== '2026-11-15') {
       return json({ error: 'يجب الموافقة على أحدث شروط الاستخدام وسياسة الخصوصية.' }, 400);
     }

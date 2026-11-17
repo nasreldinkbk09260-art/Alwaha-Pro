@@ -43,7 +43,7 @@ $$;
 
 INSERT INTO auth.users (id, email, phone, raw_user_meta_data)
 VALUES (
-  '22222222-2222-4222-8222-222222222222',
+  'f691104a-c9e7-4e15-8fcb-0e1707202643',
   'user.gender.optional@auth.alwaha.invalid',
   NULL,
   jsonb_build_object(
@@ -64,7 +64,7 @@ DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.users
-    WHERE id='22222222-2222-4222-8222-222222222222' AND gender IS NULL
+    WHERE id='f691104a-c9e7-4e15-8fcb-0e1707202643' AND gender IS NULL
   ) THEN
     RAISE EXCEPTION 'Signup without a gender selection must store NULL.';
   END IF;
@@ -75,14 +75,14 @@ INSERT INTO public.public_profiles
   (id, first_name, last_name, gender, username)
 SELECT id, first_name, last_name, gender, username
 FROM public.users
-WHERE id='22222222-2222-4222-8222-222222222222'
+WHERE id='f691104a-c9e7-4e15-8fcb-0e1707202643'
 ON CONFLICT (id) DO UPDATE SET gender=EXCLUDED.gender;
 
 DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.user_directory
-    WHERE id='22222222-2222-4222-8222-222222222222' AND gender IS NULL
+    WHERE id='f691104a-c9e7-4e15-8fcb-0e1707202643' AND gender IS NULL
   ) THEN
     RAISE EXCEPTION 'Public directory must preserve an unselected gender as NULL.';
   END IF;
