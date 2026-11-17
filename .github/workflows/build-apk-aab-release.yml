@@ -173,6 +173,9 @@ jobs:
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/functions/user-safety/index.ts
           test -s supabase/functions/account-deletion/index.ts
+          test -s supabase/migrations/20261117010000_storage_upload_ownership.sql
+          test -s supabase/tests/20261117010000_storage_upload_ownership.sql
+          test -s supabase/tests/storage-upload-ci-bootstrap.sql
           test -s supabase/migrations/20261115200000_user_consent_policy_acceptance.sql
           test -s supabase/tests/20261115200000_user_consent_policy_acceptance.sql
           test -s supabase/migrations/20261115201000_content_reports_fk_indexes.sql
