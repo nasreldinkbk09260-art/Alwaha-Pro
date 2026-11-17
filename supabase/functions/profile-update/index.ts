@@ -77,7 +77,8 @@ Deno.serve(async (req: Request) => {
   if ('gender' in body) {
     const value = String(body.gender ?? '').trim();
     if (value && !['ذكر', 'أنثى'].includes(value)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
-    update.gender = value || null;
+    // public.users.gender is NOT NULL in production; an omitted choice keeps the legacy default.
+    update.gender = value || 'ذكر';
   }
   if ('birthdate' in body) {
     const value = body.birthdate == null ? '' : String(body.birthdate).trim();
