@@ -120,3 +120,8 @@ echo 'APPLY TEST MIGRATION: 20261117140000_profile_gender_optional.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117140000_profile_gender_optional.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117140000_profile_gender_optional.sql"
 
+
+echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117180000_support_tickets_private_intake.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117180000_support_tickets_private_intake.sql"
+echo 'SUPPORT_TICKETS_SQL_REGRESSION=PASS'

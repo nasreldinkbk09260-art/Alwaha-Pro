@@ -83,6 +83,8 @@ jobs:
         run: deno check --node-modules-dir=auto supabase/functions/username-auth/index.ts
       - name: Type-check authenticated profile update API
         run: deno check --node-modules-dir=auto supabase/functions/profile-update/index.ts
+      - name: Type-check authenticated support ticket API
+        run: deno check --node-modules-dir=auto supabase/functions/support-tickets/index.ts
 
       - name: Setup Node.js
         uses: actions/setup-node@v7.1.0
@@ -174,6 +176,10 @@ jobs:
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/functions/user-safety/index.ts
           test -s supabase/functions/profile-update/index.ts
+          test -s supabase/functions/support-tickets/index.ts
+          test -s supabase/migrations/20261117180000_support_tickets_private_intake.sql
+          test -s supabase/tests/20261117180000_support_tickets_private_intake.sql
+          test -s scripts/support-tickets-audit.mjs
           test -s supabase/functions/account-deletion/index.ts
           test -s supabase/migrations/20261117010000_storage_upload_ownership.sql
           test -s supabase/tests/20261117010000_storage_upload_ownership.sql
@@ -316,6 +322,8 @@ jobs:
       - name: Run retention, kids-room, and backup audit
         run: npm run audit:retention-kids-vault
 
+      - name: Run support-ticket intake and admin queue audit
+        run: npm run audit:support-tickets
       - name: Run user reporting, blocking and moderation audit
         run: npm run audit:user-safety
 

@@ -899,6 +899,7 @@ img,video,canvas{max-width:100%}
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
             </div>
             <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(139,244,255,.06);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff22;color:#8bf4ff;font:inherit;text-align:right;" onclick="showAlwahaPrivacyNotice()"><span style="font-size:13px;"><i class="fa-solid fa-shield-halved"></i> معلومات الخصوصية والأذونات</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
+            <button type="button" class="profile-menu-btn" style="width:100%;background:rgba(103,232,249,.08);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;border:1px solid #67e8f944;color:#9befff;font:inherit;text-align:right;" onclick="openAlwahaSupportTicket()"><span style="font-size:13px;"><i class="fa-solid fa-headset"></i> إرسال شكوى أو اقتراح</span><i class="fa-solid fa-chevron-left" style="font-size:11px;color:#aaa;"></i></button>
             <div class="profile-menu-btn" style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;" onclick="openSubProfileView('sub-prof-privacy')">
                 <span style="font-size:13px; color:#ff00ff;"><i class="fa-solid fa-user-gear"></i> إعدادات الخصوصية والاسم</span>
                 <i class="fa-solid fa-chevron-left" style="font-size:11px; color:#aaa;"></i>
@@ -5738,7 +5739,28 @@ function triggerAnimeAiConverterFilter() {
             }).join('');
         }
 
-        async function callAlwahaUserSafety(action,fields={}) {
+        async function openAlwahaSupportTicket(){
+ const me=await requireAuthenticatedUser('سجّل الدخول أولًا لإرسال شكوى أو اقتراح.');if(!me)return;
+ let modal=document.getElementById('alwaha-support-ticket-modal');
+ if(!modal){modal=document.createElement('div');modal.id='alwaha-support-ticket-modal';modal.style.cssText='position:fixed;inset:0;z-index:2147483001;background:rgba(3,8,18,.94);display:flex;align-items:center;justify-content:center;padding:14px;';
+ modal.innerHTML='<section role="dialog" aria-modal="true" style="width:min(100%,460px);max-height:90dvh;overflow:auto;background:#101827;border:1px solid #67e8f966;border-radius:18px;padding:18px;color:#fff;"><h2 style="color:#9befff">دعم الواحة</h2><p>أرسل مشكلة أو اقتراحًا. سيصل الطلب إلى لوحة الإدارة.</p><label for="alwaha-support-category">نوع الطلب</label><select id="alwaha-support-category" style="width:100%;padding:11px;background:#081322;color:#fff"><option value="bug">خلل فني أو زر لا يعمل</option><option value="account">الحساب أو تسجيل الدخول</option><option value="performance">البطء أو استهلاك البيانات</option><option value="messaging">الرسائل والمحادثات</option><option value="calls">المكالمات والصوت</option><option value="marketplace">سوق الواحة</option><option value="suggestion">اقتراح تطوير</option><option value="other">أخرى</option></select><label for="alwaha-support-subject">عنوان مختصر</label><input id="alwaha-support-subject" maxlength="120" style="width:100%;padding:11px;background:#081322;color:#fff"><label for="alwaha-support-description">اشرح ما حدث</label><textarea id="alwaha-support-description" maxlength="2400" rows="5" style="width:100%;padding:11px;background:#081322;color:#fff"></textarea><p style="color:#ffd2a8;font-size:11px;line-height:1.8">لا تكتب كلمة المرور أو رمز التحقق أو بيانات الدفع أو محتوى محادثة خاصة. لا توجد مرفقات. بلاغات سلامة الأطفال تُرسل من زر «إبلاغ» على الحساب أو المحتوى.</p><button id="alwaha-support-submit" onclick="submitAlwahaSupportTicket()">إرسال الطلب</button><button onclick="loadMyAlwahaSupportTickets()">طلباتي السابقة</button><button onclick="closeAlwahaSupportTicket()">إغلاق</button><div id="alwaha-support-history" class="hidden"></div></section>';
+ modal.addEventListener('click',e=>{if(e.target===modal)closeAlwahaSupportTicket()});document.body.appendChild(modal)}
+ modal.style.display='flex';document.body.classList.add('modal-active')
+}
+function closeAlwahaSupportTicket(){const m=document.getElementById('alwaha-support-ticket-modal');if(m)m.style.display='none';if(!document.querySelector('#comments-modal-box[style*="display: block"],#alwaha-public-profile-modal[style*="display: flex"]'))document.body.classList.remove('modal-active')}
+async function submitAlwahaSupportTicket(){
+ const b=document.getElementById('alwaha-support-submit'),category=document.getElementById('alwaha-support-category')?.value||'',subject=String(document.getElementById('alwaha-support-subject')?.value||'').trim(),description=String(document.getElementById('alwaha-support-description')?.value||'').trim();
+ if(subject.length<4||description.length<12)return triggerToastNotification('اكتب عنوانًا ووصفًا لا يقل عن 12 حرفًا.','error');
+ if(b)b.disabled=true;
+ try{const platform=String(window.Capacitor?.getPlatform?.()||'web');const {data,error}=await supabaseClient.functions.invoke('support-tickets',{body:{action:'create_ticket',category,subject,description,appVersion:'3.0.3',platform}});if(error){let m=error.message||'تعذر الاتصال بخدمة الدعم.';try{const p=await error.context?.json();if(p?.error)m=p.error}catch(_){}throw Error(m)}if(data?.error)throw Error(data.error);closeAlwahaSupportTicket();triggerToastNotification('تم استلام طلبك · '+String(data.ticket?.id||'').slice(0,8),'success');document.getElementById('alwaha-support-subject').value='';document.getElementById('alwaha-support-description').value=''}
+ catch(e){triggerToastNotification(e.message||'تعذر إرسال الطلب الآن.','error')}finally{if(b)b.disabled=false}
+}
+async function loadMyAlwahaSupportTickets(){
+ const box=document.getElementById('alwaha-support-history');if(!box)return;box.classList.remove('hidden');box.textContent='جارٍ تحميل طلباتك…';
+ try{const {data,error}=await supabaseClient.functions.invoke('support-tickets',{body:{action:'my_tickets'}});if(error)throw error;if(data?.error)throw Error(data.error);const rows=Array.isArray(data.tickets)?data.tickets:[],labels={open:'وصلنا طلبك',triaged:'تم فرزه',in_progress:'قيد المعالجة',resolved:'تم الحل',closed:'مغلق'};const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));box.innerHTML=rows.length?rows.map(t=>'<p>'+esc(t.subject)+' · '+esc(labels[t.status]||t.status)+'</p>').join(''):'<p>لا توجد طلبات سابقة.</p>'}catch(e){box.textContent=e.message||'تعذر تحميل طلباتك.'}
+}
+
+async function callAlwahaUserSafety(action,fields={}) {
   if(!supabaseClient)throw new Error('خدمة سلامة المستخدم غير متاحة.');
   const {data,error}=await supabaseClient.functions.invoke('user-safety',{body:{action,...fields}});
   if(error){let message=error.message||'تعذر الاتصال بخدمة سلامة المستخدم.';try{const payload=await error.context?.json();if(payload?.error)message=payload.error}catch(_){}throw new Error(message)}
