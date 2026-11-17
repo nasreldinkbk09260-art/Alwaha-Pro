@@ -10,6 +10,7 @@ on:
       - alwaha-pro-3.0.3-dev
       - alwaha-pro-3.0.3-android-verification-20261116
       - alwaha-pro-3.0.3-username-registration-20261116
+      - alwaha-pro-3.0.3-account-deletion-username-20261117
   workflow_dispatch:
 
 permissions:
@@ -181,6 +182,7 @@ jobs:
           test -s official-site/terms.html
           test -s official-site/delete-account.html
           test -s official-site/alwaha-public-config.js
+          test -s assets/vendor/supabase/supabase.js
           test -s scripts/account-deletion-audit.mjs
           test -s supabase/tests/20261113050000_trigger_definer_empty_search_path.sql
           test -s supabase/tests/20261102010000_legacy_client_privileges_hardening.sql
@@ -335,6 +337,9 @@ jobs:
           npm run build
           test -s dist/index.html
           test -s dist/official/index.html
+          test -s dist/official/delete-account.html
+          test -s dist/assets/vendor/supabase/supabase.js
+          grep -Fq 'src="../assets/vendor/supabase/supabase.js"' dist/official/delete-account.html
           test -s dist/manifest.json
           test -s dist/sw.js
           test -s dist/icon.png
