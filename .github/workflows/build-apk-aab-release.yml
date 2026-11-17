@@ -108,6 +108,7 @@ jobs:
           set -euo pipefail
           test -s index.html
           test -s official-site/index.html
+          test -s official-site/child-safety.html
           test -s manifest.json
           test -s sw.js
           test -s icon.png
@@ -183,6 +184,8 @@ jobs:
           test -s supabase/functions/account-deletion/index.ts
           test -s supabase/migrations/20261117010000_storage_upload_ownership.sql
           test -s supabase/tests/20261117010000_storage_upload_ownership.sql
+          test -s supabase/migrations/20261117170000_child_safety_urgent_reports.sql
+          test -s supabase/tests/20261117170000_child_safety_urgent_reports.sql
           test -s supabase/tests/storage-upload-ci-bootstrap.sql
           test -s supabase/migrations/20261115200000_user_consent_policy_acceptance.sql
           test -s supabase/tests/20261115200000_user_consent_policy_acceptance.sql
