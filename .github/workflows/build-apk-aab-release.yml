@@ -458,7 +458,7 @@ jobs:
                   raise SystemExit('Audio route plugin registration marker is missing; refusing local network registration.')
               source = source.replace(
                   'registerPlugin(AlwahaAudioRoutePlugin.class);',
-                  'registerPlugin(AlwahaAudioRoutePlugin.class);\\n        registerPlugin(AlwahaLocalNetworkPlugin.class);',
+                  'registerPlugin(AlwahaAudioRoutePlugin.class);\n        registerPlugin(AlwahaLocalNetworkPlugin.class);',
                   1
               )
               activity.write_text(source, encoding='utf-8')

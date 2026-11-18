@@ -96,6 +96,6 @@
 - الأساس يتيح فحص القدرات والأذونات، واكتشاف أجهزة Wi‑Fi Direct عبر `WifiP2pManager` وأجهزة Bluetooth Classic عبر `BluetoothAdapter`، مع إيقاف الفحص تلقائيًا بعد 25 ثانية وأحداث للأجهزة القريبة.
 - أضيفت أذونات Android 13+ لـNearby Wi‑Fi وBluetooth Scan/Connect/Advertise، وإعلانات Bluetooth القديمة محصورة إلى API 30، مع `neverForLocation` حيث لا نستنتج موقعاً فعلياً.
 - قُيّدت النتائج لتبقى `verified=false` و`authenticationRequired=true`. يعيد المكوّن صراحةً `transportReady=false` و`chatReady=false` و`fileTransferReady=false` و`callMediaReady=false`. **هذا أساس اكتشاف فقط، وليس زر شبكة محلية عاملاً أو نقل رسائل/مكالمات/ملفات بعد.**
-- أضيف التسجيل الأصلي في MainActivity، وجسر JavaScript، واختبار قبول ثابت، وربط الاختبار بسير عمل CI.
+- أضيف التسجيل الأصلي في MainActivity، وجسر JavaScript، واختبار قبول ثابت، وربط الاختبار بسير عمل CI. فُحص نص توليد MainActivity أيضًا، وصُحّح تمثيل سطر Java الجديد قبل بناء Android.
 - لا تُطلب أذونات الشبكة المحلية الجديدة `ACCESS_LOCAL_NETWORK` في هذا البناء لأن التطبيق يستهدف API 36؛ وثائق Android الحالية تجعلها مطلوبة عند استهداف API 37+، بينما Wi‑Fi Direct على API 33+ يتطلب `NEARBY_WIFI_DEVICES`.
 - **الخطوة التالية:** اجتياز Android compile، ثم تنفيذ قناة نقل آمنة ومشفرة مع اقتران متبادل قصير العمر وبيانات نصية/ملفات أولاً. بعدها دمج signaling لمكالمات الفيديو عبر Wi‑Fi Direct، ثم إظهار زر داخل المحادثة بعد نجاح كل مسار قبول. Bluetooth يظل للاكتشاف والرسائل/الملفات الخفيفة؛ الفيديو يمر عبر Wi‑Fi Direct/شبكة Wi‑Fi لا عبر Bluetooth وحده.
