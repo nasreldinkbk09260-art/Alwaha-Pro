@@ -71,7 +71,7 @@ const checks=[
 
 const visibilityChecks = [
  ['profile section starts with the profile menu and puts Waha test tools behind a separate bottom menu action',html.indexOf('id="alwaha-device-suite-menu-button"')>html.indexOf('id="profile-section"')&&html.indexOf('id="alwaha-device-suite"')>html.indexOf('id="alwaha-device-suite-menu-button"')&&html.includes("openSubProfileView('sub-prof-device-suite')")],
- ['the seven-day feature coverage board exposes incomplete and unverified work instead of hiding it',html.includes('id="alwaha-test-coverage-board"')&&html.includes('data-feature-id="local-pairing-transfer"')&&html.includes('data-feature-id="local-calls"')&&html.includes('data-feature-id="kids-room-safety"')&&html.includes('data-feature-id="share-button-policy"')],
+ ['the seven-day feature coverage board exposes incomplete and unverified work instead of hiding it',html.includes('id="alwaha-test-coverage-board"')&&['local-pairing-transfer','local-calls','kids-room-safety','share-button-policy','friend-requests-notifications','ringtone-audio','kids-call-room','privacy-account-safety','official-page-video','test-data-retention'].every(id=>html.includes('data-feature-id="'+id+'"'))],
  ['no Arabic coming-soon placeholders remain in the test branch UI',!html.includes('قريبًا')&&!html.includes('قريباً')]
 ];
 
