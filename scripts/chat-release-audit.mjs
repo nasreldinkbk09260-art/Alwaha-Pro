@@ -6,6 +6,7 @@ const replyMigration=fs.readFileSync('supabase/migrations/20261108120000_real_ch
 const replyTest=fs.readFileSync('supabase/tests/20261108120000_message_reply_scope.sql','utf8');
 const friendAcceptMigration=fs.readFileSync('supabase/migrations/20261108130000_friend_request_acceptance_notification.sql','utf8');
 const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_request_acceptance_notification.sql','utf8');
+const marketCallMigration=fs.readFileSync('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','utf8');
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
@@ -49,7 +50,8 @@ const checks = [
   ['market conversation list supports the live pre-snapshot schema', 'market_conversations?select=id,product_id,buyer_id,seller_id,created_at&${filter}'],
   ['market snapshots are queried as an optional schema extension', 'market_conversations?id=in.(${idFilter})&select=id,listing_snapshot'],
   ['market message success does not wait for secondary list refresh', 'void renderMarketConversationsList();'],
-  ['market call entry is disabled until production Realtime policies and two-device QA are complete', html.includes('اتصال صوتي بالبائع — قريبًا') && html.includes('disabled aria-disabled="true"') && html.includes('مكالمات السوق الصوتية قريبًا')],
+  ['market call entry uses the existing private conversation-scoped call path without friend gating', html.includes("startAlwahaCall('market','audio'") && html.includes('market-call-room-') && html.includes('market-call-inbox-') && html.includes('webrtc-market-incoming') && html.includes('market_conversations?id=eq.') && !html.includes('مكالمات السوق الصوتية قريبًا')],
+  ['market call Realtime policies are private and restricted to actual conversation participants', marketCallMigration.includes('alwaha_market_call_channels_receive') && marketCallMigration.includes('alwaha_market_call_channels_send') && marketCallMigration.includes('realtime.topic()') && marketCallMigration.includes('market_conversations')],
   ['market call uses conversation-scoped realtime', 'market-call-room-'],
   ['market transaction snapshot is used', 'market_transactions?conversation_id'],
   ['transaction sale uses atomic server rpc', "rpc('complete_market_sale'"],

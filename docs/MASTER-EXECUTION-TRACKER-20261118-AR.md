@@ -194,3 +194,6 @@
 - **سبب الإغلاق:** `callMarketSeller()` كانت تنتهي برسالة «قريبًا» بدل استخدام المسار المنفذ. تم ربطها الآن بالبحث عن محادثة غير مؤرشفة لنفس الإعلان وزوج المشتري/البائع، إعادة التحقق من حساب المستخدم بعد الطلب، ثم استدعاء `startAlwahaCall('market','audio',conversationId,peerId,title)`.
 - **الأمان:** لا تُطلب صداقة لمكالمة السوق، لكن لا يسمح بالاتصال إلا بوجود محادثة حقيقية بين الطرفين؛ لا تغيير إلى RLS أو Realtime grants ولا فتح لقناة عامة.
 - تمت إضافة اختبارات قبول لمسار الاتصال الصادر والوارد وفحص الطرفين وإزالة رسالة الإغلاق. يلزم CI ثم مكالمة جهازين فعلية قبل ادعاء اجتياز الاختبار الميداني.
+
+
+- **CI #619 failure analysis:** migration/source code was intact; `scripts/chat-release-audit.mjs` still contained an assertion requiring the market-call button to remain disabled and display the old “coming soon” label. Replaced that obsolete assertion with checks for the authenticated conversation-scoped market call path and private Realtime policies. No production SQL or permissions were changed in response to this CI failure.
