@@ -33,6 +33,8 @@ if(!workflow.includes('npm run audit:account-deletion')||!workflow.includes('den
 if(!workflow.includes('--print-certs')||!workflow.includes('APK-SIGNING-CERTIFICATE.txt')||!workflow.includes('certificate_sha256='))fail('Public APK signing certificate metadata is not included in the verified build/release artifacts.');
 if(!workflow.includes('> release/BUILD-INFO.txt')||!workflow.includes('BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt'))fail('Build metadata and certificate must both be written and included in the verified checksum manifest.');
 if(!officialSite.includes('APK-SIGNING-CERTIFICATE.txt')||!officialSite.includes('Alwaha-Pro-Android.apk.sha256'))fail('Official site must expose the APK signing certificate fingerprint and checksum verification links.');
+if(!html.includes('apple-touch-icon')||!html.includes('apple-mobile-web-app-title')||!html.includes('viewport-fit=cover'))fail('iPhone Safari PWA home-screen metadata is incomplete.');
+if(!officialSite.includes('Safari')||!officialSite.includes('إضافة إلى الشاشة الرئيسية')||!officialSite.includes('ليست تطبيقًا أصليًا منشورًا في App Store'))fail('Official guide must document iPhone Safari PWA installation without claiming native App Store availability.');
 
 const polish=read('production-polish.js');
 const sw=read('sw.js');
@@ -96,7 +98,7 @@ for(const required of ['reg-username','reg-country-code','alwaha-call-ringtone-e
 if(!html.includes("functions.invoke('username-auth'"))fail('Username Auth invocation missing.');
 if(!html.includes("functions.invoke('call-config'"))fail('Call ICE config hook missing.');
 if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing registration/audio polish module.');
-if(!fs.readFileSync('production-polish.js','utf8').includes('alwaha-profile-editor.js')||!fs.readFileSync('scripts/build-web.mjs','utf8').includes('alwaha-profile-editor.js')||!sw.includes("'./alwaha-profile-editor.js'")||!sw.includes("'./alwaha-profile-editor.js?v=3.0.4-account-password-change-20261117'"))fail('Profile editor module is not loaded, built and precached.');
+if(!fs.readFileSync('production-polish.js','utf8').includes('alwaha-profile-editor.js')||!fs.readFileSync('scripts/build-web.mjs','utf8').includes('alwaha-profile-editor.js')||!sw.includes("'./alwaha-profile-editor.js'")||!sw.includes("'./alwaha-profile-editor.js?v=3.0.4-iphone-pwa-20261118'"))fail('Profile editor module is not loaded, built and precached.');
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
 for(const asset of ['./assets/vendor/fontawesome/css/all.min.css','./assets/vendor/supabase/supabase.js','./assets/vendor/cairo/300.css','./assets/vendor/cairo/400.css','./assets/vendor/cairo/600.css','./assets/vendor/cairo/700.css','./assets/vendor/cairo/900.css'])if(!html.includes(asset))fail('Critical UI dependency is not served locally: '+asset);
@@ -110,8 +112,8 @@ if (!buildWeb.includes("path.join(root, 'scripts', 'native-back-handler.mjs')") 
 if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler is not precached by the service worker.');
 if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.4 local experience modules are not precached.');
 if (!sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard is not precached.');
-if (!html.includes('src="./alwaha-runtime-guard.js?v=3.0.4-account-password-change-20261117"') || !sw.includes("'./alwaha-runtime-guard.js?v=3.0.4-account-password-change-20261117'") || !sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard must use the versioned precached path with offline retry fallback.');
-for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js']) if (!html.includes('src="./'+asset+'?v=3.0.4-account-password-change-20261117"') || !sw.includes("'./"+asset+"?v=3.0.4-account-password-change-20261117'") || !sw.includes("'./"+asset+"'")) fail('Offline script URL does not match versioned and fallback service-worker precache entries: '+asset);
+if (!html.includes('src="./alwaha-runtime-guard.js?v=3.0.4-iphone-pwa-20261118"') || !sw.includes("'./alwaha-runtime-guard.js?v=3.0.4-iphone-pwa-20261118'") || !sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard must use the versioned precached path with offline retry fallback.');
+for (const asset of ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js']) if (!html.includes('src="./'+asset+'?v=3.0.4-iphone-pwa-20261118"') || !sw.includes("'./"+asset+"?v=3.0.4-iphone-pwa-20261118'") || !sw.includes("'./"+asset+"'")) fail('Offline script URL does not match versioned and fallback service-worker precache entries: '+asset);
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
 const runtimeAuditCommand = pkg.scripts?.['audit:runtime'] || '';
@@ -184,7 +186,7 @@ const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m
 if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
 if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
 if(sw.includes('bg-spring.webp')||sw.includes('bg-summer.webp')||sw.includes('bg-autumn.webp')||sw.includes('bg-winter.webp'))fail('Obsolete seasonal wallpaper files remain in the active offline cache list.');
-if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./alwaha-theme-system.css?v=3.0.4-account-password-change-20261117'")||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from offline precache.');
+if(!sw.includes("'./alwaha-theme-system.css'")||!sw.includes("'./alwaha-theme-system.css?v=3.0.4-iphone-pwa-20261118'")||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from offline precache.');
 
 if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
 
