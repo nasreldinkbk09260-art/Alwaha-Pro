@@ -1,4 +1,4 @@
-/* Alwaha-Pro 3.0.3 — unified three-theme system. */
+/* Alwaha-Pro 3.0.4 — unified three-theme system. */
 :root{--alwaha-theme-duration:260ms;}
 #alwaha-theme-backdrop{display:none!important;position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;overflow:hidden!important;background-position:center center!important;background-repeat:no-repeat!important;background-size:cover!important;transform:translateZ(0);opacity:0;transition:opacity var(--alwaha-theme-duration) ease;}
 body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop,body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop{display:block!important;opacity:1;}
