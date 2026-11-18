@@ -31,10 +31,10 @@ check('release version 3.0.4 is consistent across package, lockfile, manifest an
   pkg.version === '3.0.4' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.4' && manifest.version === '3.0.4' && /<title>Alwaha-Pro 3\.0\.4<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
 check('3.0.4 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-account-password-change-20261117'") &&
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-iphone-pwa-20261118'") &&
   read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.4-account-password-change-20261117') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.4-account-password-change-20261117') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.4-account-password-change-20261117'));
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.4-iphone-pwa-20261118') &&
+  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.4-iphone-pwa-20261118'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
