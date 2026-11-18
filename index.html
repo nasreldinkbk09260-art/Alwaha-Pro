@@ -4337,6 +4337,56 @@ async function renderConversationsList() {
             }
         }
 
+        async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
+            if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
+            const video = mediaType === 'video';
+            const user = await requireAuthenticatedUser(video ? 'سجّل الدخول لإجراء مكالمة فيديو.' : 'سجّل الدخول أولاً لإجراء مكالمة صوتية.');
+            if (!user) return;
+            const marketMode=mode==='market';
+            const targetId = marketMode ? (marketPeerId||'') : (currentChatUserId || '');
+            if (!targetId) return triggerToastNotification(marketMode?'تعذر تحديد البائع لمكالمة السوق.':'افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
+            if (targetId === user.id) return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.', 'error');
+            if (marketMode) {
+                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(marketConversationId||'')}&select=id,buyer_id,seller_id&limit=1`);
+                const c=Array.isArray(rows)?rows[0]:null;
+                if(!c||!((c.buyer_id===user.id&&c.seller_id===targetId)||(c.seller_id===user.id&&c.buyer_id===targetId)))return triggerToastNotification('المكالمة غير مسموحة: لا توجد محادثة سوق موثقة بين الطرفين.', 'error');
+            } else if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
+            if (video && (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection)) return triggerToastNotification('مكالمات الفيديو غير مدعومة في إصدار WebView الحالي.', 'error');
+            setCallModal(true);
+            if (!activeCallManager) activeCallManager = new CallSignalingManager();
+            activeCallManager.mediaType = video ? 'video' : 'audio';
+            updateCallUi('outgoing', {
+                target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId),
+                text: video ? 'جاري بدء مكالمة الفيديو...' : 'جاري الاتصال...',
+                indicator: marketMode ? '<i class="fa-solid fa-store"></i> اتصال سوق موثق — لا يشترط الصداقة' : (video ? '<i class="fa-solid fa-video"></i> فيديو متكيف يصل إلى 640×360' : '<i class="fa-solid fa-phone"></i> اتصال صوتي عبر الإنترنت')
+            });
+            try {
+                await activeCallManager.startOutgoing(targetId, mode, mediaType, marketMode?marketConversationId:null);
+                const networkStatus = window.__alwahaCallNetworkStatus;
+                const connectingText = networkStatus?.turnConfigured === false
+                    ? 'بانتظار الطرف الآخر... تنبيه: TURN غير مهيأ أو لم يستجب؛ قد تفشل المكالمة عبر بعض الشبكات.'
+                    : 'بانتظار الطرف الآخر...';
+                updateCallUi('connecting', { target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId), text: connectingText });
+            } catch (error) {
+                console.error('[Alwaha Call] Outgoing call failed:', error);
+                cancelPendingKidsRoomAfterConnect();
+                await activeCallManager?.end(false);
+                updateCallUi('idle');
+                setCallModal(false);
+                const message = video && /camera|video|permission|NotAllowed|NotFound/i.test(String(error?.name || '') + ' ' + String(error?.message || ''))
+                    ? 'تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا والميكروفون ثم أعد المحاولة.'
+                    : (error?.message || 'تعذر بدء المكالمة. تحقق من إذن الميكروفون والاتصال.');
+                triggerToastNotification(message, 'error');
+            }
+        }
+        async function initiateVoiceCall(type = 'online') { return startAlwahaCall(type, 'audio'); }
+        async function initiateVideoCall(mode = 'normal') {
+            cancelPendingKidsRoomAfterConnect();
+            pendingKidsRoomAfterConnect = mode === 'kids';
+            await startAlwahaCall('online', 'video');
+            if (!activeCallManager?.call) cancelPendingKidsRoomAfterConnect();
+            return !!activeCallManager?.call;
+        }
         let pendingKidsRoomAfterConnect = false;
         let kidsRoomOpenAnimation = 0;
         function cancelPendingKidsRoomAfterConnect() {
@@ -4416,56 +4466,6 @@ async function renderConversationsList() {
             window.AlwahaModalShell?.sync?.();
             overlay.focus();
             overlay.querySelector('[data-video-call-mode="normal"]')?.focus();
-        }
-        async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
-            if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
-            const video = mediaType === 'video';
-            const user = await requireAuthenticatedUser(video ? 'سجّل الدخول لإجراء مكالمة فيديو.' : 'سجّل الدخول أولاً لإجراء مكالمة صوتية.');
-            if (!user) return;
-            const marketMode=mode==='market';
-            const targetId = marketMode ? (marketPeerId||'') : (currentChatUserId || '');
-            if (!targetId) return triggerToastNotification(marketMode?'تعذر تحديد البائع لمكالمة السوق.':'افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
-            if (targetId === user.id) return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.', 'error');
-            if (marketMode) {
-                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(marketConversationId||'')}&select=id,buyer_id,seller_id&limit=1`);
-                const c=Array.isArray(rows)?rows[0]:null;
-                if(!c||!((c.buyer_id===user.id&&c.seller_id===targetId)||(c.seller_id===user.id&&c.buyer_id===targetId)))return triggerToastNotification('المكالمة غير مسموحة: لا توجد محادثة سوق موثقة بين الطرفين.', 'error');
-            } else if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
-            if (video && (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection)) return triggerToastNotification('مكالمات الفيديو غير مدعومة في إصدار WebView الحالي.', 'error');
-            setCallModal(true);
-            if (!activeCallManager) activeCallManager = new CallSignalingManager();
-            activeCallManager.mediaType = video ? 'video' : 'audio';
-            updateCallUi('outgoing', {
-                target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId),
-                text: video ? 'جاري بدء مكالمة الفيديو...' : 'جاري الاتصال...',
-                indicator: marketMode ? '<i class="fa-solid fa-store"></i> اتصال سوق موثق — لا يشترط الصداقة' : (video ? '<i class="fa-solid fa-video"></i> فيديو متكيف يصل إلى 640×360' : '<i class="fa-solid fa-phone"></i> اتصال صوتي عبر الإنترنت')
-            });
-            try {
-                await activeCallManager.startOutgoing(targetId, mode, mediaType, marketMode?marketConversationId:null);
-                const networkStatus = window.__alwahaCallNetworkStatus;
-                const connectingText = networkStatus?.turnConfigured === false
-                    ? 'بانتظار الطرف الآخر... تنبيه: TURN غير مهيأ أو لم يستجب؛ قد تفشل المكالمة عبر بعض الشبكات.'
-                    : 'بانتظار الطرف الآخر...';
-                updateCallUi('connecting', { target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId), text: connectingText });
-            } catch (error) {
-                console.error('[Alwaha Call] Outgoing call failed:', error);
-                cancelPendingKidsRoomAfterConnect();
-                await activeCallManager?.end(false);
-                updateCallUi('idle');
-                setCallModal(false);
-                const message = video && /camera|video|permission|NotAllowed|NotFound/i.test(String(error?.name || '') + ' ' + String(error?.message || ''))
-                    ? 'تعذر تشغيل الكاميرا. تحقق من إذن الكاميرا والميكروفون ثم أعد المحاولة.'
-                    : (error?.message || 'تعذر بدء المكالمة. تحقق من إذن الميكروفون والاتصال.');
-                triggerToastNotification(message, 'error');
-            }
-        }
-        async function initiateVoiceCall(type = 'online') { return startAlwahaCall(type, 'audio'); }
-        async function initiateVideoCall(mode = 'normal') {
-            cancelPendingKidsRoomAfterConnect();
-            pendingKidsRoomAfterConnect = mode === 'kids';
-            await startAlwahaCall('online', 'video');
-            if (!activeCallManager?.call) cancelPendingKidsRoomAfterConnect();
-            return !!activeCallManager?.call;
         }
         function toggleCallCamera() {
             const enabled = activeCallManager?.call?.toggleCamera?.();
