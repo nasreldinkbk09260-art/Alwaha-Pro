@@ -6,6 +6,7 @@ const plugin = read('scripts/android/AlwahaLocalNetworkPlugin.java');
 const bridge = read('scripts/native-back-handler.mjs');
 const workflow = read('.github/workflows/build-apk-aab-release.yml');
 const pkg = JSON.parse(read('package.json'));
+const html = read('index.html');
 
 const checks = [
   ['native Capacitor plugin uses the stable AlwahaLocalNetwork registration name', /@CapacitorPlugin\(\s*name\s*=\s*"AlwahaLocalNetwork"/.test(plugin)],
@@ -19,6 +20,8 @@ const checks = [
   ['Android build validates and generates the local network plugin template', workflow.includes('test -s scripts/android/AlwahaLocalNetworkPlugin.java') && workflow.includes("for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin'):") && workflow.includes("template_path = Path('scripts/android') / f'{plugin_name}.java'") && workflow.includes("template.replace('__ALWAHA_PACKAGE__', package_match.group(1))")],
   ['Android MainActivity registers both native plugins', workflow.includes('registerPlugin(AlwahaAudioRoutePlugin.class)') && workflow.includes('registerPlugin(AlwahaLocalNetworkPlugin.class)')],
   ['Android manifest adds Nearby Wi-Fi, Bluetooth and legacy declarations without adding broad location claims', workflow.includes('android.permission.NEARBY_WIFI_DEVICES') && workflow.includes('android.permission.BLUETOOTH_SCAN') && workflow.includes('android.permission.BLUETOOTH_CONNECT') && workflow.includes('android.permission.BLUETOOTH_ADVERTISE') && workflow.includes('neverForLocation')],
+  ['chat header exposes permission-gated nearby-device discovery', html.includes('onclick="openAlwahaLocalDiscovery()"') && html.includes('async function openAlwahaLocalDiscovery()') && html.includes('plugin.startDiscovery()') && html.includes("bind('peerDiscovered'")],
+  ['nearby discovery labels devices unverified and exposes no fake connect action', html.includes('verified:false,authenticationRequired:true') && html.includes('لا يوجد اتصال أو نقل بيانات') && !html.includes('data-local-connect')],
   ['native local network audit is part of the standard npm validation scripts', pkg.scripts['audit:local-network-native'] === 'node scripts/local-network-native-audit.mjs']
 ];
 let failed = 0;

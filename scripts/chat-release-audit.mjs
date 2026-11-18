@@ -10,6 +10,8 @@ const marketCallMigration=fs.readFileSync('supabase/migrations/20261101210000_ma
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
+  ['chat header exposes native nearby Wi-Fi/Bluetooth discovery dialog', html.includes('onclick="openAlwahaLocalDiscovery()"') && html.includes('async function openAlwahaLocalDiscovery()') && html.includes('plugin.startDiscovery()') && html.includes('peerDiscovered')],
+  ['discovery-only mode does not claim local messaging, files or calls are ready', html.includes('ولا يتم الاتصال بها أو إرسال رسائل أو ملفات أو مكالمات محلية') && html.includes('لا يوجد اتصال أو نقل بيانات')],
   ['video action opens the normal/Kids mode chooser', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"')],
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
