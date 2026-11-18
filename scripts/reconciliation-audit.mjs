@@ -84,11 +84,13 @@ check('market_messages.sender_id foreign-key advisor finding has a migration ind
   lifecycleSql.includes('market_messages_sender_id_idx') &&
   nonfriendTest.includes('Missing index for market_messages.sender_id foreign key'));
 
-// Kids mode: real source and call-audio track path are checked separately from device QA.
-check('kids mode is explicitly deferred in the app until real-device acceptance',
-  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && html.includes('id="kidsModeBtn"') &&
-  html.includes('وضع الأطفال — قريبًا') && html.includes('disabled aria-disabled="true"') &&
-  !html.includes('onclick="toggleAlwahaKidsMode()"'));
+// Kids Room is selectable from the video-call mode chooser; real-device acceptance remains a release gate.
+check('Kids Room is selectable and guarded until the video call has a remote stream',
+  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && kids.includes('kids-parent-exit') &&
+  html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') &&
+  html.includes('data-video-call-mode="kids"') && html.includes('onclick="toggleAlwahaKidsMode()"') &&
+  html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'") &&
+  html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1'));
 check('kids room includes local scene, both video streams, camera filters, toys, balloon, key and door lock',
   kids.includes('kids-video-port') && kids.includes('kids-local-port') && kids.includes('const filters=') &&
   kids.includes('data-toy') && kids.includes('kids-balloon') && kids.includes('kids-key') && kids.includes('kids-lock') && kids.includes('kids-door'));
