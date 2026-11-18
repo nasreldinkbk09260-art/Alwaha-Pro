@@ -171,3 +171,18 @@
 - **Run #617** على commit `186f4762f9e16ca520e904457c0f3b6a838591bc` فشل قبل تنفيذ تدقيق الألعاب بسبب خطأ صياغة في آخر `scripts/game-actions-audit.mjs`: قوس الإغلاق بعد `checks` سقط عند إضافة assertion الجديدة.
 - فُتح سجل الوظيفة `Build and verify signed Android APK/AAB` (job ID `135035227942`) وتأكد أن الفشل SyntaxError في السطر 62 فقط؛ فحص PostgreSQL المؤقت نجح، ولم يبدأ نشر أو إنتاج.
 - تم تصحيح القوس فقط دون تغيير منطق اللعبة أو SQL. سيُعاد التحقق على commit جديد؛ لا يُحتسب #617 نجاحًا.
+
+
+## نتيجة CI الناجحة — Build #618 واختبارات قواعد الألعاب (18 نوفمبر 2026)
+- **Commit المختبَر:** `0c115b6bbdac10a1fcdf20184c7f07ded6f7c175` على الفرع `alwaha-pro-recovery-20261118`.
+- **GitHub Actions:** [Run #618 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44370563721). نجحت وظيفتا PostgreSQL المؤقت وبناء Android؛ وظيفتا نشر APK Release وGitHub Pages كانتا `skipped` عمداً.
+- **اختبارات الألعاب:** `deno check` لدالة `game-actions` نجح، واختبارات Deno الثمانية لقواعد الشطرنج/ليدو/حرب الورق نجحت، ثم `audit:games` وQR runtime audit نجحا. اختبارات الشطرنج شملت الحركة القانونية وغير القانونية والكش مات، وليدو الدخول/التمرير/الفوز، وحرب الورق وحالة الحرب مع حفظ 52 ورقة. اختبار SQL للغرف والامتيازات على PostgreSQL مؤقت نجح.
+- **بقية البوابات المطلوبة:** release preflight، performance/storage، chat/feed، Android compatibility، runtime/back navigation، local-network discovery، native-call UI/signaling، adaptive video، fullscreen UI، reconciliation، retention/kids/vault، support tickets، user-safety/moderation، account deletion/privacy، admin security، وweb build كلها `success` في التشغيل نفسه.
+- **بيانات البناء:** version `3.0.4`، version_code `618`، application_id `pro.alwaha.app`، target SDK `36`، والفرع/commit كما أعلاه.
+- **Artifact:** `Alwaha-Pro-3.0.4-build-618`، ID `14459181253`، الحجم `54,520,763 bytes`، انتهاء الصلاحية `2026-12-18T18:34:09Z`. [تحميل Artifact Build 618](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44370563721/artifacts/14459181253). بصمة ZIP: `bf5dc4cc25f535cad9179b6996d086408b459c5a3ef6484bba066cf988252312`.
+- **بصمات الملفات داخل الحزمة:** APK SHA-256 `b13b48a25c694858339b37563ee69ed8f717f962858abc47a181a0bbb054dba3`؛ AAB SHA-256 `a2da4649f115c78f97b0f4ddab75850e2339d3afebe99ca0a8a00e86e2e6e7b9`؛ Final Source ZIP SHA-256 `cf56a4d9cadbc30f5f70609dad4cfd90bccb7a58662d9e3c1601664253d7392f`. تم تشغيل `sha256sum --check` على الملفات الخمسة في الحزمة وكانت كلها `OK`.
+- **التوقيع:** CI تحقق من توقيع APK وAAB؛ كما اجتاز AAB تحقق `jarsigner` المستقل. بصمة شهادة SHA-256 `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`، مطابقة لبصمة Builds #608/#612/#616. لم تُقارن بعد ببصمة النسخة المثبتة سابقاً على هاتف المالك.
+- **Supabase/النشر:** لا SQL أو migration أو Edge Function deploy على الإنتاج ضمن هذه الدفعة؛ لا تغيير على `main`، ولم يُنشر APK أو الموقع رسمياً.
+- **حالة P1 للألعاب:** اختبارات المصدر وقواعد الخادم وCI اجتازت. **لم يُغلق اختبار الجهازين**: لا بد من تثبيت Build 618 على هاتفين بحسابين منفصلين، إنشاء غرفة من الأول، الانضمام من الثاني بالكود ثم QR، تنفيذ حركات فعلية في الألعاب الثلاث، إغلاق الغرفة واستعادتها من الجهازين. لا نعلن اكتمالاً ميدانياً قبل هذه التجربة.
+- **تعثر CI السابق:** #617 فشل بسبب قوس مفقود في حلقة `checks` في `game-actions-audit.mjs`؛ أُصلح في commit `0c115b6`، ثم اجتاز #618 جميع البوابات.
+- **الخطوة التالية:** اختبار Build 618 على جهازين وحسابين وإرسال نتيجة فتح صفحة الألعاب/إنشاء الغرفة/QR/اللعب/الاستعادة. بعد توثيق بوابة الألعاب، ننتقل إلى اختبار مكالمة الفيديو العادية وغرفة الأطفال بين جهازين؛ لا يُعد CI اختبار هاتف.
