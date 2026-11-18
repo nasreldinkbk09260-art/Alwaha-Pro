@@ -59,5 +59,5 @@ const checks=[
   ['game resume storage is restricted to the active participant RLS policy',roomMigration.includes('game_rooms_select_participant')&&roomMigration.includes('player1_id = (select auth.uid()) or player2_id = (select auth.uid())')],
   ['game rules are isolated for direct runtime testing and cover all three game engines',edge.includes("from '../_shared/game-rules.ts'")&&rulesTest.includes('Deno.test')&&rulesTest.includes('chess')&&rulesTest.includes('ludo')&&rulesTest.includes('war')&&rules.includes('export { randomCode, initialState, computeMove }')],
 ]; 
-for(const [name,ok] of checks ok?pass(name):fail(name);
+for(const [name,ok] of checks) ok?pass(name):fail(name);
 if(!process.exitCode)console.log('SERVER_AUTHORITATIVE_GAMES_AUDIT=PASS');
