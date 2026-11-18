@@ -113,6 +113,8 @@ jobs:
           test -s scripts/build-web.mjs
           test -s scripts/native-back-handler.mjs
           test -s scripts/android/AlwahaAudioRoutePlugin.java
+          test -s scripts/android/AlwahaLocalNetworkPlugin.java
+          test -s scripts/local-network-native-audit.mjs
           test -s games.js
           test -s production-polish.js
           test -s alwaha-call-feedback.js
@@ -279,6 +281,9 @@ jobs:
         run: npm run audit:runtime
 
 
+      - name: Audit native Wi-Fi Direct and Bluetooth discovery foundation
+        run: npm run audit:local-network-native
+
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
 
@@ -401,8 +406,12 @@ jobs:
           package_match = re.search(r'^package\s+([A-Za-z0-9_.]+);', source, re.M)
           if not package_match:
               raise SystemExit('Could not determine MainActivity package.')
-          template = Path('scripts/android/AlwahaAudioRoutePlugin.java').read_text(encoding='utf-8')
-          (activity.parent / 'AlwahaAudioRoutePlugin.java').write_text(template.replace('__ALWAHA_PACKAGE__', package_match.group(1)), encoding='utf-8')
+          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin'):
+              template_path = Path('scripts/android') / f'{plugin_name}.java'
+              if not template_path.is_file():
+                  raise SystemExit(f'Missing native plugin template: {template_path}')
+              template = template_path.read_text(encoding='utf-8')
+              (activity.parent / f'{plugin_name}.java').write_text(template.replace('__ALWAHA_PACKAGE__', package_match.group(1)), encoding='utf-8')
           manifest_path = Path('android/app/src/main/AndroidManifest.xml')
           manifest = manifest_path.read_text(encoding='utf-8')
           provider_marker = 'android:authorities="${applicationId}.alwaha-fileprovider"'
@@ -444,7 +453,16 @@ jobs:
                   method = '\n        @Override\n        public void onCreate(Bundle savedInstanceState) {\n            registerPlugin(AlwahaAudioRoutePlugin.class);\n            super.onCreate(savedInstanceState);\n        }\n'
                   source = source[:body] + method + source[body:]
               activity.write_text(source, encoding='utf-8')
-          print('Registered AlwahaAudioRoutePlugin:', activity)
+          if 'registerPlugin(AlwahaLocalNetworkPlugin.class)' not in source:
+              if 'registerPlugin(AlwahaAudioRoutePlugin.class)' not in source:
+                  raise SystemExit('Audio route plugin registration marker is missing; refusing local network registration.')
+              source = source.replace(
+                  'registerPlugin(AlwahaAudioRoutePlugin.class);',
+                  'registerPlugin(AlwahaAudioRoutePlugin.class);\\n        registerPlugin(AlwahaLocalNetworkPlugin.class);',
+                  1
+              )
+              activity.write_text(source, encoding='utf-8')
+          print('Registered AlwahaAudioRoutePlugin and AlwahaLocalNetworkPlugin:', activity)
           PY
 
 
@@ -458,18 +476,28 @@ jobs:
           path = Path('android/app/src/main/AndroidManifest.xml')
           source = path.read_text(encoding='utf-8')
           permissions = (
-              'android.permission.CAMERA',
-              'android.permission.RECORD_AUDIO',
-              'android.permission.MODIFY_AUDIO_SETTINGS',
-              'android.permission.ACCESS_COARSE_LOCATION',
-              'android.permission.ACCESS_FINE_LOCATION',
+              ('android.permission.CAMERA', ''),
+              ('android.permission.RECORD_AUDIO', ''),
+              ('android.permission.MODIFY_AUDIO_SETTINGS', ''),
+              ('android.permission.ACCESS_COARSE_LOCATION', ''),
+              ('android.permission.ACCESS_FINE_LOCATION', ''),
+              ('android.permission.ACCESS_WIFI_STATE', ''),
+              ('android.permission.CHANGE_WIFI_STATE', ''),
+              ('android.permission.CHANGE_NETWORK_STATE', ''),
+              ('android.permission.ACCESS_NETWORK_STATE', ''),
+              ('android.permission.NEARBY_WIFI_DEVICES', 'android:usesPermissionFlags="neverForLocation"'),
+              ('android.permission.BLUETOOTH_SCAN', 'android:usesPermissionFlags="neverForLocation"'),
+              ('android.permission.BLUETOOTH_CONNECT', ''),
+              ('android.permission.BLUETOOTH_ADVERTISE', ''),
+              ('android.permission.BLUETOOTH', 'android:maxSdkVersion="30"'),
+              ('android.permission.BLUETOOTH_ADMIN', 'android:maxSdkVersion="30"'),
           )
           app_pos = source.find('<application')
           if app_pos < 0:
               raise SystemExit('Could not find <application> in AndroidManifest.xml.')
           additions = [
-              f'    <uses-permission android:name="{permission}" />'
-              for permission in permissions
+              f'    <uses-permission android:name="{permission}" {attributes}/>'.replace(' />', '/>')
+              for permission, attributes in permissions
               if f'android:name="{permission}"' not in source
           ]
           if additions:

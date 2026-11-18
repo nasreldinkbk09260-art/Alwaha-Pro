@@ -34,7 +34,8 @@
     "audit:security-definers": "node scripts/security-definer-audit.mjs",
     "audit:user-safety": "node scripts/user-safety-ui-audit.mjs",
     "audit:account-deletion": "node scripts/account-deletion-audit.mjs",
-    "audit:support-tickets": "node scripts/support-tickets-audit.mjs"
+    "audit:support-tickets": "node scripts/support-tickets-audit.mjs",
+    "audit:local-network-native": "node scripts/local-network-native-audit.mjs"
   },
   "engines": {
     "node": ">=22"

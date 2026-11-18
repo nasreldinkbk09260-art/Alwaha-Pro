@@ -2,7 +2,9 @@ import { App } from '@capacitor/app';
 import { registerPlugin } from '@capacitor/core';
 
 const AlwahaAudioRoute = registerPlugin('AlwahaAudioRoute');
+const AlwahaLocalNetwork = registerPlugin('AlwahaLocalNetwork');
 window.alwahaAudioRoute = AlwahaAudioRoute;
+window.alwahaLocalNetwork = AlwahaLocalNetwork;
 
 function handleAndroidBack() {
   if (typeof window.dispatchAlwahaBack === 'function') {
