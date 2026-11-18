@@ -874,11 +874,6 @@ img,video,canvas{max-width:100%}
 
     <!-- 4. قسم الملف الشخصي -->
     <section id="profile-section" class="app-section">
-        <div id="alwaha-device-suite" style="margin:12px 0 20px;padding:13px;border:1px solid #8bf4ff2b;border-radius:16px;background:linear-gradient(145deg,#0e1a2b,#101725);">
-          <h3 style="margin:0 0 10px;color:#8bf4ff;font-size:14px;">مساحة الواحة وإعدادات التجربة</h3>
-          <div id="alwaha-local-vault-ui"></div>
-          <div id="alwaha-experience-ui" style="margin-top:14px;"></div>
-        </div>
         <div class="profile-card-header-view" style="text-align:center; padding:20px 0;">
             <img id="profile-avatar-display" src="icon.png" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #00ffff; margin-bottom:10px;">
             <h3 id="profile-name-display" style="margin:0; font-size:16px; color:#fff;">زائر Alwaha-Pro</h3>
@@ -919,6 +914,10 @@ img,video,canvas{max-width:100%}
             </div>
             <button id="alwaha-delete-account-button" class="btn-action" style="display:none;width:100%;margin-top:4px;background:rgba(255,130,90,.10);color:#ffc0a8;border:1px solid #ff9a7955;padding:12px;border-radius:12px;font-size:12px;" onclick="deleteMyAlwahaAccount()" aria-hidden="true"><i class="fa-solid fa-user-xmark"></i> حذف حسابي وبياناتي</button>
             <button id="alwaha-logout-button" class="btn-action" style="display:none;width:100%;margin-top:4px;background:rgba(255,0,85,.12);color:#ff8fa5;border:1px solid #ff6688;padding:12px;border-radius:12px;font-size:12px;" onclick="signOutAlwaha()"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+            <button type="button" id="alwaha-device-suite-menu-button" class="profile-menu-btn" style="width:100%;background:linear-gradient(120deg,rgba(20,184,166,.13),rgba(59,130,246,.12));padding:13px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid #8bf4ff55;color:#a9f7ff;font:inherit;text-align:right;" onclick="openSubProfileView('sub-prof-device-suite')">
+                <span style="font-size:13px;"><i class="fa-solid fa-sliders"></i> مساحة الواحة وإعدادات التجربة</span>
+                <i class="fa-solid fa-chevron-left" style="font-size:11px;color:#9ddce8;"></i>
+            </button>
         </div>
     </section>
 
@@ -1011,6 +1010,82 @@ img,video,canvas{max-width:100%}
         <button class="btn-action" style="width:100%; background:rgba(255,0,85,0.1); color:#ff0055; border:1px solid #ff0055; padding:12px; border-radius:8px; font-size:13px;" onclick="clearAppCacheKeepData()">
             <i class="fa-solid fa-broom"></i> تنظيف الكاش وتسريع التطبيق
         </button>
+    </div>
+
+
+    <div id="sub-prof-device-suite" class="sub-profile-view-box" aria-label="مساحة الواحة وإعدادات التجربة">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
+            <h3 style="color:#8bf4ff;font-size:16px;margin:0;">مساحة الواحة وإعدادات التجربة</h3>
+            <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-device-suite')" aria-label="إغلاق مساحة الواحة"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="alwaha-device-suite" style="margin:0 0 18px;padding:13px;border:1px solid #8bf4ff2b;border-radius:16px;background:linear-gradient(145deg,#0e1a2b,#101725);">
+          <h4 style="margin:0 0 10px;color:#8bf4ff;font-size:14px;">النسخ الاحتياطي المحلي وتجربة التنقل</h4>
+          <div id="alwaha-local-vault-ui"></div>
+          <div id="alwaha-experience-ui" style="margin-top:14px;"></div>
+        </div>
+        <section id="alwaha-test-coverage-board" aria-labelledby="alwaha-test-coverage-title" style="padding:13px;border:1px solid #8bf4ff35;border-radius:15px;background:linear-gradient(145deg,#101b2d,#111827);margin-bottom:20px;">
+          <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">فهرس طلبات الأيام السبعة وحالة التنفيذ</h4>
+          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة متابعة لنسخة الاختبار الخاصة بتاريخ 19 نوفمبر 2026. حالة «موجود بالكود» لا تعني أن التجربة على هاتفين نجحت؛ سنحوّلها إلى ناجح أو يحتاج إصلاح بعد الاختبار الفعلي. لا توجد عناصر مخفية من هذا الفهرس.</p>
+          <div style="display:grid;gap:9px;">
+            <div data-feature-id="market-chat-call" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">السوق: محادثة المشتري والبائع والاتصال الصوتي</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">مسار المحادثة والاتصال الموثق موجود في الكود؛ اختبار حساب مشتري وبائع مطلوب.</span>
+            </div>
+            <div data-feature-id="market-transactions" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">السوق: تسجيل البيع وسجل المعاملات والضمان والأرشيف</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">جداول وسياسات وخدمة تسجيل البيع موجودة وفق فحص قاعدة البيانات؛ تجربة البيع والاستلام وموافقة الطرفين مطلوبة.</span>
+            </div>
+            <div data-feature-id="nearby-discovery" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الأجهزة القريبة: اكتشاف Wi-Fi وBluetooth</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">مدخل الاكتشاف موجود؛ يجب إثبات ظهور الأجهزة فعلياً على هاتفين.</span>
+            </div>
+            <div data-feature-id="local-pairing-transfer" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الشبكة المحلية: الاقتران المشفر ونقل الرسائل والملفات</strong>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">غير مثبت اكتماله في هذه النسخة؛ ظاهر في سجل الاختبار ولا يُعرض كوظيفة ناجحة قبل إثبات النقل.</span>
+            </div>
+            <div data-feature-id="local-calls" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الصوت والفيديو عبر الشبكة المحلية</strong>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">غير مثبتة كمسار اتصال محلي مكتمل؛ مكالمات الإنترنت مسار منفصل.</span>
+            </div>
+            <div data-feature-id="internet-video-quality" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الإنترنت وجودة الفيديو التكيفية</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">اختبارات آلية ومسار مكالمة موجودان؛ اختبار الشبكة والكاميرا والصوت على جهازين مطلوب.</span>
+            </div>
+            <div data-feature-id="multiplayer-games" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الألعاب الفردية والجماعية</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">محرك الألعاب واختباراته موجودان؛ إنشاء غرفة ومشاركة لاعب ثانٍ يحتاجان تجربة فعلية.</span>
+            </div>
+            <div data-feature-id="kids-room-safety" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">غرفة الأطفال وسلامة الاستخدام</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">الوحدة موجودة في المصدر؛ يلزم اختبار تدفق الدخول والمحتوى والأذونات وسلوك المكالمة.</span>
+            </div>
+            <div data-feature-id="notifications" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">التنبيهات وطلبات الصداقة وقراءة الإشعارات</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">يحتاج سيناريو حسابين: قراءة تنبيه واحد، إبقاء البقية، واستخدام «تحديد الكل كمقروء» يدوياً.</span>
+            </div>
+            <div data-feature-id="navigation-themes" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">شريط التنقل والثيمات والمظهر</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">السحب والترتيب والإخفاء والاستعادة وثلاثة ثيمات موجودة؛ الثيمات الموسمية الأربعة تحتاج مراجعة منفصلة.</span>
+            </div>
+            <div data-feature-id="backup-low-data" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">النسخ الاحتياطي والتخزين المحلي وتوفير البيانات</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">النسخة المشفرة واستعادة المسودات والإعدادات موجودة؛ يلزم اختبار ملف حقيقي واسترجاعه دون كتابة تلقائية للسحابة.</span>
+            </div>
+            <div data-feature-id="admin-support" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الإدارة وطلبات الدعم وتوثيق الحساب</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">المسارات موجودة في المصدر؛ يلزم اختبارها بحساب الإدارة والصلاحيات الصحيحة.</span>
+            </div>
+            <div data-feature-id="ui-full-audit" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">مراجعة كل صفحة وزر والأداء مع الاتصال الضعيف</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">قائمة فحص ميدانية مفتوحة؛ لا تعتبر مراجعة الأزرار مكتملة قبل المرور عليها في التطبيق المثبت.</span>
+            </div>
+            <div data-feature-id="share-button-policy" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">زر المشاركة العام</strong>
+              <span style="display:block;color:#b7c9da;font-size:10px;margin-top:4px;">محذوف وفق قرارك السابق؛ لن نعيده ضمن تجميع ميزات الاختبار.</span>
+            </div>
+          </div>
+          <p style="color:#9fb6c9;font-size:9px;line-height:1.8;margin:12px 0 0;">سجّل نتيجة كل تجربة: ناجح، يحتاج إصلاح، أو لم يُختبر. لا تُحوّل الحالة إلى «ناجح» اعتماداً على وجود زر أو نجاح البناء فقط.</p>
+        </section>
     </div>
 
     <div id="sub-prof-recovery" class="sub-profile-view-box">
@@ -3613,7 +3688,7 @@ async function subscribeToMarketConversation() {
             const holder=document.getElementById('market-transactions-container');if(!holder)return;
             const me=await getCurrentAuthUser();if(requestId!==marketTransactionsRenderRequestId)return;if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
-            if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">سجل المعاملات والضمان قريبًا. سيظهر بعد اكتمال تحديث قاعدة السوق واعتماد صلاحياته.</div>';return;}
+            if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">تعذر التحقق من مخطط سجل المعاملات. لم يتم تحميل السجل؛ راجع حالة الخدمة ثم أعد المحاولة.</div>';return;}
             const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
             const activeUser=await getCurrentAuthUser();
             if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;
@@ -3634,7 +3709,7 @@ async function subscribeToMarketConversation() {
         }
         async function confirmMarketTransactionReceipt(transactionId) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً.');if(!me)return;
-            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تأكيد الاستلام قريبًا حتى يكتمل تحديث سجل المعاملات.','info');
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تأكيد الاستلام.','info');
             if(!window.confirm('تأكيد الاستلام؟ سيُسجل وقت تأكيدك ضمن سجل المعاملة.'))return;
             const result=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&buyer_confirmed_at=is.null`,{method:'PATCH',body:JSON.stringify({buyer_confirmed_at:new Date().toISOString()}),prefer:'return=representation'});
             if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تسجيل الاستلام. تحقق من صلاحيات قاعدة البيانات.','error');
@@ -3643,7 +3718,7 @@ async function subscribeToMarketConversation() {
 
         async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً لإدارة موافقتك على الأرشيف.');if(!me)return;
-            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('موافقة حذف الأرشيف قريبًا بعد اكتمال تحديث سياسة الاحتفاظ.','info');
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سياسة الاحتفاظ؛ لم يتم تغيير موافقة الأرشيف.','info');
             if(!['conversation','transaction'].includes(recordType)||!recordId)return;
             const message=approve?'لن يُحذف الأرشيف تلقائياً. لا يتم الحذف إلا بعد موافقة الطرفين ومرور 7 أيام كاملة بعد الإشعار. يمكنك إلغاء موافقتك قبل تنفيذ الحذف. هل توافق؟':'سيتم سحب موافقتك، ولن يتم الحذف ما لم يسجل الطرفان الموافقة من جديد. هل تريد المتابعة؟';
             if(!window.confirm(message))return;
@@ -4999,7 +5074,7 @@ async function submitNewProductToMarket() {
                 const productId=modal.dataset.productId,sellerId=modal.dataset.sellerId;
                 if(mode==='sale'){
                     if(me.id!==sellerId)return triggerToastNotification('الحساب الحالي ليس مالك الإعلان.','error');
-                    if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا حتى يكتمل تحديث قاعدة السوق.','info');
+                    if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تسجيل البيع.','info');
                     const buyerSelect=modal.querySelector('#market-action-buyer'),selected=buyerSelect?.selectedOptions?.[0],buyerId=buyerSelect?.value,conversationId=selected?.dataset?.conversationId;
                     const guaranteeDays=Number(modal.querySelector('#market-action-guarantee')?.value),agreementNote=String(modal.querySelector('#market-action-agreement')?.value||'').trim();
                     if(!buyerId||!conversationId)return triggerToastNotification('اختر المشتري من محادثات الإعلان.','error');
@@ -5033,7 +5108,7 @@ async function submitNewProductToMarket() {
         async function markMyProductSold(productId) {
             const requestId=++marketActionFormRequestId;
             const me=await requireAuthenticatedUser('سجّل الدخول لإدارة إعلانك.');if(!me||requestId!==marketActionFormRequestId)return;
-            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا حتى يكتمل تحديث قاعدة السوق.','info');
+            if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تسجيل البيع.','info');
             const activeUserBeforeSchema=await getCurrentAuthUser();if(requestId!==marketActionFormRequestId||activeUserBeforeSchema?.id!==me.id)return;
             const [productRows,rows]=await Promise.all([
                 supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&seller_id=eq.${encodeURIComponent(me.id)}&select=id,title,status&limit=1`),
@@ -5103,7 +5178,7 @@ async function renderMyPersonalMarketItems() {
               </div>
               <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px;">
                 ${product.status==='archived'?`<button type="button" class="btn-action" style="background:#17354a;color:#8bf4ff;padding:8px;border-radius:7px;font-size:10px;" onclick="reactivateMyProduct('${escapeJs(product.id)}')">إعادة نشر</button>`:``}
-                ${product.status==='sold'?`<span style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;text-align:center;">${marketTransactionsReady?'بيع مسجل — محفوظ بالضمان':'تم البيع — الضمان قريبًا'}</span>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" ${marketTransactionsReady?'':'disabled aria-disabled="true"'} onclick="markMyProductSold('${escapeJs(product.id)}')">${marketTransactionsReady?'تم البيع':'تسجيل البيع قريبًا'}</button>`}
+                ${product.status==='sold'?`<span style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;text-align:center;">${marketTransactionsReady?'بيع مسجل — محفوظ بالضمان':'تم البيع — تعذر التحقق من الضمان'}</span>`:`<button type="button" class="btn-action" style="background:#173a2b;color:#8cffc1;padding:8px;border-radius:7px;font-size:10px;" aria-label="تسجيل بيع الإعلان" data-transaction-schema="${marketTransactionsReady?'ready':'needs-check'}" onclick="markMyProductSold('${escapeJs(product.id)}')">${marketTransactionsReady?'تم البيع':'تسجيل البيع'}</button>`}
                 ${product.status==='active'?`<button type="button" class="btn-action" style="background:#3b2e16;color:#ffd86b;padding:8px;border-radius:7px;font-size:10px;" onclick="promoteMyProduct('${escapeJs(product.id)}')">ترويج 3 أيام</button>`:''}
                 <button type="button" class="btn-action" style="background:#253449;color:#fff;padding:8px;border-radius:7px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(product.id)}')">عرض التفاصيل</button>
               </div>
