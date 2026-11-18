@@ -57,7 +57,7 @@ const checks=[
  ['opening a market chat revalidates the signed-in participant against the conversation row',html.includes("if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))")],
  ['market message sending is single-flight and preserves the draft on failed requests',html.includes('if(marketMessageSendInFlight)return;')&&html.includes('marketMessageSendInFlight=true')&&html.includes("if(input)input.value=''")&&html.includes('بقي النص في خانة الكتابة')],
  ['market realtime subscription is scoped to the active conversation id',html.includes('market-conversation-\${id}')&&html.includes('currentMarketConversationId===id')],
- ['market seller call is explicitly deferred until production Realtime authorization is deployed',html.includes('اتصال صوتي بالبائع — قريبًا')&&html.includes('disabled aria-disabled="true"')&&(()=>{const a=html.indexOf('async function callMarketSeller'),b=html.indexOf('async function updateMarketProductLifecycle',a),s=a>=0&&b>a?html.slice(a,b):'';return s.includes('مكالمات السوق الصوتية قريبًا')&&!s.includes('startAlwahaCall(');})()],
+ ['market seller call is enabled only through a verified conversation and the authenticated market call path',(()=>{const a=html.indexOf('async function callMarketSeller'),b=html.indexOf('async function updateMarketProductLifecycle',a),s=a>=0&&b>a?html.slice(a,b):'';return s.includes("startAlwahaCall('market','audio'")&&s.includes('market_conversations?')&&s.includes('archived_at=is.null')&&!s.includes('مكالمات السوق الصوتية قريبًا')&&!/disabled aria-disabled="true"[^>]*>[^<]*اتصال صوتي بالبائع/.test(html);})()],
  ['market archive remains a reversible status update, not a frontend hard delete',html.includes("body:JSON.stringify({status:'archived',archived_at:new Date().toISOString()})")&&html.includes('async function reactivateMyProduct')],
  ['friend request creation relies on the database pending default rather than client-controlled status',html.includes("JSON.stringify({requester_id:user.id,target_id:targetId})")&&!html.includes("JSON.stringify({requester_id:user.id,target_id:targetId,status:'pending'})")],
  ['market conversation and message inserts are limited to participant/content columns',writeMigration.includes('REVOKE INSERT ON TABLE public.market_conversations')&&writeMigration.includes('GRANT INSERT (product_id, buyer_id, seller_id)')&&writeMigration.includes('REVOKE INSERT ON TABLE public.market_messages')&&writeMigration.includes('GRANT INSERT (conversation_id, sender_id, message, reply_to_id)')&&writeTest.includes("has_column_privilege('authenticated','public.market_conversations','listing_snapshot','INSERT')")&&writeTest.includes("has_column_privilege('authenticated','public.market_messages','read_at','INSERT')")],
@@ -66,6 +66,32 @@ const checks=[
 
 
 ];
+
+const marketCallStart=html.indexOf('async function callMarketSeller(');
+const marketCallEnd=html.indexOf('async function updateMarketProductLifecycle(',marketCallStart);
+const marketCallBody=marketCallStart>=0&&marketCallEnd>marketCallStart?html.slice(marketCallStart,marketCallEnd):'';
+const startCallStart=html.indexOf('async function startAlwahaCall(');
+const startCallEnd=html.indexOf('async function initiateVoiceCall(',startCallStart);
+const startCallBody=startCallStart>=0&&startCallEnd>startCallStart?html.slice(startCallStart,startCallEnd):'';
+const outgoingStart=html.indexOf('async startOutgoing(peerId, mode=');
+const outgoingEnd=html.indexOf('async sendCallResult(',outgoingStart);
+const outgoingBody=outgoingStart>=0&&outgoingEnd>outgoingStart?html.slice(outgoingStart,outgoingEnd):'';
+const inboxStart=html.indexOf('async sendToPeerInbox(payload)');
+const inboxEnd=html.indexOf('async startOutgoing(peerId, mode=',inboxStart);
+const inboxBody=inboxStart>=0&&inboxEnd>inboxStart?html.slice(inboxStart,inboxEnd):'';
+const incomingStart=html.indexOf('async handleIncomingOffer(payload)');
+const incomingEnd=html.indexOf('async acceptIncoming()',incomingStart);
+const incomingBody=incomingStart>=0&&incomingEnd>incomingStart?html.slice(incomingStart,incomingEnd):'';
+const marketCallChecks=[
+ ['market call queries a non-archived conversation linked to the selected product and exact buyer/seller pair',marketCallBody.includes('product_id=eq.')&&marketCallBody.includes('archived_at=is.null')&&marketCallBody.includes('buyer_id.eq.')&&marketCallBody.includes('seller_id.eq.')&&marketCallBody.includes('select=id,buyer_id,seller_id,archived_at')],
+ ['market call rejects self-calls, stale-account results, missing conversations and participant mismatches',marketCallBody.includes('peerId===me.id')&&marketCallBody.includes('activeUser?.id!==me.id')&&marketCallBody.includes('if(!conversation)')&&marketCallBody.includes('participantId)!==peerId')],
+ ['market call starts the existing authenticated market-audio signaling path without friendship gating',marketCallBody.includes("startAlwahaCall('market','audio'")&&startCallBody.includes('const marketMode=mode===\'market\'')&&startCallBody.includes('if (marketMode)')&&startCallBody.includes('else if (!(await hasAcceptedAlwahaFriendship(targetId)))')],
+ ['outgoing market offers use the private market inbox event and conversation ID',outgoingBody.includes('mode:market?\'market\':\'online\'')&&outgoingBody.includes('conversationId:this.conversationId||undefined')&&inboxBody.includes("market?'webrtc-market-incoming':'webrtc-incoming'")],
+ ['incoming market offers verify both conversation participants before ringing',incomingBody.includes("payload.mode==='market'")&&incomingBody.includes('market_conversations?id=eq.')&&incomingBody.includes('c.buyer_id===this.myId&&c.seller_id===payload.from')],
+ ['the disabled market-call placeholder has been removed',!marketCallBody.includes('مكالمات السوق الصوتية قريبًا')&&!html.includes('اتصال صوتي بالبائع — قريبًا')]
+];
+for(const [label,ok] of marketCallChecks)ok?pass(label):fail(label);
+
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
 console.log('MARKETPLACE_BUY_SELL_ACCEPTANCE=PASS ('+checks.length+' checks)');

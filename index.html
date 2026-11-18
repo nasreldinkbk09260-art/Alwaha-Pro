@@ -4800,8 +4800,26 @@ async function submitNewProductToMarket() {
         async function callMarketSeller(productId,title,sellerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة مع البائع.');
             if(!me)return;
-            if(!sellerId||sellerId===me.id)return triggerToastNotification('لا يمكن الاتصال بحسابك الشخصي.','info');
-            return triggerToastNotification('مكالمات السوق الصوتية قريبًا حتى تُنشر صلاحيات Realtime الخاصة بها ويُختبر الاتصال بين هاتفين.','info');
+            const peerId=String(sellerId||'');
+            const listingId=String(productId||'');
+            if(!peerId||peerId===me.id)return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.','info');
+            if(!listingId)return triggerToastNotification('تعذر تحديد الإعلان لإجراء مكالمة السوق.','error');
+            const filter='product_id=eq.'+encodeURIComponent(listingId)
+                +'&archived_at=is.null'
+                +'&or=(and(buyer_id.eq.'+encodeURIComponent(me.id)+',seller_id.eq.'+encodeURIComponent(peerId)+'),and(buyer_id.eq.'+encodeURIComponent(peerId)+',seller_id.eq.'+encodeURIComponent(me.id)+'))'
+                +'&select=id,buyer_id,seller_id,archived_at&order=created_at.desc&limit=1';
+            const rows=await supabaseFetch('market_conversations?'+filter);
+            const activeUser=await getCurrentAuthUser();
+            if(activeUser?.id!==me.id)return;
+            if(!Array.isArray(rows)){
+                const error=window.__alwahaLastApiError||{};
+                return triggerToastNotification(error.status===401?'انتهت جلسة الدخول؛ سجّل الدخول مجددًا.':'تعذر التحقق من محادثة السوق قبل الاتصال. افتح المحادثة ثم أعد المحاولة.','error');
+            }
+            const conversation=rows[0];
+            if(!conversation)return triggerToastNotification('ابدأ محادثة السوق مع هذا البائع أولًا، ثم أعد الاتصال من الإعلان.','info');
+            const participantId=conversation.buyer_id===me.id?conversation.seller_id:conversation.buyer_id;
+            if(String(participantId)!==peerId)return triggerToastNotification('المحادثة لا تطابق البائع المحدد؛ لم نبدأ الاتصال.','error');
+            return startAlwahaCall('market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
         }
 
         async function updateMarketProductLifecycle(productId, patch, successMessage) {
