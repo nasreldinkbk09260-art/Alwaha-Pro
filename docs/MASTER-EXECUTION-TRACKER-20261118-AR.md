@@ -99,3 +99,18 @@
 - أضيف التسجيل الأصلي في MainActivity، وجسر JavaScript، واختبار قبول ثابت، وربط الاختبار بسير عمل CI. فُحص نص توليد MainActivity أيضًا، وصُحّح تمثيل سطر Java الجديد قبل بناء Android.
 - لا تُطلب أذونات الشبكة المحلية الجديدة `ACCESS_LOCAL_NETWORK` في هذا البناء لأن التطبيق يستهدف API 36؛ وثائق Android الحالية تجعلها مطلوبة عند استهداف API 37+، بينما Wi‑Fi Direct على API 33+ يتطلب `NEARBY_WIFI_DEVICES`.
 - **الخطوة التالية:** اجتياز Android compile، ثم تنفيذ قناة نقل آمنة ومشفرة مع اقتران متبادل قصير العمر وبيانات نصية/ملفات أولاً. بعدها دمج signaling لمكالمات الفيديو عبر Wi‑Fi Direct، ثم إظهار زر داخل المحادثة بعد نجاح كل مسار قبول. Bluetooth يظل للاكتشاف والرسائل/الملفات الخفيفة؛ الفيديو يمر عبر Wi‑Fi Direct/شبكة Wi‑Fi لا عبر Bluetooth وحده.
+
+
+## نتيجة CI الناجحة — Build #612 (18 نوفمبر 2026)
+- **Commit المختبر:** `1f295e177e472e0305378ddb430a82eb46833c5a` على `alwaha-pro-recovery-20261118`.
+- **GitHub Actions:** [Run #612 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44241981263)
+- **PostgreSQL:** اختبار ترحيلات السوق والاحتفاظ اجتاز على قاعدة مؤقتة.
+- **الويب والواجهات:** بناء الويب، release/security/performance، المحادثات، الملاحة، runtime/back navigation، الألعاب الجماعية/QR، Kids Room/backup، native call/signaling، سلامة المستخدم/الإشراف، دعم التذاكر، خصوصية وحذف الحساب، type checks؛ كلها اجتازت ضمن التشغيل.
+- **الشبكة المحلية الأصلية:** اجتاز `audit:local-network-native`، وتوليد قالب Java، وتسجيل `AlwahaLocalNetworkPlugin` بجانب `AlwahaAudioRoutePlugin`، وفحص أذونات Wi‑Fi/Bluetooth، ثم ترجمة Android. تم توقيع APK/AAB والتحقق منهما.
+- **Build metadata:** `version=3.0.4`, `version_code=612`, `application_id=pro.alwaha.app`, `target_sdk=36`, `branch=alwaha-pro-recovery-20261118`, `commit=1f295e177e472e0305378ddb430a82eb46833c5a`.
+- **APK signing certificate SHA-256:** `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`؛ متطابقة مع شهادة Build #608. لم تُقارن بعد مع شهادة النسخة المثبتة على هاتف المستخدم.
+- **Artifact:** `Alwaha-Pro-3.0.4-build-612`, ID `14399862668`, size `54,509,761 bytes`, expiry `2026-12-18T05:09:47Z`. [Download build artifact](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44241981263/artifacts/14399862668)
+- **النشر العام:** Release وGitHub Pages تخطّيا عمداً على فرع الاسترداد. لا تعديل على `main` ولا Supabase production.
+- **حالة ميزة الشبكة:** المرحلة الأولى هي اكتشاف Wi‑Fi Direct/Bluetooth وفحص قدرات وأذونات الجهاز فقط. لم يتم بعد الاقتران المشفر أو نقل الرسائل/الملفات أو مكالمات الإنترنت المحلي، ولا يوجد زر محادثة مفعل يدّعي اكتمال الاتصال.
+- **بوابات مادية لازمة:** تثبيت Build 612 على جهازين Android واختبار اكتشاف متبادل عبر Wi‑Fi Direct وBluetooth. بعدها pairing قبول/رفض، ثم نقل نص/ملف واختبار الانقطاع. لا يمكن اعتمادها من CI وحده.
+- **الخطوة التالية:** تصميم وتنفيذ مصادقة واقتران قصيرة العمر ومشفرة بين جهازين، ثم قناة نقل محلية Wi‑Fi Direct (نصوص/ملفات أولاً) وربطها بمسار الدردشة فقط بعد قبول اختبارات البروتوكول.
