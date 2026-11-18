@@ -51,6 +51,7 @@ const checks = [
   ['market snapshots are queried as an optional schema extension', 'market_conversations?id=in.(${idFilter})&select=id,listing_snapshot'],
   ['market message success does not wait for secondary list refresh', 'void renderMarketConversationsList();'],
   ['market call entry uses the existing private conversation-scoped call path without friend gating', html.includes("startAlwahaCall('market','audio'") && html.includes('market-call-room-') && html.includes('market-call-inbox-') && html.includes('webrtc-market-incoming') && html.includes('market_conversations?id=eq.') && !html.includes('مكالمات السوق الصوتية قريبًا')],
+  ['market detail page call action is active and routed to callMarketSeller', html.includes('onclick="callMarketSeller(') && html.includes('aria-label="اتصال صوتي موثق بالبائع"') && !html.includes('اتصال صوتي بالبائع — قريبًا')],
   ['market call Realtime policies are private and restricted to actual conversation participants', marketCallMigration.includes('alwaha_market_call_channels_receive') && marketCallMigration.includes('alwaha_market_call_channels_send') && marketCallMigration.includes('realtime.topic()') && marketCallMigration.includes('market_conversations')],
   ['market call uses conversation-scoped realtime', 'market-call-room-'],
   ['market transaction snapshot is used', 'market_transactions?conversation_id'],

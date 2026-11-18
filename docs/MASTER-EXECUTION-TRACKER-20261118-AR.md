@@ -197,3 +197,10 @@
 
 
 - **CI #619 failure analysis:** migration/source code was intact; `scripts/chat-release-audit.mjs` still contained an assertion requiring the market-call button to remain disabled and display the old “coming soon” label. Replaced that obsolete assertion with checks for the authenticated conversation-scoped market call path and private Realtime policies. No production SQL or permissions were changed in response to this CI failure.
+
+
+## تفعيل زر اتصال البائع في صفحة الإعلان — 18 نوفمبر 2026
+- أزيلت خصائص disabled/aria-disabled ورسالة «قريبًا» من زر الاتصال في بطاقة تفاصيل الإعلان.
+- الزر أصبح يستدعي `callMarketSeller(productId,title,sellerId)`، التي تتحقق من تسجيل الدخول، ومن وجود محادثة سوق نشطة مرتبطة بالإعلان والطرفين قبل بدء مكالمة السوق الصوتية عبر القنوات الخاصة.
+- الاتصال لا يشترط صداقة، ولا يتيح الاتصال بحساب ذاتي أو محادثة مؤرشفة أو طرف خارج المحادثة.
+- الاختبار الميداني بين حساب البائع والمشتري على هاتفين مطلوب قبل إعلان نجاح المكالمة عمليًا.
