@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-iphone-pwa-20261118';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-test-visibility-20261119';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
