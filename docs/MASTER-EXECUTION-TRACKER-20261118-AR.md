@@ -213,3 +213,10 @@
 - تظل `transportReady/chatReady/fileTransferReady/callMediaReady=false`؛ الاقتران المتبادل والتشفير ونقل الرسائل/الملفات/الصوت المحلي ما زالت أعمالًا لاحقة تتطلب تنفيذًا واختبار جهازين.
 
 - **CI #622 (44379043135) failed in one chat-audit wording assertion only:** the assertion expected “إرسال رسائل” but the actual UI warning says “تبادل رسائل”. All other checks in the chat audit passed, including the new discovery control. Updated the test to match the exact safe UI text. No runtime behavior or permissions changed.
+
+
+## تصحيح صفحة الشروط وحالة الميزات — 18 نوفمبر 2026
+- أظهر CI #623 وجود فحص سلامة قديم وعبارة قديمة في `official-site/terms.html` تزعم أن الألعاب مغلقة وأن Kids Room/مكالمات السوق غير متاحة.
+- تم تعديل صفحة الشروط: الألعاب الجماعية الشطرنج/ليدو/حرب الورق متاحة بعد تسجيل الدخول والاتصال بالإنترنت وبغرف متعددة اللاعبين؛ غرفة الأطفال لا تعمل إلا أثناء فيديو متصل ووصول بث الطرف الآخر مع خروج ولي الأمر؛ مكالمة السوق الصوتية تتطلب محادثة سوق نشطة بين البائع والمشتري وتعمل عبر الإنترنت دون اشتراط الصداقة.
+- تم توضيح أن زر Wi-Fi/Bluetooth الحالي يكتشف الأجهزة فقط، ولا يوفر بعد اقترانًا موثوقًا أو رسائل/ملفات/مكالمات محلية.
+- استبدلنا فحص «الميزة غير متاحة» بفحص إيجابي لحالة الواجهة وبقاء القيود الأمنية ووضوح حدود الشبكة المحلية.

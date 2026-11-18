@@ -26,7 +26,8 @@ check('Kids Room retains parent emergency exit and is selectable only in a conne
 check('public child safety policy is linked from official site',read('official-site/child-safety.html').includes('CSAM')&&read('official-site/index.html').includes('./child-safety.html'));
 check('terms explicitly prohibit CSAE and CSAM and grooming',read('official-site/terms.html').includes('CSAE/CSAM')&&read('official-site/terms.html').includes('استدراج'));
 check('child mode remains restricted to an active connected video call',read('alwaha-kids-room.js').includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط'));
-check('child mode, games and marketplace voice calls remain unavailable pending device testing',read('official-site/terms.html').includes('الألعاب مغلقة')&&html.includes('اتصال صوتي بالبائع — قريبًا'));
+check('games, Kids Room and marketplace calls are exposed with correct account/call guards',!read('official-site/terms.html').includes('الألعاب مغلقة')&&read('official-site/terms.html').includes('الشطرنج وليدو وحرب الورق')&&html.includes("onclick=\"showSection('games-section', this)\"")&&html.includes('data-video-call-mode=\"kids\"')&&html.includes('aria-label=\"اتصال صوتي موثق بالبائع\"')&&!html.includes('اتصال صوتي بالبائع — قريبًا'));
+check('public terms correctly label local network as discovery-only and not data transport',read('official-site/terms.html').includes('لا يتيح هذا الإصدار بعد اقترانًا موثوقًا')&&read('official-site/terms.html').includes('إرسال رسائل أو ملفات أو مكالمات عبر الشبكة المحلية'));
 
 console.log('USER_SAFETY_UI_AUDIT='+(failed?'FAIL':'PASS')+' ('+checks+' checks)');
 if(failed)process.exit(1);
