@@ -69,9 +69,11 @@ const checks=[
 ];
 
 
+const visibilityChecks = [
  ['profile section starts with the profile menu and puts Waha test tools behind a separate bottom menu action',html.indexOf('id="alwaha-device-suite-menu-button"')>html.indexOf('id="profile-section"')&&html.indexOf('id="alwaha-device-suite"')>html.indexOf('id="alwaha-device-suite-menu-button"')&&html.includes("openSubProfileView('sub-prof-device-suite')")],
  ['the seven-day feature coverage board exposes incomplete and unverified work instead of hiding it',html.includes('id="alwaha-test-coverage-board"')&&html.includes('data-feature-id="local-pairing-transfer"')&&html.includes('data-feature-id="local-calls"')&&html.includes('data-feature-id="kids-room-safety"')&&html.includes('data-feature-id="share-button-policy"')],
- ['no Arabic coming-soon placeholders remain in the test branch UI',!html.includes('قريبًا')&&!html.includes('قريباً')],
+ ['no Arabic coming-soon placeholders remain in the test branch UI',!html.includes('قريبًا')&&!html.includes('قريباً')]
+];
 
 const marketCallStart=html.indexOf('async function callMarketSeller(');
 const marketCallEnd=html.indexOf('async function updateMarketProductLifecycle(',marketCallStart);
@@ -99,5 +101,6 @@ const marketCallChecks=[
 for(const [label,ok] of marketCallChecks)ok?pass(label):fail(label);
 
 for(const [label,ok] of checks)ok?pass(label):fail(label);
+for(const [label,ok] of visibilityChecks)ok?pass(label):fail(label);
 if(process.exitCode)process.exit(1);
 console.log('MARKETPLACE_BUY_SELL_ACCEPTANCE=PASS ('+checks.length+' checks)');
