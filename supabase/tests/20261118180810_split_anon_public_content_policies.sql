@@ -32,7 +32,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.posts WHERE content='test post') THEN RAISE EXCEPTION 'Anonymous role cannot read public posts'; END IF;
   IF NOT EXISTS (SELECT 1 FROM public.reels WHERE title='test reel') THEN RAISE EXCEPTION 'Anonymous role cannot read public reels'; END IF;
   IF NOT EXISTS (SELECT 1 FROM public.comments WHERE content='test comment') THEN RAISE EXCEPTION 'Anonymous role cannot read public comments'; END IF;
-  IF has_function_privilege(current_user,'app_private.is_user_blocked(uuid,uuid)','EXECUTE') THEN RAISE EXCEPTION 'Anonymous role can execute private block helper'; END IF;
+  -- The helper denial is asserted above as the database owner; do not resolve its private schema here.
 END;
 $anon$;
 ROLLBACK;
