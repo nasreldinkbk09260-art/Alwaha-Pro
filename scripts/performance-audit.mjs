@@ -27,38 +27,38 @@ const buildWeb = read("scripts/build-web.mjs");
 const nativeBack = read("scripts/native-back-handler.mjs");
 const workflow = read(".github/workflows/build-apk-aab-release.yml");
 
-if (pkg.version === "3.0.3") pass("package version is 3.0.3");
+if (pkg.version === "3.0.4") pass("package version is 3.0.4");
 else fail(`package version is ${pkg.version}`);
 
-if (lock.version === "3.0.3" && lock.packages?.[""]?.version === "3.0.3")
-  pass("package-lock root versions match 3.0.3");
+if (lock.version === "3.0.4" && lock.packages?.[""]?.version === "3.0.4")
+  pass("package-lock root versions match 3.0.4");
 else fail("package-lock version mismatch");
 
-if (manifest.version === "3.0.3") pass("manifest version is 3.0.3");
+if (manifest.version === "3.0.4") pass("manifest version is 3.0.4");
 else fail("manifest version mismatch");
 
 if (/<title>Alwaha-Pro 3\.0\.3<\/title>/i.test(html) &&
     /currentAppVersion\s*=\s*["']3\.0\.3["']/.test(html))
-  pass("HTML title and currentAppVersion match 3.0.3");
+  pass("HTML title and currentAppVersion match 3.0.4");
 else fail("HTML release version mismatch");
 
 if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.3-account-password-change-20261117['"]/.test(sw))
-  pass("service worker uses the current 3.0.3 three-theme cache namespace");
+  pass("service worker uses the current 3.0.4 three-theme cache namespace");
 else fail("service worker cache namespace mismatch");
 
-if (html.includes("3.0.3 mobile performance guard") &&
+if (html.includes("3.0.4 mobile performance guard") &&
     /pointer:\s*coarse/.test(html) && /max-width:\s*768px/.test(html))
   pass("mobile performance CSS guard is present");
 else fail("mobile performance CSS guard missing or incomplete");
 
 if (/APP_VERSION:\s*['"]3\.0\.3['"]/.test(workflow) &&
     /VERSION_NAME:\s*['"]3\.0\.3['"]/.test(workflow))
-  pass("workflow version variables match 3.0.3");
+  pass("workflow version variables match 3.0.4");
 else fail("workflow version variables mismatch");
 
-if (workflow.includes("Alwaha-Pro-3.0.3.apk") &&
-    workflow.includes("Alwaha-Pro-3.0.3.aab"))
-  pass("workflow output names match 3.0.3");
+if (workflow.includes("Alwaha-Pro-3.0.4.apk") &&
+    workflow.includes("Alwaha-Pro-3.0.4.aab"))
+  pass("workflow output names match 3.0.4");
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
