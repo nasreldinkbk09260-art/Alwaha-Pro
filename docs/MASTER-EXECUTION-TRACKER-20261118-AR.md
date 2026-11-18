@@ -146,3 +146,13 @@
 - **Build metadata:** version 3.0.4, version_code 616, app ID `pro.alwaha.app`, target SDK 36, same signing SHA-256 as Build #612: `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`.
 - **Automation:** task `6afdea303a888191aff5c7b6ae74f748` titled `Alwaha daily recovery`, recurring daily with flexible morning target at 08:00 Africa/Cairo; next run `2026-11-19T08:00:00+02:00`. It reads latest HEAD/tracker, continues top unfinished task and records checkpoints. It cannot resume instantly while device/internet is offline; it resumes on the next scheduled run when integrations are available.
 - **الخطوة التالية:** اختبار المستخدم على Build 616: تسجيل الدخول، تحميل الخلاصة، نشر نص قصير، ثم تأكيد ظهوره بعد التحديث. بعدها اختبار هاتفين للألعاب/المكالمات. لا تعتمد ألعاب multiplayer أو LAN حتى تحقق جهازين فعليين.
+
+
+## مطابقة مكونات Build 616 والألعاب الجماعية المنشورة — 18 نوفمبر 2026
+- فُحص ملف APK نفسه: يحتوي `assets/public/index.html` بحجم 555,757 بايت، و`assets/public/games.js` بحجم 59,755 بايت، و`assets/public/alwaha-kids-room.js` بحجم 16,638 بايت؛ وملف الصفحة يشير إلى تحميل `games.js` و`alwaha-kids-room.js` بنفس cache token الخاص بـ3.0.4.
+- زر التنقل `games-nav` في مصدر الفرع زر فعّال من نوع button، دون `disabled`، ويستدعي `showSection('games-section', this)`.
+- خدمة `game-actions` على Supabase ACTIVE، `verify_jwt=true`، النسخة المنشورة 1، ومحتوى `index.ts` مطابق حرفيًا لملف الفرع (12,164 بايت). لذلك Edge Function نفسها ليست غائبة أو قديمة.
+- `join_game_room` تسمح بدعوة المستخدم المسجل؛ `apply_game_action_result` مقيّدة بـservice_role فقط وتُستدعى من الخادم، وهو التصميم الصحيح لمنع تعديل الحالة من العميل.
+- جدول `game_rooms` لا يحتوي غرفًا في وقت الفحص. لا نضيف غرف/حسابات اختبار إلى الإنتاج. تجربة اللعب تتطلب مستخدمين مسجلين وجهازين أو جلستين متزامنتين، مع اتصال إنترنت؛ هذه ليست ألعابًا محلية أو أوفلاين حاليًا.
+- لم تظهر في نافذة السجلات التالية لتطبيق migration (آخر 30 دقيقة) طلبات تطبيق جديدة أو أخطاء 401 posts/reels؛ لا توجد محاولة POST أو game action حديثة في السجل المعروض.
+- **الاستنتاج:** Build 616 يحتوي واجهة الألعاب وKids Room؛ CI/الملفات وEdge function المنشورة متطابقة. يلزم تثبيت Build 616 بدل النسخة السابقة ثم تجربة فتح صفحة الألعاب. لبدء مباراة استخدم حسابًا أولًا لإنشاء غرفة، والحساب الثاني للانضمام بالكود أو QR. يلزم اختبار فيديو فعلي بجهازين للتحقق من اختيار العادية/الأطفال، stream الطرف الآخر والخروج الأبوي. لا نعلن اللعبة/الفيديو مكتملة ميدانيًا قبل ذلك.
