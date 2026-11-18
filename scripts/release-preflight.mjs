@@ -231,6 +231,9 @@ const storageOwnershipBootstrap=read('supabase/tests/storage-upload-ci-bootstrap
 if(!storageOwnershipMigration.includes('DROP POLICY IF EXISTS "Authenticated Users Upload"')||!storageOwnershipMigration.includes('storage.foldername(name)')||!storageOwnershipMigration.includes("bucket_id IN ('avatars', 'posts', 'products')")||!storageOwnershipTest.includes('Cross-user avatar folder upload was allowed')||!storageOwnershipTest.includes('Cross-user product folder upload was allowed')||!storageOwnershipTest.includes('STORAGE_UPLOAD_OWNERSHIP=PASS')||!storageOwnershipBootstrap.includes('CREATE POLICY "Authenticated Users Upload"')||!sqlCi.includes('20261117010000_storage_upload_ownership.sql'))fail('Storage upload ownership hardening or its regression test is not wired into SQL CI.');
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 if(!workflow.includes('      - main') || !workflow.includes('      - alwaha-pro-3.0.3-dev'))fail('Android build workflow must watch main and the single development branch.');
+const supportTicketIndexMigration=read('supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql');
+const supportTicketIndexTest=read('supabase/tests/20261118050000_support_tickets_assigned_to_index.sql');
+if(!supportTicketIndexMigration.includes('ON public.support_tickets (assigned_to)')||!supportTicketIndexTest.includes('support_tickets_assigned_to_idx')||!sqlCi.includes('20261118050000_support_tickets_assigned_to_index.sql'))fail('Support-ticket assignment index or its SQL regression test is missing from release CI.');
 if (process.exitCode) throw new Error('Alwaha-Pro 3.0.4 release preflight failed.');
 console.log('Alwaha-Pro 3.0.4 release preflight checks passed.');
 console.log('Static checks do not replace Supabase integration tests, applying migrations, or two-device call tests.');
