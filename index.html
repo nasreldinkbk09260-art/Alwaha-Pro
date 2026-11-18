@@ -1025,7 +1025,7 @@ img,video,canvas{max-width:100%}
         </div>
         <section id="alwaha-test-coverage-board" aria-labelledby="alwaha-test-coverage-title" style="padding:13px;border:1px solid #8bf4ff35;border-radius:15px;background:linear-gradient(145deg,#101b2d,#111827);margin-bottom:20px;">
           <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">فهرس طلبات الأيام السبعة وحالة التنفيذ</h4>
-          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة متابعة لنسخة الاختبار الخاصة بتاريخ 19 نوفمبر 2026. حالة «موجود بالكود» لا تعني أن التجربة على هاتفين نجحت؛ سنحوّلها إلى ناجح أو يحتاج إصلاح بعد الاختبار الفعلي. لا توجد عناصر مخفية من هذا الفهرس.</p>
+          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة متابعة لنسخة الاختبار الخاصة بتاريخ 19 نوفمبر 2026: لا نخفي الميزات، ولا نحذف بيانات الاختبار، ولا ننشر للعامة. حالة «موجود بالكود» لا تعني نجاح التجربة على هاتفين؛ نحدّثها بعد الاختبار الفعلي.</p>
           <div style="display:grid;gap:9px;">
             <div data-feature-id="market-chat-call" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">السوق: محادثة المشتري والبائع والاتصال الصوتي</strong>
@@ -1082,6 +1082,30 @@ img,video,canvas{max-width:100%}
             <div data-feature-id="share-button-policy" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">زر المشاركة العام</strong>
               <span style="display:block;color:#b7c9da;font-size:10px;margin-top:4px;">محذوف وفق قرارك السابق؛ لن نعيده ضمن تجميع ميزات الاختبار.</span>
+            </div>
+            <div data-feature-id="friend-requests-notifications" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">طلبات الصداقة والتنبيهات</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">اختبار قبول ورفض الطلب دون إعادة تحميل كاملة، وقراءة تنبيه واحد مع بقاء بقية التنبيهات حتى تختار تحديد الكل كمقروء.</span>
+            </div>
+            <div data-feature-id="ringtone-audio" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الرنات وأصوات الرسائل والإشعارات</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">اختيار النغمة والمعاينة موجودان؛ يجب فحص طول التشغيل والسماع الفعلي في المكالمة والتنبيه على الجهاز.</span>
+            </div>
+            <div data-feature-id="kids-call-room" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">غرفة الأطفال أثناء المكالمة</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">فلاتر الرؤية وعناصر الغرفة ثلاثية الأبعاد والألعاب والأصوات تحتاج مراجعة منفصلة مع اختبار سلامة وأذونات.</span>
+            </div>
+            <div data-feature-id="privacy-account-safety" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الخصوصية وأمان الحساب والحظر والإبلاغ والحذف</strong>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">مسارات وسياسات موجودة في المشروع؛ يلزم التحقق العملي من الصلاحيات والحسابات المختلفة قبل اعتمادها.</span>
+            </div>
+            <div data-feature-id="official-page-video" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">الصفحة الرسمية والفيديو التعريفي</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">مهمة محتوى ونشر منفصلة عن APK؛ لم أعتبر الفيديو أو تحديث الصفحة منجزاً دون رابط نشر يمكن فتحه ومراجعته.</span>
+            </div>
+            <div data-feature-id="test-data-retention" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">بيانات الاختبار الحالية</strong>
+              <span style="display:block;color:#b7c9da;font-size:10px;margin-top:4px;">تبقى محفوظة خلال مرحلة الاختبار الخاصة؛ لا نحذف الحسابات أو المنشورات أو المنتجات الآن. التنظيف يكون بخطة منفصلة قبل الإطلاق العام وبعد تمييز بيانات التجربة فقط.</span>
             </div>
           </div>
           <p style="color:#9fb6c9;font-size:9px;line-height:1.8;margin:12px 0 0;">سجّل نتيجة كل تجربة: ناجح، يحتاج إصلاح، أو لم يُختبر. لا تُحوّل الحالة إلى «ناجح» اعتماداً على وجود زر أو نجاح البناء فقط.</p>
