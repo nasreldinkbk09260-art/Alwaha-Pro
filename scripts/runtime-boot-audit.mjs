@@ -25,10 +25,10 @@ const checks=[
  ['core local script URLs match versioned assets and offline retry precache paths', ['games.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-call-feedback.js'].every(asset=>html.includes('src="./'+asset+'?v=3.0.4-iphone-pwa-20261118"')&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v=3.0.4-iphone-pwa-20261118'"))],
  ['runtime guard is copied into the Web build and both cache paths are precached',build.includes("'alwaha-runtime-guard.js'")&&sw.includes("'./alwaha-runtime-guard.js'")&&sw.includes("'./alwaha-runtime-guard.js?v=3.0.4-iphone-pwa-20261118'")],
  ['runtime audit is wired into npm and Android CI',pkg.scripts?.['audit:runtime']?.includes('node scripts/runtime-boot-audit.mjs')&&pkg.scripts?.['audit:runtime']?.includes('node scripts/back-navigation-runtime-test.mjs')&&wf.includes('npm run audit:runtime')],
- ['service-worker update bypasses HTTP cache and uses a versioned registration',html.includes("navigator.serviceWorker.register('./sw.js?v=3.0.4-iphone-pwa-20261118', { scope: './', updateViaCache: 'none' });")],
+ ['service-worker update bypasses HTTP cache and uses a versioned registration',html.includes("navigator.serviceWorker.register('./sw.js?v=3.0.4-test-visibility-20261119', { scope: './', updateViaCache: 'none' });")],
  ['modal mutation observer filters relevant layers and coalesces updates',modal.includes('hasRelevantMutation(records)')&&modal.includes('scheduleSync()')&&modal.includes('nodeContainsLayer')&&modal.includes('if(changed)window.AlwahaExperience?.syncDock?.()')],
  ['navigation handle label updates are idempotent',experience.includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel')&&!experience.includes('new MutationObserver')],
- ['service-worker uses the final 3.0.4 cache namespace',sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-iphone-pwa-20261118'")],
+ ['service-worker uses the final 3.0.4 cache namespace',sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-test-visibility-20261119'")],
 ];
 for(const [name,ok] of checks)ok?pass(name):fail(name);
 if(process.exitCode)process.exit(1);
