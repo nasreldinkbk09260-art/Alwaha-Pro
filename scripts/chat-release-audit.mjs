@@ -54,7 +54,7 @@ const checks = [
   ['market transaction snapshot is used', 'market_transactions?conversation_id'],
   ['transaction sale uses atomic server rpc', "rpc('complete_market_sale'"],
   ['warranty and archive retention are displayed with a seven-day warning grace', 'مهلة 7 أيام كاملة بعد الإشعار'],
-  ['kids mode is visibly deferred and its in-call control cannot be activated before device QA', html.includes('id="kidsModeBtn"') && html.includes('وضع الأطفال — قريبًا') && html.includes('disabled aria-disabled="true"') && !html.includes('onclick="toggleAlwahaKidsMode()"')],
+  ['video mode chooser offers normal video and Kids Room; Kids Room waits for connected remote video', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"') && html.includes('onclick="toggleAlwahaKidsMode()"') && html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'") && html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1')],
   ['local encrypted backup module loaded', 'alwaha-local-vault.js'],
   ['home image picker compresses images before preview', 'compressImageFile(original,1400,.82)'],
   ['home image preview is read locally before any network upload', "reader.readAsDataURL(compressed)"],
