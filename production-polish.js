@@ -285,7 +285,7 @@
   function loadProfileEditorModule() {
     if (document.querySelector('script[data-alwaha-profile-editor]')) return;
     const script = document.createElement('script');
-    script.src = './alwaha-profile-editor.js?v=3.0.3-account-password-change-20261117';
+    script.src = './alwaha-profile-editor.js?v=3.0.4-account-password-change-20261117';
     script.dataset.alwahaProfileEditor = '1';
     script.onload = () => window.AlwahaProfileEditor?.initialize?.();
     script.onerror = () => console.warn('[Alwaha Profile] Could not load the local profile editor module.');

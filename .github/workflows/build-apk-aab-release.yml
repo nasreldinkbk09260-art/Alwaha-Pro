@@ -20,7 +20,7 @@ concurrency:
 env:
   NODE_VERSION: '24'
   JAVA_VERSION: '21'
-  APP_VERSION: '3.0.3'
+  APP_VERSION: '3.0.4'
   APP_ID: 'pro.alwaha.app'
 
 jobs:
@@ -209,13 +209,13 @@ jobs:
           test -s supabase/functions/admin-api/index.ts
           test -s supabase/functions/username-auth/index.ts
           test -s supabase/functions/call-config/index.ts
-          grep -Fq 'Alwaha-Pro 3.0.3' index.html
+          grep -Fq 'Alwaha-Pro 3.0.4' index.html
           node <<'NODE'
           const fs = require('node:fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
           const cap = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          if (pkg.version !== '3.0.3') throw new Error(`Unexpected package version: ${pkg.version}`);
+          if (pkg.version !== '3.0.4') throw new Error(`Unexpected package version: ${pkg.version}`);
           if (manifest.version !== pkg.version) throw new Error(`Manifest version mismatch: ${manifest.version}`);
           if (cap.appId !== 'pro.alwaha.app') throw new Error(`Unexpected appId: ${cap.appId}`);
           if (cap.webDir !== 'dist') throw new Error(`Unexpected webDir: ${cap.webDir}`);
@@ -528,7 +528,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS || secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
-          VERSION_NAME: '3.0.3'
+          VERSION_NAME: '3.0.4'
           APP_ID: 'pro.alwaha.app'
         run: |
           set -euo pipefail
@@ -742,31 +742,31 @@ jobs:
           jarsigner -verify -verbose -certs "$AAB" > "$RUNNER_TEMP/aab-signature-check.txt" 2>&1
           grep -Eiq 'jar verified' "$RUNNER_TEMP/aab-signature-check.txt"
           mkdir -p release
-          cp "$APK" release/Alwaha-Pro-3.0.3.apk
-          cp "$AAB" release/Alwaha-Pro-3.0.3.aab
+          cp "$APK" release/Alwaha-Pro-3.0.4.apk
+          cp "$AAB" release/Alwaha-Pro-3.0.4.aab
           {
             printf 'application_id=pro.alwaha.app\n'
-            printf 'version_name=3.0.3\n'
+            printf 'version_name=3.0.4\n'
             printf 'version_code=%s\n' "$GITHUB_RUN_NUMBER"
             printf 'target_sdk=36\n'
             printf 'certificate_sha256=%s\n' "$CERT_SHA256"
             printf 'certificate_sha256_colon=%s\n' "$CERT_SHA256_COLON"
             printf 'signature_verified=true\n'
           } > release/APK-SIGNING-CERTIFICATE.txt
-          git archive --format=zip --prefix=Alwaha-Pro-3.0.3/ HEAD > release/Alwaha-Pro-3.0.3-Final-Source.zip
-          printf 'version=3.0.3\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON" > release/BUILD-INFO.txt
+          git archive --format=zip --prefix=Alwaha-Pro-3.0.4/ HEAD > release/Alwaha-Pro-3.0.4-Final-Source.zip
+          printf 'version=3.0.4\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON" > release/BUILD-INFO.txt
           (
             cd release
-            sha256sum Alwaha-Pro-3.0.3.apk Alwaha-Pro-3.0.3.aab Alwaha-Pro-3.0.3-Final-Source.zip BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
+            sha256sum Alwaha-Pro-3.0.4.apk Alwaha-Pro-3.0.4.aab Alwaha-Pro-3.0.4-Final-Source.zip BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
             sha256sum --check SHA256SUMS.txt
           )
-          test -s release/Alwaha-Pro-3.0.3-Final-Source.zip
+          test -s release/Alwaha-Pro-3.0.4-Final-Source.zip
           echo 'Signed APK, AAB and tracked source archive verified successfully.'
 
       - name: Upload final source and Android artifacts
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: Alwaha-Pro-3.0.3-build-${{ github.run_number }}
+          name: Alwaha-Pro-3.0.4-build-${{ github.run_number }}
           path: release/
           if-no-files-found: error
           retention-days: 30
@@ -786,16 +786,16 @@ jobs:
       - name: Download this run's verified Android artifact
         uses: actions/download-artifact@v4
         with:
-          name: Alwaha-Pro-3.0.3-build-${{ github.run_number }}
+          name: Alwaha-Pro-3.0.4-build-${{ github.run_number }}
           path: release-artifact
       - name: Verify downloaded release files
         shell: bash
         run: |
           set -euo pipefail
-          test -s release-artifact/Alwaha-Pro-3.0.3.apk
+          test -s release-artifact/Alwaha-Pro-3.0.4.apk
           test -s release-artifact/SHA256SUMS.txt
           (cd release-artifact && sha256sum --check SHA256SUMS.txt)
-          cp release-artifact/Alwaha-Pro-3.0.3.apk release-artifact/Alwaha-Pro-Android.apk
+          cp release-artifact/Alwaha-Pro-3.0.4.apk release-artifact/Alwaha-Pro-Android.apk
           (cd release-artifact && sha256sum Alwaha-Pro-Android.apk > Alwaha-Pro-Android.apk.sha256)
       - name: Create the public latest release
         env:
@@ -828,7 +828,7 @@ jobs:
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'APK-SIGNING-CERTIFICATE.txt'
 
   publish-web:
-    name: Publish Alwaha-Pro 3.0.3 website
+    name: Publish Alwaha-Pro 3.0.4 website
     if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
@@ -862,7 +862,7 @@ jobs:
       - name: Build final web application
         run: npm run build
 
-      - name: Verify exact 3.0.3 website output
+      - name: Verify exact 3.0.4 website output
         shell: bash
         run: |
           set -euo pipefail
@@ -871,10 +871,10 @@ jobs:
           test -s dist/sw.js
           test -s dist/icon.png
           test -s dist/alwaha-theme-system.css
-          grep -Fq '<title>Alwaha-Pro 3.0.3</title>' dist/index.html
+          grep -Fq '<title>Alwaha-Pro 3.0.4</title>' dist/index.html
           grep -Fq '<title>Alwaha-Pro | الموقع الرسمي</title>' dist/official/index.html
-          node -e "const m=require('./dist/manifest.json'); if(m.version!=='3.0.3') process.exit(1)"
-          echo 'Alwaha-Pro 3.0.3 website output verified.'
+          node -e "const m=require('./dist/manifest.json'); if(m.version!=='3.0.4') process.exit(1)"
+          echo 'Alwaha-Pro 3.0.4 website output verified.'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
