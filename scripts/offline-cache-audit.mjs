@@ -3,7 +3,7 @@ import process from 'node:process';
 const read=p=>fs.readFileSync(p,'utf8');
 const html=read('index.html'),sw=read('sw.js'),vault=read('alwaha-local-vault.js'),polish=read('production-polish.js'),build=read('scripts/build-web.mjs');
 const pkg=JSON.parse(read('package.json')),workflow=read('.github/workflows/build-apk-aab-release.yml');
-const version='3.0.4-iphone-pwa-20261118',cache='alwaha-pro-v3.0.4-iphone-pwa-20261118';
+const version='3.0.4-iphone-pwa-20261118',serviceWorkerVersion='3.0.4-test-visibility-20261119',cache='alwaha-pro-v3.0.4-test-visibility-20261119';
 const assets=['production-polish.js','alwaha-call-feedback.js','compatibility.js','alwaha-local-vault.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-kids-room.js','alwaha-smart-assistant.js','games.js','alwaha-native-back-handler.js'];
 let failed=0;
 const check=(label,ok)=>{if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}};
@@ -19,7 +19,7 @@ check('public image cache is bounded to 2 MiB per image and 40 images',sw.includ
 check('all first-party modules use versioned URLs and have offline fallback entries',assets.every(asset=>html.includes('src="./'+asset+'?v='+version+'"')&&sw.includes("'./"+asset+"?v="+version+"'")&&sw.includes("'./"+asset+"'"))&&html.includes('href="./alwaha-theme-system.css?v='+version+'"')&&sw.includes("'./alwaha-theme-system.css?v="+version+"'"));
 check('Service Worker precache bypasses stale HTTP cache responses',sw.includes("cache.addAll(PRECACHE_ASSETS.map(asset => new Request(new URL(asset, self.registration.scope), { cache: 'reload' })))"));
 check('dynamic profile editor module is loaded locally, included in the web build and precached with versioned/fallback URLs',polish.includes('alwaha-profile-editor.js')&&build.includes('alwaha-profile-editor.js')&&sw.includes("'./alwaha-profile-editor.js?v=3.0.4-iphone-pwa-20261118'")&&sw.includes("'./alwaha-profile-editor.js'"));
-check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+version+"', { scope: './', updateViaCache: 'none' });"));
+check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+serviceWorkerVersion+"', { scope: './', updateViaCache: 'none' });"));
 check('encrypted backup vault remains separate from public display cache',vault.includes("DB_NAME='alwaha-pro-local-vault-v1'")&&vault.includes('AES-GCM')&&!vault.includes('ALWAHA_PUBLIC_CACHE_DB'));
 check('R7.5.1 runtime observer loop protections remain present',read('alwaha-modal-shell.js').includes('hasRelevantMutation(records)')&&read('alwaha-modal-shell.js').includes('scheduleSync()')&&read('alwaha-modal-shell.js').includes('nodeContainsLayer')&&read('alwaha-experience.js').includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel'));
 check('offline cache audit is part of npm release and Android CI',pkg.scripts?.['audit:offline-cache']==='node scripts/offline-cache-audit.mjs'&&pkg.scripts?.['audit:release']?.includes('audit:offline-cache')&&workflow.includes('npm run audit:release'));
