@@ -177,6 +177,9 @@ jobs:
           test -s supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql
           test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
+          test -s supabase/migrations/20261118180810_split_anon_public_content_policies.sql
+          test -s supabase/tests/20261118180810_split_anon_public_content_policies.sql
+          test -s scripts/public-content-anon-policy-audit.mjs
           test -s supabase/functions/user-safety/index.ts
           test -s supabase/functions/profile-update/index.ts
           test -s supabase/functions/support-tickets/index.ts
@@ -267,6 +270,9 @@ jobs:
       - name: Run release preflight audit
         shell: bash
         run: npm run audit:release
+
+      - name: Audit anonymous public-content and authenticated block policies
+        run: npm run audit:public-content-rls
 
       - name: Run mobile performance and storage audit
         run: npm run audit:performance

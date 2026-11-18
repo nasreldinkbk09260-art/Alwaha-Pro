@@ -96,6 +96,10 @@ echo 'SUPABASE_SQL_REGRESSION=PASS (PostgreSQL fixture; pg_cron API mocked, not 
 echo 'APPLY TEST MIGRATION: 20261114230000_user_safety_reports_and_blocks.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114230000_user_safety_reports_and_blocks.sql"
+echo 'APPLY TEST MIGRATION: 20261118180810_split_anon_public_content_policies.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261118180810_split_anon_public_content_policies.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261118180810_split_anon_public_content_policies.sql"
+echo 'PUBLIC_CONTENT_ANON_POLICY_SQL_REGRESSION=PASS'
 echo 'APPLY TEST MIGRATION: 20261114235000_marketplace_account_deletion_retention.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114235000_marketplace_account_deletion_retention.sql"

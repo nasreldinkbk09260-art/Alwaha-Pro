@@ -35,7 +35,8 @@
     "audit:user-safety": "node scripts/user-safety-ui-audit.mjs",
     "audit:account-deletion": "node scripts/account-deletion-audit.mjs",
     "audit:support-tickets": "node scripts/support-tickets-audit.mjs",
-    "audit:local-network-native": "node scripts/local-network-native-audit.mjs"
+    "audit:local-network-native": "node scripts/local-network-native-audit.mjs",
+    "audit:public-content-rls": "node scripts/public-content-anon-policy-audit.mjs"
   },
   "engines": {
     "node": ">=22"
