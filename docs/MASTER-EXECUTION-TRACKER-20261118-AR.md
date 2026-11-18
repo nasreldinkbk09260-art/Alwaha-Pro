@@ -73,3 +73,19 @@
 
 ## تصحيح حد اختبار الصنف — 18 نوفمبر 2026
 - CI #607 اجتاز SQL والصياغة وتدقيق الواجهة الأصلي ومؤثرات المكالمة، لكنه أظهر أن حدّ الاقتطاع في `call-signaling-runtime-test.mjs` ما زال يبحث عن سطرين قبل مساعدات Kids Room. موضع المصدر الفعلي يحتوي سطرًا واحدًا فقط؛ تم تصحيح الحد إلى البنية الفعلية.
+
+
+## نتيجة CI الناجحة — Build #608
+- **الفرع:** `alwaha-pro-recovery-20261118`
+- **Commit المختبَر:** `7cfaa2816b8d9b633a02341fd9fbefcfdad9056c`
+- **GitHub Actions:** [Run #608 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44239478909)
+- **SQL:** اختبار Marketplace migrations وسلوك retention على PostgreSQL مؤقت نجح.
+- **Web/JS:** بناء الويب، JSON، Service Worker، JavaScript syntax، release preflight، performance/storage، chat/feed، compatibility، runtime/back navigation، الألعاب/QR، Kids Room/backup، native call UI، call feedback/signaling، moderation/report/block، support-ticket، account deletion/privacy، وTypeScript للـEdge Functions نجحت في التشغيل.
+- **Android:** إنشاء/مزامنة مشروع Capacitor، plugin الصوت الأصلي، أذونات Android، هوية التطبيق، target API 36، Gradle signed APK/AAB، التحقق من توقيع APK وAAB، وSHA256SUMS نجحت.
+- **Build metadata:** `version=3.0.4`, `version_code=608`, `application_id=pro.alwaha.app`, `target_sdk=36`, `branch=alwaha-pro-recovery-20261118`, `commit=7cfaa2816b8d9b633a02341fd9fbefcfdad9056c`.
+- **APK signing certificate SHA-256:** `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb` (تم استخراج البصمة واجتاز التوقيع؛ لم تتم بعد مقارنتها ببصمة APK الرسمي المثبت سابقاً).
+- **Artifact:** `Alwaha-Pro-3.0.4-build-608`, ID `14398682529`, size `54,492,253 bytes`, expiry `2026-12-18T04:47:20Z`. [Download build artifact](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44239478909/artifacts/14398682529)
+- **نشر الإنتاج:** وظيفتا نشر APK release والموقع تم تخطيهما عمداً على فرع الاسترداد؛ لا تغيير على `main` ولا كتابة إلى Supabase الإنتاجية.
+- **ما لم يثبت بعد:** تثبيت النسخة على جهاز Android حقيقي، مقارنة شهادة التوقيع مع النسخة السابقة، اختبار الألعاب بين حسابين/هاتفين، اختبار مكالمة الفيديو وغرفة الأطفال بين هاتفين، واختبار فقد/عودة الإنترنت.
+- **حالة الأولويات:** فتح بوابة الألعاب واختيار الفيديو/غرفة الأطفال: اجتازا CI على المصدر. الميزة المحلية Wi‑Fi/Bluetooth: لم تُنفذ بعد؛ يلزم Capacitor Android Plugin أصلي مشفر ونقل بيانات محلي واختبار فعلي، ولا يوجد زر عامل بعد.
+- **الخطوة التالية:** ابدأ تنفيذ طبقة النقل المحلي الأصلية بعد مراجعة Android API والصلاحيات، مع الحفاظ على النقل الحالي عبر الإنترنت وتوفير موافقة/اقتران واضح. بالتوازي حدّد اختبار هاتفين للألعاب والفيديو قبل ترقية أي Artifact إلى إصدار عام.
