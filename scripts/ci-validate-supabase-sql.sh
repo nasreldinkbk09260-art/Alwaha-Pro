@@ -124,6 +124,9 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117140000_profile_gender_o
 echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117180000_support_tickets_private_intake.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117180000_support_tickets_private_intake.sql"
+echo 'APPLY TEST MIGRATION: 20261118050000_support_tickets_assigned_to_index.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261118050000_support_tickets_assigned_to_index.sql"
 echo 'SUPPORT_TICKETS_SQL_REGRESSION=PASS'
 
 echo 'APPLY TEST MIGRATION: 20261117190000_admin_action_logs_report_and_support_actions.sql'
