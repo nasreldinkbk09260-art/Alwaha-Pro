@@ -825,7 +825,7 @@ img,video,canvas{max-width:100%}
             </div>
             <div class="alwaha-chat-actions" role="group" aria-label="خيارات الاتصال">
                 <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
-                <button type="button" class="alwaha-chat-icon-btn video" onclick="initiateVideoCall()" aria-label="مكالمة فيديو خفيفة" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn video" onclick="openVideoCallModeChooser()" aria-label="اختيار نوع مكالمة الفيديو" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
         </div>
@@ -863,7 +863,7 @@ img,video,canvas{max-width:100%}
             <button id="speakerRouteBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleCallSpeaker()" aria-pressed="false"><i class="fa-solid fa-ear-listen"></i> تشغيل مكبر الصوت</button>
             <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
             <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
-            <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;opacity:.6;cursor:not-allowed;" disabled aria-disabled="true" title="قريبًا بعد اختبار وضع الأطفال على الأجهزة"><i class="fa-solid fa-wand-magic-sparkles"></i> وضع الأطفال — قريبًا</button>
+            <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleAlwahaKidsMode()" aria-pressed="false" title="فتح غرفة الأطفال أثناء مكالمة الفيديو"><i class="fa-solid fa-wand-magic-sparkles"></i> غرفة الأطفال</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
@@ -1103,9 +1103,9 @@ img,video,canvas{max-width:100%}
         </form>
     </div>
 
-    <!-- 6. الألعاب الجماعية مؤجلة لحين نشر خدمة الخادم واختبارها؛ لا تعرض هذه النسخة أي زر تشغيل مباشر -->
+    <!-- 6. الألعاب الجماعية: غرف موثقة من الخادم للشطرنج وليدو وحرب الورق -->
     <section id="games-section" class="app-section">
-        <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> الألعاب — جاري التطوير</h2>
+        <h2 style="font-size:18px; color:#ffd700; margin-bottom:15px;"><i class="fa-solid fa-gamepad"></i> الألعاب الجماعية</h2>
         <div id="games-list-container"></div>
     </section>
 
@@ -1183,7 +1183,7 @@ img,video,canvas{max-width:100%}
         <button type="button" class="nav-item market-center" aria-label="السوق" onclick="showSection('market-section', this)"><i class="fa-solid fa-shop"></i><span>السوق</span></button>
         <button type="button" class="nav-item chat" aria-label="المحادثات" onclick="showSection('chat-section', this)"><i class="fa-solid fa-comments"></i><span>محادثة</span></button>
         <button type="button" class="nav-item reels" aria-label="الريلز" onclick="showSection('reels-section', this)"><i class="fa-solid fa-clapperboard"></i><span>ريلز</span></button>
-        <button type="button" class="nav-item games-nav" aria-label="الألعاب — مغلقة حاليًا" title="ستتاح بعد اكتمال الاختبارات" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed;"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
+        <button type="button" class="nav-item games-nav" aria-label="الألعاب الجماعية" title="الشطرنج وليدو وحرب الورق" onclick="showSection('games-section', this)"><i class="fa-solid fa-gamepad"></i><span>الألعاب</span></button>
         <button type="button" class="nav-item profile-me" aria-label="حسابي" onclick="showSection('profile-section', this)"><i class="fa-solid fa-user"></i><span>حسابي</span></button>
         <button type="button" class="nav-item notification-nav-item" aria-label="التنبيهات" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i><span>تنبيهات</span><span id="notification-badge-nav" class="alwaha-notification-badge" style="display:none;"></span></button>
     </nav>
@@ -4302,7 +4302,7 @@ async function renderConversationsList() {
             }
             async handleCallState(state) {
                 const target=this.mode==='market'?'بائع السوق':(currentChatUser||'المستخدم');
-                if(state==='connected'){this.clearCallTimeout();window.AlwahaCallFeedback?.stop();window.AlwahaCallFeedback?.play('connected');updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});startCallTimer();}
+                if(state==='connected'){this.clearCallTimeout();window.AlwahaCallFeedback?.stop();window.AlwahaCallFeedback?.play('connected');updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});startCallTimer();if(this.mediaType==='video')scheduleKidsRoomAfterVideoConnect(this);}
                 else if(['declined','busy','no-answer','unavailable'].includes(state)){
                     const states={declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
                     const result=states[state];await this.end(false);updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
@@ -4313,6 +4313,7 @@ async function renderConversationsList() {
                 }
             }
             async end(notify = true, reason = 'ended') {
+                cancelPendingKidsRoomAfterConnect();
                 this.clearCallTimeout();window.AlwahaCallFeedback?.stop();stopAlwahaCallRingtone();
                 stopCallTimer();
                 if (typeof window.closeAlwahaKidsMode === 'function') { try { window.closeAlwahaKidsMode(); } catch (error) { console.warn('[Alwaha Kids] safe close failed:', error); } }
@@ -4336,6 +4337,86 @@ async function renderConversationsList() {
             }
         }
 
+        let pendingKidsRoomAfterConnect = false;
+        let kidsRoomOpenAnimation = 0;
+        function cancelPendingKidsRoomAfterConnect() {
+            pendingKidsRoomAfterConnect = false;
+            if (kidsRoomOpenAnimation) cancelAnimationFrame(kidsRoomOpenAnimation);
+            kidsRoomOpenAnimation = 0;
+        }
+        function scheduleKidsRoomAfterVideoConnect(manager) {
+            if (!pendingKidsRoomAfterConnect || kidsRoomOpenAnimation) return;
+            const startedAt = Date.now();
+            const waitForRemoteVideo = () => {
+                kidsRoomOpenAnimation = 0;
+                if (!pendingKidsRoomAfterConnect) return;
+                if (activeCallManager !== manager || !manager?.call || manager.mediaType !== 'video') {
+                    cancelPendingKidsRoomAfterConnect();
+                    return;
+                }
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (remoteVideo?.srcObject && remoteVideo.readyState >= 1) {
+                    pendingKidsRoomAfterConnect = false;
+                    if (typeof window.toggleAlwahaKidsMode === 'function') window.toggleAlwahaKidsMode();
+                    else triggerToastNotification('غرفة الأطفال غير محمّلة في هذه النسخة. أغلق التطبيق وافتحه بعد اكتمال التحديث.', 'error');
+                    return;
+                }
+                if (Date.now() - startedAt >= 10000) {
+                    cancelPendingKidsRoomAfterConnect();
+                    triggerToastNotification('اتصل الفيديو، لكن لم يصل بث الطرف الآخر لفتح غرفة الأطفال. يمكنك المحاولة من زر غرفة الأطفال بعد ظهور الصورة.', 'info');
+                    return;
+                }
+                kidsRoomOpenAnimation = requestAnimationFrame(waitForRemoteVideo);
+            };
+            kidsRoomOpenAnimation = requestAnimationFrame(waitForRemoteVideo);
+        }
+        function closeVideoCallModeChooser() {
+            const overlay = document.getElementById('alwaha-video-call-choice');
+            if (!overlay) return;
+            const previousFocus = overlay.__alwahaPreviousFocus;
+            overlay.remove();
+            document.body.classList.remove('modal-active');
+            window.AlwahaModalShell?.sync?.();
+            if (previousFocus?.isConnected) previousFocus.focus();
+        }
+        function openVideoCallModeChooser() {
+            closeVideoCallModeChooser();
+            const overlay = document.createElement('div');
+            overlay.id = 'alwaha-video-call-choice';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+            overlay.setAttribute('aria-labelledby', 'alwaha-video-call-choice-title');
+            overlay.setAttribute('tabindex', '-1');
+            overlay.__alwahaPreviousFocus = document.activeElement;
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483500;display:flex;align-items:center;justify-content:center;overflow:auto;overscroll-behavior:contain;padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));background:rgba(2,8,18,.96);box-sizing:border-box;';
+            overlay.innerHTML = `
+              <section style="width:min(100%,440px);max-height:100%;overflow:auto;box-sizing:border-box;padding:22px;border:1px solid #8bf4ff55;border-radius:22px;background:linear-gradient(145deg,#10243a,#10131f);box-shadow:0 20px 70px #000b;color:#eaf7ff;text-align:right;">
+                <h2 id="alwaha-video-call-choice-title" style="font:900 18px Cairo,sans-serif;margin:0 0 10px;">اختر نوع مكالمة الفيديو</h2>
+                <p style="font:12px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:0 0 16px;">يمكنك إجراء مكالمة فيديو عادية أو فتح غرفة الأطفال التفاعلية بعد اتصال الفيديو ووصول صورة الطرف الآخر. يمكنك العودة للمكالمة أو الخروج كولي أمر في أي وقت.</p>
+                <button type="button" data-video-call-mode="normal" style="display:block;width:100%;min-height:48px;margin:8px 0;padding:12px;border:1px solid #60a5fa66;border-radius:12px;background:#1e4770;color:#fff;font:800 13px Cairo,sans-serif;">📹 مكالمة فيديو عادية</button>
+                <button type="button" data-video-call-mode="kids" style="display:block;width:100%;min-height:48px;margin:8px 0;padding:12px;border:1px solid #8bf4ff88;border-radius:12px;background:#13504b;color:#fff;font:800 13px Cairo,sans-serif;">🧸 مكالمة فيديو مع غرفة الأطفال</button>
+                <button type="button" data-video-call-cancel style="display:block;width:100%;min-height:44px;margin-top:14px;padding:10px;border:1px solid #ffffff25;border-radius:12px;background:transparent;color:#bdc9d5;font:700 12px Cairo,sans-serif;">إلغاء</button>
+              </section>`;
+            const finish = () => closeVideoCallModeChooser();
+            overlay.addEventListener('click', event => { if (event.target === overlay) finish(); });
+            overlay.addEventListener('keydown', event => {
+                if (event.key === 'Escape') { event.preventDefault(); finish(); return; }
+                if (event.key !== 'Tab') return;
+                const buttons = [...overlay.querySelectorAll('button:not([disabled])')];
+                if (!buttons.length) return;
+                const first = buttons[0], last = buttons[buttons.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            });
+            overlay.querySelector('[data-video-call-mode="normal"]').addEventListener('click', () => { finish(); void initiateVideoCall('normal'); });
+            overlay.querySelector('[data-video-call-mode="kids"]').addEventListener('click', () => { finish(); void initiateVideoCall('kids'); });
+            overlay.querySelector('[data-video-call-cancel]').addEventListener('click', finish);
+            document.body.appendChild(overlay);
+            document.body.classList.add('modal-active');
+            window.AlwahaModalShell?.sync?.();
+            overlay.focus();
+            overlay.querySelector('[data-video-call-mode="normal"]')?.focus();
+        }
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
             if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
             const video = mediaType === 'video';
@@ -4368,6 +4449,7 @@ async function renderConversationsList() {
                 updateCallUi('connecting', { target: marketMode ? (marketDisplayName||'بائع السوق') : (currentChatUser || targetId), text: connectingText });
             } catch (error) {
                 console.error('[Alwaha Call] Outgoing call failed:', error);
+                cancelPendingKidsRoomAfterConnect();
                 await activeCallManager?.end(false);
                 updateCallUi('idle');
                 setCallModal(false);
@@ -4378,7 +4460,13 @@ async function renderConversationsList() {
             }
         }
         async function initiateVoiceCall(type = 'online') { return startAlwahaCall(type, 'audio'); }
-        async function initiateVideoCall() { return startAlwahaCall('online', 'video'); }
+        async function initiateVideoCall(mode = 'normal') {
+            cancelPendingKidsRoomAfterConnect();
+            pendingKidsRoomAfterConnect = mode === 'kids';
+            await startAlwahaCall('online', 'video');
+            if (!activeCallManager?.call) cancelPendingKidsRoomAfterConnect();
+            return !!activeCallManager?.call;
+        }
         function toggleCallCamera() {
             const enabled = activeCallManager?.call?.toggleCamera?.();
             const button = document.getElementById('cameraMuteBtn');
@@ -5269,10 +5357,6 @@ function triggerAnimeAiConverterFilter() {
         window.alwahaModalHistory = window.alwahaModalHistory || [];
 
         function showSection(id, element, options = {}) {
-            if (id === 'games-section') {
-                if (typeof triggerToastNotification === 'function') triggerToastNotification('الألعاب مغلقة حاليًا، وستُفتح بعد اكتمال الاختبارات.', 'info');
-                return;
-            }
             const current = document.querySelector('.app-section.active-section')?.id
                 || document.querySelector('.app-section[style*="display: block"]')?.id
                 || 'home-section';

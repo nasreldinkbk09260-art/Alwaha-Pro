@@ -58,6 +58,10 @@ const checks=[
  ['market backup supports pre-snapshot conversation schemas',vault.includes('لقطات الإعلانات غير متاحة في قاعدة البيانات الحالية')],
  ['encrypted backup is retained locally and can be downloaded again',vault.includes("put('backup:last-encrypted',file)")&&vault.includes('downloadSavedBackup')],
  ['CI runs PostgreSQL migrations and marketplace retention behavior before Android build',fs.existsSync('scripts/ci-validate-supabase-sql.sh')&&fs.existsSync('supabase/tests/ci-bootstrap.sql')&&fs.existsSync('supabase/tests/20261102100000_marketplace_retention_behavior.sql')],
+ ['video call button opens a clear normal-video versus Kids Room choice',html.includes('onclick="openVideoCallModeChooser()"')&&html.includes('function openVideoCallModeChooser()')&&html.includes('data-video-call-mode="normal"')&&html.includes('data-video-call-mode="kids"')&&html.includes("setAttribute('aria-modal', 'true')")],
+ ['Kids Room automatically opens only after the selected video call connects and remote video is ready',html.includes('pendingKidsRoomAfterConnect')&&html.includes('scheduleKidsRoomAfterVideoConnect(this)')&&html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1')&&html.includes('window.toggleAlwahaKidsMode()')],
+ ['connected video calls expose the interactive Kids Room control instead of a disabled Coming Soon button',html.includes('id="kidsModeBtn"')&&html.includes('onclick="toggleAlwahaKidsMode()"')&&!/id="kidsModeBtn"[^>]*disabled/.test(html)&&!/id="kidsModeBtn"[^>]*aria-disabled="true"/.test(html)),
+
 ];
 let failed=0;for(const [label,ok] of checks){if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}}
 if(failed)process.exit(1);console.log(`RETENTION_KIDS_VAULT_AUDIT=PASS (${checks.length} checks)`);

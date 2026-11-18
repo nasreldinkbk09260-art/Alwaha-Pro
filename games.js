@@ -770,17 +770,50 @@
   function renderGamesSection() {
     const container = $('games-list-container');
     if (!container) return;
-    container.innerHTML = `<div class="mp-status" role="status" aria-live="polite" style="padding:18px;text-align:center;line-height:2;">
-      <strong>الألعاب الجماعية — جاري التطوير</strong>
-      <div>سيُعاد تفعيلها بعد نشر خدمة اللعب الآمن game-actions وتطبيق صلاحياتها واختبار إنشاء الغرف والحركات بين جهازين.</div>
-    </div>`;
-    container.onclick = null;
-    container.onsubmit = null;
+    const cards = Object.entries(GAME_INFO).map(([id, game]) => `
+      <article class="mp-game-card" data-game-id="${id}" style="border-color:${game.color}77">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <span class="mp-game-icon" aria-hidden="true">${game.icon}</span>
+          <div style="min-width:0"><h3 class="mp-game-title">${esc(game.title)}</h3><p class="mp-game-desc">${esc(game.description)}</p></div>
+        </div>
+        <div class="mp-join-code-actions">
+          <button type="button" class="mp-action mp-create" data-mp-create="${id}" aria-label="إنشاء غرفة ${esc(game.title)}">إنشاء غرفة</button>
+          <button type="button" class="mp-action mp-join" data-mp-join="${id}" aria-expanded="false" aria-label="الانضمام إلى غرفة ${esc(game.title)}">الانضمام بكود</button>
+        </div>
+      </article>`).join('');
+    container.innerHTML = `
+      <div class="mp-status" role="status" aria-live="polite" style="padding:12px;text-align:center;line-height:1.9;">
+        <strong>الألعاب الجماعية متاحة الآن كتجربة أولية</strong>
+        <div>أنشئ غرفة وشارك كودها مع لاعب آخر. تتطلب حسابين واتصالًا بالخادم؛ اختبارات حماية الحركات آلية، وما زال قبول اللعب بين جهازين فعليين مطلوبًا.</div>
+      </div>
+      <div class="mp-game-cards">${cards}</div>
+      <p class="mp-help">الألعاب المتاحة: الشطرنج، ليدو، وحرب الورق. الألعاب الفردية القديمة ليست ضمن هذا الإصدار.</p>`;
+    container.onclick = async (event) => {
+      const button = event.target.closest('button');
+      if (!button || !container.contains(button)) return;
+      if (button.dataset.mpCreate) { await createRoom(button.dataset.mpCreate, button); return; }
+      if (button.dataset.mpJoin) { showJoinCodeForm(button.dataset.mpJoin, button); return; }
+      if (button.dataset.mpScan) { await startQrScan(button); return; }
+      if (button.hasAttribute('data-mp-cancel-join')) { closeJoinCodeForm(button.closest('.mp-join-code-form')); return; }
+      if (button.hasAttribute('data-mp-resume')) await resumeLastRoom(button);
+    };
+    container.onsubmit = async (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || !form.matches('.mp-join-code-form') || !container.contains(form)) return;
+      event.preventDefault();
+      const input = form.querySelector('input[name="roomCode"]');
+      const submit = form.querySelector('button[type="submit"]');
+      await joinRoom(form.dataset.mpJoinForm, submit, input?.value || '');
+    };
+    updateResumeRoomControl();
   }
   window.renderGamesSection = renderGamesSection;
-  // Only multiplayer games are exposed in this release candidate.
+  // Only authenticated multiplayer rooms are exposed; the server owns room state and all game actions.
   window.launchGameEngine = function(gameTitle) {
-    return toast('قسم الألعاب الجماعية جاري التطوير، وسيُعاد تفعيله بعد اكتمال خدمة الخادم واختبار جهازين.', 'info');
+    const requested = String(gameTitle || '');
+    const gameId = Object.keys(GAME_INFO).find(id => id === requested || GAME_INFO[id].title === requested);
+    if (!gameId) return toast('نوع اللعبة غير متاح في هذا الإصدار.', 'info');
+    return createRoom(gameId);
   };
   window.closeAlwahaGameRoom = closeRoom;
   window.closeAlwahaGameQrScanner = stopQrScanner;
