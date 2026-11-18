@@ -113,4 +113,20 @@ echo 'APPLY TEST MIGRATION: 20261117010000_storage_upload_ownership.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/storage-upload-ci-bootstrap.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117010000_storage_upload_ownership.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117010000_storage_upload_ownership.sql"
+echo 'APPLY TEST MIGRATION: 20261117170000_child_safety_urgent_reports.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117170000_child_safety_urgent_reports.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117170000_child_safety_urgent_reports.sql"
+echo 'APPLY TEST MIGRATION: 20261117140000_profile_gender_optional.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117140000_profile_gender_optional.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117140000_profile_gender_optional.sql"
 
+
+echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117180000_support_tickets_private_intake.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117180000_support_tickets_private_intake.sql"
+echo 'SUPPORT_TICKETS_SQL_REGRESSION=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261117190000_admin_action_logs_report_and_support_actions.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117190000_admin_action_logs_report_and_support_actions.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117190000_admin_action_logs_report_and_support_actions.sql"
+echo 'ADMIN_ACTION_ALLOWLIST_REGRESSION=PASS'

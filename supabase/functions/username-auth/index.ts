@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
     const firstName = String(body.first_name || '').trim().slice(0, 80);
     const lastName = String(body.last_name || '').trim().slice(0, 80);
     const phone = String(body.phone || '').trim();
-    const gender = String(body.gender || 'ذكر');
+    const gender = String(body.gender ?? '').trim();
     const birthdate = body.birthdate == null ? null : String(body.birthdate);
     const termsVersion = String(body.alwaha_terms_version || '');
     const privacyVersion = String(body.alwaha_privacy_version || '');
@@ -57,6 +57,7 @@ Deno.serve(async (req: Request) => {
     if (password.length < 8 || password.length > 128) return json({ error: 'كلمة المرور يجب أن تكون من 8 إلى 128 حرفًا.' }, 400);
     if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) return json({ error: 'رقم الهاتف غير صحيح.' }, 400);
     if (birthdate && !/^\d{4}-\d{2}-\d{2}$/.test(birthdate)) return json({ error: 'تاريخ الميلاد غير صحيح.' }, 400);
+    if (gender && !['ذكر', 'أنثى'].includes(gender)) return json({ error: 'قيمة النوع غير صحيحة.' }, 400);
     if (termsVersion !== '2026-11-15' || privacyVersion !== '2026-11-15') {
       return json({ error: 'يجب الموافقة على أحدث شروط الاستخدام وسياسة الخصوصية.' }, 400);
     }
@@ -81,7 +82,7 @@ Deno.serve(async (req: Request) => {
       username,
       first_name: firstName,
       last_name: lastName,
-      gender: gender === 'أنثى' ? 'أنثى' : 'ذكر',
+      gender: gender || null,
       birthdate: birthdate || null,
       phone: phone || '',
       avatar_url: null,

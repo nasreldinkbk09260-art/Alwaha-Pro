@@ -1,6 +1,6 @@
 {
   "name": "alwaha-pro",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Alwaha-Pro Unified Web and Mobile Application",
   "private": true,
   "main": "index.html",
@@ -33,7 +33,8 @@
     "audit:offline-cache": "node scripts/offline-cache-audit.mjs",
     "audit:security-definers": "node scripts/security-definer-audit.mjs",
     "audit:user-safety": "node scripts/user-safety-ui-audit.mjs",
-    "audit:account-deletion": "node scripts/account-deletion-audit.mjs"
+    "audit:account-deletion": "node scripts/account-deletion-audit.mjs",
+    "audit:support-tickets": "node scripts/support-tickets-audit.mjs"
   },
   "engines": {
     "node": ">=22"

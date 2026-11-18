@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(p,'utf8'),check=(n,v)=>{if(!v)throw Error('FAIL '+n);console.log('PASS '+n)};
+const ui=read('index.html'),dialog=ui.slice(ui.indexOf('async function openAlwahaSupportTicket'),ui.indexOf('async function callAlwahaUserSafety'));
+const fn=read('supabase/functions/support-tickets/index.ts'),api=read('supabase/functions/admin-api/index.ts'),admin=read('admin-app/index.html');
+const sql=read('supabase/migrations/20261117180000_support_tickets_private_intake.sql'),test=read('supabase/tests/20261117180000_support_tickets_private_intake.sql');
+const ci=read('scripts/ci-validate-supabase-sql.sh'),wf=read('.github/workflows/build-apk-aab-release.yml'),cfg=read('supabase/config.toml');
+const adminAuditMigration=read('supabase/migrations/20261117190000_admin_action_logs_report_and_support_actions.sql'),adminAuditTest=read('supabase/tests/20261117190000_admin_action_logs_report_and_support_actions.sql');
+check('user support form and admin queue are linked',ui.includes('openAlwahaSupportTicket()')&&admin.includes('supportPane'));
+check('form is text-only and warns against secrets',dialog.includes("functions.invoke('support-tickets'")&&dialog.includes('لا تكتب كلمة المرور أو رمز التحقق')&&!dialog.includes('type="file"'));
+check('Edge Function verifies auth and sanitizes text',fn.includes('auth.auth.getUser(')&&fn.includes('cleanText(')&&fn.includes('[سر محذوف]'));
+check('daily user rate limit is present',fn.includes('86400000')&&fn.includes('(count||0)>=5'));
+check('ticket table RLS denies direct client grants',sql.includes('ENABLE ROW LEVEL SECURITY')&&sql.includes('REVOKE ALL ON TABLE public.support_tickets FROM PUBLIC, anon, authenticated'));
+check('SQL test covers privileges and account anonymization',test.includes('has_table_privilege')&&test.includes('DELETE FROM auth.users'));
+check('support function requires JWT',cfg.includes('[functions.support-tickets]')&&cfg.includes('verify_jwt = true'));
+check('admin API includes audited support actions',api.includes('list_support_tickets')&&api.includes('review_support_ticket')&&api.includes('pendingSupportTicketsCount'));
+check('SQL CI and release workflow run support tests',ci.includes('20261117180000_support_tickets_private_intake.sql')&&wf.includes('npm run audit:support-tickets'));
+check('admin audit allowlist includes content reports and support actions',adminAuditMigration.includes('review_content_report')&&adminAuditMigration.includes('review_support_ticket')&&adminAuditTest.includes('admin_action_logs_action_check')&&ci.includes('20261117190000_admin_action_logs_report_and_support_actions.sql'));
+console.log('SUPPORT_TICKETS_AUDIT=PASS');

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const read=p=>fs.readFileSync(p,'utf8');
-const html=read('index.html'),api=read('supabase/functions/user-safety/index.ts'),adminApi=read('supabase/functions/admin-api/index.ts'),adminHtml=read('admin-app/index.html'),migration=read('supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql'),config=read('supabase/config.toml');
+const html=read('index.html'),api=read('supabase/functions/user-safety/index.ts'),adminApi=read('supabase/functions/admin-api/index.ts'),adminHtml=read('admin-app/index.html'),migration=read('supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql'),childMigration=read('supabase/migrations/20261117170000_child_safety_urgent_reports.sql'),config=read('supabase/config.toml');
 let checks=0,failed=0;
 function check(name,ok){checks++;if(ok)console.log('PASS: '+name);else{failed++;console.error('FAIL: '+name)}}
 check('user safety client uses authenticated Edge Function',html.includes("functions.invoke('user-safety'")&&html.includes('callAlwahaUserSafety'));
@@ -18,5 +18,15 @@ check('database block policies protect communication and content interaction',mi
 check('admin API restricts report queue and review to is_admin with audit',adminApi.includes('list_content_reports')&&adminApi.includes('review_content_report')&&adminApi.includes('if (!profile?.is_admin)')&&adminApi.includes('finishAudit'));
 check('admin dashboard contains review queue and status filters',adminHtml.includes('reportsPane')&&adminHtml.includes('list_content_reports')&&adminHtml.includes('review_content_report')&&adminHtml.includes('reportStatus'));
 check('admin dashboard never deletes report targets automatically',!adminHtml.includes("delete_content_report")&&!adminHtml.includes("deleteReportedContent"));
+check('child safety report reason is accepted by the authenticated safety API',api.includes("'child_safety'")&&html.includes('child_safety'));
+check('child safety reports receive urgent priority in database and admin queue',api.includes("priority:reason==='child_safety'?100:0")&&adminApi.includes(".order('priority', { ascending: false })")&&adminHtml.includes('أولوية عاجلة'));
+check('child safety database migration allows dedicated reason and indexed priority',childMigration.includes("'child_safety'")&&childMigration.includes('priority DESC, created_at ASC'));
+check('Kids Mode button is hidden and disabled pending real device and guardian-safety validation',html.includes('id="kidsModeBtn"')&&html.includes('disabled aria-disabled="true"')&&html.includes('وضع الأطفال — قريبًا'));
+
+check('public child safety policy is linked from official site',read('official-site/child-safety.html').includes('CSAM')&&read('official-site/index.html').includes('./child-safety.html'));
+check('terms explicitly prohibit CSAE and CSAM and grooming',read('official-site/terms.html').includes('CSAE/CSAM')&&read('official-site/terms.html').includes('استدراج'));
+check('child mode remains restricted to an active connected video call',read('alwaha-kids-room.js').includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط'));
+check('child mode, games and marketplace voice calls remain unavailable pending device testing',read('official-site/terms.html').includes('الألعاب مغلقة')&&html.includes('اتصال صوتي بالبائع — قريبًا'));
+
 console.log('USER_SAFETY_UI_AUDIT='+(failed?'FAIL':'PASS')+' ('+checks+' checks)');
 if(failed)process.exit(1);

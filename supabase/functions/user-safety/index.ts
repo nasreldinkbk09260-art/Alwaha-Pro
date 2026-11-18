@@ -10,7 +10,7 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: corsHeaders });
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const targetTypes = new Set(['user','post','reel','comment']);
-const reasons = new Set(['spam','harassment','inappropriate','violence','fraud','other']);
+const reasons = new Set(['spam','harassment','inappropriate','violence','fraud','child_safety','other']);
 type Body = Record<string, unknown>;
 const asBody = (value: unknown): Body => value && typeof value === 'object' && !Array.isArray(value) ? value as Body : {};
 
@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       if (dupError) throw new Error('report_duplicate_check_failed');
       if (openReport) return json({ok:true,duplicate:true,message:'يوجد بلاغ مفتوح عن هذا المحتوى بالفعل.'});
       const { error: insertError } = await db.from('content_reports').insert({
-        reporter_id:user.id,target_type:targetType,target_id:targetId,target_user_id:ownerId,reason,details,status:'pending'
+        reporter_id:user.id,target_type:targetType,target_id:targetId,target_user_id:ownerId,reason,details,status:'pending',priority:reason==='child_safety'?100:0
       });
       if (insertError) {
         if (insertError.code==='23505') return json({ok:true,duplicate:true,message:'يوجد بلاغ مفتوح عن هذا المحتوى بالفعل.'});
