@@ -27,14 +27,14 @@ const sqlRunner = read('scripts/ci-validate-supabase-sql.sh');
 
 function check(label, condition) { condition ? pass(label) : fail(label); }
 
-check('release version 3.0.3 is consistent across package, lockfile, manifest and title',
-  pkg.version === '3.0.3' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.3' && manifest.version === '3.0.3' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
+check('release version 3.0.4 is consistent across package, lockfile, manifest and title',
+  pkg.version === '3.0.4' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.4' && manifest.version === '3.0.4' && /<title>Alwaha-Pro 3\.0\.3<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
-check('3.0.3 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.3-account-password-change-20261117'") &&
+check('3.0.4 final cache token agrees across all current audits',
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-account-password-change-20261117'") &&
   read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.3-account-password-change-20261117') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.3-account-password-change-20261117') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.3-account-password-change-20261117'));
+  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.4-account-password-change-20261117') &&
+  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.4-account-password-change-20261117'));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
@@ -137,7 +137,7 @@ check('APK/AAB workflow watches main and only explicitly maintained validation/p
   expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
 check('public website publication is gated to main',
   workflow.includes("if: github.ref == 'refs/heads/main'") &&
-  workflow.includes('name: Publish Alwaha-Pro 3.0.3 website'));
+  workflow.includes('name: Publish Alwaha-Pro 3.0.4 website'));
 check('obsolete 3.0.0 web-build workflow is retired',
   !fs.existsSync('.github/workflows/pages-web-300.yml'));
 check('Supabase migration workflow remains manual and non-deploying',
