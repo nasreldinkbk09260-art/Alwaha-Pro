@@ -211,3 +211,5 @@
 - يفتح نافذة Android الأصلية عبر `window.alwahaLocalNetwork`، وتطلب `startDiscovery()` أذونات Nearby Wi-Fi/Bluetooth، ثم يستمع التطبيق إلى أحداث `peerDiscovered` و`peersDiscovered` و`discoveryState`. عند إغلاق النافذة يوقف المسح ويزيل جميع listeners.
 - تعرض الأجهزة المكتشفة بوصفها «غير موثّقة» مع وسيلة الاكتشاف. لا يوجد زر اتصال/إرسال/ملف وهمي.
 - تظل `transportReady/chatReady/fileTransferReady/callMediaReady=false`؛ الاقتران المتبادل والتشفير ونقل الرسائل/الملفات/الصوت المحلي ما زالت أعمالًا لاحقة تتطلب تنفيذًا واختبار جهازين.
+
+- **CI #622 (44379043135) failed in one chat-audit wording assertion only:** the assertion expected “إرسال رسائل” but the actual UI warning says “تبادل رسائل”. All other checks in the chat audit passed, including the new discovery control. Updated the test to match the exact safe UI text. No runtime behavior or permissions changed.
