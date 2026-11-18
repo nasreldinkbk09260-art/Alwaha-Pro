@@ -331,6 +331,8 @@ jobs:
 
       - name: Type-check server-authoritative game Edge Function
         run: deno check --node-modules-dir=auto supabase/functions/game-actions/index.ts
+      - name: Runtime-test server-authoritative game rules
+        run: deno test --node-modules-dir=auto supabase/functions/game-actions/game-rules.test.ts
       - name: Run server-authoritative multiplayer game audit
         run: npm run audit:games
       - name: Run retention, kids-room, and backup audit
