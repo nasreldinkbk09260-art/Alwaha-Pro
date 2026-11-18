@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 const html=fs.readFileSync('index.html','utf8');
 const start=html.indexOf('class CallSignalingManager {');
-const marker='\\n\\n        let pendingKidsRoomAfterConnect = false;';
+const marker='\n\n        let pendingKidsRoomAfterConnect = false;';
 const close=html.indexOf(marker,start);
 assert.ok(start>=0&&close>start,'CallSignalingManager source block is found before the Kids Room chooser helpers');
 const classSource=html.slice(start,close).trim();
