@@ -37,12 +37,12 @@ else fail("package-lock version mismatch");
 if (manifest.version === "3.0.4") pass("manifest version is 3.0.4");
 else fail("manifest version mismatch");
 
-if (/<title>Alwaha-Pro 3\.0\.3<\/title>/i.test(html) &&
-    /currentAppVersion\s*=\s*["']3\.0\.3["']/.test(html))
+if (/<title>Alwaha-Pro 3\.0\.4<\/title>/i.test(html) &&
+    /currentAppVersion\s*=\s*["']3\.0\.4["']/.test(html))
   pass("HTML title and currentAppVersion match 3.0.4");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.3-account-password-change-20261117['"]/.test(sw))
+if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.4-account-password-change-20261117['"]/.test(sw))
   pass("service worker uses the current 3.0.4 three-theme cache namespace");
 else fail("service worker cache namespace mismatch");
 
@@ -51,8 +51,8 @@ if (html.includes("3.0.4 mobile performance guard") &&
   pass("mobile performance CSS guard is present");
 else fail("mobile performance CSS guard missing or incomplete");
 
-if (/APP_VERSION:\s*['"]3\.0\.3['"]/.test(workflow) &&
-    /VERSION_NAME:\s*['"]3\.0\.3['"]/.test(workflow))
+if (/APP_VERSION:\s*['"]3\.0\.4['"]/.test(workflow) &&
+    /VERSION_NAME:\s*['"]3\.0\.4['"]/.test(workflow))
   pass("workflow version variables match 3.0.4");
 else fail("workflow version variables mismatch");
 
