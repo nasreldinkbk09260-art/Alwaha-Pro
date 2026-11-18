@@ -1878,10 +1878,12 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             let accessToken = SUPABASE_KEY;
+            let hasUserSession = false;
             try {
-                const sessionResult = await alwahaUiDeadline(supabaseClient?.auth.getSession(), 1200, null);
-                const data = sessionResult && sessionResult.data;
-                if (data?.session?.access_token) accessToken = data.session.access_token;
+                // Do not silently downgrade an authenticated request to the anon key on a short UI timeout.
+                const sessionResult = await alwahaUiDeadline(supabaseClient?.auth.getSession(), 5000, null);
+                const session = sessionResult?.data?.session;
+                if (session?.access_token) { accessToken = session.access_token; hasUserSession = true; }
             } catch (e) {}
             const headers = {
                 "apikey": SUPABASE_KEY,
@@ -1900,9 +1902,24 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 };
                 if (controller) requestOptions.signal = controller.signal;
                 const requestPromise = (async () => {
-                    const response = await fetch(url, requestOptions);
-                    const contentType = response.headers.get('content-type') || '';
-                    const data = contentType.includes('application/json') ? await response.json() : await response.text();
+                    let response = await fetch(url, requestOptions);
+                    let contentType = response.headers.get('content-type') || '';
+                    let data = contentType.includes('application/json') ? await response.json() : await response.text();
+                    // Refresh an expired session once after a 401; never bypass RLS or use service-role credentials.
+                    if (response.status === 401 && hasUserSession && supabaseClient?.auth?.refreshSession) {
+                        try {
+                            const refreshed = await supabaseClient.auth.refreshSession();
+                            const freshToken = refreshed?.data?.session?.access_token;
+                            if (!refreshed?.error && freshToken) {
+                                requestOptions.headers = { ...requestOptions.headers, Authorization: `Bearer ${freshToken}` };
+                                response = await fetch(url, requestOptions);
+                                contentType = response.headers.get('content-type') || '';
+                                data = contentType.includes('application/json') ? await response.json() : await response.text();
+                            }
+                        } catch (refreshError) {
+                            console.warn('[Alwaha Auth] Session refresh after 401 failed:', refreshError?.message || refreshError);
+                        }
+                    }
                     return { response, data };
                 })();
                 const requestResult = await Promise.race([
