@@ -47,11 +47,11 @@ const checks=[
  ['archived listings can be republished through the lifecycle update path',html.includes('async function reactivateMyProduct')&&html.includes("status:'active',archived_at:null")],
  ['promotion is scoped through the seller-owned lifecycle update path',html.includes('async function promoteMyProduct')&&html.includes('async function updateMarketProductLifecycle')&&html.includes('seller_id=eq.')],
  ['market transaction schema is probed before sale and retention controls are enabled',html.includes('async function detectMarketTransactionSchema()')&&html.includes("market_transactions?select=id&limit=0")&&html.includes('listing_snapshot,archived_at,retention_until,retention_notice_sent_at')],
- ['my listings display an honest coming-soon state when transaction and warranty schema is absent',html.includes('const marketTransactionsReady=await detectMarketTransactionSchema()')&&html.includes('تسجيل البيع قريبًا')&&html.includes('الضمان قريبًا')],
- ['sale registration fails closed when live transaction schema is absent',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا")],
- ['sale form rechecks transaction schema before calling the server-authoritative RPC',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تسجيل البيع والضمان قريبًا")&&html.includes("supabaseClient.rpc('complete_market_sale'")],
- ['transaction history displays coming soon instead of a misleading schema error',html.includes("سجل المعاملات والضمان قريبًا. سيظهر بعد اكتمال تحديث قاعدة السوق واعتماد صلاحياته.")],
- ['receipt confirmation and archive consent are gated until their live schema exists',html.includes("تأكيد الاستلام قريبًا حتى يكتمل تحديث سجل المعاملات")&&html.includes("موافقة حذف الأرشيف قريبًا بعد اكتمال تحديث سياسة الاحتفاظ")],
+ ['my listings keep sale controls visible even when transaction schema checks fail',html.includes('const marketTransactionsReady=await detectMarketTransactionSchema()')&&html.includes('data-transaction-schema=')&&html.includes('تسجيل البيع')&&html.includes('تعذر التحقق من الضمان')&&!/disabled aria-disabled="true"[^>]*onclick="markMyProductSold/.test(html)],
+ ['sale registration remains fail-closed with a visible, explicit service error when schema validation fails',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تسجيل البيع.')")],
+ ['sale form rechecks transaction schema before the server-authoritative RPC and explains failure without hiding the action',html.includes("if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تسجيل البيع.')")&&html.includes("supabaseClient.rpc('complete_market_sale'")],
+ ['transaction history stays visible and reports schema validation failure without a coming-soon placeholder',html.includes('id="market-transactions-container"')&&html.includes('تعذر التحقق من مخطط سجل المعاملات. لم يتم تحميل السجل')&&!html.includes('قريبًا')],
+ ['receipt confirmation and archive consent keep fail-closed guards with explicit non-success errors',html.includes("تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تأكيد الاستلام.")&&html.includes("تعذر التحقق من مخطط سياسة الاحتفاظ؛ لم يتم تغيير موافقة الأرشيف.")],
  ['market inbox is a dedicated full-screen modal that blocks the background',html.includes("page.setAttribute('aria-modal','true')")&&html.includes("page.className='alwaha-fullscreen-layer'")&&html.includes("document.body.classList.add('modal-active')")],
  ['market conversation list revalidates the signed-in participant after parallel reads',html.includes('const activeUser=await getCurrentAuthUser();')&&html.includes('activeUser?.id!==me.id')],
  ['opening a market chat revalidates the signed-in participant against the conversation row',html.includes("if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))")],
@@ -67,6 +67,11 @@ const checks=[
 
 
 ];
+
+
+ ['profile section starts with the profile menu and puts Waha test tools behind a separate bottom menu action',html.indexOf('id="alwaha-device-suite-menu-button"')>html.indexOf('id="profile-section"')&&html.indexOf('id="alwaha-device-suite"')>html.indexOf('id="alwaha-device-suite-menu-button"')&&html.includes("openSubProfileView('sub-prof-device-suite')")],
+ ['the seven-day feature coverage board exposes incomplete and unverified work instead of hiding it',html.includes('id="alwaha-test-coverage-board"')&&html.includes('data-feature-id="local-pairing-transfer"')&&html.includes('data-feature-id="local-calls"')&&html.includes('data-feature-id="kids-room-safety"')&&html.includes('data-feature-id="share-button-policy"')],
+ ['no Arabic coming-soon placeholders remain in the test branch UI',!html.includes('قريبًا')&&!html.includes('قريباً')],
 
 const marketCallStart=html.indexOf('async function callMarketSeller(');
 const marketCallEnd=html.indexOf('async function updateMarketProductLifecycle(',marketCallStart);
