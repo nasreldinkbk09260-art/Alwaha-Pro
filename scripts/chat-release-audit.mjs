@@ -9,7 +9,7 @@ const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_req
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
-  ['video action', 'initiateVideoCall()'],
+  ['video action opens the normal/Kids mode chooser', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"')],
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
   ['message refresh action', 'loadDirectMessages()'],
