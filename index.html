@@ -4089,26 +4089,52 @@ async function subscribeToMarketConversation() {
             return String(conversation.id);
         }
 
-async function renderConversationsList() {
-            const holder=document.getElementById('conversations-list'); if(!holder)return;
-            const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض المحادثات.'); if(!me)return;
-            holder.innerHTML='<div style="text-align:center;color:#00ffff;font-size:11px;padding:15px;">جاري تحميل المحادثات...</div>';
-            if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled()){
-                const cached=await window.AlwahaLocalVault?.getAllDirectChatCaches?.(me.id)||[];
-                if(!cached.length){holder.innerHTML='<div style="color:#ffd88b;text-align:center;padding:15px;font-size:10px;">لا توجد محادثات محفوظة على هذا الجهاز بعد. افتح المحادثة مرة واحدة أثناء الاتصال.</div>';return;}
-                holder.innerHTML=cached.map(c=>{const last=c.messages[c.messages.length-1],peer=c.peerId,name='محادثة محفوظة · '+peer.slice(0,8);const preview=decodeAlwahaChatMedia(last?.message)?'وسيط محفوظ':String(last?.message||'محادثة محفوظة');return `<button type="button" class="profile-menu-btn" onclick="openTargetUserDirectChat('${escapeJs(name)}','','${escapeJs(peer)}')" style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border:0;border-radius:8px;color:#fff;text-align:right;"><img src="icon.png" alt="" style="width:40px;height:40px;border-radius:50%;"><span style="flex:1;min-width:0;"><strong style="display:block;font-size:11px;">${escapeHtml(name)}</strong><span style="display:block;color:#9fb1c8;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</span></span></button>`;}).join('')+'<div style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">نسخة محلية مشفّرة؛ الإرسال والمزامنة متوقفان دون اتصال.</div>';
-                return;
-            }
+async function renderCachedDirectConversationList(holder,user,cached){
+ const items=await Promise.all((cached||[]).map(async conversation=>{
+  const peerId=String(conversation.peerId||''),messages=Array.isArray(conversation.messages)?conversation.messages:[];
+  const peer=await window.AlwahaLocalVault?.getPeerProfileCache?.(user.id,peerId)||{};
+  const name=[peer.first_name||'',peer.last_name||''].join(' ').trim()||('محادثة محفوظة · '+peerId.slice(0,8));
+  const last=messages[messages.length-1],preview=decodeAlwahaChatMedia(last?.message)?'وسيط محفوظ':String(last?.message||'محادثة محفوظة');
+  return {peerId,name,avatar:peer.avatar_url||'icon.png',verified:peer.is_verified===true,preview,createdAt:last?.created_at||''};
+ }));
+ if(!items.length){holder.innerHTML='<div style="color:#ffd88b;text-align:center;padding:15px;font-size:10px;">لا توجد محادثات محفوظة على هذا الجهاز بعد. افتح المحادثة مرة واحدة أثناء الاتصال.</div>';return;}
+ holder.innerHTML=items.map(item=>`<button type="button" class="profile-menu-btn" onclick="openTargetUserDirectChat('${escapeJs(item.name)}','','${escapeJs(item.peerId)}')" style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border:0;border-radius:8px;color:#fff;text-align:right;"><img src="${escapeHtml(item.avatar)}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"><span style="flex:1;min-width:0;"><strong style="display:block;font-size:11px;">${escapeHtml(item.name)} ${item.verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:10px;"></i>':''}</strong><span style="display:block;color:#9fb1c8;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(item.preview)}</span></span><span style="font-size:9px;color:#777;">${item.createdAt?new Date(item.createdAt).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}):''}</span></button>`).join('')+'<div style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">نسخة محلية مشفّرة؛ الإرسال والمزامنة السحابية متوقفان دون اتصال.</div>';
+}
 
-            const rows=await supabaseFetch(`messages?or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&select=id,sender_id,receiver_id,message,created_at&order=created_at.desc&limit=100`);
-            if(!Array.isArray(rows)||!rows.length){holder.innerHTML='<div style="text-align:center;color:#aaa;font-size:11px;padding:20px;">لا توجد محادثات بعد. افتح دليل المستخدمين لبدء محادثة.</div>';return;}
-            const partnerIds=[...new Set(rows.map(r=>r.sender_id===me.id?r.receiver_id:r.sender_id))];
-            await Promise.all(partnerIds.map(async pid=>{const ownRows=rows.filter(row=>String(row.sender_id===me.id?row.receiver_id:row.sender_id)===String(pid));await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,pid,ownRows).catch(error=>console.warn('[Alwaha Vault] direct inbox cache failed:',error));}));
-            const users=await supabaseFetch(`user_directory?id=in.(${partnerIds.join(',')})&select=id,first_name,last_name,identifier,avatar_url,is_verified`);
-            const umap=new Map((users||[]).map(u=>[u.id,u])); const seen=new Set(); const conv=[];
-            for(const r of rows){const pid=r.sender_id===me.id?r.receiver_id:r.sender_id;if(seen.has(pid))continue;seen.add(pid);const u=umap.get(pid)||{};conv.push({pid,u,last:r});}
-            holder.innerHTML=conv.map(c=>{const name=`${c.u.first_name||''} ${c.u.last_name||''}`.trim()||'مستخدم';return `<div class="profile-menu-btn" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:8px;cursor:pointer;" onclick="openTargetUserDirectChat('${escapeJs(name)}','${escapeJs(c.u.identifier||'')}','${escapeJs(c.pid)}')"><img src="${escapeHtml(c.u.avatar_url||'icon.png')}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"><div style="flex:1;min-width:0;"><div style="font-weight:bold;color:#fff;font-size:12px;">${escapeHtml(name)} ${c.u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:10px;"></i>':''}</div><div style="font-size:10px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.last.message||'')}</div></div><span style="font-size:9px;color:#777;">${new Date(c.last.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}).join('');
-        }
+async function renderConversationsList(){
+ const holder=document.getElementById('conversations-list');if(!holder)return;
+ const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض المحادثات.');if(!me)return;
+ holder.innerHTML='<div style="text-align:center;color:#00ffff;font-size:11px;padding:15px;">جاري تحميل المحادثات...</div>';
+ if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled()){
+  const cached=await window.AlwahaLocalVault?.getAllDirectChatCaches?.(me.id)||[];
+  await renderCachedDirectConversationList(holder,me,cached);return;
+ }
+ const rows=await supabaseFetch(`messages?or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&select=id,sender_id,receiver_id,message,created_at&order=created_at.desc&limit=100`);
+ if(!Array.isArray(rows)){
+  const cached=await window.AlwahaLocalVault?.getAllDirectChatCaches?.(me.id)||[];
+  if(cached.length){await renderCachedDirectConversationList(holder,me,cached);return;}
+  const error=window.__alwahaLastApiError||{};
+  holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:15px;font-size:10px;">تعذر تحميل المحادثات (${escapeHtml(error.status||'اتصال')}). لا توجد نسخة محلية محفوظة لهذا الجهاز بعد.</div>`;
+  return;
+ }
+ if(!rows.length){holder.innerHTML='<div style="text-align:center;color:#aaa;font-size:11px;padding:20px;">لا توجد محادثات بعد. افتح دليل المستخدمين لبدء محادثة.</div>';return;}
+ const partnerIds=[...new Set(rows.map(r=>String(r.sender_id===me.id?r.receiver_id:r.sender_id)))];
+ await Promise.all(partnerIds.map(async pid=>{
+  const ownRows=rows.filter(row=>String(row.sender_id===me.id?row.receiver_id:row.sender_id)===pid);
+  await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,pid,ownRows).catch(error=>console.warn('[Alwaha Vault] direct inbox cache failed:',error));
+ }));
+ const users=await supabaseFetch(`user_directory?id=in.(${partnerIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,identifier,avatar_url,is_verified`);
+ const umap=new Map((Array.isArray(users)?users:[]).map(u=>[String(u.id),u]));
+ for(const peer of (Array.isArray(users)?users:[]))await window.AlwahaLocalVault?.savePeerProfileCache?.(me.id,peer.id,peer).catch(error=>console.warn('[Alwaha Vault] peer profile cache failed:',error));
+ const peers=new Map();
+ await Promise.all(partnerIds.map(async pid=>peers.set(pid,umap.get(pid)||await window.AlwahaLocalVault?.getPeerProfileCache?.(me.id,pid)||{})));
+ const seen=new Set(),conv=[];
+ for(const row of rows){const pid=String(row.sender_id===me.id?row.receiver_id:row.sender_id);if(seen.has(pid))continue;seen.add(pid);conv.push({pid,u:peers.get(pid)||{},last:row});}
+ holder.innerHTML=conv.map(c=>{
+  const name=[c.u.first_name||'',c.u.last_name||''].join(' ').trim()||('محادثة محفوظة · '+c.pid.slice(0,8));
+  return `<div class="profile-menu-btn" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:8px;cursor:pointer;" onclick="openTargetUserDirectChat('${escapeJs(name)}','${escapeJs(c.u.identifier||'')}','${escapeJs(c.pid)}')"><img src="${escapeHtml(c.u.avatar_url||'icon.png')}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"><div style="flex:1;min-width:0;"><div style="font-weight:bold;color:#fff;font-size:12px;">${escapeHtml(name)} ${c.u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:10px;"></i>':''}</div><div style="font-size:10px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.last.message||'')}</div></div><span style="font-size:9px;color:#777;">${new Date(c.last.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span></div>`;
+ }).join('');
+}
 
         class VoiceCall {
             constructor({ signaling, localAudioEl, remoteAudioEl, localVideoEl = null, remoteVideoEl = null, mediaType = 'audio', onState }) {
