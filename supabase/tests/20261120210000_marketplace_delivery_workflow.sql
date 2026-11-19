@@ -1,9 +1,9 @@
 -- Marketplace delivery: participant roles, private address, legal state transitions and receipt confirmation.
--- Disposable test identities explicitly satisfy the same versioned consent gate as real signups.
+-- Disposable test identities explicitly satisfy the versioned consent gate and use unique usernames.
 INSERT INTO auth.users(id,raw_user_meta_data) VALUES
- ('93000000-0000-0000-0000-000000000001','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
- ('93000000-0000-0000-0000-000000000002','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
- ('93000000-0000-0000-0000-000000000003','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb)
+ ('93000000-0000-0000-0000-000000000001','{"username":"delivery_buyer","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
+ ('93000000-0000-0000-0000-000000000002','{"username":"delivery_seller","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
+ ('93000000-0000-0000-0000-000000000003','{"username":"delivery_intruder","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.market_transactions(
