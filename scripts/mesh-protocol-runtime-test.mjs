@@ -65,10 +65,12 @@ assert.equal(JSON.stringify(storedFileChunks).includes(firstChunkB64),false,'sen
 assert.equal(fileDelivered.length,1,'recipient should reassemble file chunks');
 assert.equal(fileDelivered[0].size,bytes.length,'reassembled file size should match original');
 const packet=rawPackets[0].value.packet;
-const firstRelay=await relay.mesh.receiveRawPacket(Buffer.from(JSON.stringify({...packet,hops:1})).toString('base64url'));
-const duplicateRelay=await relay.mesh.receiveRawPacket(Buffer.from(JSON.stringify({...packet,hops:1})).toString('base64url'));
-assert.equal(firstRelay.relayed,true,'non-recipient should queue opaque packet for store-and-forward');
-assert.equal(duplicateRelay.duplicate,true,'relay should discard replays');
+const relayPacketStates=[];
+relay.window.addEventListener('alwaha:mesh-packet-state',event=>relayPacketStates.push(event.detail));
+await relay.mesh.receiveRawPacket(Buffer.from(JSON.stringify({...packet,hops:1})).toString('base64url'));
+await relay.mesh.receiveRawPacket(Buffer.from(JSON.stringify({...packet,hops:1})).toString('base64url'));
+assert.equal(relayPacketStates[0]?.relayed,true,'non-recipient should queue opaque packet for store-and-forward');
+assert.equal(relayPacketStates[1]?.duplicate,true,'relay should discard replays');
 assert.ok([...relay.records.keys()].some(key=>key.startsWith('mesh:relay:')),'relay queue must persist ciphertext for later peer connection');
 
 const nextHop=createHarness('next-hop');
