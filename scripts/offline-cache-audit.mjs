@@ -38,7 +38,7 @@ const themeMarker='href="./alwaha-theme-system.css?v=',themePosition=html.indexO
 const themeHref=themePosition>=0?html.slice(themePosition+themeMarker.length).split('"')[0]:'';
 check('all first-party modules use versioned URLs and have offline fallback entries',assets.length>0&&assets.every(asset=>hasVersionedAsset(asset)&&build.includes(asset))&&!!themeHref&&sw.includes("'./alwaha-theme-system.css?v="+themeHref+"'")&&sw.includes("'./alwaha-theme-system.css'"));
 check('Service Worker precache bypasses stale HTTP cache responses',sw.includes("cache.addAll(PRECACHE_ASSETS.map(asset => new Request(new URL(asset, self.registration.scope), { cache: 'reload' })))"));
-const profileEditorRevision=(polish.match(/alwaha-profile-editor\\.js\\?v=([^'"]+)/)||[])[1]||'';
+const profileEditorRevision=(polish.match(/alwaha-profile-editor\.js\?v=([^'"]+)/)||[])[1]||'';
 check('dynamic profile editor module is loaded locally, included in the web build and precached with versioned/fallback URLs',polish.includes('alwaha-profile-editor.js')&&build.includes('alwaha-profile-editor.js')&&!!profileEditorRevision&&sw.includes("'./alwaha-profile-editor.js'")&&sw.includes("'./alwaha-profile-editor.js?v="+profileEditorRevision+"'"));
 check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+serviceWorkerVersion+"', { scope: './', updateViaCache: 'none' });"));
 check('encrypted backup vault remains separate from public display cache',vault.includes("DB_NAME='alwaha-pro-local-vault-v1'")&&vault.includes('AES-GCM')&&!vault.includes('ALWAHA_PUBLIC_CACHE_DB'));
