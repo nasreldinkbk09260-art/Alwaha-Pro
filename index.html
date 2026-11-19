@@ -4927,10 +4927,33 @@ async function renderConversationsList() {
             }catch(error){if(!session.closed)say(error?.message||'تعذر تهيئة الشبكة المحلية.');}
         }
 
+        async function closeAlwahaCloudRealtimeForLocalMode(){
+            if(!supabaseClient)return;
+            const channels=[['notificationChannel',notificationChannel],['directMessageChannel',directMessageChannel],['marketInboxChannel',marketInboxChannel],['marketConversationChannel',marketConversationChannel]];
+            for(const [name,handle] of channels){
+                if(!handle)continue;
+                try{await supabaseClient.removeChannel(handle);}catch(error){console.warn('[Alwaha Mesh] realtime channel cleanup failed:',name,error);}
+                if(name==='notificationChannel')notificationChannel=null;
+                if(name==='directMessageChannel')directMessageChannel=null;
+                if(name==='marketInboxChannel')marketInboxChannel=null;
+                if(name==='marketConversationChannel')marketConversationChannel=null;
+            }
+        }
         async function toggleAlwahaLocalChatMode(){
             const mesh=window.AlwahaLocalMesh;if(!mesh)return triggerToastNotification('بروتوكول الشبكة الحرة غير موجود في هذه النسخة.','error');
+            if(activeCallManager?.call)return triggerToastNotification('أنه المكالمة الحالية قبل تغيير مسار الشبكة.','info');
             const enabled=!mesh.isEnabled();await mesh.setMode(enabled);
-            const buttonText=enabled?'تم تفعيل وضع المحادثة المحلية. لن نرسل رسائل هذا المسار إلى Supabase.':'تم إيقاف وضع المحادثة المحلية.';
+            if(enabled)await closeAlwahaCloudRealtimeForLocalMode();
+            else{
+                try{
+                    await subscribeToNotifications();
+                    await subscribeToDirectMessages();
+                    await subscribeToMarketInbox();
+                    if(currentMarketConversationId)await subscribeToMarketConversation();
+                    await initializeRealtimeCallInbox();
+                }catch(error){console.warn('[Alwaha Mesh] realtime restore after local mode:',error);}
+            }
+            const buttonText=enabled?'تم تفعيل الشبكة الحرة. طلبات REST ورفع الملفات وRealtime متوقفة في هذا الوضع؛ القوائم غير المحفوظة محليًا ستبقى غير متاحة.':'تم إيقاف الوضع المحلي واستعادة الاتصال السحابي.';
             triggerToastNotification(buttonText,'info');
             document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{button.setAttribute('aria-pressed',String(enabled));button.style.color=enabled?'#a8ffd7':'';});
             if(enabled)void openAlwahaLocalDiscovery();
