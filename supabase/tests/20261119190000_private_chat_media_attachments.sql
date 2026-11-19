@@ -50,6 +50,18 @@ INSERT INTO storage.objects(bucket_id,name,owner) VALUES
  ('chat-attachments','41000000-0000-4000-8000-000000000001/direct/41000000-0000-4000-8000-000000000002/direct-image.jpg','41000000-0000-4000-8000-000000000001'),
  ('chat-attachments','41000000-0000-4000-8000-000000000001/market/'||current_setting('alwaha.test.conversation_id')||'/market-audio.webm','41000000-0000-4000-8000-000000000001');
 
+DO $upload_scope$
+DECLARE denied boolean := false;
+BEGIN
+  BEGIN
+    INSERT INTO storage.objects(bucket_id,name,owner)
+    VALUES ('chat-attachments','41000000-0000-4000-8000-000000000002/direct/41000000-0000-4000-8000-000000000001/forged.jpg','41000000-0000-4000-8000-000000000001');
+  EXCEPTION WHEN insufficient_privilege THEN denied := true;
+  END;
+  IF NOT denied THEN RAISE EXCEPTION 'A user uploaded into another account folder'; END IF;
+END
+$upload_scope$;
+
 INSERT INTO public.messages(sender_id,receiver_id,message,attachment_path,attachment_kind,attachment_mime,attachment_name,attachment_size)
 VALUES ('41000000-0000-4000-8000-000000000001','41000000-0000-4000-8000-000000000002','',
  '41000000-0000-4000-8000-000000000001/direct/41000000-0000-4000-8000-000000000002/direct-image.jpg',
@@ -59,6 +71,20 @@ INSERT INTO public.market_messages(conversation_id,sender_id,message,attachment_
 VALUES (current_setting('alwaha.test.conversation_id')::uuid,'41000000-0000-4000-8000-000000000001','',
  '41000000-0000-4000-8000-000000000001/market/'||current_setting('alwaha.test.conversation_id')||'/market-audio.webm',
  'audio','audio/webm','voice-note.webm',2048);
+
+DO $metadata_scope$
+DECLARE denied boolean := false;
+BEGIN
+  BEGIN
+    INSERT INTO public.messages(sender_id,receiver_id,message,attachment_path,attachment_kind,attachment_mime,attachment_name,attachment_size)
+    VALUES ('41000000-0000-4000-8000-000000000001','41000000-0000-4000-8000-000000000002','',
+      '41000000-0000-4000-8000-000000000002/direct/41000000-0000-4000-8000-000000000001/forged.jpg',
+      'image','image/jpeg','forged.jpg',512);
+  EXCEPTION WHEN check_violation THEN denied := true;
+  END;
+  IF NOT denied THEN RAISE EXCEPTION 'Message metadata accepted an attachment path owned by another sender'; END IF;
+END
+$metadata_scope$;
 
 DO $sender$
 BEGIN
