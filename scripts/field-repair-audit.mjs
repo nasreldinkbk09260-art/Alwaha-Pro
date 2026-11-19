@@ -26,7 +26,7 @@ else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && /fr\.status\s*=\s*'accepted'/.test(migration) && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
 if (
-  /const CACHE_NAME = 'alwaha-pro-v3\\.0\\.4-[^']+'/.test(sw) &&
+  /const CACHE_NAME = 'alwaha-pro-v3\.0\.4-[^']+'/.test(sw) &&
   sw.includes("url.pathname.startsWith('/storage/v1/object/public/')") &&
   sw.includes("response.ok && /^image\\//i.test(type)") &&
   sw.includes('size<=2*1024*1024') &&
