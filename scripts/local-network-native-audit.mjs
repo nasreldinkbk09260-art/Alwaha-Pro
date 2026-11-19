@@ -16,7 +16,7 @@ const checks=[
  ['users can create a Wi-Fi Direct group and connect to a selected peer',plugin.includes('createWifiDirectGroup')&&plugin.includes('connectWifiDirectPeer')&&plugin.includes('wifiP2pManager.createGroup')&&plugin.includes('wifiP2pManager.connect')],
  ['native transport uses bounded length-prefixed TCP frames',plugin.includes('LOCAL_PACKET_PORT = 43817')&&plugin.includes('MAX_LOCAL_PACKET_BYTES = 262144')&&plugin.includes('output.writeInt(packet.length)')&&plugin.includes('input.readInt()')&&plugin.includes('input.readFully(packet)')],
  ['native transport has explicit start/send/stop methods and connection state',plugin.includes('startPacketTransport')&&plugin.includes('sendLocalPacket')&&plugin.includes('stopPacketTransport')&&plugin.includes('isTransportConnected()')],
- ['native transport closes sockets on disconnect and plugin teardown',plugin.includes('closeTransportSocket("peer-disconnected")')&&plugin.includes('stopPacketTransportInternal("plugin-destroyed")')&&plugin.includes('transportExecutor.shutdownNow()')],
+ ['native transport closes sockets on disconnect and plugin teardown',plugin.includes('closeTransportSocketFor(socket, "peer-disconnected")')&&plugin.includes('stopPacketTransportInternal("plugin-destroyed")')&&plugin.includes('transportExecutor.shutdownNow()')],
  ['native frames are opaque bytes; no native path parses chat plaintext',plugin.includes('notifyListeners("localPacketReceived", payload)')&&!plugin.includes('new JSONObject(packet)')],
  ['plugin reports transport ready only while a socket exists',plugin.includes('result.put("transportReady", isTransportConnected())')&&plugin.includes('result.put("chatReady", isTransportConnected())')],
  ['mesh identities use P-256 ECDH and ECDSA with AES-GCM and HKDF',mesh.includes("name:'ECDH',namedCurve:'P-256'")&&mesh.includes("name:'ECDSA',namedCurve:'P-256'")&&mesh.includes("name:'AES-GCM'")&&mesh.includes("name:'HKDF'")],
@@ -32,6 +32,10 @@ const checks=[
  ['mesh script is included in web build and service worker precache',build.includes("'alwaha-local-mesh.js'")&&sw.includes("'./alwaha-local-mesh.js'")&&html.includes('alwaha-local-mesh.js?v=')],
  ['Android build generates and registers the native Wi-Fi Direct plugin',workflow.includes('AlwahaLocalNetworkPlugin.java')&&workflow.includes('registerPlugin(AlwahaLocalNetworkPlugin.class)')],
  ['standard CI runs native audit plus cryptographic runtime tests',pkg.scripts['audit:local-network-native']==='node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs']
+ ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
+ ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
+ ['mesh relay forwarding is restricted to an explicitly paired neighbor and bounded queue',mesh.includes("reason:'untrusted-neighbor'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
+
 ];
 
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
