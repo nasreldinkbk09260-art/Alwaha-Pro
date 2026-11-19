@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-dev';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
