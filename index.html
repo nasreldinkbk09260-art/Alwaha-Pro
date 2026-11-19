@@ -2244,13 +2244,16 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     return;
                 }
                 if(payload.type==='file-ready'){
-                    const row={id,sender_id:senderId,receiver_id:me.id,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
-                    const direct=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,senderId)||[];if(!direct.some(item=>item.id===id)){direct.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,senderId,direct);}
-                    const marketId=String(currentMarketConversationId||'');
-                    if(marketId&&String(currentMarketPeerId||'')===senderId){
-                        const marketRow={id,conversation_id:marketId,sender_id:senderId,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
-                        const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,marketId)||[];rows.push(marketRow);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,marketId,rows);await loadMarketMessages();
-                    }else if(String(currentChatUserId||'')===senderId)await loadDirectMessages();
+                    const context=payload.context||{};
+                    if(context.type==='market'&&context.conversationId){
+                        const marketId=String(context.conversationId),marketRow={id,conversation_id:marketId,sender_id:senderId,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
+                        const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,marketId)||[];if(!rows.some(item=>item.id===id)){rows.push(marketRow);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,marketId,rows);}
+                        if(String(currentMarketConversationId||'')===marketId)await loadMarketMessages();
+                    }else{
+                        const row={id,sender_id:senderId,receiver_id:me.id,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
+                        const direct=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,senderId)||[];if(!direct.some(item=>item.id===id)){direct.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,senderId,direct);}
+                        if(String(currentChatUserId||'')===senderId)await loadDirectMessages();
+                    }
                 }
             })().catch(error=>console.warn('[Alwaha Mesh] incoming local message could not be stored:',error));
         });
@@ -2262,7 +2265,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 try{
                     if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
                     const kind=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
-                    const result=await window.AlwahaLocalMesh.sendFileToAccount(peerId,file,kind);
+                    const result=await window.AlwahaLocalMesh.sendFileToAccount(peerId,file,kind,{type:'direct'});
                     const row={id:'mesh-'+result.fileId,sender_id:me.id,receiver_id:peerId,message:meshFileMessageRef(result),created_at:new Date().toISOString(),read_at:null,local_mesh:true};
                     const rows=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,peerId)||[];rows.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,peerId,rows);
                     await loadDirectMessages();triggerToastNotification('تم تشفير الملف وتقسيمه إلى '+result.chunks+' حزمة للشبكة المحلية.','success');return;
@@ -2289,7 +2292,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     if(!currentMarketPeerId)return triggerToastNotification('لم يتم تحديد الطرف الآخر لمحادثة السوق.','error');
                     if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
                     const kind=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
-                    const result=await window.AlwahaLocalMesh.sendFileToAccount(currentMarketPeerId,file,kind);
+                    const result=await window.AlwahaLocalMesh.sendFileToAccount(currentMarketPeerId,file,kind,{type:'market',conversationId});
                     const row={id:'mesh-'+result.fileId,conversation_id:conversationId,sender_id:me.id,message:meshFileMessageRef(result),created_at:new Date().toISOString(),read_at:null,local_mesh:true};
                     const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||[];rows.push(row);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,conversationId,rows);
                     await loadMarketMessages();triggerToastNotification('تم تقسيم الملف إلى '+result.chunks+' حزمة مشفّرة للشبكة المحلية.','success');return;
