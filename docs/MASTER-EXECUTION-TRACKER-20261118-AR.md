@@ -274,3 +274,39 @@
 - Artifact الأحدث: `Alwaha-Pro-3.0.4-build-656`, ID `14506363666`, الحجم `54,553,315 bytes`, SHA-256 digest `7aaceeda30de8776990257571ffff5ac83fe0664961c5522d4048022c2db45eb`, انتهاء الصلاحية `2026-12-19T07:14:10Z`. [Artifact Build 656](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44477707242/artifacts/14506363666).
 - بيانات البناء: version `3.0.4`, version_code `656`, application_id `pro.alwaha.app`, target SDK `36`, certificate SHA-256 `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`. الكود التنفيذي داخل artifact مطابق لكود Build 655؛ الاختلاف توثيقي فقط.
 - عند إنشاء هذا التحديث كان HEAD هو `c6ae4d1cfad3a604710916f5223fec363975a306`. سيضيف هذا التحديث التوثيقي commit جديدًا فقط؛ لا توجد تغييرات تنفيذية جديدة بعد Build 655.
+
+
+## دفعة اختبار دورة حياة واجهة الألعاب — 19 نوفمبر 2026
+
+### نقطة البداية ومراجعة التشغيل السابق
+- بدأ هذا التشغيل بقراءة HEAD الفعلي للفرع `alwaha-pro-recovery-20261118`: `e912aed93ec88a6859e267cdc2e09e559fdae1fb`، ثم قراءة هذا السجل من الفرع نفسه (blob SHA: `ef360ab4921504da4e71a2f2fd20ee6758198fce`).
+- **CI #713** على commit `915597c003ee1ddf5bce61fcd87322d04d43c22d` فشل في تدقيق الشبكة المحلية فقط: لم يكن workflow يتحقق من وجود قالب `AlwahaLocalSessionCrypto.java`. أضيف فحص وجود الملف في commit `e912aed`، ثم **CI #714 نجح** على `e912aed`.
+- **CI #714:** [Run 714 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44589368281). نجحت PostgreSQL المؤقتة وبناء/توقيع Android. نشر APK العام وGitHub Pages كانا `skipped`. Artifact السابق: [Build 714](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44589368281/artifacts/14562193380)، ID `14562193380`، حجمه `54,603,261 bytes`، digest `abf374fc5a5f53bf7c8199e2a7f740f7ed07a38982b4a8747d36eca6e6b77b3d`.
+
+### دفعة P1 للألعاب: اختبار تشغيل وظائف إنشاء/انضمام/استعادة الغرفة
+- أضيف `scripts/game-ui-runtime-test.mjs`، وهو اختبار Node VM لوظائف دورة الغرفة المستخرجة من `games.js` مع استجابات خادم اختبارية؛ لا يغيّر كود اللعبة أو قاعدة البيانات.
+- يغطي إنشاء غرف الشطرنج وليدو وحرب الورق والتحقق من أن الخادم أعاد اللعبة والمالك الصحيحين، والانضمام اليدوي بكود منقح إلى الحروف الكبيرة عبر `rpc/join_game_room` مع تثبيت نوع اللعبة، وقراءة/رفض QR حسب إصدار البروتوكول وصيغة الكود، واستعادة الغرفة بإعادة جلبها من الخادم والتحقق من عضوية الحساب، ورفض غرفة تخص حسابًا آخر أو غرفة لم تعد موجودة، وتحرير مسار الإجراء بعد النجاح/الفشل.
+- تم ربط الاختبار بـ `npm run audit:games`، وأضيف تحقق إلى `game-actions-audit.mjs` لمنع فصل الاختبار عن بوابة الألعاب.
+- **Commit المصدر:** `c4c56efc075e011051cf793fda1448c2c8f2d635` — `Add multiplayer game UI lifecycle runtime acceptance tests`.
+
+### نتيجة CI #715
+- **الفرع/Commit المختبر:** `alwaha-pro-recovery-20261118` / `c4c56efc075e011051cf793fda1448c2c8f2d635`.
+- **GitHub Actions:** [Run 715 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44590765583). نجحت وظيفة PostgreSQL المؤقتة ووظيفة بناء/توقيع Android. وظيفتا نشر APK العام وGitHub Pages كانتا `skipped`.
+- أدلة التشغيل: `GAME_UI_RUNTIME_PASS` نجح مع **43 assertion**؛ `SERVER_AUTHORITATIVE_GAMES_AUDIT=PASS)، و`QR_RUNTIME_PASS`، و`LOCAL_SESSION_CRYPTO=PASS (23 assertions)`، و`PROFILE_UI_ACCEPTANCE=PASS (42/42)`.
+- نجحت خطوات CI المسماة: release preflight، public-content/RLS audit، performance/storage، chat/feed، Android compatibility، runtime resilience، local-network native audit، native-call UI/signaling، adaptive-video quality، field repair، themes، navigation dock، home acceptance، smart assistant، UI handlers، fullscreen/modal isolation، marketplace permissions and buy/sell، reconciliation، user-safety API typing، game Edge Function typing/runtime rules/audit، retention/kids-room/backup، support tickets/admin queue، moderation/report/block، account deletion/privacy، وadmin security.
+- **Build 715:** version `3.0.4`، version code `715`، application ID `pro.alwaha.app`، target SDK `36`. تم بناء APK وAAB والتحقق من توقيعهما؛ تحقق APK v2 نجح، والتحقق من توقيع AAB عبر `jarsigner` نجح، كما اجتاز `sha256sum --check` ملفات الحزمة.
+- **بصمة شهادة توقيع APK SHA-256:** `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`.
+- Artifact: `Alwaha-Pro-3.0.4-build-715`، ID `14563057223`، الحجم `54,605,989 bytes`، digest `db84ca71347016582d6f732ad1fc0c5af389a9e634c1151f4544f3366074f3b4`، وينتهي في `2026-12-19T18:46:03Z`. [Artifact Build 715 APK/AAB/Source](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44590765583/artifacts/14563057223).
+- محرر الملف الشخصي لم يُعَد بناؤه؛ تأكد من وجود تحميله محليًا وإدخاله في build/cache، واجتاز اختبار القبول الموجود `42/42`.
+
+### حدود ما أثبته هذا التشغيل
+- اختبار 43 assertion يختبر وظائف دورة الغرفة واستجابات الخادم الوهمية داخل VM، وليس ضغط المستخدم على واجهة هاتف حقيقي. واختبار QR يثبت توليد/فك payload محليًا؛ لا يثبت نجاح كاميرا هاتف فعلي.
+- **اختبار الألعاب بين حسابين وهاتفين ما زال مطلوبًا**: إنشاء الغرفة من الهاتف الأول، الانضمام بالكود ثم QR من الثاني، اللعب المتزامن في الألعاب الثلاث، قطع الاتصال وإعادته، ثم استعادة الغرفة على الجهازين.
+- مكالمة الفيديو العادية وغرفة الأطفال لم تُختبرا على هاتفين حقيقيين بعد؛ يلزم اتصال وارد وصادر والتحقق من remote video track قبل الدخول، ثم دخول/خروج ولي الأمر.
+- الشبكة المحلية ما زالت اكتشاف Wi‑Fi Direct/Bluetooth مع أساس تشفير جلسة فقط؛ لا يوجد اتصال Wi‑Fi P2P أو socket أو نقل رسائل/ملفات/مكالمات. تبقى جميع readiness flags false ولا تعرض الواجهة نقلًا محليًا عاملًا.
+- لم تُكتب بيانات أو SQL أو migrations في Supabase الإنتاجية، ولم تُنشر Edge Functions، ولم يتغير Auth/RLS، ولم يُعدّل `main`، ولم يُنشر APK أو الموقع رسميًا.
+
+### الخطوة التالية
+1. بوابة P1 التالية هي تثبيت Artifact Build 715 على هاتفين بحسابين منفصلين وإتمام اختبار الألعاب الميداني أعلاه؛ لا يثبت CI ذلك.
+2. بعد توثيق الألعاب، نفّذ اختبار الفيديو العادي وغرفة الأطفال على الجهازين والتحقق من وصول بث الطرف الآخر.
+3. لا تبدأ نقل الرسائل/الملفات عبر Wi‑Fi/Bluetooth ولا ترفع readiness flags قبل إغلاق بوابتي الألعاب والفيديو والاختبارات الأمنية/الميدانية المطلوبة.
