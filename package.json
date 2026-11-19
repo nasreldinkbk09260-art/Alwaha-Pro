@@ -12,7 +12,7 @@
     "prebuild": "node scripts/vendor-assets.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
-    "audit:chat": "node scripts/chat-release-audit.mjs",
+    "audit:chat": "node scripts/chat-release-audit.mjs && node scripts/chat-media-offline-audit.mjs",
     "audit:compatibility": "node scripts/compatibility-audit.mjs",
     "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs && node scripts/call-feedback-runtime-test.mjs && node scripts/call-signaling-runtime-test.mjs",
     "audit:adaptive-video-quality": "node scripts/adaptive-video-quality-runtime-test.mjs",
