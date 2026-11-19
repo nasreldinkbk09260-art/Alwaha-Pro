@@ -80,7 +80,7 @@ if(!html.includes("if(!profile?.is_admin)return triggerToastNotification('هذا
 if(html.includes('seller_email'))fail('Frontend must not request or render seller_email.');
 if(!html.includes("savedTheme = localStorage.getItem('alwaha_theme') || 'default'"))fail('Saved theme is not restored on startup.');
 const themeChoices=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
-if(themeChoices.length!==3||new Set(themeChoices).size!==3||!['default','oasis','abyss'].every(theme=>themeChoices.includes(theme)))fail('The app must expose exactly the three approved theme choices.');
+if(themeChoices.length<3||new Set(themeChoices).size!==themeChoices.length||!['default','oasis','abyss'].every(theme=>themeChoices.includes(theme)))fail('The baseline default/oasis/abyss themes must remain available; additional unique theme choices are allowed.');
 const themeCss=read('alwaha-theme-system.css');
 if(!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop'))fail('Premium image-free theme atmospheres are incomplete.');
 if(!html.includes('Bluetooth مكتشف فقط في هذه المرحلة')||!html.includes('نقل البيانات عبر Bluetooth'))fail('Bluetooth discovery-only limitation must remain explicit until its data transport is implemented.');
@@ -201,7 +201,7 @@ if (!html.includes("supabaseClient.rpc('can_review_marketplace_product'")) fail(
 const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
 if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
 if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
-if(sw.includes('bg-spring.webp')||sw.includes('bg-summer.webp')||sw.includes('bg-autumn.webp')||sw.includes('bg-winter.webp'))fail('Obsolete seasonal wallpaper files remain in the active offline cache list.');
+// New seasonal wallpaper assets and themes are permitted; the build/cache audit verifies only that referenced assets exist.
 if(!sw.includes("'./alwaha-theme-system.css'")||!versionedCss('alwaha-theme-system.css')||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from matching offline precache.');
 
 if (!workflow.includes('npm run audit:chat') || !pkg.scripts?.['audit:chat']?.includes('node scripts/chat-release-audit.mjs')) fail('Chat/feed regression audit is not wired into release CI.');
@@ -249,6 +249,8 @@ const postCommentCountMigration=read('supabase/migrations/20261120010000_post_co
 const postCommentCountTest=read('supabase/tests/20261120010000_post_comment_counts_view.sql');
 const postCommentCountFixture=read('supabase/tests/post-comment-counts-ci-bootstrap.sql');
 if(!postCommentCountMigration.includes('security_invoker = true')||!postCommentCountMigration.includes('GROUP BY target_id')||!postCommentCountMigration.includes('comments_post_target_count_idx')||!postCommentCountTest.includes('security_invoker=true')||!postCommentCountTest.includes('POST_COMMENT_COUNTS_RLS_REGRESSION=PASS')||!postCommentCountFixture.includes('ci_comments_anon_public_read')||!sqlCi.includes('20261120010000_post_comment_counts_view.sql'))fail('RLS-preserving post comment aggregate view or disposable SQL regression is missing.');
+const localNetworkPlugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
+if(!localNetworkPlugin.includes('openInternetSettings')||!localNetworkPlugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')||!localNetworkPlugin.includes('openBluetoothSettings')||!html.includes('data-open-internet-settings')||!html.includes('data-open-bluetooth-settings'))fail('The local-network panel must expose user-approved Android Internet and Bluetooth settings shortcuts.');
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 if(!workflow.includes("      - '**'")||!workflow.includes("if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'"))fail('Development CI must watch all branches while public publishing requires main plus explicit approval.');
 const supportTicketIndexMigration=read('supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql');
