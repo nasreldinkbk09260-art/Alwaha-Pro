@@ -45,11 +45,26 @@ BEGIN
   IF v_count IS DISTINCT FROM 2 THEN
     RAISE EXCEPTION 'anon count for public-post should be 2, got %', v_count;
   END IF;
-  IF EXISTS (SELECT 1 FROM public.post_comment_counts WHERE post_id='hidden-post') THEN
-    RAISE EXCEPTION 'security-invoker view exposed a row hidden by comments RLS';
+  SELECT comments_count INTO v_count
+  FROM public.post_comment_counts WHERE post_id='hidden-post';
+  IF v_count IS DISTINCT FROM 1 THEN
+    RAISE EXCEPTION 'public anonymous count should respect the public comments policy, got %', v_count;
   END IF;
 END
 $anon$;
+RESET ROLE;
+
+SET ROLE ci_restricted_reader;
+DO $restricted$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.post_comment_counts WHERE post_id='hidden-post') THEN
+    RAISE EXCEPTION 'security-invoker view ignored the restricted reader comments RLS policy';
+  END IF;
+  IF (SELECT comments_count FROM public.post_comment_counts WHERE post_id='public-post') IS DISTINCT FROM 2 THEN
+    RAISE EXCEPTION 'restricted reader did not receive the public post aggregate';
+  END IF;
+END
+$restricted$;
 RESET ROLE;
 
 SET ROLE authenticated;
