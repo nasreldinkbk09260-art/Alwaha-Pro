@@ -828,6 +828,7 @@ img,video,canvas{max-width:100%}
                 <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn video" onclick="openVideoCallModeChooser()" aria-label="اختيار نوع مكالمة الفيديو" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn local" onclick="openAlwahaLocalDiscovery()" aria-label="البحث عن أجهزة قريبة عبر Wi-Fi وBluetooth" title="الأجهزة القريبة" style="color:#8bf4ff;"><i class="fa-solid fa-wifi"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn local" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" aria-label="تبديل الشبكة الحرة المحلية" title="الشبكة الحرة"><i class="fa-solid fa-route"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
         </div>
@@ -838,7 +839,7 @@ img,video,canvas{max-width:100%}
         </div>
         <div id="chat-messages-container" style="height:calc(100dvh - 180px);overflow-y:auto;padding:10px 4px 76px;display:flex;flex-direction:column;overscroll-behavior:contain;"></div>
         <div id="direct-reply-preview" style="display:none;padding:7px 10px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-        <div class="alwaha-chat-composer" style="flex-wrap:wrap;gap:6px;">
+        <div class="alwaha-chat-composer" style="flex-wrap:wrap;gap:6px;"><button type="button" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" title="الشبكة الحرة المحلية" style="border:1px solid #8bf4ff55;background:#102e3a;color:#8bf4ff;border-radius:10px;padding:7px 9px;font:10px Cairo,sans-serif;">شبكة حرة</button>
             <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off" style="flex:1;min-width:130px;">
             <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة"><i class="fa-solid fa-paper-plane"></i></button>
             <button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('direct-chat-media-input').click()" aria-label="إرسال صورة أو فيديو" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button>
@@ -3810,7 +3811,7 @@ async function subscribeToMarketConversation() {
                     <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
                     <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-                    <div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:120px;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button><button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('market-chat-media-input').click()" aria-label="إرسال صورة أو فيديو للبائع" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button><button type="button" class="alwaha-chat-icon-btn" id="market-chat-voice-button" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button><input type="file" id="market-chat-media-input" accept="image/*,video/*" hidden onchange="handleMarketChatFileInput(this)"></div>
+                    <div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:120px;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" title="الشبكة الحرة المحلية" style="border:1px solid #8bf4ff55;background:#102e3a;color:#8bf4ff;border-radius:10px;padding:7px 9px;font:10px Cairo,sans-serif;">شبكة حرة</button><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button><button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('market-chat-media-input').click()" aria-label="إرسال صورة أو فيديو للبائع" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button><button type="button" class="alwaha-chat-icon-btn" id="market-chat-voice-button" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button><input type="file" id="market-chat-media-input" accept="image/*,video/*" hidden onchange="handleMarketChatFileInput(this)"></div>
                     <div style="font-size:9px;color:#8294aa;padding:5px 2px 0;">رسائل السوق مستقلة عن طلبات الصداقة ودردشة الأصدقاء.</div></section>`;
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
             }
@@ -4635,101 +4636,138 @@ async function renderConversationsList() {
         }
 
         let alwahaLocalDiscoverySession = null;
-        async function openAlwahaLocalDiscovery() {
-            const user=await requireAuthenticatedUser('سجّل الدخول أولًا للبحث عن الأجهزة القريبة.');
-            if(!user)return;
-            const plugin=window.alwahaLocalNetwork;
-            if(!plugin||typeof plugin.startDiscovery!=='function'||typeof plugin.addListener!=='function') {
-                return triggerToastNotification('البحث عن الأجهزة القريبة يحتاج تطبيق Android محدّثًا يدعم المكوّن الأصلي.','info');
-            }
+        async async function openAlwahaLocalDiscovery() {
+            const user=await requireAuthenticatedUser('سجّل الدخول أولًا لتفعيل هوية الجهاز المحلي.');if(!user)return;
+            const plugin=window.alwahaLocalNetwork,mesh=window.AlwahaLocalMesh;
+            if(!plugin?.startDiscovery||!plugin?.addListener||!mesh)return triggerToastNotification('مكوّن الشبكة الحرة غير موجود في نسخة Android هذه.','error');
             if(document.getElementById('alwaha-local-discovery-modal'))return;
-            const modal=document.createElement('div');
-            modal.id='alwaha-local-discovery-modal';
-            modal.className='alwaha-fullscreen-layer is-open';
-            modal.setAttribute('role','dialog');
-            modal.setAttribute('aria-modal','true');
-            modal.setAttribute('aria-labelledby','alwaha-local-discovery-title');
+            const modal=document.createElement('div');modal.id='alwaha-local-discovery-modal';modal.className='alwaha-fullscreen-layer is-open';
+            modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','alwaha-local-discovery-title');
             modal.style.cssText='position:fixed;inset:0;z-index:2147483400;display:flex;align-items:center;justify-content:center;overflow:auto;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));background:rgba(2,8,18,.97);';
-            modal.innerHTML='<section style="width:min(100%,480px);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px;border:1px solid #8bf4ff55;border-radius:18px;background:#101c2c;color:#eaf7ff;">'
-              +'<header style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><h2 id="alwaha-local-discovery-title" style="margin:0;font:900 16px Cairo,sans-serif;color:#8bf4ff;">الأجهزة القريبة</h2><button type="button" data-close-local aria-label="إغلاق" style="border:0;border-radius:9px;background:#ffffff15;color:#fff;padding:7px 12px;">إغلاق</button></header>'
-              +'<p style="font:11px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:10px 0;">يبحث التطبيق عن أجهزة Wi-Fi Direct وBluetooth القريبة بعد إذنك. هذه مرحلة اكتشاف فقط؛ الأجهزة غير موثّقة، ولا يتم الاتصال بها أو تبادل رسائل أو ملفات أو مكالمات محلية.</p>'
-              +'<div id="alwaha-local-status" role="status" aria-live="polite" style="padding:9px 10px;border:1px solid #8bf4ff22;border-radius:10px;background:#8bf4ff0b;color:#c8e9f5;font:11px/1.8 Cairo,sans-serif;">جاهز لبدء البحث بعد موافقتك.</div>'
-              +'<div style="display:flex;gap:8px;margin:12px 0;"><button type="button" data-start-local style="flex:1;min-height:42px;border:0;border-radius:10px;background:#8bf4ff;color:#09202b;font:800 11px Cairo,sans-serif;">بدء / إعادة البحث</button><button type="button" data-stop-local style="min-height:42px;border:1px solid #ffffff28;border-radius:10px;background:#253449;color:#fff;padding:8px 12px;">إيقاف</button></div>'
+            modal.innerHTML='<section style="width:min(100%,500px);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px;border:1px solid #8bf4ff55;border-radius:18px;background:#101c2c;color:#eaf7ff;">'
+              +'<header style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><h2 id="alwaha-local-discovery-title" style="margin:0;font:900 16px Cairo,sans-serif;color:#8bf4ff;">الشبكة الحرة المحلية</h2><button type="button" data-close-local aria-label="إغلاق" style="border:0;border-radius:9px;background:#ffffff15;color:#fff;padding:7px 12px;">إغلاق</button></header>'
+              +'<p style="font:11px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:10px 0;">اتصال مباشر بين أجهزة Android عبر Wi‑Fi Direct، مع حزم مشفّرة من طرف إلى طرف وتخزين مرحّل عند انتقال الجهاز بين الجيران. البلوتوث يكتشف الأجهزة الآن؛ نقل البيانات عبر Bluetooth سيضاف كمسار مستقل. لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا؛ وضعه المحلي يمنع إرسال رسائل هذه المحادثة إلى السحابة فقط.</p>'
+              +'<div id="alwaha-local-status" role="status" aria-live="polite" style="padding:9px 10px;border:1px solid #8bf4ff22;border-radius:10px;background:#8bf4ff0b;color:#c8e9f5;font:11px/1.8 Cairo,sans-serif;">جارٍ تجهيز هوية الجهاز…</div>'
+              +'<div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;"><button type="button" data-start-local style="flex:1;min-height:42px;border:0;border-radius:10px;background:#8bf4ff;color:#09202b;font:800 11px Cairo,sans-serif;">بحث عن الأجهزة</button><button type="button" data-create-group style="flex:1;min-height:42px;border:0;border-radius:10px;background:#17442f;color:#a8ffd7;font:800 11px Cairo,sans-serif;">إنشاء شبكة Wi‑Fi Direct</button><button type="button" data-stop-local style="min-height:42px;border:1px solid #ffffff28;border-radius:10px;background:#253449;color:#fff;padding:8px 12px;">إيقاف البحث</button></div>'
+              +'<div style="padding:10px;border:1px solid #8bf4ff30;border-radius:12px;margin-bottom:10px;"><strong style="font-size:11px;color:#8bf4ff;">هوية هذا الجهاز</strong><p style="font-size:10px;color:#c5d3e3;line-height:1.7;">شارك بيانات الهوية العامة فقط مع الطرف الآخر، ثم طابق رمز التحقق من الجهازين قبل الوثوق به. المفتاح الخاص لا يغادر الهاتف.</p><div id="alwaha-mesh-own-code" style="font:900 18px monospace;color:#a8ffd7;letter-spacing:3px;">••••••</div><textarea id="alwaha-mesh-own-bundle" readonly rows="3" style="width:100%;margin-top:7px;background:#07111d;color:#a9d9ed;border:1px solid #ffffff20;border-radius:8px;padding:7px;font:9px monospace;direction:ltr;"></textarea><button type="button" data-copy-identity style="margin-top:7px;width:100%;padding:8px;border:0;border-radius:8px;background:#263c54;color:#fff;font:10px Cairo,sans-serif;">نسخ هوية الجهاز العامة</button></div>'
+              +'<div style="padding:10px;border:1px solid #8bf4ff30;border-radius:12px;margin-bottom:10px;"><strong style="font-size:11px;color:#8bf4ff;">توثيق جهاز آخر</strong><textarea id="alwaha-mesh-peer-bundle" rows="3" placeholder="الصق هوية الجهاز الآخر هنا" style="width:100%;margin-top:7px;background:#07111d;color:#fff;border:1px solid #ffffff20;border-radius:8px;padding:7px;font:9px monospace;direction:ltr;"></textarea><button type="button" data-pair-peer style="margin-top:7px;width:100%;padding:8px;border:0;border-radius:8px;background:#17442f;color:#a8ffd7;font:800 10px Cairo,sans-serif;">التحقق من الرمز وتوثيق الجهاز</button></div>'
               +'<div id="alwaha-local-peers" aria-live="polite" style="display:grid;gap:7px;"><div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div></div>'
-              +'<p style="margin:12px 0 0;color:#ffd88b;font:10px/1.8 Cairo,sans-serif;">الاقتران المشفّر ونقل البيانات المحلية غير متاحين بعد؛ لا تقبل جهازًا مجهولًا.</p></section>';
-            const session={handles:[],peers:new Map(),closed:false,starting:false};
+              +'<button type="button" data-flush-relay style="margin-top:10px;width:100%;min-height:40px;border:1px solid #8bf4ff44;border-radius:10px;background:#123047;color:#8bf4ff;font:800 10px Cairo,sans-serif;">تمرير الحزم المشفّرة المخزنة إلى الجار المتصل</button>'
+              +'<p style="margin:12px 0 0;color:#ffd88b;font:10px/1.8 Cairo,sans-serif;">هذه مرحلة Wi‑Fi Direct لنقل الحزم النصية والملفات على شكل أجزاء. لا تزال المكالمات الحية متعددة القفزات وBluetooth data transport بحاجة إلى تنفيذ واختبار منفصل؛ لا يتم عرضهما كجاهزين.</p></section>';
+            const session={handles:[],peers:new Map(),closed:false,starting:false,transportStarting:false};
             alwahaLocalDiscoverySession=session;
-            const status=modal.querySelector('#alwaha-local-status');
-            const peers=modal.querySelector('#alwaha-local-peers');
-            const start=modal.querySelector('[data-start-local]');
-            const stop=modal.querySelector('[data-stop-local]');
-            const say=(value)=>{if(status?.isConnected)status.textContent=String(value||'');};
+            const status=modal.querySelector('#alwaha-local-status'),peerHost=modal.querySelector('#alwaha-local-peers'),startBtn=modal.querySelector('[data-start-local]'),stopBtn=modal.querySelector('[data-stop-local]');
+            const say=value=>{if(status?.isConnected)status.textContent=String(value||'');};
             const render=()=>{
-                if(!peers?.isConnected)return;
+                if(!peerHost?.isConnected)return;
                 const values=[...session.peers.values()];
-                if(!values.length){peers.innerHTML='<div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div>';return;}
-                peers.innerHTML=values.map(peer=>{
-                    const transport=peer.transport==='wifi-direct'?'Wi-Fi Direct':'Bluetooth';
+                if(!values.length){peerHost.innerHTML='<div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div>';return;}
+                peerHost.innerHTML=values.map(peer=>{
+                    const transport=peer.transport==='wifi-direct'?'Wi‑Fi Direct':'Bluetooth (اكتشاف)';
+                    const canConnect=peer.transport==='wifi-direct'&&peer.address;
                     return '<article style="padding:10px;border:1px solid #8bf4ff25;border-radius:10px;background:#ffffff08;">'
                       +'<strong style="color:#e8fbff;font:800 11px Cairo,sans-serif;">'+escapeHtml(peer.name||'جهاز قريب')+'</strong>'
                       +'<div style="margin-top:4px;color:#8bf4ff;font:10px Cairo,sans-serif;">'+transport+'</div>'
                       +'<div style="margin-top:4px;color:#8fa5bc;font:9px;overflow-wrap:anywhere;">'+escapeHtml(peer.address||'')+'</div>'
-                      +'<div style="margin-top:6px;color:#ffd88b;font:9px Cairo,sans-serif;">غير موثّق — لا يوجد اتصال أو نقل بيانات</div></article>';
+                      +(canConnect?'<button type="button" data-connect-address="'+escapeHtml(peer.address)+'" style="margin-top:8px;width:100%;padding:8px;border:0;border-radius:8px;background:#17442f;color:#a8ffd7;font:800 10px Cairo,sans-serif;">الاتصال بهذا الجهاز</button>':'<div style="margin-top:6px;color:#ffd88b;font:9px Cairo,sans-serif;">Bluetooth مكتشف فقط في هذه المرحلة</div>')+'</article>';
                 }).join('');
+                peerHost.querySelectorAll('[data-connect-address]').forEach(button=>button.addEventListener('click',async()=>{
+                    button.disabled=true;say('جارٍ طلب اتصال Wi‑Fi Direct…');
+                    try{const result=await plugin.connectWifiDirectPeer({address:button.dataset.connectAddress});say(result?.message||'قبل Android طلب الاتصال؛ ننتظر تكوين المجموعة.');}
+                    catch(error){say(error?.message||'تعذر الاتصال بالجهاز.');}
+                    finally{button.disabled=false;}
+                }));
             };
-            const addPeer=(peer)=>{
+            const addPeer=peer=>{
                 if(!peer||typeof peer!=='object')return;
                 const key=String(peer.transport||'unknown')+':'+String(peer.address||peer.name||'unknown');
-                session.peers.set(key,{...peer,verified:false,authenticationRequired:true});
-                render();
+                session.peers.set(key,{...peer,verified:false,authenticationRequired:true});render();
             };
-            const bind=async(name,callback)=>{
-                const handle=await plugin.addListener(name,callback);
-                if(handle?.remove)session.handles.push(handle);
-            };
+            const bind=async(name,callback)=>{const handle=await plugin.addListener(name,callback);if(handle?.remove)session.handles.push(handle);};
+            const onNeighbor=event=>{const item=event?.detail;if(!item)return;say('تم التعرف على هوية جار: '+item.code+' · '+(item.trusted?'موثوق':'غير موثوق بعد؛ طابق الرمز ووثّقه'));};
+            const onMeshError=event=>{if(event?.detail?.message)say('رفضت الشبكة حزمة: '+event.detail.message);};
             const close=async()=>{
-                if(session.closed)return;
-                session.closed=true;
+                if(session.closed)return;session.closed=true;
                 try{await plugin.stopDiscovery();}catch(e){}
-                await Promise.all(session.handles.map(h=>Promise.resolve(h.remove()).catch(()=>{})));
+                await Promise.all(session.handles.map(handle=>Promise.resolve(handle.remove()).catch(()=>{})));
+                window.removeEventListener('alwaha:mesh-neighbor',onNeighbor);window.removeEventListener('alwaha:mesh-error',onMeshError);
                 if(alwahaLocalDiscoverySession===session)alwahaLocalDiscoverySession=null;
-                modal.remove();
-                document.body.classList.remove('modal-active');
-                window.AlwahaModalShell?.sync?.();
+                modal.remove();document.body.classList.remove('modal-active');window.AlwahaModalShell?.sync?.();
             };
-            modal.querySelector('[data-close-local]').addEventListener('click',()=>{void close();});
+            modal.querySelector('[data-close-local]').addEventListener('click',()=>void close());
             modal.addEventListener('click',event=>{if(event.target===modal)void close();});
             modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();void close();}});
-            stop.addEventListener('click',async()=>{try{await plugin.stopDiscovery();say('تم إيقاف البحث؛ الأجهزة المكتشفة ما زالت غير موثّقة.');}catch(e){say('تعذر إيقاف البحث من الجهاز.');}});
-            start.addEventListener('click',async()=>{
-                if(session.starting||session.closed)return;
-                session.starting=true;start.disabled=true;
-                try{say('جارٍ طلب أذونات الأجهزة القريبة وبدء البحث…');const result=await plugin.startDiscovery();if(!session.closed)say(result?.message||'بدأ البحث لمدة محدودة.');}
-                catch(e){if(!session.closed)say(e?.message||'تعذر بدء البحث؛ تحقق من الأذونات وإعدادات Wi-Fi/Bluetooth.');}
-                finally{session.starting=false;if(start.isConnected&&!session.closed)start.disabled=false;}
+            stopBtn.addEventListener('click',async()=>{try{await plugin.stopDiscovery();say('تم إيقاف البحث. اتصال Wi‑Fi Direct القائم لا يتوقف تلقائيًا.');}catch(e){say('تعذر إيقاف البحث.');}});
+            startBtn.addEventListener('click',async()=>{
+                if(session.starting||session.closed)return;session.starting=true;startBtn.disabled=true;
+                try{say('جارٍ طلب الأذونات وبدء اكتشاف الأجهزة…');const result=await plugin.startDiscovery();if(!session.closed)say(result?.message||'بدأ البحث.');}
+                catch(error){if(!session.closed)say(error?.message||'تعذر بدء البحث؛ راجع أذونات Android.');}
+                finally{session.starting=false;if(startBtn.isConnected&&!session.closed)startBtn.disabled=false;}
             });
-            document.body.appendChild(modal);
-            document.body.classList.add('modal-active');
-            window.AlwahaModalShell?.sync?.();
+            modal.querySelector('[data-create-group]').addEventListener('click',async event=>{
+                const button=event.currentTarget;button.disabled=true;
+                try{const result=await plugin.createWifiDirectGroup();say(result?.message||'تم طلب إنشاء مجموعة Wi‑Fi Direct؛ انتظر اتصال جهاز آخر.');}
+                catch(error){say(error?.message||'تعذر إنشاء شبكة Wi‑Fi Direct.');}
+                finally{button.disabled=false;}
+            });
+            modal.querySelector('[data-copy-identity]').addEventListener('click',async()=>{
+                const field=modal.querySelector('#alwaha-mesh-own-bundle');field?.focus();field?.select();
+                try{await navigator.clipboard.writeText(field?.value||'');say('تم نسخ الهوية العامة. شاركها مع الشخص المقصود فقط.');}
+                catch{say('حدد نص الهوية وانسخه يدويًا.');}
+            });
+            modal.querySelector('[data-pair-peer]').addEventListener('click',async()=>{
+                try{
+                    const peerBundle=JSON.parse(modal.querySelector('#alwaha-mesh-peer-bundle')?.value||'{}');
+                    const code=prompt('أدخل رمز التحقق المكوّن من 6 أحرف الذي يظهر على الهاتف الآخر.');
+                    if(!code)return;
+                    const accountId=String(currentChatUserId||currentMarketPeerId||prompt('أدخل معرف حساب الشخص الذي يخصه هذا الجهاز:')||'').trim();
+                    if(!accountId)return say('لم يتم ربط الجهاز بحساب محادثة.');
+                    const paired=await mesh.pairPeer(peerBundle,{confirmationCode:code,accountUserId:accountId,label:currentChatUser||'جهة اتصال'});
+                    say('تم توثيق الجهاز محليًا. بصمته: '+paired.fingerprint.slice(0,16)+'…');
+                }catch(error){say(error?.message||'فشل توثيق الجهاز.');}
+            });
+            modal.querySelector('[data-flush-relay]').addEventListener('click',async()=>{
+                try{const result=await mesh.flushRelayQueue();say('تم تمرير '+result.sent+' حزمة إلى الجار المتصل. الحزم غير المستلمة تبقى في الطابور حتى تتوفر وصلة أخرى.');}
+                catch(error){say(error?.message||'تعذر تمرير الحزم.');}
+            });
+            window.addEventListener('alwaha:mesh-neighbor',onNeighbor);window.addEventListener('alwaha:mesh-error',onMeshError);
+            document.body.appendChild(modal);document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();
             try{
                 await bind('peerDiscovered',payload=>addPeer(payload?.peer));
                 await bind('peersDiscovered',payload=>(Array.isArray(payload?.peers)?payload.peers:[]).forEach(addPeer));
                 await bind('discoveryState',payload=>{
-                    const map={scanning:'جارٍ البحث عن الأجهزة القريبة…','wifi-direct-scanning':'يبحث عبر Wi-Fi Direct…','wifi-location-required':'يلزم تشغيل خدمة الموقع في إعدادات Android لاكتشاف Wi-Fi Direct.','wifi-direct-unavailable':'تعذر بدء Wi-Fi Direct على هذا الجهاز.','bluetooth-unavailable':'Bluetooth غير متاح أو لم تسمح الأذونات.',stopped:'انتهى البحث عن الأجهزة القريبة.',timeout:'انتهت مهلة البحث المحدودة.'};
-                    say(map[payload?.status]||payload?.message||('حالة الاكتشاف: '+String(payload?.status||'غير معروفة')));
+                    const map={scanning:'جارٍ البحث عن الأجهزة القريبة…','wifi-direct-scanning':'يبحث عبر Wi‑Fi Direct…','wifi-location-required':'يلزم تشغيل الموقع في إعدادات Android لاكتشاف Wi‑Fi Direct.','wifi-direct-unavailable':'تعذر بدء Wi‑Fi Direct على هذا الجهاز.',stopped:'انتهى البحث عن الأجهزة القريبة.',timeout:'انتهت مهلة البحث المحدودة.'};
+                    say(map[payload?.state]||payload?.message||('حالة الاكتشاف: '+String(payload?.state||'غير معروفة')));
+                });
+                await bind('wifiDirectLinkChanged',async payload=>{
+                    if(!payload?.groupFormed||session.transportStarting)return;
+                    session.transportStarting=true;
+                    try{say('تم تكوين Wi‑Fi Direct؛ جارٍ فتح قناة نقل الحزم المشفّرة…');const result=await plugin.startPacketTransport();say(result?.connected?'قناة الحزم المحلية متصلة.':'قناة الحزم تستمع لانتظار الجهاز الآخر.');}
+                    catch(error){say(error?.message||'تعذر فتح قناة الحزم.');}
+                    finally{session.transportStarting=false;}
+                });
+                await bind('transportState',payload=>{
+                    if(payload?.state==='packet-transport-connected')say('اتصال Wi‑Fi Direct لنقل الحزم قائم. يجري التحقق من هوية الجار.');
+                    else if(payload?.state==='packet-transport-disconnected')say('انقطع رابط الجار. الحزم المرحّلة تبقى محفوظة محليًا.');
+                    else if(payload?.state==='packet-transport-listening')say('الجهاز يستمع لاتصالات Wi‑Fi Direct.');
                 });
                 if(session.closed)return;
-                const caps=await plugin.getCapabilities().catch(()=>null);
-                if(caps&&!session.closed){
-                    const hints=[];
-                    if(!caps.wifiDirectSupported)hints.push('Wi-Fi Direct غير مدعوم');
-                    if(!caps.wifiEnabled)hints.push('Wi-Fi غير مفعّل');
-                    if(!caps.bluetoothClassicSupported)hints.push('Bluetooth غير مدعوم');
-                    if(!caps.bluetoothEnabled)hints.push('Bluetooth غير مفعّل');
-                    if(hints.length)say(hints.join(' · ')+'. شغّل الخدمات من إعدادات Android ثم أعد البحث.');
-                }
-                if(!session.closed)start.click();
-            }catch(error){if(!session.closed)say(error?.message||'تعذر تهيئة اكتشاف الأجهزة القريبة.');}
+                const [caps,bundle]=await Promise.all([plugin.getCapabilities().catch(()=>null),mesh.getIdentityBundle()]);
+                if(session.closed)return;
+                modal.querySelector('#alwaha-mesh-own-code').textContent=bundle.fingerprintCode;
+                modal.querySelector('#alwaha-mesh-own-bundle').value=JSON.stringify(bundle);
+                if(caps){const hints=[];if(!caps.wifiDirectSupported)hints.push('Wi‑Fi Direct غير مدعوم');if(!caps.wifiEnabled)hints.push('Wi‑Fi غير مفعّل');if(!caps.bluetoothEnabled)hints.push('Bluetooth غير مفعّل');if(hints.length)say(hints.join(' · ')+'. راجع إعدادات Android ثم أعد البحث.');}
+                if(!session.closed)startBtn.click();
+            }catch(error){if(!session.closed)say(error?.message||'تعذر تهيئة الشبكة المحلية.');}
+        }
+
+        async function toggleAlwahaLocalChatMode(){
+            const mesh=window.AlwahaLocalMesh;if(!mesh)return triggerToastNotification('بروتوكول الشبكة الحرة غير موجود في هذه النسخة.','error');
+            const enabled=!mesh.isEnabled();await mesh.setMode(enabled);
+            const buttonText=enabled?'تم تفعيل وضع المحادثة المحلية. لن نرسل رسائل هذا المسار إلى Supabase.':'تم إيقاف وضع المحادثة المحلية.';
+            triggerToastNotification(buttonText,'info');
+            document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{button.setAttribute('aria-pressed',String(enabled));button.style.color=enabled?'#a8ffd7':'';});
+            if(enabled)void openAlwahaLocalDiscovery();
         }
 
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
