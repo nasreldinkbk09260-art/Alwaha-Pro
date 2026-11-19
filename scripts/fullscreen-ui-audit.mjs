@@ -2,6 +2,12 @@ import fs from 'node:fs';
 const fail=[];const pass=(s)=>console.log('PASS:',s);const check=(s,v)=>{if(v)pass(s);else{console.error('FAIL:',s);fail.push(s);}};
 const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),exp=fs.readFileSync('alwaha-experience.js','utf8'),shell=fs.readFileSync('alwaha-modal-shell.js','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),themeCss=fs.readFileSync('alwaha-theme-system.css','utf8');
 const cacheName=(sw.match(/const CACHE_NAME = ['"]([^'"]+)['"]/)||[])[1]||'';
+const hasValidCacheNamespace=cacheName.startsWith('alwaha-pro-v3.0.4-');
+function hasVersionedScript(asset){
+ const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
+ const revision=html.slice(start+marker.length).split('"')[0];
+ return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
+}
 const hasValidCacheNamespace=/^alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*$/.test(cacheName);
 function hasVersionedScript(asset){
  const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
