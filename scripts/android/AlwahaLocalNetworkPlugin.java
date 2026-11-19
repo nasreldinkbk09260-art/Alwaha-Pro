@@ -154,6 +154,87 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void startBluetoothPacketServer(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Bluetooth permission is required before starting Bluetooth transfer.");
+            return;
+        }
+        BluetoothAdapter adapter = getBluetoothAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            call.reject("Enable Bluetooth in Android settings before starting local transfer.");
+            return;
+        }
+        try {
+            Intent discoverable = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            discoverable.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+            getActivity().startActivity(discoverable);
+        } catch (Exception error) {
+            call.reject("Android could not open the Bluetooth visibility approval screen.", error);
+            return;
+        }
+        transportExecutor.execute(() -> {
+            try {
+                BluetoothServerSocket existing = bluetoothServerSocket;
+                if (existing == null || bluetoothServerClosed) {
+                    BluetoothServerSocket server = adapter.listenUsingInsecureRfcommWithServiceRecord(BLUETOOTH_SERVICE_NAME, BLUETOOTH_PACKET_UUID);
+                    bluetoothServerSocket = server;
+                    bluetoothServerClosed = false;
+                    transportExecutor.execute(() -> acceptBluetoothClients(server));
+                }
+                JSObject result = new JSObject();
+                result.put("listening", true);
+                result.put("transport", "bluetooth-rfcomm-e2e-encrypted");
+                result.put("visibilitySeconds", 300);
+                call.resolve(result);
+                emitTransportState("bluetooth-server-listening", BLUETOOTH_SERVICE_NAME);
+            } catch (SecurityException error) {
+                call.reject("Bluetooth connect permission was denied.", error);
+            } catch (Exception error) {
+                call.reject("Could not start the local Bluetooth packet receiver.", error);
+            }
+        });
+    }
+
+    @PluginMethod
+    public void connectBluetoothPeer(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Bluetooth permission is required before connecting to a device.");
+            return;
+        }
+        String address = call.getString("address", "");
+        if (address == null || !address.matches("(?i)^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")) {
+            call.reject("The nearby Bluetooth device address is invalid.");
+            return;
+        }
+        BluetoothAdapter adapter = getBluetoothAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            call.reject("Bluetooth is not enabled on this device.");
+            return;
+        }
+        transportExecutor.execute(() -> {
+            BluetoothSocket socket = null;
+            try {
+                if (adapter.isDiscovering()) adapter.cancelDiscovery();
+                BluetoothDevice device = adapter.getRemoteDevice(address);
+                socket = device.createInsecureRfcommSocketToServiceRecord(BLUETOOTH_PACKET_UUID);
+                socket.connect();
+                attachBluetoothTransportSocket(socket);
+                JSObject result = new JSObject();
+                result.put("connected", true);
+                result.put("transport", "bluetooth-rfcomm-e2e-encrypted");
+                result.put("address", address);
+                call.resolve(result);
+            } catch (SecurityException error) {
+                if (socket != null) try { socket.close(); } catch (Exception ignored) {}
+                call.reject("Bluetooth permission was denied while connecting.", error);
+            } catch (Exception error) {
+                if (socket != null) try { socket.close(); } catch (Exception ignored) {}
+                call.reject("Could not connect to the Bluetooth peer. Confirm the other phone approved visibility and started its receiver.", error);
+            }
+        });
+    }
+
+    @PluginMethod
     public void requestLocalPermissions(PluginCall call) {
         requestPermissionsForCurrentApi(call, "permissionOnlyCallback");
     }
