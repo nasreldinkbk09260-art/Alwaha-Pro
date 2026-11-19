@@ -31,7 +31,7 @@ const checks=[
  ['voice notes, pictures and videos use the same encrypted chunked local packet path',html.includes("sendFileToAccount(peerId,file,kind,{type:'direct'})")&&html.includes("sendFileToAccount(currentMarketPeerId,file,kind,{type:'market'")],
  ['mesh script is included in web build and service worker precache',build.includes("'alwaha-local-mesh.js'")&&sw.includes("'./alwaha-local-mesh.js'")&&html.includes('alwaha-local-mesh.js?v=')],
  ['Android build generates and registers the native Wi-Fi Direct plugin',workflow.includes('AlwahaLocalNetworkPlugin.java')&&workflow.includes('registerPlugin(AlwahaLocalNetworkPlugin.class)')],
- ['standard CI runs native audit plus cryptographic runtime tests',pkg.scripts['audit:local-network-native']==='node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs']
+ ['standard CI runs native audit plus cryptographic runtime tests',pkg.scripts['audit:local-network-native']==='node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs'],
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
  ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
  ['mesh relay forwarding is restricted to an explicitly paired neighbor and bounded queue',mesh.includes("reason:'untrusted-neighbor'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
