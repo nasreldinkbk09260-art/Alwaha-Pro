@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 const fail=[];const pass=(s)=>console.log('PASS:',s);const check=(s,v)=>{if(v)pass(s);else{console.error('FAIL:',s);fail.push(s);}};
 const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),exp=fs.readFileSync('alwaha-experience.js','utf8'),shell=fs.readFileSync('alwaha-modal-shell.js','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),themeCss=fs.readFileSync('alwaha-theme-system.css','utf8');
+const cacheName=(sw.match(/const CACHE_NAME = ['"]([^'"]+)['"]/)||[])[1]||'';
+const hasValidCacheNamespace=/^alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*$/.test(cacheName);
+function hasVersionedScript(asset){
+ const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
+ const revision=html.slice(start+marker.length).split('"')[0];
+ return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
+}
 check('market button is beside buy/sell/my items and opens a dedicated page',html.includes('id="market-conversations-open"')&&html.includes('onclick="openMarketConversationsPage()"')&&html.includes('function openMarketConversationsPage()'));
 check('shared camera preview is queried by a scoped data attribute, not a duplicated ID',html.includes('data-camera-live-video')&&html.includes("document.querySelector('#camera-view-box video[data-camera-live-video]')")&&!html.includes('id="camera-live-video"'));
 check('original market conversation and transaction DOM is preserved and moved, not duplicated',html.includes('id="market-conversations-panel"')&&html.includes("placeholder.id='market-conversations-panel-placeholder'")&&html.includes("content.appendChild(panel)")&&html.includes('market-transactions-container'));
@@ -25,10 +32,10 @@ check('permanent post/reel deletion explains scope and asks the user to preserve
 check('vault restore and local cleanup explain exactly what is replaced or cleared',fs.readFileSync('alwaha-local-vault.js','utf8').includes('ستُستبدل المسودات الحالية فقط')&&fs.readFileSync('alwaha-local-vault.js','utf8').includes('سيتم مسح المسودات المحلية المحفوظة فقط'));
 check('opening/closing notifications does not mark every notification read',/async function toggleInternalNotificationCenter\([\s\S]*?if\(center\.classList\.contains\('alwaha-notifications-open'\)\)[\s\S]*?window\.AlwahaModalShell/.test(html)&&html.includes('function markSingleNotificationRead'));
 check('accepting a request removes only its related request rows and does not wait for user-list refresh',/async function respondFriendRequest\([\s\S]*?await supabaseFetch\(`friend_requests\?id=eq\.[\s\S]*?relatedRows\.forEach\(row=>row\.remove\(\)\)[\s\S]*?void loadAllRegisteredUsersList\(\)/.test(html));
-check('modal module is included with versioned URL, web build and both service-worker cache paths',html.includes('src="./alwaha-modal-shell.js?v=${ASSET_REVISION}"')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'")&&sw.includes("'./alwaha-modal-shell.js?v=${ASSET_REVISION}'"));
+check('modal module is included with versioned URL, web build and both service-worker cache paths',hasVersionedScript('alwaha-modal-shell.js')&&build.includes('alwaha-modal-shell.js'));
 check('modal observation is coalesced and duplicate navigation observer is removed',shell.includes('syncScheduled=false')&&shell.includes('function scheduleSync()')&&shell.includes('new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();})')&&shell.includes('if(changed)window.AlwahaExperience?.syncDock?.();')&&!exp.includes('modalObserver')&&!exp.includes('new MutationObserver'));
 
-check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('${SERVICE_WORKER_CACHE}')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
+check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',hasValidCacheNamespace&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 
 const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*[(]/g)].map(match=>match[1]);
