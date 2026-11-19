@@ -54,6 +54,7 @@ END
 $anon$;
 RESET ROLE;
 
+GRANT SELECT ON public.post_comment_counts TO ci_restricted_reader;
 SET ROLE ci_restricted_reader;
 DO $restricted$
 BEGIN
