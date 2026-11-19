@@ -9,9 +9,9 @@ const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_req
 const marketCallMigration=fs.readFileSync('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','utf8');
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
-  ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
+  ['local mesh controls remain discoverable in chat without suppressing future entry points', html.includes('openAlwahaLocalDiscovery()') && html.includes('data-alwaha-mesh-toggle') && html.includes('toggleAlwahaLocalChatMode()')],
   ['chat header exposes native nearby Wi-Fi/Bluetooth discovery dialog', html.includes('onclick="openAlwahaLocalDiscovery()"') && html.includes('async function openAlwahaLocalDiscovery()') && html.includes('plugin.startDiscovery()') && html.includes('peerDiscovered')],
-  ['discovery-only mode does not claim local messaging, files or calls are ready', html.includes('ولا يتم الاتصال بها أو تبادل رسائل أو ملفات أو مكالمات محلية.') && html.includes('لا يوجد اتصال أو نقل بيانات')],
+  ['local mesh UI accurately distinguishes Wi-Fi Direct transport from Bluetooth discovery-only', html.includes('اتصال مباشر بين أجهزة Android عبر Wi‑Fi Direct') && html.includes('البلوتوث يكتشف الأجهزة الآن') && html.includes('Bluetooth مكتشف فقط في هذه المرحلة')],
   ['video action opens the normal/Kids mode chooser', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"')],
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
@@ -78,6 +78,8 @@ const checks = [
   ['direct chat exposes voice note and image/video upload controls', html.includes('id="direct-chat-voice-button"') && html.includes("toggleChatVoiceRecording('direct')") && html.includes('id="direct-chat-media-input"') && html.includes('accept="image/*,video/*"')],
   ['market chat exposes voice note and image/video upload controls', html.includes('id="market-chat-voice-button"') && html.includes("toggleChatVoiceRecording('market')") && html.includes('id="market-chat-media-input"') && html.includes('accept="image/*,video/*"')],
   ['call end button remains bound to deterministic close cleanup', html.includes("if (endBtn) endBtn.onclick = () => terminateVoiceCall()") && html.includes('window.__alwahaCallTerminationRequested') && html.includes("if(window.__alwahaCallTerminationRequested)return")],
+  ['offline direct inbox falls back to encrypted cached conversations and restores saved peer labels', html.includes('async function renderCachedDirectConversationList(') && html.includes('getAllDirectChatCaches?.(me.id)') && html.includes('getPeerProfileCache?.(user.id,peerId)') && html.includes('if(!Array.isArray(rows))')],
+
   ['Kids Room remounts the active video streams and restores their original state', kids.includes("remotePort.appendChild(remote)") && kids.includes("remote.play?.()") && kids.includes("local.play?.()") && kids.includes("remote.muted=remoteWasMuted") && kids.includes("overlay.querySelector('#kids-exit').onclick=()=>close(true)")],
   ['feed retry state', 'إعادة المحاولة'],
   ['feed no network state', 'لا يوجد اتصال بالإنترنت'],
