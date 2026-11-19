@@ -174,12 +174,14 @@
       if(opened.payload?.type==='file-chunk'){
         const chunk=opened.payload,base='mesh:file:'+String(chunk.fileId||''),key=base+':'+String(chunk.index);
         if(!chunk.fileId||!Number.isInteger(chunk.index)||!Number.isInteger(chunk.total)||chunk.total<1||chunk.total>512||chunk.index<0||chunk.index>=chunk.total)throw new Error('Invalid local file chunk metadata.');
-        await vault().put(key,{chunk,receivedAt:new Date().toISOString()});
-        const all=await vault().getAll(),parts=[];
-        for(let i=0;i<chunk.total;i++){const row=all.find(item=>item.key===base+':'+i);if(!row?.value?.chunk)return {delivered:true,fileProgress:{fileId:chunk.fileId,received:i,total:chunk.total}};parts.push(b64ToBytes(row.value.chunk.chunk));}
+        await storeLocalEncrypted(key,{chunk:chunk.chunk,receivedAt:new Date().toISOString()});
+        const parts=[];
+        for(let i=0;i<chunk.total;i++){const row=await readLocalEncrypted(base+':'+i);if(!row?.chunk)return {delivered:true,fileProgress:{fileId:chunk.fileId,received:i,total:chunk.total}};parts.push(b64ToBytes(row.chunk));}
         const blob=new Blob(parts,{type:String(chunk.mime||'application/octet-stream')});
         if(blob.size>25*1024*1024)throw new Error('Reassembled local file exceeds the 25 MB limit.');
-        await vault().put(base+':meta',{total:chunk.total,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,kind:chunk.kind||'file'});\n        const url=URL.createObjectURL(blob);\n        fileUrls.set(chunk.fileId,url);
+        await storeLocalEncrypted(base+':meta',{total:chunk.total,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,kind:chunk.kind||'file',context:chunk.context||null});
+        const url=URL.createObjectURL(blob);
+        fileUrls.set(chunk.fileId,url);
         detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file',context:chunk.context||null};
       }
       window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail}));
