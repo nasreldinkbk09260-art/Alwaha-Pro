@@ -29,7 +29,7 @@ if(!html.includes('id="alwaha-ui-sounds-enabled"')||!experience.includes('functi
 const soundFn=experience.match(/function sound\(freq=480\)\{[\s\S]*?\}\n function setSoundEnabled/);if(!soundFn||soundFn[0].includes('motionAllowed()'))throw Error('Sound is incorrectly disabled by motion/data saver settings');
 const modalShell=fs.readFileSync('alwaha-modal-shell.js','utf8'),ws='split(/'+String.fromCharCode(92)+'s+/)';
 if(!modalShell.includes(ws)||!modalShell.includes("document.body.className||'')."+ws))throw Error('MutationObserver whitespace guard missing');
-const themeCssHref=(html.match(/<link rel="stylesheet" href="([^"]*alwaha-theme-system\\.css\\?v=[^"]+)"/)||[])[1]||'';
+const themeCssHref=(html.match(/<link rel="stylesheet" href="([^"]*alwaha-theme-system\.css\?v=[^"]+)"/)||[])[1]||'';
 if(!themeCssHref||!sw.includes("'"+themeCssHref+"'")||!sw.includes("'./alwaha-theme-system.css'"))throw Error('Theme CSS versioned path/precache mismatch');
 if(!sw.includes("'./alwaha-theme-system.css'"))throw Error('Theme CSS not precached');
 const first=context.changeAppTheme('default',false);if(first!=='default'||Object.prototype.hasOwnProperty.call(body.dataset,'alwahaTheme')||stored.get('alwaha_theme')!=='default')throw Error('Default theme did not restore');
