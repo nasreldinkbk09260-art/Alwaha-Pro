@@ -1960,9 +1960,10 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const isPublicCommentThread = tableName === 'comments' && /(?:^|&)target_id=eq\./.test(query) && /(?:^|&)target_type=eq\./.test(query) && !hasUserFilter;
             const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread);
             const cacheKey = cacheable ? String(endpoint) : '';
-            if (requestMethod !== 'GET') apiCache.clear();
+            const localOnlyMode = window.AlwahaLocalMesh?.isEnabled() === true;
+            if (requestMethod !== 'GET' && !localOnlyMode) apiCache.clear();
 
-            const shouldBypassHomePostCache = tableName === 'posts' && navigator.onLine !== false;
+            const shouldBypassHomePostCache = tableName === 'posts' && navigator.onLine !== false && !localOnlyMode;
             if (tableName === 'posts' && !__alwahaBackgroundRefresh) await resetLegacyHomePostCacheOnce();
 
             // Keep offline snapshots for reels and marketplace, but validate the home feed against Supabase online.
@@ -1970,17 +1971,20 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 const now=Date.now(),reconnectRefresh=shouldRefreshAlwahaPublicCacheAfterReconnect(cacheKey);
                 const memory=apiCache.get(cacheKey);
                 if(memory && Array.isArray(memory.value)) {
-                    if(memory.expiresAt<=now || reconnectRefresh)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    if(!localOnlyMode&&(memory.expiresAt<=now || reconnectRefresh))queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
                     return JSON.parse(JSON.stringify(memory.value));
                 }
                 const persisted=await alwahaUiDeadline(readAlwahaPublicCache(cacheKey), 900, null);
                 if(persisted && Array.isArray(persisted.value)) {
                     const value=JSON.parse(JSON.stringify(persisted.value));
                     apiCache.set(cacheKey,{expiresAt:now+ALWAHA_PUBLIC_CACHE_MEMORY_TTL,value});
-                    if(now-Number(persisted.updatedAt||0)>=ALWAHA_PUBLIC_CACHE_MEMORY_TTL || reconnectRefresh)queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
+                    if(!localOnlyMode&&(now-Number(persisted.updatedAt||0)>=ALWAHA_PUBLIC_CACHE_MEMORY_TTL || reconnectRefresh))queueAlwahaPublicRefresh(endpoint,fetchOptions,cacheKey);
                     return value;
                 }
             }
+
+            // Local-only mode is fail-closed: cached public GETs may be served above; every uncached read and every write stays off the cloud.
+            if (localOnlyMode) return null;
 
             const url = `${SUPABASE_URL}/rest/v1/${endpoint}`;
             let accessToken = SUPABASE_KEY;
@@ -2076,6 +2080,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         }
 
         window.alwahaInvokeEdgeFunction = async function(functionName, payload) {
+            if (window.AlwahaLocalMesh?.isEnabled()) throw new Error('خدمات الخادم متوقفة أثناء وضع الشبكة الحرة المحلية.');
             if (!/^[a-z0-9-]{2,64}$/.test(String(functionName||''))) throw new Error('اسم خدمة الخادم غير صالح.');
             if (!supabaseClient?.functions?.invoke) throw new Error('خدمة Supabase غير مهيأة.');
             const {data,error}=await supabaseClient.functions.invoke(functionName,{body:payload||{}});
@@ -2148,6 +2153,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         }
 
         async function uploadFileToStorage(file, folder, {maxBytes=50*1024*1024}={}) {
+            if (window.AlwahaLocalMesh?.isEnabled()) { triggerToastNotification('رفع الملفات إلى السحابة متوقف في وضع الشبكة الحرة. استخدم الإرفاق داخل محادثة موثوقة.','info'); return null; }
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لرفع الملفات.');
             if (!user || !supabaseClient || !file) return null;
             if (!Number.isFinite(file.size) || file.size <= 0) { triggerToastNotification('الملف فارغ أو غير صالح. اختر ملفًا آخر.','error'); return null; }
@@ -2724,6 +2730,7 @@ async function toggleInternalNotificationCenter() {
         }
 
         async function subscribeToNotifications() {
+            if (window.AlwahaLocalMesh?.isEnabled()) return;
             const me = await getCurrentAuthUser();
             if (!me || !supabaseClient) return;
             if (notificationChannel) { try { await supabaseClient.removeChannel(notificationChannel); } catch(e){} notificationChannel=null; }
@@ -3620,6 +3627,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         hardenAlwahaPublicSearchInputs();
 
         async function subscribeToDirectMessages() {
+            if (window.AlwahaLocalMesh?.isEnabled()) return;
             const me = await getCurrentAuthUser();
             if (!me || !supabaseClient) return;
             if (directMessageChannel) {
@@ -3917,6 +3925,7 @@ async function subscribeToMarketConversation() {
             currentMarketConversationId='';syncAlwahaModalBodyLock();window.AlwahaModalShell?.sync?.();void renderMarketConversationsList();
         }
         async function subscribeToMarketInbox() {
+            if(window.AlwahaLocalMesh?.isEnabled())return;
             const me=await getCurrentAuthUser();if(!me||!supabaseClient||marketInboxChannel)return;
             marketInboxChannel=supabaseClient.channel(`market-inbox-${me.id}`)
                 .on('postgres_changes',{event:'*',schema:'public',table:'market_messages'},async payload=>{
@@ -5802,7 +5811,7 @@ function triggerAnimeAiConverterFilter() {
         }
 
         async function initializeRealtimeCallInbox() {
-            if (!supabaseClient) return;
+            if (window.AlwahaLocalMesh?.isEnabled() || !supabaseClient) return;
             try {
                 if (!activeCallManager) activeCallManager = new CallSignalingManager();
                 await activeCallManager.ensureInbox();
