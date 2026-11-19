@@ -1,0 +1,231 @@
+(() => {
+  'use strict';
+  const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12;
+  const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
+  const enc=new TextEncoder(), dec=new TextDecoder();
+  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', modeEnabled=false, receiving=false;
+  const queued=new Map(), seen=new Map(), peers=new Map();
+
+  function vault(){return window.AlwahaLocalVault;}
+  function bytesToB64(bytes){let raw='';for(let i=0;i<bytes.length;i+=0x8000)raw+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+  function b64ToBytes(value){const raw=atob(String(value||'').replace(/-/g,'+').replace(/_/g,'/'));const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+  async function sha(bytes){return new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));}
+  function hex(bytes){return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');}
+  function utcDay(date=Date.now()){return new Date(date).toISOString().slice(0,10);}
+  async function routeToken(fingerprint,day){return bytesToB64(await sha(enc.encode('AlwahaMeshRouteV1|'+fingerprint+'|'+day)));}
+  async function routeTokens(fingerprint,now=Date.now()){
+    const values=[];for(let shift=-1;shift<ROUTE_DAYS;shift++){const d=new Date(now);d.setUTCDate(d.getUTCDate()+shift);values.push(await routeToken(fingerprint,utcDay(d)));}
+    return values;
+  }
+  async function fingerprintFor(ecdhPublicKey,signingPublicKey){
+    const material=new Uint8Array(b64ToBytes(ecdhPublicKey).length+b64ToBytes(signingPublicKey).length);
+    material.set(b64ToBytes(ecdhPublicKey),0);material.set(b64ToBytes(signingPublicKey),b64ToBytes(ecdhPublicKey).length);
+    return hex(await sha(material));
+  }
+  async function generatePair(algorithm,usages){
+    // Public keys remain exportable; private keys are stored non-extractable in IndexedDB.
+    const pair=await crypto.subtle.generateKey(algorithm,false,usages);
+    return {privateKey:pair.privateKey,publicKey:pair.publicKey};
+  }
+  async function getIdentity(){
+    if(identityPromise)return identityPromise;
+    identityPromise=(async()=>{
+      if(!crypto?.subtle||!vault()?.getRecord||!vault()?.put)throw new Error('Secure WebCrypto or the local vault is unavailable.');
+      const row=await vault().getRecord('mesh:identity-v1');
+      if(row?.value?.ecdh?.privateKey&&row?.value?.signing?.privateKey)return row.value;
+      const [ecdh,signing]=await Promise.all([
+        generatePair({name:'ECDH',namedCurve:'P-256'},['deriveBits']),
+        generatePair({name:'ECDSA',namedCurve:'P-256'},['sign'])
+      ]);
+      const [ecdhRaw,signingRaw]=await Promise.all([
+        crypto.subtle.exportKey('raw',ecdh.publicKey),
+        crypto.subtle.exportKey('raw',signing.publicKey)
+      ]);
+      const ecdhPublicKey=bytesToB64(new Uint8Array(ecdhRaw)),signingPublicKey=bytesToB64(new Uint8Array(signingRaw));
+      const fingerprint=await fingerprintFor(ecdhPublicKey,signingPublicKey);
+      const identity={version:VERSION,ecdh,signing,ecdhPublicKey,signingPublicKey,fingerprint,createdAt:new Date().toISOString()};
+      await vault().put('mesh:identity-v1',identity);
+      return identity;
+    })().catch(error=>{identityPromise=null;throw error;});
+    return identityPromise;
+  }
+  async function getIdentityBundle(){
+    const id=await getIdentity();
+    return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey,fingerprint:id.fingerprint,fingerprintCode:id.fingerprint.slice(-6).toUpperCase()};
+  }
+  async function validateBundle(bundle){
+    if(!bundle||bundle.protocol!==PREFIX||bundle.version!==VERSION||typeof bundle.ecdhPublicKey!=='string'||typeof bundle.signingPublicKey!=='string')throw new Error('صيغة هوية الجهاز غير صحيحة.');
+    const fingerprint=await fingerprintFor(bundle.ecdhPublicKey,bundle.signingPublicKey);
+    if(fingerprint!==bundle.fingerprint)throw new Error('بصمة هوية الجهاز لا تطابق مفاتيحه؛ رفضنا الاقتران.');
+    await crypto.subtle.importKey('raw',b64ToBytes(bundle.ecdhPublicKey),{name:'ECDH',namedCurve:'P-256'},false,[]);
+    await crypto.subtle.importKey('raw',b64ToBytes(bundle.signingPublicKey),{name:'ECDSA',namedCurve:'P-256'},false,[]);
+    return fingerprint;
+  }
+  async function pairPeer(bundle,{confirmationCode,accountUserId='',label='جهاز موثوق'}={}){
+    const fingerprint=await validateBundle(bundle),expected=fingerprint.slice(-6).toUpperCase();
+    if(String(confirmationCode||'').trim().toUpperCase()!==expected)throw new Error('رمز التحقق لا يطابق بصمة الجهاز الآخر.');
+    const own=await getIdentity();if(fingerprint===own.fingerprint)throw new Error('لا يمكن اقتران الجهاز بنفسه.');
+    const record={...bundle,fingerprint,accountUserId:String(accountUserId||''),label:String(label||'جهاز موثوق').slice(0,80),pairedAt:new Date().toISOString(),trusted:true};
+    await vault().put('mesh:peer:'+fingerprint,record);peers.set(fingerprint,record);
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-peer-paired',{detail:{fingerprint,label:record.label}}));
+    await sendHello();await flushRelayQueue();
+    return {fingerprint,code:expected};
+  }
+  async function getTrustedPeers(){
+    const rows=await vault().getAll(),out=[];
+    for(const row of rows||[])if(typeof row.key==='string'&&row.key.startsWith('mesh:peer:')&&row.value?.trusted){peers.set(row.value.fingerprint,row.value);out.push(row.value);}
+    return out;
+  }
+  async function getPeerByAccountId(accountUserId){
+    const all=await getTrustedPeers();return all.find(peer=>peer.accountUserId&&peer.accountUserId===String(accountUserId))||null;
+  }
+  async function importEcdhPublic(b64){return crypto.subtle.importKey('raw',b64ToBytes(b64),{name:'ECDH',namedCurve:'P-256'},false,[]);}
+  async function deriveAesKey(privateKey,publicKey,salt,context){
+    const shared=await crypto.subtle.deriveBits({name:'ECDH',public:publicKey},privateKey,256);
+    const material=await crypto.subtle.importKey('raw',shared,'HKDF',false,['deriveKey']);
+    return crypto.subtle.deriveKey({name:'HKDF',hash:'SHA-256',salt,info:enc.encode(context)},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  }
+  function associatedData(packet){return enc.encode(JSON.stringify({v:packet.v,id:packet.id,toRoutes:packet.toRoutes,fromRoute:packet.fromRoute,createdAt:packet.createdAt,expiresAt:packet.expiresAt,ephemeralPublicKey:packet.ephemeralPublicKey}));}
+  function signablePacket(packet){return {v:packet.v,id:packet.id,toRoutes:packet.toRoutes,fromRoute:packet.fromRoute,createdAt:packet.createdAt,expiresAt:packet.expiresAt,hopLimit:packet.hopLimit,ephemeralPublicKey:packet.ephemeralPublicKey,salt:packet.salt,iv:packet.iv,ciphertext:packet.ciphertext};}
+  function packetBytes(packet){return enc.encode(JSON.stringify(packet));}
+  function encodeNativePacket(packet){const bytes=packetBytes(packet);if(bytes.byteLength>MAX_PACKET_BYTES)throw new Error('حزمة الشبكة أكبر من حد النقل المحلي 256 كيلوبايت.');return bytesToB64(bytes);}
+  async function createEnvelope(recipient,payload){
+    const sender=await getIdentity(),recipientPublic=await importEcdhPublic(recipient.ecdhPublicKey),ephemeral=await generatePair({name:'ECDH',namedCurve:'P-256'},['deriveBits']);
+    const now=Date.now(),createdAt=new Date(now).toISOString(),expiresAt=new Date(now+MAX_AGE_MS).toISOString(),id=crypto.randomUUID();
+    const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+    const context='AlwahaMeshV1|'+sender.fingerprint+'|'+recipient.fingerprint+'|'+id;
+    const key=await deriveAesKey(ephemeral.privateKey,recipientPublic,salt,context);
+    const ephemeralPub=bytesToB64(new Uint8Array(await crypto.subtle.exportKey('raw',ephemeral.publicKey)));
+    const toRoutes=await routeTokens(recipient.fingerprint,now),fromRoute=await routeToken(sender.fingerprint,utcDay(now));
+    const packet={v:VERSION,id,toRoutes,fromRoute,createdAt,expiresAt,hopLimit:MAX_HOPS,hops:0,ephemeralPublicKey:ephemeralPub,salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:''};
+    const plain={protocol:PREFIX,senderFingerprint:sender.fingerprint,senderSigningPublicKey:sender.signingPublicKey,recipientFingerprint:recipient.fingerprint,payload};
+    packet.ciphertext=bytesToB64(new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:associatedData(packet)},key,enc.encode(JSON.stringify(plain)))));
+    const signature=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},sender.signing.privateKey,packetBytes(signablePacket(packet)));
+    packet.signature=bytesToB64(new Uint8Array(signature));
+    return packet;
+  }
+  async function isForThisDevice(packet,identity){
+    const tokens=await routeTokens(identity.fingerprint);
+    return Array.isArray(packet.toRoutes)&&packet.toRoutes.some(token=>tokens.includes(token));
+  }
+  async function saveSeen(packet,sourceFingerprint=''){
+    const key='mesh:seen:'+packet.id,exists=await vault().getRecord(key);if(exists)return false;
+    await vault().put(key,{expiresAt:packet.expiresAt,sourceFingerprint,seenAt:new Date().toISOString()});
+    seen.set(packet.id,true);return true;
+  }
+  async function enqueueRelay(packet,lastHopFingerprint=''){
+    if(Number(packet.hops||0)>=Math.min(Number(packet.hopLimit||MAX_HOPS),MAX_HOPS))return false;
+    const key='mesh:relay:'+packet.id,row=await vault().getRecord(key);if(row)return false;
+    const relay={...packet,hops:Math.min(MAX_HOPS,Number(packet.hops||0)+1)};
+    await vault().put(key,{packet:relay,lastHopFingerprint,queuedAt:new Date().toISOString()});
+    queued.set(packet.id,relay);window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-queued',{detail:{id:packet.id,hops:relay.hops}}));
+    return true;
+  }
+  async function decryptEnvelope(packet,identity){
+    const senderEcdh=await importEcdhPublic(packet.ephemeralPublicKey);
+    const salt=b64ToBytes(packet.salt),iv=b64ToBytes(packet.iv);
+    const provisionalContext='AlwahaMeshV1|'; 
+    // Sender fingerprint is encrypted, so try only explicitly paired peers and verify the result.
+    const trusted=await getTrustedPeers();
+    for(const peer of trusted){
+      const context=provisionalContext+peer.fingerprint+'|'+identity.fingerprint+'|'+packet.id;
+      try{
+        const key=await deriveAesKey(identity.ecdh.privateKey,senderEcdh,salt,context);
+        const plaintext=await crypto.subtle.decrypt({name:'AES-GCM',iv,additionalData:associatedData(packet)},key,b64ToBytes(packet.ciphertext));
+        const data=JSON.parse(dec.decode(plaintext));
+        if(data.protocol!==PREFIX||data.recipientFingerprint!==identity.fingerprint||data.senderFingerprint!==peer.fingerprint||data.senderSigningPublicKey!==peer.signingPublicKey)continue;
+        const signingKey=await crypto.subtle.importKey('raw',b64ToBytes(peer.signingPublicKey),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+        const ok=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},signingKey,b64ToBytes(packet.signature),packetBytes(signablePacket(packet)));
+        if(!ok)throw new Error('توقيع حزمة الشبكة غير صالح؛ رفضنا الرسالة.');
+        return {peer,payload:data.payload};
+      }catch(error){if(error?.message?.includes('توقيع'))throw error;}
+    }
+    throw new Error('تعذر فك الحزمة: لم نعثر على جهاز موثوق يطابق هوية المرسل.');
+  }
+  async function handlePacket(packet){
+    if(!packet||packet.v!==VERSION||packet.protocol===PREFIX||typeof packet.id!=='string'||!Array.isArray(packet.toRoutes))return {ignored:true};
+    const now=Date.now(),expiry=Date.parse(packet.expiresAt||'');
+    if(!Number.isFinite(expiry)||expiry<now||expiry>now+MAX_AGE_MS+60000)return {expired:true};
+    if(Number(packet.hops||0)>MAX_HOPS||Number(packet.hopLimit||MAX_HOPS)>MAX_HOPS)return {invalid:true};
+    if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
+    const identity=await getIdentity();
+    if(await isForThisDevice(packet,identity)){
+      const opened=await decryptEnvelope(packet,identity);
+      window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail:{id:packet.id,senderFingerprint:opened.peer.fingerprint,senderAccountId:opened.peer.accountUserId||'',payload:opened.payload,receivedAt:new Date().toISOString(),local:true}}));
+      return {delivered:true};
+    }
+    const relayed=await enqueueRelay(packet,transportPeerFingerprint);
+    return {relayed};
+  }
+  async function sendRawPacket(packet){
+    const native=window.alwahaLocalNetwork;
+    if(!native?.sendLocalPacket)throw new Error('لا يوجد اتصال Wi-Fi Direct محلي لنقل الحزمة.');
+    await native.sendLocalPacket({packet:encodeNativePacket(packet)});
+  }
+  async function sendHello(){
+    const native=window.alwahaLocalNetwork;if(!native?.sendLocalPacket)return false;
+    const bundle=await getIdentityBundle();
+    const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle};
+    try{const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;await native.sendLocalPacket({packet:bytesToB64(bytes)});return true;}catch{return false;}
+  }
+  async function receiveRawPacket(encoded){
+    if(receiving)return;
+    receiving=true;
+    try{
+      const bytes=b64ToBytes(encoded);if(bytes.length>MAX_PACKET_BYTES)throw new Error('Oversized mesh frame');
+      const message=JSON.parse(dec.decode(bytes));
+      if(message?.type==='hello'&&message.protocol===PREFIX){const fp=await validateBundle(message.bundle);transportPeerFingerprint=fp;window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:{fingerprint:fp,code:fp.slice(-6).toUpperCase(),trusted:(await getTrustedPeers()).some(p=>p.fingerprint===fp)}}));return;}
+      const result=await handlePacket(message);
+      window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
+    }catch(error){console.warn('[Alwaha Mesh] rejected local frame:',error);window.dispatchEvent(new CustomEvent('alwaha:mesh-error',{detail:{message:error.message}}));}
+    finally{receiving=false;}
+  }
+  async function installTransportListeners(){
+    const native=window.alwahaLocalNetwork;if(!native?.addListener||transportHandles.length)return;
+    transportHandles.push(await native.addListener('localPacketReceived',event=>{void receiveRawPacket(event?.packet||'');}));
+    transportHandles.push(await native.addListener('transportState',event=>{
+      if(event?.state==='packet-transport-connected'){void sendHello();window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));}
+      if(event?.state==='packet-transport-disconnected'||event?.state==='packet-transport-closed')window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+    }));
+  }
+  async function sendToAccount(accountUserId,payload){
+    if(!modeEnabled)throw new Error('وضع الشبكة الحرة غير مفعل في هذه المحادثة.');
+    const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('لم تقترن بهذا الحساب بجهاز موثوق بعد.');
+    const packet=await createEnvelope(peer,payload);
+    const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
+    if(transportPeerFingerprint===peer.fingerprint&&window.alwahaLocalNetwork?.sendLocalPacket){await sendRawPacket(packet);return {sent:true,id:packet.id,route:'direct'};}
+    await enqueueRelay(packet,'');
+    return {sent:false,queued:true,id:packet.id,route:'store-and-forward'};
+  }
+  async function sendFileToAccount(accountUserId,file,kind='file'){
+    if(!file||!Number.isFinite(file.size)||file.size<=0)throw new Error('الملف غير صالح.');
+    if(file.size>25*1024*1024)throw new Error('حد الملف المحلي 25 ميجابايت في هذه المرحلة.');
+    const peer=await getPeerByAccountId(accountUserId),fileId=crypto.randomUUID(),total=Math.ceil(file.size/FILE_CHUNK_BYTES);
+    if(!peer)throw new Error('الجهاز المقصود غير مقترن.');
+    for(let index=0;index<total;index++){
+      const bytes=new Uint8Array(await file.slice(index*FILE_CHUNK_BYTES,Math.min(file.size,(index+1)*FILE_CHUNK_BYTES)).arrayBuffer());
+      await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:file.name,mime:file.type||'application/octet-stream',size:file.size,kind,chunk:bytesToB64(bytes)});
+    }
+    return {queued:true,fileId,chunks:total};
+  }
+  async function flushRelayQueue(){
+    if(!window.alwahaLocalNetwork?.sendLocalPacket||!transportPeerFingerprint)return {sent:0};
+    const rows=await vault().getAll(),out=[];
+    for(const row of rows||[]){
+      if(typeof row.key!=='string'||!row.key.startsWith('mesh:relay:')||!row.value?.packet)continue;
+      const packet=row.value.packet,expires=Date.parse(packet.expiresAt||'');
+      if(!Number.isFinite(expires)||expires<Date.now()){await vault().put('mesh:expired:'+packet.id,{expiredAt:new Date().toISOString()});continue;}
+      if(row.value.lastHopFingerprint===transportPeerFingerprint)continue;
+      try{await sendRawPacket(packet);out.push(packet.id);}catch(error){console.warn('[Alwaha Mesh] relay send failed:',error);break;}
+    }
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-flushed',{detail:{count:out.length}}));
+    return {sent:out.length,ids:out};
+  }
+  async function setMode(enabled){modeEnabled=Boolean(enabled);await installTransportListeners();window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled}}));return modeEnabled;}
+  function isEnabled(){return modeEnabled;}
+  function getTransportPeer(){return transportPeerFingerprint;}
+  function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
+  function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,setMode,isEnabled,getTransportPeer,setTransportPeer,destroy};
+  window.addEventListener('DOMContentLoaded',()=>{void installTransportListeners().catch(error=>console.warn('[Alwaha Mesh] listener setup failed:',error));});
+})();
