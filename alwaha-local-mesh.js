@@ -210,7 +210,14 @@
     try{
       const bytes=b64ToBytes(encoded);if(bytes.length>MAX_PACKET_BYTES)throw new Error('Oversized mesh frame');
       const message=JSON.parse(dec.decode(bytes));
-      if(message?.type==='hello'&&message.protocol===PREFIX){const fp=await validateBundle(message.bundle);transportPeerFingerprint=fp;window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:{fingerprint:fp,code:fp.slice(-6).toUpperCase(),trusted:(await getTrustedPeers()).some(p=>p.fingerprint===fp)}}));return;}
+      if(message?.type==='hello'&&message.protocol===PREFIX){
+        const fp=await validateBundle(message.bundle);transportPeerFingerprint=fp;
+        const trusted=(await getTrustedPeers()).some(p=>p.fingerprint===fp);
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:{fingerprint:fp,code:fp.slice(-6).toUpperCase(),trusted}}));
+        // Store-carry-forward resumes automatically only after a trusted neighbor is authenticated.
+        if(trusted&&isEnabled())await flushRelayQueue();
+        return;
+      }
       const result=await handlePacket(message);
       window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
     }catch(error){console.warn('[Alwaha Mesh] rejected local frame:',error);window.dispatchEvent(new CustomEvent('alwaha:mesh-error',{detail:{message:error.message}}));}
