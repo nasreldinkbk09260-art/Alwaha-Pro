@@ -178,6 +178,10 @@ jobs:
           test -s supabase/migrations/20261118180810_split_anon_public_content_policies.sql
           test -s supabase/migrations/20261120010000_post_comment_counts_view.sql
           test -s supabase/tests/20261120010000_post_comment_counts_view.sql
+          test -s supabase/migrations/20261120210000_marketplace_delivery_workflow.sql
+          test -s supabase/tests/20261120210000_marketplace_delivery_workflow.sql
+          test -s scripts/marketplace-delivery-audit.mjs
+
           test -s supabase/tests/post-comment-counts-ci-bootstrap.sql
 
           test -s supabase/tests/20261118180810_split_anon_public_content_policies.sql
@@ -324,6 +328,9 @@ jobs:
 
       - name: Run marketplace purchase and sell acceptance audit
         run: npm run audit:marketplace-ui
+
+      - name: Run marketplace delivery request, privacy and transition audit
+        run: npm run audit:marketplace-delivery
 
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation
