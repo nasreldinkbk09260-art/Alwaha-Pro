@@ -13,6 +13,9 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.WpsInfo;
+import android.util.Base64;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,6 +32,13 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @CapacitorPlugin(
     name = "AlwahaLocalNetwork",
@@ -44,6 +54,13 @@ import java.util.List;
 )
 public class AlwahaLocalNetworkPlugin extends Plugin {
     private static final long DISCOVERY_TIMEOUT_MS = 25000L;
+    private static final int LOCAL_PACKET_PORT = 43817;
+    private static final int MAX_LOCAL_PACKET_BYTES = 262144;
+    private final ExecutorService transportExecutor = Executors.newCachedThreadPool();
+    private volatile ServerSocket transportServer;
+    private volatile Socket transportSocket;
+    private volatile boolean transportClosed = false;
+    private final Object transportWriteLock = new Object();
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiChannel;
     private BluetoothAdapter bluetoothAdapter;
@@ -71,7 +88,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         int targetSdk = getContext().getApplicationInfo().targetSdkVersion;
 
         JSObject result = new JSObject();
-        result.put("phase", "discovery-only");
+        result.put("phase", "wifi-direct-store-forward");
         result.put("wifiDirectSupported", wifiDirect);
         result.put("wifiEnabled", wifiEnabled);
         result.put("bluetoothClassicSupported", bluetooth != null);
@@ -80,8 +97,8 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("targetSdk", targetSdk);
         result.put("locationModeEnabled", isLocationModeEnabled());
         result.put("permissionsGranted", hasDiscoveryPermissions());
-        result.put("transportReady", false);
-        result.put("chatReady", false);
+        result.put("transportReady", isTransportConnected());
+        result.put("chatReady", isTransportConnected());
         result.put("fileTransferReady", false);
         result.put("callMediaReady", false);
         result.put("requiresAccessLocalNetworkPermission", Build.VERSION.SDK_INT >= 37 && targetSdk >= 37);
@@ -118,6 +135,277 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             return;
         }
         startDiscoveryNow(call);
+    }
+
+    @PluginMethod
+    public void createWifiDirectGroup(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Wi-Fi permission is required before creating a local group.");
+            return;
+        }
+        ensureWifiP2p();
+        if (wifiP2pManager == null || wifiChannel == null) {
+            call.reject("Wi-Fi Direct is not available on this device.");
+            return;
+        }
+        try {
+            wifiP2pManager.createGroup(wifiChannel, new WifiP2pManager.ActionListener() {
+                @Override public void onSuccess() {
+                    JSObject result = new JSObject();
+                    result.put("started", true);
+                    result.put("role", "group-owner");
+                    result.put("transportReady", false);
+                    call.resolve(result);
+                    emitTransportState("group-created", "waiting-for-peer");
+                }
+                @Override public void onFailure(int reason) {
+                    call.reject("Could not create the Wi-Fi Direct group. Android reason: " + reason);
+                }
+            });
+        } catch (SecurityException error) {
+            call.reject("Wi-Fi Direct permission was denied.", error);
+        }
+    }
+
+    @PluginMethod
+    public void connectWifiDirectPeer(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Wi-Fi permission is required before connecting to a peer.");
+            return;
+        }
+        String address = call.getString("address", "");
+        if (address == null || !address.matches("(?i)^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")) {
+            call.reject("The nearby Wi-Fi Direct device address is invalid.");
+            return;
+        }
+        ensureWifiP2p();
+        if (wifiP2pManager == null || wifiChannel == null) {
+            call.reject("Wi-Fi Direct is not available on this device.");
+            return;
+        }
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = address;
+        config.wps.setup = WpsInfo.PBC;
+        config.groupOwnerIntent = 0;
+        try {
+            wifiP2pManager.connect(wifiChannel, config, new WifiP2pManager.ActionListener() {
+                @Override public void onSuccess() {
+                    JSObject result = new JSObject();
+                    result.put("started", true);
+                    result.put("transportReady", false);
+                    result.put("message", "Connection request accepted by Android; waiting for Wi-Fi Direct group formation.");
+                    call.resolve(result);
+                    emitTransportState("connection-requested", address);
+                }
+                @Override public void onFailure(int reason) {
+                    call.reject("Wi-Fi Direct connection failed. Android reason: " + reason);
+                }
+            });
+        } catch (SecurityException error) {
+            call.reject("Wi-Fi Direct permission was denied.", error);
+        }
+    }
+
+    @PluginMethod
+    public void startPacketTransport(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Wi-Fi permission is required before starting local transport.");
+            return;
+        }
+        ensureWifiP2p();
+        if (wifiP2pManager == null || wifiChannel == null) {
+            call.reject("Wi-Fi Direct is not available on this device.");
+            return;
+        }
+        try {
+            wifiP2pManager.requestConnectionInfo(wifiChannel, info -> {
+                if (info == null || !info.groupFormed) {
+                    call.reject("Wi-Fi Direct group is not connected yet.");
+                    return;
+                }
+                if (info.isGroupOwner) {
+                    startPacketServer(call);
+                } else if (info.groupOwnerAddress != null) {
+                    connectPacketClient(info.groupOwnerAddress.getHostAddress(), call);
+                } else {
+                    call.reject("Android did not provide the Wi-Fi Direct group-owner address.");
+                }
+            });
+        } catch (SecurityException error) {
+            call.reject("Wi-Fi Direct connection information permission was denied.", error);
+        }
+    }
+
+    @PluginMethod
+    public void sendLocalPacket(PluginCall call) {
+        String encoded = call.getString("packet", "");
+        if (encoded == null || encoded.isEmpty()) {
+            call.reject("An encrypted local packet is required.");
+            return;
+        }
+        byte[] packet;
+        try { packet = Base64.decode(encoded, Base64.URL_SAFE | Base64.NO_WRAP); }
+        catch (IllegalArgumentException error) { call.reject("Local packet encoding is invalid."); return; }
+        if (packet.length == 0 || packet.length > MAX_LOCAL_PACKET_BYTES) {
+            call.reject("Local packet exceeds the allowed 256 KiB transport frame.");
+            return;
+        }
+        Socket socket = transportSocket;
+        if (socket == null || socket.isClosed() || !socket.isConnected()) {
+            call.reject("No Wi-Fi Direct packet transport is connected.");
+            return;
+        }
+        transportExecutor.execute(() -> {
+            try {
+                synchronized (transportWriteLock) {
+                    DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                    output.writeInt(packet.length);
+                    output.write(packet);
+                    output.flush();
+                }
+                JSObject result = new JSObject();
+                result.put("sent", true);
+                result.put("bytes", packet.length);
+                call.resolve(result);
+            } catch (Exception error) {
+                closeTransportSocket("send-failed");
+                call.reject("Could not send the local encrypted packet.", error);
+            }
+        });
+    }
+
+    @PluginMethod
+    public void stopPacketTransport(PluginCall call) {
+        stopPacketTransportInternal("user");
+        JSObject result = new JSObject();
+        result.put("stopped", true);
+        call.resolve(result);
+    }
+
+    private void ensureWifiP2p() {
+        try {
+            if (wifiP2pManager == null) wifiP2pManager = (WifiP2pManager) getContext().getSystemService(Context.WIFI_P2P_SERVICE);
+            if (wifiP2pManager != null && wifiChannel == null) {
+                wifiChannel = wifiP2pManager.initialize(getContext(), getActivity().getMainLooper(), () -> emitTransportState("wifi-channel-disconnected", ""));
+            }
+        } catch (Exception error) {
+            emitTransportState("wifi-direct-unavailable", error.getClass().getSimpleName());
+        }
+    }
+
+    private void startPacketServer(PluginCall call) {
+        transportExecutor.execute(() -> {
+            try {
+                ServerSocket existing = transportServer;
+                if (existing == null || existing.isClosed()) {
+                    ServerSocket server = new ServerSocket();
+                    server.setReuseAddress(true);
+                    server.bind(new InetSocketAddress(LOCAL_PACKET_PORT), 2);
+                    transportServer = server;
+                    transportClosed = false;
+                    transportExecutor.execute(() -> acceptPacketClients(server));
+                }
+                JSObject result = new JSObject();
+                result.put("listening", true);
+                result.put("connected", isTransportConnected());
+                result.put("role", "group-owner");
+                result.put("port", LOCAL_PACKET_PORT);
+                call.resolve(result);
+                emitTransportState("packet-server-listening", String.valueOf(LOCAL_PACKET_PORT));
+            } catch (Exception error) {
+                call.reject("Could not start the local packet listener.", error);
+            }
+        });
+    }
+
+    private void acceptPacketClients(ServerSocket server) {
+        while (!transportClosed && server != null && !server.isClosed()) {
+            try {
+                Socket socket = server.accept();
+                socket.setKeepAlive(true);
+                socket.setTcpNoDelay(true);
+                attachTransportSocket(socket);
+            } catch (Exception error) {
+                if (!transportClosed) emitTransportState("packet-accept-failed", error.getClass().getSimpleName());
+                break;
+            }
+        }
+    }
+
+    private void connectPacketClient(String host, PluginCall call) {
+        transportExecutor.execute(() -> {
+            try {
+                Socket socket = new Socket();
+                socket.connect(new InetSocketAddress(host, LOCAL_PACKET_PORT), 8000);
+                socket.setKeepAlive(true);
+                socket.setTcpNoDelay(true);
+                attachTransportSocket(socket);
+                JSObject result = new JSObject();
+                result.put("connected", true);
+                result.put("role", "group-client");
+                result.put("host", host);
+                result.put("port", LOCAL_PACKET_PORT);
+                call.resolve(result);
+            } catch (Exception error) {
+                call.reject("Could not connect to the Wi-Fi Direct packet listener.", error);
+            }
+        });
+    }
+
+    private void attachTransportSocket(Socket socket) {
+        closeTransportSocket("replaced");
+        transportSocket = socket;
+        transportClosed = false;
+        emitTransportState("packet-transport-connected", socket.getInetAddress() == null ? "" : socket.getInetAddress().getHostAddress());
+        transportExecutor.execute(() -> readTransportFrames(socket));
+    }
+
+    private void readTransportFrames(Socket socket) {
+        try {
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            while (!transportClosed && !socket.isClosed()) {
+                int length = input.readInt();
+                if (length <= 0 || length > MAX_LOCAL_PACKET_BYTES) throw new IllegalStateException("Invalid local packet length.");
+                byte[] packet = new byte[length];
+                input.readFully(packet);
+                JSObject payload = new JSObject();
+                payload.put("packet", Base64.encodeToString(packet, Base64.URL_SAFE | Base64.NO_WRAP));
+                payload.put("bytes", length);
+                notifyListeners("localPacketReceived", payload);
+            }
+        } catch (Exception error) {
+            if (!transportClosed) emitTransportState("packet-transport-disconnected", error.getClass().getSimpleName());
+            closeTransportSocket("peer-disconnected");
+        }
+    }
+
+    private boolean isTransportConnected() {
+        Socket socket = transportSocket;
+        return socket != null && socket.isConnected() && !socket.isClosed();
+    }
+
+    private void closeTransportSocket(String reason) {
+        Socket socket = transportSocket;
+        transportSocket = null;
+        if (socket != null) try { socket.close(); } catch (Exception ignored) {}
+        emitTransportState("packet-transport-closed", reason);
+    }
+
+    private void stopPacketTransportInternal(String reason) {
+        transportClosed = true;
+        closeTransportSocket(reason);
+        ServerSocket server = transportServer;
+        transportServer = null;
+        if (server != null) try { server.close(); } catch (Exception ignored) {}
+    }
+
+    private void emitTransportState(String state, String detail) {
+        JSObject payload = new JSObject();
+        payload.put("state", state);
+        payload.put("detail", detail);
+        payload.put("transportReady", isTransportConnected());
+        payload.put("transport", "wifi-direct-tcp");
+        notifyListeners("transportState", payload);
     }
 
     @PluginMethod
@@ -357,7 +645,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
                 payload.put("groupFormed", info.groupFormed);
                 payload.put("isGroupOwner", info.isGroupOwner);
                 payload.put("groupOwnerAddress", info.groupOwnerAddress == null ? "" : info.groupOwnerAddress.getHostAddress());
-                payload.put("transportReady", false);
+                payload.put("transportReady", isTransportConnected());
                 payload.put("verified", false);
                 notifyListeners("wifiDirectLinkChanged", payload);
             });
@@ -373,6 +661,14 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         payload.put("phase", "discovery-only");
         payload.put("transportReady", false);
         notifyListeners("discoveryState", payload);
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        stopPacketTransportInternal("plugin-destroyed");
+        stopDiscoveryInternal("plugin-destroyed");
+        transportExecutor.shutdownNow();
+        super.handleOnDestroy();
     }
 
     private void stopDiscoveryInternal(String reason) {
