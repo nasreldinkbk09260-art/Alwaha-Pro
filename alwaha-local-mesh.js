@@ -219,12 +219,28 @@
     await enqueueRelay(packet,'');
     return {sent:false,queued:true,id:packet.id,route:'store-and-forward'};
   }
+  async function getLocalCacheKey(){
+    const row=await vault().getRecord('mesh:local-at-rest-key-v1');
+    if(row?.value?.type==='secret'&&row.value.algorithm?.name==='AES-GCM')return row.value;
+    const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    await vault().put('mesh:local-at-rest-key-v1',key);return key;
+  }
+  async function storeLocalEncrypted(keyName,value){
+    const key=await getLocalCacheKey(),iv=crypto.getRandomValues(new Uint8Array(12));
+    const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(value)));
+    await vault().put(keyName,{version:1,iv:bytesToB64(iv),cipher:bytesToB64(new Uint8Array(cipher))});
+  }
+  async function readLocalEncrypted(keyName){
+    const row=await vault().getRecord(keyName),value=row?.value;
+    if(!value||value.version!==1||!value.iv||!value.cipher)return null;
+    try{const key=await getLocalCacheKey(),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64ToBytes(value.iv)},key,b64ToBytes(value.cipher));return JSON.parse(dec.decode(plain));}catch(error){console.warn('[Alwaha Mesh] local encrypted file cache unavailable:',error);return null;}
+  }
   async function restoreFile(fileId){
     if(fileUrls.has(fileId))return fileUrls.get(fileId);
-    const rows=await vault().getAll(),metaRow=rows.find(row=>row.key==='mesh:file:'+fileId+':meta'),meta=metaRow?.value;
+    const meta=await readLocalEncrypted('mesh:file:'+fileId+':meta');
     if(!meta||!Number.isInteger(meta.total)||meta.total<1||meta.total>512)return null;
     const parts=[];
-    for(let index=0;index<meta.total;index++){const row=rows.find(item=>item.key==='mesh:file:'+fileId+':'+index);if(!row?.value?.chunk)return null;parts.push(b64ToBytes(row.value.chunk));}
+    for(let index=0;index<meta.total;index++){const chunk=await readLocalEncrypted('mesh:file:'+fileId+':'+index);if(!chunk?.chunk)return null;parts.push(b64ToBytes(chunk.chunk));}
     const blob=new Blob(parts,{type:meta.mime||'application/octet-stream'});if(blob.size>25*1024*1024)return null;
     const url=URL.createObjectURL(blob);fileUrls.set(fileId,url);return url;
   }
@@ -234,7 +250,7 @@
     const peer=await getPeerByAccountId(accountUserId),fileId=crypto.randomUUID(),total=Math.ceil(file.size/FILE_CHUNK_BYTES);
     if(!peer)throw new Error('الجهاز المقصود غير مقترن.');
     const meta={total,name:String(file.name||'offline-file'),mime:file.type||'application/octet-stream',size:file.size,kind,context};
-    await vault().put('mesh:file:'+fileId+':meta',meta);
+    await storeLocalEncrypted('mesh:file:'+fileId+':meta',meta);
     for(let index=0;index<total;index++){
       const bytes=new Uint8Array(await file.slice(index*FILE_CHUNK_BYTES,Math.min(file.size,(index+1)*FILE_CHUNK_BYTES)).arrayBuffer());
       await vault().put('mesh:file:'+fileId+':'+index,{chunk:bytesToB64(bytes)});
