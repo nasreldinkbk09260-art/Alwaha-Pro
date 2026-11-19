@@ -2774,7 +2774,7 @@ async function toggleInternalNotificationCenter() {
             const requestId=++notificationRenderRequestId;
             const me = await requireAuthenticatedUser('سجل الدخول أولاً لعرض التنبيهات.');
             if (!me || requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open')) return;
-            if(!navigator.onLine&&!window.AlwahaLocalMesh?.isEnabled()){}else if(navigator.onLine)await syncPendingNotificationReads(me.id);
+            if(navigator.onLine!==false&&!window.AlwahaLocalMesh?.isEnabled())await syncPendingNotificationReads(me.id);
             if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             if(center.parentElement!==document.body)document.body.appendChild(center);
             center.classList.add('alwaha-notifications-open');
