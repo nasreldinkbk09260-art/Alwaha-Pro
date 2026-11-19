@@ -375,7 +375,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             }
         } catch (Exception error) {
             if (!transportClosed) emitTransportState("packet-transport-disconnected", error.getClass().getSimpleName());
-            closeTransportSocket("peer-disconnected");
+            closeTransportSocketFor(socket, "peer-disconnected");
         }
     }
 
@@ -387,6 +387,19 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void closeTransportSocket(String reason) {
         Socket socket = transportSocket;
         transportSocket = null;
+        closeSocketAndNotify(socket, reason);
+    }
+
+    private void closeTransportSocketFor(Socket expected, String reason) {
+        if (transportSocket != expected) {
+            try { if (expected != null) expected.close(); } catch (Exception ignored) {}
+            return;
+        }
+        transportSocket = null;
+        closeSocketAndNotify(expected, reason);
+    }
+
+    private void closeSocketAndNotify(Socket socket, String reason) {
         if (socket != null) try { socket.close(); } catch (Exception ignored) {}
         emitTransportState("packet-transport-closed", reason);
     }
