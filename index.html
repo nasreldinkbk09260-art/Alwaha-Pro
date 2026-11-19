@@ -2730,7 +2730,7 @@ async function toggleInternalNotificationCenter() {
                 [rows,pendingFriendRequests,cachedRequesterDirectory]=await Promise.all([
                     window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications'),
                     window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requests'),
-                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory')
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requester-directory')
                 ]);
             }else{
                 [rows,pendingFriendRequests]=await Promise.all([
@@ -2768,7 +2768,7 @@ async function toggleInternalNotificationCenter() {
                     requesterQuery=(Array.isArray(cachedRequesterDirectory)?cachedRequesterDirectory:[]).filter(user=>requesterIds.includes(String(user.id)));
                 }else if(requesterIds.length){
                     requesterQuery=await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`);
-                    if(Array.isArray(requesterQuery))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-directory',requesterQuery).catch(error=>console.warn('[Alwaha Vault] friend directory cache failed:',error));
+                    if(Array.isArray(requesterQuery))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-requester-directory',requesterQuery).catch(error=>console.warn('[Alwaha Vault] friend directory cache failed:',error));
                 }
                 if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
                 const requesterMap=new Map((Array.isArray(requesterQuery)?requesterQuery:[]).map(u=>[String(u.id),u]));
@@ -6793,7 +6793,7 @@ function triggerAnimeAiConverterFilter() {
             let users=null,requests=null;
             if(offlineDirectory){
                 [users,requests]=await Promise.all([
-                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory'),
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requester-directory'),
                     window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-relations')
                 ]);
             }else{
