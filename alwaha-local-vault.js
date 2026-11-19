@@ -59,7 +59,7 @@
     for(const row of rows){if(typeof row.key==='string'&&row.key.startsWith(prefix)){const messages=await getEncryptedCache(row.key);out.push({conversationId:row.key.slice(prefix.length),messages:Array.isArray(messages)?messages:[]});}}
     return out;
   }
-  const ACCOUNT_VIEW_CACHE_NAMES=new Set(['notifications','friend-requests','friend-relations','friend-directory','friend-requester-directory','market-transactions']);
+  const ACCOUNT_VIEW_CACHE_NAMES=new Set(['notifications','friend-requests','friend-relations','friend-directory','friend-requester-directory','market-transactions','pending-notification-reads']);
   async function saveAccountViewCache(userId,viewName,value){
     const name=String(viewName||'');
     if(!userId||!ACCOUNT_VIEW_CACHE_NAMES.has(name))return false;
