@@ -2212,9 +2212,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         async function sendDirectChatMedia(file){
             if(!file||directMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط المحادثة.');const peerId=String(currentChatUserId||'');if(!me||!peerId)return;
-            if(!navigator.onLine)return triggerToastNotification('حُفظ اختيار الملف مؤقتًا في الهاتف؛ الإرسال ينتظر عودة الاتصال أو اكتمال شبكة Mesh.','info');
+            if(!navigator.onLine)return triggerToastNotification('إرسال الوسائط دون اتصال غير متاح بعد؛ لم يُرفع الملف ولم يُرسل.','info');
             if(!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل إرسال الوسائط.','info');
-            let file=file;
             if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
             const conversationKey=directChatConversationKey(me.id,peerId),path=await uploadPrivateChatMedia(file,conversationKey,me);if(!path)return;
             const type=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
@@ -2229,7 +2228,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         async function sendMarketChatMedia(file){
             if(!file||marketMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط السوق.');const conversationId=String(currentMarketConversationId||'');if(!me||!conversationId)return;
-            if(!navigator.onLine)return triggerToastNotification('حُفظ اختيار الملف مؤقتًا؛ الإرسال ينتظر عودة الاتصال أو اكتمال شبكة Mesh.','info');
+            if(!navigator.onLine)return triggerToastNotification('إرسال وسائط السوق دون اتصال غير متاح بعد؛ لم يُرفع الملف ولم يُرسل.','info');
             const conversations=await supabaseFetch('market_conversations?id=eq.'+encodeURIComponent(conversationId)+'&select=id,buyer_id,seller_id&limit=1');
             const conversation=Array.isArray(conversations)?conversations[0]:null;
             if(!conversation||![conversation.buyer_id,conversation.seller_id].includes(me.id))return triggerToastNotification('لا تملك صلاحية إرسال الوسائط في هذه المحادثة.','error');
