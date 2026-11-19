@@ -380,14 +380,18 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             return;
         }
         Socket socket = transportSocket;
-        if (socket == null || socket.isClosed() || !socket.isConnected()) {
-            call.reject("No Wi-Fi Direct packet transport is connected.");
+        BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
+        boolean wifiReady = socket != null && !socket.isClosed() && socket.isConnected();
+        boolean bluetoothReady = bluetoothSocket != null && !bluetoothSocket.isClosed() && bluetoothSocket.isConnected();
+        if (!wifiReady && !bluetoothReady) {
+            call.reject("No Wi-Fi Direct or Bluetooth packet transport is connected.");
             return;
         }
         transportExecutor.execute(() -> {
             try {
                 synchronized (transportWriteLock) {
-                    DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+                    OutputStream rawOutput = bluetoothReady ? bluetoothSocket.getOutputStream() : socket.getOutputStream();
+                    DataOutputStream output = new DataOutputStream(rawOutput);
                     output.writeInt(packet.length);
                     output.write(packet);
                     output.flush();
@@ -489,6 +493,48 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         transportExecutor.execute(() -> readTransportFrames(socket));
     }
 
+    private void attachBluetoothTransportSocket(BluetoothSocket socket) {
+        closeTransportSocket("replaced");
+        bluetoothTransportSocket = socket;
+        transportClosed = false;
+        String address = "";
+        try { address = socket.getRemoteDevice() == null ? "" : socket.getRemoteDevice().getAddress(); } catch (SecurityException ignored) {}
+        emitTransportState("packet-transport-connected", address);
+        transportExecutor.execute(() -> readBluetoothFrames(socket));
+    }
+
+    private void acceptBluetoothClients(BluetoothServerSocket server) {
+        while (!bluetoothServerClosed && server != null) {
+            try {
+                BluetoothSocket socket = server.accept();
+                if (socket != null) attachBluetoothTransportSocket(socket);
+            } catch (Exception error) {
+                if (!bluetoothServerClosed) emitTransportState("bluetooth-accept-failed", error.getClass().getSimpleName());
+                break;
+            }
+        }
+    }
+
+    private void readBluetoothFrames(BluetoothSocket socket) {
+        try {
+            DataInputStream input = new DataInputStream(socket.getInputStream());
+            while (!transportClosed && socket.isConnected() && !socket.isClosed()) {
+                int length = input.readInt();
+                if (length <= 0 || length > MAX_LOCAL_PACKET_BYTES) throw new IllegalStateException("Invalid Bluetooth packet length.");
+                byte[] packet = new byte[length];
+                input.readFully(packet);
+                JSObject payload = new JSObject();
+                payload.put("packet", Base64.encodeToString(packet, Base64.URL_SAFE | Base64.NO_WRAP));
+                payload.put("bytes", length);
+                payload.put("transport", "bluetooth-rfcomm");
+                notifyListeners("localPacketReceived", payload);
+            }
+        } catch (Exception error) {
+            if (!transportClosed) emitTransportState("packet-transport-disconnected", error.getClass().getSimpleName());
+            closeBluetoothTransportSocketFor(socket, "peer-disconnected");
+        }
+    }
+
     private void readTransportFrames(Socket socket) {
         try {
             DataInputStream input = new DataInputStream(socket.getInputStream());
@@ -510,13 +556,35 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     private boolean isTransportConnected() {
         Socket socket = transportSocket;
+        BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
+        boolean wifiReady = socket != null && socket.isConnected() && !socket.isClosed();
+        boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected() && !bluetoothSocket.isClosed();
+        return wifiReady || bluetoothReady;
+    }
+
+    private boolean isBluetoothTransportConnected() {
+        BluetoothSocket socket = bluetoothTransportSocket;
         return socket != null && socket.isConnected() && !socket.isClosed();
     }
 
     private void closeTransportSocket(String reason) {
         Socket socket = transportSocket;
+        BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
         transportSocket = null;
-        closeSocketAndNotify(socket, reason);
+        bluetoothTransportSocket = null;
+        if (socket != null) try { socket.close(); } catch (Exception ignored) {}
+        if (bluetoothSocket != null) try { bluetoothSocket.close(); } catch (Exception ignored) {}
+        emitTransportState("packet-transport-closed", reason);
+    }
+
+    private void closeBluetoothTransportSocketFor(BluetoothSocket expected, String reason) {
+        if (bluetoothTransportSocket != expected) {
+            try { if (expected != null) expected.close(); } catch (Exception ignored) {}
+            return;
+        }
+        bluetoothTransportSocket = null;
+        if (expected != null) try { expected.close(); } catch (Exception ignored) {}
+        emitTransportState("packet-transport-closed", reason);
     }
 
     private void closeTransportSocketFor(Socket expected, String reason) {
@@ -539,6 +607,10 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         ServerSocket server = transportServer;
         transportServer = null;
         if (server != null) try { server.close(); } catch (Exception ignored) {}
+        bluetoothServerClosed = true;
+        BluetoothServerSocket bluetoothServer = bluetoothServerSocket;
+        bluetoothServerSocket = null;
+        if (bluetoothServer != null) try { bluetoothServer.close(); } catch (Exception ignored) {}
     }
 
     private void emitTransportState(String state, String detail) {
