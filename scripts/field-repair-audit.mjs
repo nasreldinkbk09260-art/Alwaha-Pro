@@ -25,7 +25,15 @@ else if (html.includes('respondFriendRequest') && html.includes('طلبات صد
 else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && /fr\.status\s*=\s*'accepted'/.test(migration) && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if (sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-") && sw.includes('/storage/v1/object/public/') && sw.includes('image/') && sw.includes('/rest/v1/')) pass('service worker caches static shell and public image media, not REST API');
+if (
+  /const CACHE_NAME = 'alwaha-pro-v3\\.0\\.4-[^']+'/.test(sw) &&
+  sw.includes("url.pathname.startsWith('/storage/v1/object/public/')") &&
+  sw.includes("response.ok && /^image\\//i.test(type)") &&
+  sw.includes('size<=2*1024*1024') &&
+  sw.includes("if (request.headers.has('Authorization')) return;") &&
+  sw.includes('rest\\/v1') &&
+  sw.includes('token|access_token|refresh_token|signature|sig|expires')
+) pass('service worker caches bounded public images and static shell, while excluding REST/API/authenticated/private media');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');
