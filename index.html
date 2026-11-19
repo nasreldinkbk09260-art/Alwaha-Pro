@@ -6789,10 +6789,21 @@ function triggerAnimeAiConverterFilter() {
             if(!me)return;
             container.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:12px;padding:12px;">جاري تحميل أعضاء الواحة...</div>';
             const query='friend_requests?or=(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(me.id)+')&select=id,requester_id,target_id,status,created_at&order=created_at.desc&limit=500';
-            const [users,requests]=await Promise.all([
-                supabaseFetch('user_directory?select=id,first_name,last_name,username,avatar_url,is_verified,created_at,gender&limit=100'),
-                supabaseFetch(query)
-            ]);
+            const offlineDirectory=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            let users=null,requests=null;
+            if(offlineDirectory){
+                [users,requests]=await Promise.all([
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory'),
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-relations')
+                ]);
+            }else{
+                [users,requests]=await Promise.all([
+                    supabaseFetch('user_directory?select=id,first_name,last_name,username,avatar_url,is_verified,created_at,gender&limit=100'),
+                    supabaseFetch(query)
+                ]);
+                if(Array.isArray(users))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-directory',users).catch(error=>console.warn('[Alwaha Vault] friend directory cache failed:',error));
+                if(Array.isArray(requests))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-relations',requests).catch(error=>console.warn('[Alwaha Vault] friend relations cache failed:',error));
+            }
             if(!Array.isArray(users)){
                 container.innerHTML='<div style="text-align:center;color:#ffb8dd;padding:12px;">تعذر تحميل دليل المستخدمين. تحقق من الاتصال ثم أعد المحاولة.</div>';
                 return;
@@ -6827,7 +6838,7 @@ function triggerAnimeAiConverterFilter() {
                 return '<div class="profile-menu-btn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:#ffffff0b;padding:11px;border:1px solid #b8e7ff20;border-radius:14px;gap:8px;">'+
                     '<div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="'+escapeHtml(avatar)+'" alt="الصورة الشخصية" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff55;"><div style="min-width:0;"><div style="font-weight:bold;color:#e8fbff;">'+escapeHtml(name)+' '+(user.is_verified?'<i class="fa-solid fa-circle-check" style="color:#8bf4ff;"></i>':'')+'</div>'+username+'<div style="font-size:10px;color:#92a8c0;">بيانات التواصل خاصة</div></div></div>'+
                     '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;">'+friendControl+'<button type="button" class="btn-action" aria-label="مراسلة '+escapeHtml(name)+'" style="padding:7px 11px;background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#102033;border-radius:20px;" onclick="openTargetUserDirectChat(\''+escapeJs(name)+'\',\'\',\''+escapeJs(user.id)+'\')"><i class="fa-solid fa-paper-plane"></i></button><button type="button" class="btn-action" title="عرض الملف الشخصي" aria-label="عرض ملف '+escapeHtml(name)+' الشخصي" style="padding:7px 10px;background:rgba(255,255,255,.08);color:#8bf4ff;border:1px solid #8bf4ff55;border-radius:20px;" onclick="openPublicUserProfile(\''+escapeJs(user.id)+'\')"><i class="fa-solid fa-user"></i></button></div></div>';
-            }).join('');
+            }).join('')+(offlineDirectory?'<div role="status" style="padding:8px;text-align:center;color:#ffd88b;font-size:9px;">دليل محفوظ محليًا ومشفّر؛ إجراءات الصداقة تحتاج اتصالاً للمزامنة.</div>':'');
         }
 
         async function openAlwahaSupportTicket(){
