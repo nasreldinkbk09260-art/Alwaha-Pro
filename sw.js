@@ -8,6 +8,7 @@ const PRECACHE_ASSETS = [
   './games.js',
   './production-polish.js',
   './alwaha-profile-editor.js',
+  './alwaha-profile-editor.js?v=3.0.4-iphone-pwa-20261118',
   './alwaha-call-feedback.js',
   './compatibility.js',
   './alwaha-local-vault.js',
