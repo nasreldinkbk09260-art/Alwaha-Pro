@@ -1478,6 +1478,7 @@ img,video,canvas{max-width:100%}
         let marketLifecycleSchemaReady = null;
         let marketLifecycleSchemaPromise = null;
         let marketTransactionSchemaReady = null;
+        let marketDeliverySchemaReady = null;
         let marketTransactionSchemaPromise = null;
         let activeReelContext = { id: '', title: '', mediaUrl: '', authorId: '' };
         let reelsFeedRequestId = 0;
@@ -4083,40 +4084,178 @@ async function subscribeToMarketConversation() {
                     <span style="min-width:0;flex:1;display:block;"><span style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#8bf4ff;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>${badge}</span><span style="display:block;font-size:10px;color:#ffd86b;margin-top:2px;">${escapeHtml(productTitle)}</span><span style="display:block;font-size:10px;color:#a9b7c9;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</span></span></button>${consentUi}</article>`;
             }).join('');
         }
+        async function hasMarketDeliverySchema() {
+            if (marketDeliverySchemaReady === true) return true;
+            if (marketDeliverySchemaReady === false) return false;
+            const columns = await supabaseFetch('market_transactions?select=fulfillment_method,delivery_status,delivery_recipient_name,delivery_recipient_phone,delivery_address,delivery_instructions,delivery_fee,delivery_provider,tracking_reference,delivery_updated_at,delivered_at&limit=0');
+            marketDeliverySchemaReady = Array.isArray(columns);
+            return marketDeliverySchemaReady;
+        }
+
+        function marketDeliveryStatusLabel(status) {
+            const labels = {
+                not_requested:'لم يُطلب توصيل',
+                requested:'طلب توصيل جديد',
+                accepted:'وافق البائع على التوصيل',
+                preparing:'يجري تجهيز الطلب',
+                shipped:'تم شحن الطلب',
+                out_for_delivery:'خرج الطلب للتسليم',
+                delivered:'تم تأكيد الاستلام',
+                failed:'تعذّر التسليم',
+                cancelled:'أُلغي التوصيل'
+            };
+            return labels[String(status||'not_requested')] || 'حالة توصيل غير معروفة';
+        }
+
+        async function requestMarketDelivery(transactionId) {
+            const me=await requireAuthenticatedUser('سجّل الدخول أولاً لطلب التوصيل.');if(!me)return;
+            if(!(await detectMarketTransactionSchema()) || !(await hasMarketDeliverySchema()))
+                return triggerToastNotification('ميزة التوصيل تحتاج إلى تحديث مخطط قاعدة البيانات أولاً. لم يتم إرسال بياناتك.','info');
+            const recipient=window.prompt('اسم مستلم الطلب:','');
+            if(recipient===null)return;
+            const phone=window.prompt('رقم هاتف المستلم للتنسيق بشأن التسليم:','');
+            if(phone===null)return;
+            const address=window.prompt('عنوان التسليم التفصيلي. سيظهر للمشتري والبائع المعنيين فقط:','');
+            if(address===null)return;
+            const instructions=window.prompt('تعليمات إضافية للمندوب (اختياري):','');
+            if(instructions===null)return;
+            if(!recipient.trim()||!phone.trim()||address.trim().length<5)
+                return triggerToastNotification('أكمل اسم المستلم ورقم الهاتف والعنوان قبل إرسال طلب التوصيل.','error');
+            if(!window.confirm('سيتم حفظ العنوان ورقم الهاتف داخل سجل المعاملة الخاص بالمشتري والبائع فقط، ولن يظهر الإعلان للعامة. هل تريد إرسال طلب التوصيل؟'))return;
+            const result=await supabaseFetch('rpc/request_market_delivery',{
+                method:'POST',
+                body:JSON.stringify({
+                    p_transaction_id:transactionId,
+                    p_recipient_name:recipient.trim(),
+                    p_recipient_phone:phone.trim(),
+                    p_delivery_address:address.trim(),
+                    p_delivery_instructions:String(instructions||'').trim()
+                }),
+                prefer:'return=representation'
+            });
+            if(result===null)return triggerToastNotification('تعذر حفظ طلب التوصيل. تأكد من تطبيق تحديث قاعدة البيانات.','error');
+            triggerToastNotification('تم إرسال طلب التوصيل إلى البائع. ستظهر تحديثات الحالة في سجل المعاملة.','success');
+            await renderMarketTransactionsList();
+        }
+
+        async function updateMarketDelivery(transactionId,nextStatus) {
+            const me=await requireAuthenticatedUser('سجّل الدخول أولاً لتحديث حالة التوصيل.');if(!me)return;
+            if(!(await hasMarketDeliverySchema()))return triggerToastNotification('تحديث التوصيل غير متاح قبل تحديث قاعدة البيانات.','info');
+            let fee=null,provider=null,tracking=null;
+            if(nextStatus==='accepted'){
+                const feeText=window.prompt('رسوم التوصيل المتفق عليها (اتركها فارغة إذا لم تُحدد بعد):','');
+                if(feeText===null)return;
+                if(String(feeText).trim()!==''){
+                    fee=Number(feeText);
+                    if(!Number.isFinite(fee)||fee<0||fee>1000000)return triggerToastNotification('قيمة رسوم التوصيل غير صحيحة.','error');
+                }
+                provider=window.prompt('شركة التوصيل أو طريقة التسليم (مثال: توصيل البائع):','توصيل البائع');
+                if(provider===null)return;
+            }
+            if(nextStatus==='shipped'){
+                tracking=window.prompt('رقم التتبع إن وجد (اختياري):','');
+                if(tracking===null)return;
+            }
+            const confirmText='تحديث حالة الطلب إلى: '+marketDeliveryStatusLabel(nextStatus)+'؟';
+            if(!window.confirm(confirmText))return;
+            const result=await supabaseFetch('rpc/update_market_delivery',{
+                method:'POST',
+                body:JSON.stringify({
+                    p_transaction_id:transactionId,
+                    p_delivery_status:nextStatus,
+                    p_delivery_fee:fee,
+                    p_delivery_provider:provider,
+                    p_tracking_reference:tracking
+                }),
+                prefer:'return=representation'
+            });
+            if(result===null)return triggerToastNotification('تعذر تحديث حالة التوصيل. ربما تغيرت حالة الطلب؛ حدّث السجل وحاول مجدداً.','error');
+            triggerToastNotification('تم تحديث حالة التوصيل.','success');
+            await renderMarketTransactionsList();
+        }
+
         async function renderMarketTransactionsList() {
             const requestId=++marketTransactionsRenderRequestId;
             const holder=document.getElementById('market-transactions-container');if(!holder)return;
             const me=await getCurrentAuthUser();if(requestId!==marketTransactionsRenderRequestId)return;if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
             if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">تعذر التحقق من مخطط سجل المعاملات. لم يتم تحميل السجل؛ راجع حالة الخدمة ثم أعد المحاولة.</div>';return;}
-            const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status&order=created_at.desc&limit=100`);
+            const deliveryReady=await hasMarketDeliverySchema();
+            const baseFields='id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status';
+            const deliveryFields=deliveryReady?',fulfillment_method,delivery_status,delivery_recipient_name,delivery_recipient_phone,delivery_address,delivery_instructions,delivery_fee,delivery_provider,tracking_reference,delivery_updated_at,delivered_at':'';
+            const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=${baseFields}${deliveryFields}&order=created_at.desc&limit=100`);
             const activeUser=await getCurrentAuthUser();
             if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;
-            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من تطبيق ترحيلات السوق الآمنة.</div>`;return;}
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من ترحيلات السوق الآمنة.</div>`;return;}
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">لا توجد معاملات مسجلة بعد.</div>';return;}
             holder.innerHTML=rows.map(tx=>{
                 const snap=tx.listing_snapshot||{},warranty=Number(tx.guarantee_days||0),expiry=tx.guarantee_expires_at?new Date(tx.guarantee_expires_at).toLocaleDateString('ar-EG'):'—',retention=tx.retention_until?new Date(tx.retention_until).toLocaleDateString('ar-EG'):'—';
-                const buyer=tx.buyer_id===me.id,role=buyer?'مشتري':'بائع',confirm=buyer&&!tx.buyer_confirmed_at?`<button type="button" onclick="confirmMarketTransactionReceipt('${escapeJs(tx.id)}')" style="margin-top:8px;background:#173a2b;color:#a8ffd7;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">تأكيد استلام السلعة</button>`:'';
+                const buyer=tx.buyer_id===me.id,role=buyer?'مشتري':'بائع';
+                const method=deliveryReady?(tx.fulfillment_method||'pickup'):'pickup';
+                const deliveryStatus=deliveryReady?(tx.delivery_status||'not_requested'):'not_requested';
+                const confirmAllowed=method==='pickup'||(method==='delivery'&&deliveryStatus==='out_for_delivery');
+                const confirm=buyer&&!tx.buyer_confirmed_at&&tx.status==='active'&&confirmAllowed
+                    ?`<button type="button" onclick="confirmMarketTransactionReceipt('${escapeJs(tx.id)}')" style="margin-top:8px;background:#173a2b;color:#a8ffd7;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">${method==='delivery'?'تأكيد استلام التوصيل':'تأكيد استلام السلعة'}</button>`:'';
+                const deliveryNext={
+                    requested:{status:'accepted',label:'قبول طلب التوصيل'},
+                    accepted:{status:'preparing',label:'بدء تجهيز الطلب'},
+                    preparing:{status:'shipped',label:'تسجيل شحن الطلب'},
+                    shipped:{status:'out_for_delivery',label:'خرج الطلب للتسليم'},
+                    out_for_delivery:{status:'failed',label:'تعذّر إتمام التسليم'},
+                    failed:{status:'preparing',label:'إعادة تجهيز الطلب'}
+                }[deliveryStatus];
+                const deliveryPanel=!deliveryReady
+                    ?'<div style="margin-top:8px;color:#a9bfd2;font-size:9px;">خيارات التوصيل ستظهر بعد تحديث مخطط قاعدة البيانات؛ سجل البيع والاستلام الشخصي يعملان كالمعتاد.</div>'
+                    :method==='delivery'
+                        ?`<div style="margin-top:9px;padding:9px;border:1px solid #8bf4ff28;border-radius:10px;background:#8bf4ff08;">
+                            <div style="font-size:10px;color:#8bf4ff;font-weight:800;">التوصيل · ${escapeHtml(marketDeliveryStatusLabel(deliveryStatus))}</div>
+                            <div style="font-size:9px;color:#d7e5f5;line-height:1.8;margin-top:5px;">
+                              المستلم: ${escapeHtml(tx.delivery_recipient_name||'—')}<br>
+                              الهاتف: ${escapeHtml(tx.delivery_recipient_phone||'—')}<br>
+                              العنوان الخاص: ${escapeHtml(tx.delivery_address||'—')}<br>
+                              تعليمات: ${escapeHtml(tx.delivery_instructions||'—')}<br>
+                              رسوم التوصيل: ${tx.delivery_fee===null||tx.delivery_fee===undefined?'لم تُحدد':escapeHtml(Number(tx.delivery_fee).toLocaleString('ar-EG'))}<br>
+                              شركة/طريقة التوصيل: ${escapeHtml(tx.delivery_provider||'—')}<br>
+                              رقم التتبع: ${escapeHtml(tx.tracking_reference||'—')}<br>
+                              آخر تحديث: ${tx.delivery_updated_at?new Date(tx.delivery_updated_at).toLocaleString('ar-EG'):'—'}
+                            </div>
+                            ${buyer&&deliveryStatus==='requested'&&!tx.buyer_confirmed_at?`<button type="button" onclick="requestMarketDelivery('${escapeJs(tx.id)}')" style="margin-top:7px;background:#25405c;color:#d9f2ff;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">تعديل عنوان وبيانات التوصيل</button>`:''}
+                            ${!buyer&&deliveryNext&&tx.status==='active'&&!tx.buyer_confirmed_at?`<button type="button" onclick="updateMarketDelivery('${escapeJs(tx.id)}','${deliveryNext.status}')" style="margin-top:7px;background:#173a2b;color:#a8ffd7;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">${deliveryNext.label}</button>`:''}
+                          </div>`
+                        :buyer&&tx.status==='active'&&!tx.buyer_confirmed_at
+                            ?'<button type="button" onclick="requestMarketDelivery(\''+escapeJs(tx.id)+'\')" style="margin-top:8px;background:#16445a;color:#bdeeff;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">طلب توصيل إلى عنواني</button><div style="font-size:8px;color:#a9bfd2;margin-top:4px;">يمكنك أيضاً الاتفاق مع البائع على الاستلام الشخصي؛ لا توجد رسوم أو شركة شحن مفروضة تلقائياً.</div>'
+                            :'';
                 const ownConsent=buyer?tx.delete_approved_by_buyer_at:tx.delete_approved_by_seller_at,otherConsent=buyer?tx.delete_approved_by_seller_at:tx.delete_approved_by_buyer_at;
                 const consentUi=tx.retention_notice_sent_at&&tx.status==='archived'?`<div style="margin-top:8px;padding:8px;border:1px solid #ffd86b33;border-radius:9px;background:#ffd86b0a;color:#d9c99c;font-size:9px;line-height:1.8;">الحذف الاختياري: موافقتك ${ownConsent?'مسجلة':'غير مسجلة'} · موافقة الطرف الآخر ${otherConsent?'مسجلة':'غير مسجلة'}. لا يتم حذف سجل المعاملة أو الضمان تلقائياً؛ يلزم موافقة الطرفين وانقضاء مهلة 7 أيام كاملة بعد الإشعار.<br><button type="button" onclick="approveMarketArchiveDeletion('transaction','${escapeJs(tx.id)}',${ownConsent?'false':'true'})" style="margin-top:6px;border:0;border-radius:7px;padding:6px 9px;background:${ownConsent?'#493044':'#173a2b'};color:${ownConsent?'#ffd1df':'#a8ffd7'};font:10px Cairo,sans-serif;">${ownConsent?'إلغاء موافقتي':'الموافقة على حذف سجل الأرشيف'}</button></div>`:'';
                 return `<article style="padding:10px;margin:0 0 8px;border:1px solid #8bf4ff25;border-radius:12px;background:#ffffff07;">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:11px;color:#8bf4ff;">${escapeHtml(snap.title||'معاملة محفوظة')}</strong><span style="font-size:9px;color:#a8ffd7;">${role} · ${tx.status==='disputed'?'قيد اعتراض — محفوظة':tx.status==='archived'?'مؤرشفة':'نشطة'}</span></div>
                   <div style="font-size:10px;color:#ffd86b;margin-top:4px;">${escapeHtml(snap.price||'السعر غير مسجل')} · ${escapeHtml(snap.category||'أخرى')}</div>
                   <div style="font-size:10px;color:#d7e5f5;line-height:1.7;margin-top:5px;white-space:pre-wrap;">${escapeHtml(snap.description||'لا يوجد وصف محفوظ.')}</div>
-                  <div style="font-size:10px;color:#a9bfd2;line-height:1.8;margin-top:6px;">الضمان: ${warranty?`${warranty} يوم — حتى ${expiry}`:'دون ضمان'}<br>الاتفاق: ${escapeHtml(tx.agreement_note||'لم تضاف ملاحظات')}<br>تاريخ العملية: ${new Date(tx.sold_at).toLocaleDateString('ar-EG')}<br>موعد الاحتفاظ حتى: ${retention}<br>سيبقى سجل البيع والضمان محفوظاً ما لم يوافق الطرفان على الحذف بعد إشعار مسبق.</div>${confirm}${consentUi}
+                  <div style="font-size:10px;color:#a9bfd2;line-height:1.8;margin-top:6px;">الضمان: ${warranty?`${warranty} يوم — حتى ${expiry}`:'دون ضمان'}<br>الاتفاق: ${escapeHtml(tx.agreement_note||'لم تضاف ملاحظات')}<br>تاريخ العملية: ${new Date(tx.sold_at).toLocaleDateString('ar-EG')}<br>موعد الاحتفاظ حتى: ${retention}<br>سيبقى سجل البيع والضمان محفوظاً ما لم يوافق الطرفان على الحذف بعد إشعار مسبق.</div>${deliveryPanel}${confirm}${consentUi}
                 </article>`;
             }).join('');
         }
+
         async function confirmMarketTransactionReceipt(transactionId) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً.');if(!me)return;
             if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سجل المعاملات؛ لم يتم تأكيد الاستلام.','info');
-            if(!window.confirm('تأكيد الاستلام؟ سيُسجل وقت تأكيدك ضمن سجل المعاملة.'))return;
-            const result=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&buyer_confirmed_at=is.null`,{method:'PATCH',body:JSON.stringify({buyer_confirmed_at:new Date().toISOString()}),prefer:'return=representation'});
-            if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تسجيل الاستلام. تحقق من صلاحيات قاعدة البيانات.','error');
-            triggerToastNotification('تم تسجيل استلام السلعة في سجل المعاملة.','success');await renderMarketTransactionsList();
+            const deliveryReady=await hasMarketDeliverySchema();
+            const select=deliveryReady?'id,buyer_confirmed_at,fulfillment_method,delivery_status':'id,buyer_confirmed_at';
+            const rows=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&select=${select}&limit=1`);
+            if(!Array.isArray(rows)||!rows.length)return triggerToastNotification('تعذر التحقق من حالة الاستلام. حدّث السجل ثم أعد المحاولة.','error');
+            const tx=rows[0];if(tx.buyer_confirmed_at)return triggerToastNotification('تم تسجيل استلام هذه المعاملة سابقاً.','info');
+            if(tx.fulfillment_method==='delivery'&&tx.delivery_status!=='out_for_delivery')return triggerToastNotification('لا يمكن تأكيد الاستلام قبل أن يسجل البائع خروج الطلب للتسليم.','info');
+            if(!window.confirm(tx.fulfillment_method==='delivery'?'تأكيد استلام طلب التوصيل؟ سيُحفظ وقت الاستلام النهائي.':'تأكيد استلام السلعة؟ سيُسجل وقت تأكيدك ضمن سجل المعاملة.'))return;
+            const now=new Date().toISOString();
+            const body=tx.fulfillment_method==='delivery'
+                ?{buyer_confirmed_at:now,delivery_status:'delivered',delivered_at:now,delivery_updated_at:now}
+                :{buyer_confirmed_at:now};
+            const result=await supabaseFetch(`market_transactions?id=eq.${encodeURIComponent(transactionId)}&buyer_id=eq.${encodeURIComponent(me.id)}&buyer_confirmed_at=is.null`,{method:'PATCH',body:JSON.stringify(body),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length)return triggerToastNotification('تعذر تسجيل الاستلام. تحقق من صلاحيات قاعدة البيانات أو حالة التوصيل.','error');
+            triggerToastNotification(tx.fulfillment_method==='delivery'?'تم تأكيد استلام التوصيل وإغلاق مسار الطلب.':'تم تسجيل استلام السلعة في سجل المعاملة.','success');await renderMarketTransactionsList();
         }
 
-        async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
+async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً لإدارة موافقتك على الأرشيف.');if(!me)return;
             if(!(await detectMarketTransactionSchema()))return triggerToastNotification('تعذر التحقق من مخطط سياسة الاحتفاظ؛ لم يتم تغيير موافقة الأرشيف.','info');
             if(!['conversation','transaction'].includes(recordType)||!recordId)return;
