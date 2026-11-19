@@ -199,7 +199,7 @@ if (!html.includes("supabaseClient.rpc('can_review_marketplace_product'")) fail(
 
 
 const approvedThemes=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1]);
-if(approvedThemes.length!==3||new Set(approvedThemes).size!==3||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x)))fail('Exactly the approved default/oasis/abyss themes must be selectable.');
+if(approvedThemes.length<3||new Set(approvedThemes).size!==approvedThemes.length||!['default','oasis','abyss'].every(x=>approvedThemes.includes(x))||!html.includes('window.registerAlwahaTheme')||!html.includes('window.AlwahaThemeRegistry'))fail('Baseline themes must remain and the registry must allow additional unique themes.');
 if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop')||!html.includes('alwaha-theme-backdrop'))fail('Integrated premium theme palettes/backdrop are incomplete.');
 // New seasonal wallpaper assets and themes are permitted; the build/cache audit verifies only that referenced assets exist.
 if(!sw.includes("'./alwaha-theme-system.css'")||!versionedCss('alwaha-theme-system.css')||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from matching offline precache.');
