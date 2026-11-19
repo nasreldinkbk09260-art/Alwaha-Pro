@@ -8,7 +8,7 @@
     ludo: { title: 'ليدو', icon: '🎲', color: '#00e0a4', description: 'ليدو لشخصين: رمي النرد، إخراج القطع، أكل قطع الخصم والوصول إلى النهاية.' },
     war: { title: 'الكتشينة — حرب الورق', icon: '🂡', color: '#ffd166', description: 'ورق لعب قياسي؛ أعلى ورقة تفوز بالجولة، والتعادل يفعّل الحرب.' }
   };
-  const SESSION = { room: null, user: null, timer: null, loading: false, pollGeneration: 0, syncFailed: false, roomActionBusy: false, qrScanner: null, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
+  const SESSION = { room: null, user: null, timer: null, pollVisibilityHandler: null, loading: false, pollGeneration: 0, syncFailed: false, roomActionBusy: false, qrScanner: null, lastRenderKey: '', selectedSquare: null, legalTargets: [], game: null, busy: false };
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
   const toast = (message, type = 'info') => {
@@ -486,6 +486,8 @@
   }
   function stopPolling() {
     if (SESSION.timer) clearInterval(SESSION.timer);
+    if (SESSION.pollVisibilityHandler) document.removeEventListener('visibilitychange', SESSION.pollVisibilityHandler);
+    SESSION.pollVisibilityHandler = null;
     SESSION.pollGeneration += 1;
     SESSION.timer = null; SESSION.loading = false; SESSION.syncFailed = false; SESSION.room = null; SESSION.lastRenderKey = ''; SESSION.selectedSquare = null; SESSION.legalTargets = []; SESSION.game = null; SESSION.busy = false;
   }
@@ -503,14 +505,25 @@
     let modal = $('alwaha-multiplayer-room');
     if (modal) modal.remove();
     modal = document.createElement('div'); modal.id = 'alwaha-multiplayer-room'; modal.className = 'game-modal-overlay alwaha-fullscreen-layer alwaha-game-page';
-    modal.innerHTML = `<div class="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="العودة إلى قائمة الألعاب مع الاحتفاظ بالغرفة">رجوع إلى الألعاب ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتم مزامنة الغرفة عبر الإنترنت كل ثانيتين. إغلاق هذه النافذة لا ينهي المباراة؛ يمكنك العودة إليها من قائمة الألعاب. يجب بقاء الاتصال بالإنترنت لدى اللاعبين.</div></div>`;
+    modal.innerHTML = `<div class="game-modal-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 id="mp-room-title" style="color:#70d6ff;font-size:16px;margin:0">${esc(GAME_INFO[room.game_id]?.title || 'لعبة جماعية')}</h3><button type="button" class="mp-action mp-muted" id="mp-room-close" aria-label="العودة إلى قائمة الألعاب مع الاحتفاظ بالغرفة">رجوع إلى الألعاب ×</button></div><div id="mp-room-meta" class="mp-room-meta"></div><div id="mp-sync-status" class="mp-status" hidden></div><div id="mp-room-stage"><div class="mp-status">جاري تحميل الغرفة…</div></div><div class="mp-help">تتحدث حالة اللعبة كل ثانية تقريبًا أثناء ظهور الغرفة، وتخفّض المزامنة تلقائيًا عند الانتقال إلى تطبيق آخر لتوفير البيانات والبطارية. إغلاق هذه النافذة لا ينهي المباراة؛ يمكنك العودة إليها من قائمة الألعاب.</div></div>`;
     modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'mp-room-title'); modal.setAttribute('tabindex', '-1');
     document.body.appendChild(modal); modal.classList.add('is-open'); document.body.classList.add('modal-active');
     window.AlwahaModalShell?.sync?.();
     $('mp-room-close').onclick = closeRoom;
     modal.addEventListener('click', ev => { if (ev.target === modal) closeRoom(); });
     renderRoom(room);
-    SESSION.timer = setInterval(pollRoom, 1900);
+    SESSION.pollVisibilityHandler = () => refreshRoomPolling();
+    document.addEventListener('visibilitychange', SESSION.pollVisibilityHandler);
+    refreshRoomPolling();
+  }
+  function refreshRoomPolling() {
+    if (SESSION.timer) clearInterval(SESSION.timer);
+    SESSION.timer = null;
+    if (!SESSION.room?.id) return;
+    // Keep foreground turns responsive while reducing background radio, battery and data use.
+    const interval = document.hidden ? 6000 : 1000;
+    SESSION.timer = setInterval(pollRoom, interval);
+    if (!document.hidden && !SESSION.loading) void pollRoom();
   }
   async function pollRoom() {
     const activeRoomId = SESSION.room?.id ? String(SESSION.room.id) : '';
