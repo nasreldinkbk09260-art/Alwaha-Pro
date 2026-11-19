@@ -5,8 +5,8 @@ const read=p=>{if(!fs.existsSync(p)){fail('Missing '+p);return '';}return fs.rea
 const html=read('index.html'),guard=read('alwaha-runtime-guard.js'),modal=read('alwaha-modal-shell.js'),experience=read('alwaha-experience.js'),sw=read('sw.js'),build=read('scripts/build-web.mjs'),pkg=JSON.parse(read('package.json')),wf=read('.github/workflows/build-apk-aab-release.yml');
 const a=html.indexOf('// تهيئة كل المكونات بعد جاهزية DOM'),b=html.indexOf('// Alwaha-Pro Cosmic Garden UX and production-safe form behavior.',a),init=a>=0&&b>a?html.slice(a,b):'';
 const cacheName=(sw.match(/const CACHE_NAME = ['"]([^'"]+)['"]/)||[])[1]||'';
-const hasValidCacheNamespace=/^alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*$/.test(cacheName);
-const serviceWorkerRegistration=/navigator\\.serviceWorker\\.register\\(['"]\\.\\/sw\\.js\\?v=[^'"]+['"], \\{ scope: ['"]\\.\\/['"], updateViaCache: ['"]none['"] \\}\\)/.test(html);
+const hasValidCacheNamespace=cacheName.startsWith('alwaha-pro-v3.0.4-');
+const serviceWorkerRegistration=html.includes("navigator.serviceWorker.register('./sw.js?v=")&&html.includes("{ scope: './', updateViaCache: 'none' });");
 function hasVersionedScript(asset){
  const marker='src="./'+asset+'?v=',start=html.indexOf(marker);
  if(start<0)return false;
