@@ -127,4 +127,14 @@ for (const file of files) {
   }
 }
 console.log("Inventory is a text scan only; it does not prove runtime data safety.");
+
+const games = read("games.js");
+if (
+  /const interval = document\.hidden \? 6000 : 1000/.test(games) &&
+  /document\.addEventListener\('visibilitychange', SESSION\.pollVisibilityHandler\)/.test(games) &&
+  /document\.removeEventListener\('visibilitychange', SESSION\.pollVisibilityHandler\)/.test(games) &&
+  /refreshRoomPolling\(\);/.test(games)
+) pass("multiplayer polling is responsive in foreground and throttled in background with listener cleanup");
+else fail("multiplayer polling must use 1s foreground / 6s background intervals and clean up visibility listeners");
+
 if (process.exitCode) process.exit(process.exitCode);
