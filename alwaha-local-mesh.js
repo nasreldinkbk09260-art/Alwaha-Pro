@@ -272,11 +272,23 @@
     window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-flushed',{detail:{count:out.length}}));
     return {sent:out.length,ids:out};
   }
-  async function setMode(enabled){modeEnabled=Boolean(enabled);await installTransportListeners();window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled}}));return modeEnabled;}
+  async function setMode(enabled){
+    modeEnabled=Boolean(enabled);
+    try{await vault().put('mesh:mode-enabled-v1',{enabled:modeEnabled,updatedAt:new Date().toISOString()});}catch(error){console.warn('[Alwaha Mesh] mode preference could not be saved:',error);}
+    await installTransportListeners();
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled}}));
+    return modeEnabled;
+  }
+  async function restoreMode(){
+    try{const row=await vault()?.getRecord?.('mesh:mode-enabled-v1');modeEnabled=Boolean(row?.value?.enabled);}
+    catch(error){modeEnabled=false;console.warn('[Alwaha Mesh] mode preference restore failed:',error);}
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled,restored:true}}));
+    return modeEnabled;
+  }
   function isEnabled(){return modeEnabled;}
   function getTransportPeer(){return transportPeerFingerprint;}
   function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
   function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
   window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,setMode,isEnabled,getTransportPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
-  window.addEventListener('DOMContentLoaded',()=>{void installTransportListeners().catch(error=>console.warn('[Alwaha Mesh] listener setup failed:',error));});
+  window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
