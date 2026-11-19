@@ -8,7 +8,7 @@ const checks=[
  ['marketplace chat has image/video picker',html.includes('id="market-chat-media-input"')&&html.includes('handleMarketChatFileInput(this)')],
  ['marketplace chat has a voice-note recorder',html.includes('id="market-chat-voice-button"')&&html.includes("toggleChatVoiceRecording('market')")],
  ['voice notes use MediaRecorder and release microphone tracks',html.includes('new MediaRecorder(stream')&&html.includes('recorder.onstop=async()')&&html.includes('stream.getTracks().forEach(track=>track.stop())')],
- ['media attachments are stored in a private bucket, not public media URLs',html.includes("storage.from('chat-media').upload")&&html.includes("createSignedUrl(item.path,3600)")&&!html.includes("getPublicUrl(path)")],
+ ['chat media uploads use the private chat-media bucket and render only participant-scoped signed URLs',html.includes("supabaseClient.storage.from('chat-media').upload(path,file")&&html.includes("supabaseClient.storage.from('chat-media').createSignedUrl(item.path,3600)")&&!html.slice(html.indexOf('async function renderAlwahaChatMessageContent'),html.indexOf('async function uploadPrivateChatMedia')).includes('getPublicUrl(')],
  ['media references preserve legacy text-message rows',html.includes('ALWAHA_MEDIA_V1:')&&html.includes('decodeAlwahaChatMedia')&&html.includes('renderAlwahaChatMessageContent')],
  ['market and direct chat rendering supports audio/video/image messages',html.includes('await renderAlwahaChatMessageContent(m.message)')&&html.includes('await renderAlwahaChatMessageContent(row.message)')],
  ['media upload validates MIME and bounded size',html.includes('file.type.startsWith(\'image/\')')&&html.includes('file.type.startsWith(\'video/\')')&&html.includes('file.size>maxBytes')],
@@ -19,7 +19,7 @@ const checks=[
  ['direct and marketplace message caches are user-scoped',vault.includes("'cache:direct:'+String(userId)+':'+String(peerId)")&&vault.includes("'cache:market:'+String(userId)+':'+String(conversationId)")],
  ['offline direct chat list reads local encrypted cache',html.includes('getAllDirectChatCaches?.(me.id)')&&html.includes('نسخة محلية مشفّرة')],
  ['offline marketplace list and chat use locally cached conversation index',html.includes('getMarketConversationIndex?.(me.id)')&&vault.includes("cache:market-index:")],
- ['offline UI does not claim remote messages or media were sent',html.includes('الإرسال والمزامنة متوقفان دون اتصال')&&html.includes('إرسال الوسائط دون اتصال غير متاح بعد')],
+ ['offline UI distinguishes local encrypted relay queueing from unavailable cloud delivery',html.includes('الإرسال والمزامنة السحابية متوقفان دون اتصال')&&html.includes('إرسال الوسائط دون اتصال غير متاح ما لم تفعل الشبكة الحرة')&&html.includes('حُفظت كحزمة مشفّرة للتمرير المرحّل.')&&html.includes('result.sent?')],
  ['offline auth fallback only reads persisted local session for local display',html.includes('A persisted session may be used only to identify cached local data offline')&&html.includes('supabaseClient.auth.getSession()')]
 ];
 let failures=0;
