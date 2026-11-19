@@ -70,10 +70,25 @@ const duplicateRelay=await relay.mesh.receiveRawPacket(Buffer.from(JSON.stringif
 assert.equal(firstRelay.relayed,true,'non-recipient should queue opaque packet for store-and-forward');
 assert.equal(duplicateRelay.duplicate,true,'relay should discard replays');
 assert.ok([...relay.records.keys()].some(key=>key.startsWith('mesh:relay:')),'relay queue must persist ciphertext for later peer connection');
+
+const nextHop=createHarness('next-hop');
+const bundleNextHop=await nextHop.mesh.getIdentityBundle();
+await relay.mesh.pairPeer(bundleNextHop,{confirmationCode:bundleNextHop.fingerprintCode,accountUserId:'user-next-hop',label:'Next hop'});
+await nextHop.mesh.pairPeer(bundleRelay,{confirmationCode:bundleRelay.fingerprintCode,accountUserId:'user-relay',label:'Relay'});
+relay.window.__peer=nextHop.mesh;
+nextHop.window.__peer=relay.mesh;
+await relay.mesh.setMode(true);
+await nextHop.mesh.sendHello();
+assert.ok([...nextHop.records.keys()].some(key=>key.startsWith('mesh:relay:')),'trusted neighbor hello should trigger automatic forwarding into the next hop relay queue');
+const forwarded=[...nextHop.records.values()].find(row=>row.key.startsWith('mesh:relay:'));
+assert.ok(forwarded,'next hop must persist the forwarded ciphertext');
+assert.equal(JSON.stringify(forwarded.value.packet).includes(secret),false,'automatic relay must preserve end-to-end ciphertext');
+
 console.log('PASS: paired P-256 ECDH/ECDSA identities');
 console.log('PASS: authenticated AES-GCM direct delivery with recipient-only decryption');
 console.log('PASS: relay envelope hides plaintext and both endpoint fingerprints');
 console.log('PASS: encrypted call signaling delivery');
 console.log('PASS: chunked file transfer, encrypted local storage and reconstruction');
 console.log('PASS: opaque store-and-forward queue and duplicate/replay rejection');
-console.log('MESH_PROTOCOL_RUNTIME=PASS (7 checks)');
+console.log('PASS: trusted-neighbor handshake automatically forwards ciphertext to next hop');
+console.log('MESH_PROTOCOL_RUNTIME=PASS (8 checks)');
