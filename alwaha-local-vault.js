@@ -65,6 +65,14 @@
     await putEncryptedCache('cache:profile:'+String(userId),safe);
   }
   async function getProfileCache(userId){return userId?getEncryptedCache('cache:profile:'+String(userId)):null;}
+  async function saveMarketConversationIndex(userId,rows){
+    if(!userId||!Array.isArray(rows))return;
+    await putEncryptedCache('cache:market-index:'+String(userId),rows.slice(0,200));
+  }
+  async function getMarketConversationIndex(userId){
+    const rows=userId?await getEncryptedCache('cache:market-index:'+String(userId)):null;
+    return Array.isArray(rows)?rows:null;
+  }
 
   async function removeRecord(key){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
   async function clear(){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
@@ -149,6 +157,6 @@
     host.querySelector('#alwaha-vault-clean').onclick=async()=>{if(!confirm('سيتم مسح المسودات المحلية المحفوظة فقط. لن تُحذف منشوراتك أو رسائلك السحابية. أنشئ نسخة احتياطية أولاً. هل تتابع؟'))return;await clearDrafts();await render();};
   }
   function bindDrafts(){const fields=[['home-post-textarea','home-post'],['prod-name','market-listing:prod-name'],['prod-price','market-listing:prod-price'],['prod-desc-location','market-listing:prod-desc-location']];for(const [id,key] of fields){const el=document.getElementById(id);if(!el)continue;let timer=null;el.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>saveDraft(key,el.value).catch(console.warn),450);});}}
-  window.AlwahaLocalVault={put,getAll:all,getRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache};
+  window.AlwahaLocalVault={put,getAll:all,getRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
   window.addEventListener('DOMContentLoaded',()=>{render().catch(console.warn);bindDrafts();restoreDrafts().catch(console.warn);});
 })();
