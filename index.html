@@ -2273,16 +2273,34 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function getCurrentAuthUser() {
             if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getUser();
-            if (error) return null;
-            return data?.user || null;
+            try {
+                const { data, error } = await supabaseClient.auth.getUser();
+                if (!error && data?.user) return data.user;
+                if (navigator.onLine !== false && !/fetch|network|timeout|offline/i.test(String(error?.message||error?.name||''))) return null;
+            } catch (error) {
+                if (navigator.onLine !== false && !/fetch|network|timeout|offline/i.test(String(error?.message||error?.name||''))) return null;
+            }
+            // A persisted session may be used only to identify cached local data offline.
+            // All server writes remain subject to authenticated Supabase checks when online.
+            try {
+                const { data:{session} } = await supabaseClient.auth.getSession();
+                return session?.user || null;
+            } catch (error) {
+                console.warn('[Alwaha Auth] Offline session lookup failed:',error);
+                return null;
+            }
         }
 
         async function getCurrentProfile() {
             const user = await getCurrentAuthUser();
             if (!user) return null;
+            if (navigator.onLine === false) return await window.AlwahaLocalVault?.getProfileCache?.(user.id) || null;
             const rows = await supabaseFetch(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
-            return Array.isArray(rows) && rows[0] ? rows[0] : null;
+            if (Array.isArray(rows) && rows[0]) {
+                window.AlwahaLocalVault?.saveProfileCache?.(user.id,rows[0]).catch(error=>console.warn('[Alwaha Vault] profile cache failed:',error));
+                return rows[0];
+            }
+            return await window.AlwahaLocalVault?.getProfileCache?.(user.id) || null;
         }
 
         async function requireAuthenticatedUser(message = 'سجل الدخول أولاً لتنفيذ هذه العملية.') {
@@ -3573,25 +3591,37 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const container=document.getElementById('chat-messages-container'),me=await getCurrentAuthUser();
             if(!container||!me||!peerId||requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
-            let rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at,reply_to_id&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
+            let rows=null,fromLocal=!navigator.onLine;
+            if(fromLocal){
+                rows=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,peerId)||null;
+            }else{
+                rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at,reply_to_id&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc&limit=1000`);
+                if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
+                directReplySchemaAvailable=Array.isArray(rows);
+                if(!Array.isArray(rows))rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc&limit=1000`);
+            }
             if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
-            directReplySchemaAvailable=Array.isArray(rows);
-            if(!Array.isArray(rows))rows=await supabaseFetch(`messages?select=id,sender_id,receiver_id,message,created_at,read_at&or=(and(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(peerId)}),and(sender_id.eq.${encodeURIComponent(peerId)},receiver_id.eq.${encodeURIComponent(me.id)}))&order=created_at.asc`);
-            if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
-            if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:20px;">تعذر تحميل الرسائل. تحقق من الاتصال ثم أعد المحاولة.</div>';return;}
+            if(!Array.isArray(rows)){
+                const cached=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,peerId);
+                rows=Array.isArray(cached)?cached:null;fromLocal=Array.isArray(cached);
+            }
+            if(!Array.isArray(rows)){container.innerHTML='<div style="text-align:center;color:#ffb1c5;font-size:11px;padding:20px;">تعذر تحميل الرسائل ولا توجد نسخة محلية محفوظة لهذا الجهاز.</div>';return;}
             currentDirectMessages=rows;
-            await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(peerId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(!fromLocal){
+                window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,peerId,rows).catch(error=>console.warn('[Alwaha Vault] direct chat cache failed:',error));
+                await supabaseFetch(`messages?sender_id=eq.${encodeURIComponent(peerId)}&receiver_id=eq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            }
             if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
-            if(!rows.length){container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';renderDirectReplyPreview();return;}
+            if(!rows.length){container.innerHTML=fromLocal?'<div style="text-align:center;color:#ffd88b;font-size:11px;padding:20px;">لا توجد رسائل محفوظة محليًا لهذه المحادثة بعد.</div>':'<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';renderDirectReplyPreview();return;}
             const messageMap=new Map(rows.map(m=>[String(m.id),m]));
             const renderedRows=await Promise.all(rows.map(async m=>{
                 const mine=m.sender_id===me.id,parent=m.reply_to_id?messageMap.get(String(m.reply_to_id)):null;
                 const quote=m.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;color:inherit;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
-                const replyButton=directReplySchemaAvailable?`<button type="button" onclick="setDirectMessageReply('${escapeJs(m.id)}')" style="margin-top:4px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
+                const replyButton=directReplySchemaAvailable&&!fromLocal?`<button type="button" onclick="setDirectMessageReply('${escapeJs(m.id)}')" style="margin-top:4px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
                 const body=await renderAlwahaChatMessageContent(m.message);
                 return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};"><div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:90%;direction:rtl;text-align:right;overflow-wrap:anywhere;">${quote}${body}</div><span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
             }));
-            container.innerHTML=renderedRows.join('');
+            container.innerHTML=(fromLocal?'<div role="status" style="padding:7px;text-align:center;color:#ffd88b;font-size:10px;">نسخة محلية مشفّرة — الإرسال والمزامنة متوقفان حتى عودة الإنترنت.</div>':'')+renderedRows.join('');
             renderDirectReplyPreview();container.scrollTop=container.scrollHeight;
         }
         function renderDirectReplyPreview(){
@@ -3657,27 +3687,38 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
             if(!holder||!me||!conversationId||requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
-            let rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=500`);
+            let rows=null,fromLocal=!navigator.onLine;
+            if(fromLocal)rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||null;
+            else{
+                rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=1000`);
+                if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
+                marketReplySchemaAvailable=Array.isArray(rows);
+                if(!Array.isArray(rows))rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=1000`);
+            }
             if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
-            marketReplySchemaAvailable=Array.isArray(rows);
-            if(!Array.isArray(rows))rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=500`);
-            if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
-            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:16px;font-size:11px;">تعذر تحميل رسائل السوق (${escapeHtml(e.status||'اتصال')}).</div>`;return;}
+            if(!Array.isArray(rows)){
+                const cached=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId);
+                rows=Array.isArray(cached)?cached:null;fromLocal=Array.isArray(cached);
+            }
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;text-align:center;padding:16px;font-size:11px;">تعذر تحميل رسائل السوق (${escapeHtml(e.status||'اتصال')}) ولا توجد نسخة محلية محفوظة.</div>`;return;}
             const activeUser=await getCurrentAuthUser();
             if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||'')||activeUser?.id!==me.id)return;
             currentMarketMessages=rows;
-            await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            if(!fromLocal){
+                window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,conversationId,rows).catch(error=>console.warn('[Alwaha Vault] market chat cache failed:',error));
+                await supabaseFetch(`market_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&sender_id=neq.${encodeURIComponent(me.id)}&read_at=is.null`,{method:'PATCH',body:JSON.stringify({read_at:new Date().toISOString()}),prefer:'return=minimal'});
+            }
             if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
-            if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';renderMarketReplyPreview();return;}
+            if(!rows.length){holder.innerHTML=fromLocal?'<div style="color:#ffd88b;text-align:center;padding:22px;font-size:11px;">لا توجد رسائل سوق محفوظة محليًا بعد.</div>':'<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';renderMarketReplyPreview();return;}
             const messageMap=new Map(rows.map(row=>[String(row.id),row]));
             const renderedRows=await Promise.all(rows.map(async row=>{
                 const mine=row.sender_id===me.id,parent=row.reply_to_id?messageMap.get(String(row.reply_to_id)):null;
                 const quote=row.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
-                const replyButton=marketReplySchemaAvailable?`<button type="button" onclick="setMarketMessageReply('${escapeJs(row.id)}')" style="margin-top:3px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
+                const replyButton=marketReplySchemaAvailable&&!fromLocal?`<button type="button" onclick="setMarketMessageReply('${escapeJs(row.id)}')" style="margin-top:3px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
                 const body=await renderAlwahaChatMessageContent(row.message);
                 return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:90%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${quote}${body}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
             }));
-            holder.innerHTML=renderedRows.join('');
+            holder.innerHTML=(fromLocal?'<div role="status" style="padding:7px;text-align:center;color:#ffd88b;font-size:10px;">نسخة محلية مشفّرة — الإرسال والمزامنة متوقفان حتى عودة الإنترنت.</div>':'')+renderedRows.join('');
             renderMarketReplyPreview();holder.scrollTop=holder.scrollHeight;
         }
         function renderMarketReplyPreview(){
