@@ -19,6 +19,7 @@ const checks=[
  ['market/friend call signaling has an executable VM regression test',fs.existsSync('scripts/call-signaling-runtime-test.mjs')&&fs.readFileSync('package.json','utf8').includes('call-signaling-runtime-test.mjs')],
  ['call termination clears call feedback and timeout',html.includes('AlwahaCallFeedback?.stop()')&&html.includes('clearCallTimeout()')],
  ['ended call screen has a dedicated close control that hides the modal before async cleanup',html.includes('id=\\"callCloseBtn\\"')&&html.includes('async function terminateVoiceCall()')&&html.includes(\"if(modal)modal.style.display='none';\")],
+ ['active calls expose an add-participant control without claiming conference support',html.includes('id="addCallParticipantBtn"')&&html.includes("addParticipantBtn.style.display=state==='connected'?'inline-block':'none'")&&html.includes('function showCallParticipantInfo()')&&html.includes('المكالمة الحالية تدعم طرفين فقط')],
  ['Termux deploy copy preserves native audio plugin',/rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8'))&&fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")]
 ];
 let failures=0;for(const [label,ok] of checks){if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failures++;}}
