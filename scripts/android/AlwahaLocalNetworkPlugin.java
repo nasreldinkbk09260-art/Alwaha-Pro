@@ -77,6 +77,43 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void openInternetSettings(PluginCall call) {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            intent = new Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
+        } else {
+            intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+        }
+        try {
+            getActivity().startActivity(intent);
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            result.put("automaticMobileDataToggle", false);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Android could not open the Internet settings panel.", error);
+        }
+    }
+
+    @PluginMethod
+    public void openBluetoothSettings(PluginCall call) {
+        Intent intent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            intent = new Intent(Settings.Panel.ACTION_BLUETOOTH);
+        } else {
+            intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
+        }
+        try {
+            getActivity().startActivity(intent);
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Android could not open the Bluetooth settings panel.", error);
+        }
+    }
+
+    @PluginMethod
     public void getCapabilities(PluginCall call) {
         boolean wifiDirect = getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_DIRECT);
         BluetoothAdapter bluetooth = getBluetoothAdapter();
