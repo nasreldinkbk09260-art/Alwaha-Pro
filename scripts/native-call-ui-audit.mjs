@@ -28,7 +28,15 @@ const checks=[
  ['local calls never call the cloud call-config ICE service',html.includes("this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 }")&&html.includes("this.rtcConfig =")],
  ['local market calls are bound to the active buyer-seller conversation',html.includes("mode==='offline-market'")&&html.includes('currentMarketPeerId')&&html.includes('conversationId')],
  ['call termination clears call feedback and timeout',html.includes('AlwahaCallFeedback?.stop()')&&html.includes('clearCallTimeout()')],
- ['closing an ended call hides the call screen before asynchronous media cleanup',/async function terminateVoiceCall\(\)\s*\{\s*\/\/ Hide the terminal call screen immediately[\s\S]{0,260}modal\.style\.display = 'none'[\s\S]{0,180}await activeCallManager\?\.end\(true\)/.test(html)],
+ ['closing an ended call hides the call screen before asynchronous media cleanup',(() => {
+    const start=html.indexOf('async function terminateVoiceCall()');
+    const end=html.indexOf('function switchMarketSubView',start);
+    const body=start>=0&&end>start?html.slice(start,end):'';
+    const closing=body.indexOf('window.__alwahaCallTerminationRequested = true;');
+    const hide=body.indexOf("modal.style.display = 'none';");
+    const cleanup=body.indexOf('await activeCallManager?.end(true);');
+    return closing>=0&&hide>closing&&cleanup>hide&&body.includes("modal.setAttribute('aria-hidden', 'true');");
+})()],
  ['Termux deploy copy preserves native audio plugin',/rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8'))&&fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")]
 ];
 let failures=0;for(const [label,ok] of checks){if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failures++;}}
