@@ -25,7 +25,7 @@ ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'chat-media'
   AND (storage.foldername(name))[1] = (SELECT auth.uid())::text
-  AND array_length(storage.foldername(name), 1) >= 3
+  AND array_length(storage.foldername(name), 1) >= 2
 );
 
 DROP POLICY IF EXISTS alwaha_chat_media_select_participant ON storage.objects;
