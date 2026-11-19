@@ -3546,7 +3546,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         function setDirectMessageReply(messageId){
             if(!directReplySchemaAvailable)return triggerToastNotification('ميزة الرد تتطلب تحديث قاعدة البيانات.','info');
             const row=currentDirectMessages.find(m=>String(m.id)===String(messageId));if(!row)return;
-            currentDirectReplyTarget={id:row.id,message:String(row.message||'').slice(0,500)};renderDirectReplyPreview();
+            currentDirectReplyTarget={id:row.id,message:String(row.message|| (row.attachment_path?'مرفق':'')).slice(0,500)};renderDirectReplyPreview();
             document.getElementById('chat-message-input')?.focus({preventScroll:true});
         }
         function clearDirectMessageReply(){currentDirectReplyTarget=null;renderDirectReplyPreview();}
@@ -3623,6 +3623,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         async function sendChatAttachment(scope,file){
             const isMarket=scope==='market',user=await requireAuthenticatedUser('سجّل الدخول أولاً لإرسال مرفق.');
             if(!user||!file)return false;
+            if(navigator.onLine===false){triggerToastNotification('حفظنا الرسائل السابقة محلياً، لكن رفع مرفق جديد دون إنترنت لم يُفعّل بعد. لم نُظهره كأنه أُرسل.','error');return false;}
             const peerId=String(currentChatUserId||''),conversationId=String(currentMarketConversationId||'');
             if(!isMarket&&!peerId)return triggerToastNotification('اختر محادثة أولاً.','error'),false;
             if(isMarket&&!conversationId)return triggerToastNotification('افتح محادثة السوق أولاً.','error'),false;
@@ -3703,7 +3704,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const input=document.getElementById('chat-message-input'),peerId=String(currentChatUserId||''),content=input?.value?.trim()||'',replyTarget=currentDirectReplyTarget;
             if(!input||!content||!peerId)return triggerToastNotification('اختر مستخدماً أولاً واكتب رسالتك.','error');
             if(replyTarget&&!directReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');
-            const button=document.querySelector('#active-chat-box .alwaha-chat-composer button'),previousMarkup=button?.innerHTML;
+            const button=document.querySelector('#active-chat-box .alwaha-chat-composer button[onclick="sendLiveChatMessageFromUI()"]'),previousMarkup=button?.innerHTML;
             directMessageSendInFlight=true;if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.textContent='جارٍ الإرسال…';}
             try{
                 const user=await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
@@ -3772,7 +3773,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         function setMarketMessageReply(messageId){
             if(!marketReplySchemaAvailable)return triggerToastNotification('ميزة الرد تتطلب تحديث قاعدة البيانات.','info');
             const row=currentMarketMessages.find(m=>String(m.id)===String(messageId));if(!row)return;
-            currentMarketReplyTarget={id:row.id,message:String(row.message||'').slice(0,500)};renderMarketReplyPreview();
+            currentMarketReplyTarget={id:row.id,message:String(row.message|| (row.attachment_path?'مرفق':'')).slice(0,500)};renderMarketReplyPreview();
             document.getElementById('market-chat-input')?.focus({preventScroll:true});
         }
         function clearMarketMessageReply(){currentMarketReplyTarget=null;renderMarketReplyPreview();}
@@ -3780,7 +3781,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             if(marketMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال رسالة للبائع.');if(!me||!currentMarketConversationId)return;
             const input=document.getElementById('market-chat-input'),message=input?.value?.trim()||'';
-            if(!message)return triggerToastNotification('اكتب رسالتك أولاً.','info');
+            if(!message)return triggerToastNotification('اكتب رسالتك أولاً أو اختر مرفقاً من زر المشبك.','info');
             if(currentMarketReplyTarget&&!marketReplySchemaAvailable)return triggerToastNotification('الرد غير متاح قبل تحديث قاعدة الرسائل؛ لم نرسل الرسالة دون مرجعها.','error');
             const modal=document.getElementById('market-chat-modal'),button=modal?.querySelector('button[onclick="sendMarketMessage()"]');
             marketMessageSendInFlight=true;if(button){button.disabled=true;button.textContent='جارٍ الإرسال…';}
