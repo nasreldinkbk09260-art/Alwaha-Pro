@@ -4085,7 +4085,7 @@ async function renderConversationsList() {
             async initPeerConnection() {
                 if (this.peerConnection) return;
                 if (!navigator.mediaDevices?.getUserMedia) throw new Error('الميكروفون غير متاح في هذا السياق.');
-                this.peerConnection = new RTCPeerConnection({ iceServers: await getAlwahaIceServers() });
+                this.peerConnection = new RTCPeerConnection(this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 } : { iceServers: await getAlwahaIceServers() });
                 const videoConstraints = this.mediaType === 'video' ? {
                     facingMode: { ideal: this.cameraFacingMode },
                     width: { ideal: 640, max: 640 },
@@ -4474,7 +4474,12 @@ async function renderConversationsList() {
                 this.pendingRoomSignalsToSend = [];
                 this.roomPeerReady = false;
                 this.mediaType = 'audio';
+                this.localOnly = false;
+                this.mode = 'online';
+                this.peerId = '';
+                this.conversationId = null;
                 this.callTimeout = null;
+                this.localOnly = false;
             }
             clearCallTimeout() { if(this.callTimeout!==null)clearTimeout(this.callTimeout);this.callTimeout=null; }
             scheduleCallTimeout(sessionId,delay,incomingPayload=null) {
@@ -4528,6 +4533,10 @@ async function renderConversationsList() {
                 }
             }
             async createRoom(peerId, sessionId, conversationId = null) {
+                if(this.mode==='offline'||this.mode==='offline-market'){
+                    this.conversationId=conversationId||null;this.peerId=peerId;this.sessionId=sessionId;
+                    this.roomId='mesh_'+sessionId;this.pendingRoomSignals=[];this.pendingRoomSignalsToSend=[];this.roomPeerReady=true;return;
+                }
                 if(!this.client)throw new Error('تعذر تهيئة Supabase Realtime.');
                 this.conversationId=conversationId||null;
                 const marketRoom=!!this.conversationId;
@@ -4566,6 +4575,10 @@ async function renderConversationsList() {
                 return status;
             }
             sendRoom(payload) {
+                if (this.mode === 'offline' || this.mode === 'offline-market') {
+                    if (!this.peerId || !this.sessionId || !window.AlwahaLocalMesh?.isEnabled()) return Promise.reject(new Error('الشبكة الحرة أو الجهاز الموثوق غير متاح.'));
+                    return window.AlwahaLocalMesh.sendToAccount(this.peerId,{type:'call-signal',signal:payload,sessionId:this.sessionId,conversationId:this.conversationId||null,mediaType:this.mediaType});
+                }
                 if (payload?.type === 'candidate' && !this.roomPeerReady) {
                     this.pendingRoomSignalsToSend.push(payload);
                     return Promise.resolve('queued');
@@ -4583,7 +4596,20 @@ async function renderConversationsList() {
 
             async startOutgoing(peerId, mode='online', mediaType='audio', conversationId=null) {
                 const authUser=await getCurrentAuthUser();if(!authUser)throw new Error('سجّل الدخول أولًا لإجراء مكالمة.');this.myId=authUser.id;
-                const market=mode==='market';
+                const localMode=mode==='offline'||mode==='offline-market',market=mode==='market'||mode==='offline-market';
+                if(localMode){
+                    if(!window.AlwahaLocalMesh?.isEnabled())throw new Error('فعّل وضع الشبكة الحرة أولًا.');
+                    const trusted=await window.AlwahaLocalMesh.getPeerByAccountId(peerId);if(!trusted)throw new Error('الجهاز المقصود غير موثّق لهذا الحساب.');
+                    if(market&&(!conversationId||String(currentMarketPeerId||'')!==String(peerId)))throw new Error('يجب فتح محادثة السوق الموثقة مع هذا البائع قبل الاتصال المحلي.');
+                    this.mode=mode;this.localOnly=true;this.conversationId=market?conversationId:null;this.mediaType=mediaType==='video'?'video':'audio';
+                    this.roomPeerReady=true;this.peerId=peerId;this.pendingRoomSignals=[];this.pendingRoomSignalsToSend=[];
+                    const sessionId=crypto.randomUUID();await this.createRoom(peerId,sessionId,this.conversationId);
+                    const localAudio=document.getElementById('localAudio'),remoteAudio=document.getElementById('remoteAudio'),localVideo=document.getElementById('localVideo'),remoteVideo=document.getElementById('remoteVideo');
+                    this.call=new VoiceCall({signaling:{send:payload=>this.sendRoom(payload),localOnly:true},localAudioEl:localAudio,remoteAudioEl:remoteAudio,localVideoEl:localVideo,remoteVideoEl:remoteVideo,mediaType:this.mediaType,onState:state=>this.handleCallState(state)});
+                    await this.call.startOutgoing();
+                    window.AlwahaCallFeedback?.start('ringback');this.scheduleCallTimeout(this.sessionId,35000);
+                    return true;
+                }
                 if(market){
                     const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId||'')}&select=id,buyer_id,seller_id&limit=1`),c=Array.isArray(rows)?rows[0]:null;
                     if(!c||!((c.buyer_id===this.myId&&c.seller_id===peerId)||(c.seller_id===this.myId&&c.buyer_id===peerId)))throw new Error('مكالمة السوق تتطلب محادثة موثقة بين المشتري والبائع.');
@@ -4600,7 +4626,9 @@ async function renderConversationsList() {
                 return true;
             }
             async sendCallResult(to, sessionId, status, mode='online') {
-                if(!this.client||!to)return;
+                if(!to)return;
+                if(mode==='offline'||mode==='offline-market')return window.AlwahaLocalMesh?.sendToAccount(to,{type:'call-result',sessionId,status,mode});
+                if(!this.client)return;
                 const market=mode==='market';
                 const topic=market?`market-call-inbox-${sanitizeChannelPart(to)}`:`call-inbox-${sanitizeChannelPart(to)}`;
                 const event=market?'webrtc-market-call-result':'webrtc-call-result';
@@ -4633,6 +4661,38 @@ async function renderConversationsList() {
                 setCallModal(true);
                 window.AlwahaCallFeedback?.play(result.tone);
             }
+            async handleLocalMeshSignal(fromAccountId,payload) {
+                if(!payload||!fromAccountId)return;
+                const authUser=await getCurrentAuthUser();if(!authUser)return;this.myId=authUser.id;
+                const trusted=await window.AlwahaLocalMesh?.getPeerByAccountId(fromAccountId);if(!trusted)return;
+                if(payload.type==='call-result'){
+                    if(payload.sessionId!==this.sessionId||fromAccountId!==this.peerId)return;
+                    const status=payload.status;if(['declined','busy','no-answer','unavailable'].includes(status)){const text={declined:'رفض الطرف الآخر المكالمة.',busy:'الطرف مشغول حالياً.', 'no-answer':'لم يتم الرد على المكالمة.',unavailable:'الجهاز غير متاح.'}[status];await this.end(false);updateCallUi('idle',{target:currentChatUser||'المستخدم',text,indicator:'انتهى طلب الاتصال المحلي.'});setCallModal(true);window.AlwahaCallFeedback?.play(status);}return;
+                }
+                if(payload.type!=='call-signal'||!payload.signal)return;
+                const signal=payload.signal;
+                if(signal.type==='offer'){
+                    if(this.call||this.pendingIncoming||this.sessionId){await window.AlwahaLocalMesh.sendToAccount(fromAccountId,{type:'call-result',sessionId:payload.sessionId,status:'busy',mode:payload.mode||'offline'}).catch(()=>{});return;}
+                    const market=!!payload.conversationId;
+                    if(market){
+                        const index=await window.AlwahaLocalVault?.getMarketConversationIndex?.(this.myId)||[];
+                        const known=index.find(row=>String(row.id)===String(payload.conversationId)&&String(row.peerId)===String(fromAccountId));
+                        if(!known)return;
+                    }
+                    this.mode=market?'offline-market':'offline';this.localOnly=true;this.conversationId=market?String(payload.conversationId):null;
+                    this.peerId=fromAccountId;this.roomId='mesh_'+payload.sessionId;this.sessionId=payload.sessionId;this.mediaType=payload.mediaType==='video'?'video':'audio';this.pendingRoomSignals=[];
+                    currentMarketPeerId=market?fromAccountId:currentMarketPeerId;currentMarketConversationId=market?String(payload.conversationId):currentMarketConversationId;
+                    currentChatUserIdentifier=fromAccountId;currentChatUser=trusted.label||'جهة اتصال موثوقة';
+                    this.pendingIncoming={from:fromAccountId,sessionId:payload.sessionId,displayName:currentChatUser,mode:this.mode,conversationId:this.conversationId,mediaType:this.mediaType,offer:signal.offer};
+                    playAlwahaCallRingtone(false);setCallModal(true);
+                    updateCallUi('incoming',{target:currentChatUser,text:market?'مكالمة سوق محلية واردة':'مكالمة محلية واردة',indicator:'<i class="fa-solid fa-wifi"></i> اتصال مباشر مشفّر عبر الشبكة الحرة'});
+                    this.scheduleCallTimeout(payload.sessionId,30000,this.pendingIncoming);return;
+                }
+                if(payload.sessionId!==this.sessionId||fromAccountId!==this.peerId)return;
+                if(signal.type==='candidate'&&!this.call){this.pendingRoomSignals.push(signal);return;}
+                if(signal.type==='end'&&!this.call){await this.handlePendingIncomingEnd({sessionId:payload.sessionId,reason:signal.reason});return;}
+                if(this.call)await this.call.handleSignal(signal);
+            }
             async handleIncomingOffer(payload) {
                 if(!payload)return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
@@ -4658,14 +4718,15 @@ async function renderConversationsList() {
                 if (!this.pendingIncoming) return;
                 const payload = this.pendingIncoming;
                 this.pendingIncoming = null;
-                await this.createRoom(payload.from, payload.sessionId, payload.conversationId||null);
+                const localMode=payload.mode==='offline'||payload.mode==='offline-market'||this.mode==='offline'||this.mode==='offline-market';
+                if(!localMode)await this.createRoom(payload.from, payload.sessionId, payload.conversationId||null);
                 this.peerId = payload.from;
                 const localAudio = document.getElementById('localAudio');
                 const remoteAudio = document.getElementById('remoteAudio');
                 const localVideo = document.getElementById('localVideo');
                 const remoteVideo = document.getElementById('remoteVideo');
                 this.call = new VoiceCall({
-                    signaling: { send: data => this.sendRoom(data) },
+                    signaling: { send: data => this.sendRoom(data), localOnly: localMode },
                     localAudioEl: localAudio, remoteAudioEl: remoteAudio,
                     localVideoEl: localVideo, remoteVideoEl: remoteVideo,
                     mediaType: payload.mediaType === 'video' ? 'video' : 'audio',
@@ -4680,7 +4741,8 @@ async function renderConversationsList() {
             async rejectIncoming() {
                 this.clearCallTimeout();stopAlwahaCallRingtone();
                 const payload=this.pendingIncoming;this.pendingIncoming=null;
-                if(payload&&this.roomChannel)await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
+                if(payload&&(this.mode==='offline'||this.mode==='offline-market'))await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Mesh Call] Decline signal failed:',error));
+                else if(payload&&this.roomChannel)await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
             }
             async handleCallState(state) {
                 const target=this.mode==='market'?'بائع السوق':(currentChatUser||'المستخدم');
