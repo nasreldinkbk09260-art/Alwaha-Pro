@@ -3,6 +3,8 @@ package __ALWAHA_PACKAGE__;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -34,11 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.UUID;
 
 @CapacitorPlugin(
     name = "AlwahaLocalNetwork",
@@ -56,9 +60,14 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private static final long DISCOVERY_TIMEOUT_MS = 25000L;
     private static final int LOCAL_PACKET_PORT = 43817;
     private static final int MAX_LOCAL_PACKET_BYTES = 262144;
+    private static final UUID BLUETOOTH_PACKET_UUID = UUID.fromString("3b5d8f2a-6b71-4d9a-9e10-7a6c2f4b8d31");
+    private static final String BLUETOOTH_SERVICE_NAME = "Alwaha-Pro Local";
     private final ExecutorService transportExecutor = Executors.newCachedThreadPool();
     private volatile ServerSocket transportServer;
     private volatile Socket transportSocket;
+    private volatile BluetoothServerSocket bluetoothServerSocket;
+    private volatile BluetoothSocket bluetoothTransportSocket;
+    private volatile boolean bluetoothServerClosed = false;
     private volatile boolean transportClosed = false;
     private final Object transportWriteLock = new Object();
     private WifiP2pManager wifiP2pManager;
@@ -125,7 +134,9 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         int targetSdk = getContext().getApplicationInfo().targetSdkVersion;
 
         JSObject result = new JSObject();
-        result.put("phase", "wifi-direct-store-forward");
+        result.put("phase", "wifi-direct+bluetooth-classic-store-forward");
+        result.put("bluetoothRfcommSupported", bluetooth != null);
+        result.put("bluetoothDataTransportReady", isBluetoothTransportConnected());
         result.put("wifiDirectSupported", wifiDirect);
         result.put("wifiEnabled", wifiEnabled);
         result.put("bluetoothClassicSupported", bluetooth != null);
