@@ -11,7 +11,7 @@ const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['local mesh controls remain discoverable in chat without suppressing future entry points', html.includes('openAlwahaLocalDiscovery()') && html.includes('data-alwaha-mesh-toggle') && html.includes('toggleAlwahaLocalChatMode()')],
   ['chat header exposes native nearby Wi-Fi/Bluetooth discovery dialog', html.includes('onclick="openAlwahaLocalDiscovery()"') && html.includes('async function openAlwahaLocalDiscovery()') && html.includes('plugin.startDiscovery()') && html.includes('peerDiscovered')],
-  ['local mesh UI exposes Wi-Fi Direct and Bluetooth Classic packet transport while keeping media calls unverified', html.includes('Wi‑Fi Direct أو Bluetooth Classic RFCOMM') && html.includes('data-bluetooth-server') && html.includes('plugin.connectBluetoothPeer') && html.includes('callMediaReady')],
+  ['local mesh UI exposes Wi-Fi Direct and Bluetooth Classic packet transport while keeping media calls unverified', html.includes('Wi‑Fi Direct أو Bluetooth Classic RFCOMM') && html.includes('data-bluetooth-server') && html.includes('plugin.connectBluetoothPeer') && html.includes('لم نعتمد بعد مكالمات الصوت والفيديو عبر Bluetooth أو عدة قفزات')],
   ['video action opens the normal/Kids mode chooser', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"')],
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
