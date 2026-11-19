@@ -3003,6 +3003,7 @@ async function toggleInternalNotificationCenter() {
             const modal = document.getElementById('voice-call-modal');
             if (!modal) return;
             modal.style.display = open ? 'flex' : 'none';
+            modal.setAttribute('aria-hidden', open ? 'false' : 'true');
             document.body.classList.toggle('modal-active', !!open);
         }
         let alwahaCallSpeakerOn=false;
@@ -4753,6 +4754,7 @@ async function renderConversationsList() {
                 if(this.call)await this.call.handleSignal(signal);
             }
             async handleIncomingOffer(payload) {
+                window.__alwahaCallTerminationRequested = false;
                 if(!payload)return;
                 const authUser=await getCurrentAuthUser();this.myId=authUser?.id||this.myId;if(!this.myId)return;
                 if(this.pendingIncoming?.sessionId===payload.sessionId)return;
@@ -4804,6 +4806,7 @@ async function renderConversationsList() {
                 else if(payload&&this.roomChannel)await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
             }
             async handleCallState(state) {
+                if (window.__alwahaCallTerminationRequested) return;
                 const target=this.mode==='market'?'بائع السوق':(currentChatUser||'المستخدم');
                 if(state==='connected'){this.clearCallTimeout();window.AlwahaCallFeedback?.stop();window.AlwahaCallFeedback?.play('connected');updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});startCallTimer();if(this.mediaType==='video')scheduleKidsRoomAfterVideoConnect(this);}
                 else if(['declined','busy','no-answer','unavailable'].includes(state)){
@@ -4812,7 +4815,7 @@ async function renderConversationsList() {
                 }else if(state==='failed'){
                     window.AlwahaCallFeedback?.stop();await this.end(false);updateCallUi('idle',{target,text:'تعذر إتمام المكالمة.',indicator:'تحقق من الميكروفون والاتصال ثم حاول مجدداً.'});setCallModal(true);window.AlwahaCallFeedback?.play('failed');triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.','error');
                 }else if(state==='remote-ended'){
-                    window.AlwahaCallFeedback?.stop();await this.end(false);updateCallUi('idle',{target,text:'أنهى الطرف الآخر المكالمة.',indicator:'انتهى الاتصال بين الجهازين.'});setCallModal(true);window.AlwahaCallFeedback?.play('ended');triggerToastNotification('أنهى الطرف الآخر المكالمة.','info');
+                    window.AlwahaCallFeedback?.stop();await this.end(false);if(window.__alwahaCallTerminationRequested)return;updateCallUi('idle',{target,text:'أنهى الطرف الآخر المكالمة.',indicator:'انتهى الاتصال بين الجهازين.'});setCallModal(true);window.AlwahaCallFeedback?.play('ended');triggerToastNotification('أنهى الطرف الآخر المكالمة.','info');
                 }
             }
             async end(notify = true, reason = 'ended') {
@@ -5009,6 +5012,7 @@ async function renderConversationsList() {
         });
 
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
+            window.__alwahaCallTerminationRequested = false;
             const video = mediaType === 'video';
             const localMode=mode==='offline'||mode==='offline-market',localMarket=mode==='offline-market';
             if(localMode){
@@ -5184,14 +5188,25 @@ async function renderConversationsList() {
             await activeCallManager?.end(false);updateCallUi('idle');setCallModal(false);
         }
         async function terminateVoiceCall() {
-            // Hide the terminal call screen immediately; native route cleanup must not trap the user here.
+            // Mark the UI as closing before awaiting channel cleanup. Remote-end callbacks
+            // can otherwise race this handler and reopen the completed call modal.
+            window.__alwahaCallTerminationRequested = true;
             const modal = document.getElementById('voice-call-modal');
-            if (modal) modal.style.display = 'none';
+            if (modal) {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
             document.body.classList.remove('modal-active');
-            try { await activeCallManager?.end(true); } catch (e) { console.warn('[Alwaha Call] close cleanup failed:', e); }
-            updateCallUi('idle');
-            setCallModal(false);
-            if (typeof window.closeAlwahaKidsMode === 'function') { try { window.closeAlwahaKidsMode(); } catch (e) {} }
+            try { await activeCallManager?.end(true); }
+            catch (e) { console.warn('[Alwaha Call] close cleanup failed:', e); }
+            finally {
+                updateCallUi('idle');
+                setCallModal(false);
+                if (typeof window.closeAlwahaKidsMode === 'function') {
+                    try { window.closeAlwahaKidsMode(); } catch (e) {}
+                }
+                if (modal) modal.setAttribute('aria-hidden', 'true');
+            }
             triggerToastNotification('أُغلقت شاشة المكالمة.', 'info');
         }
 
