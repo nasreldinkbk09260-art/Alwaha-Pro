@@ -56,7 +56,7 @@ body.modal-active>.bottom-nav-bar:not(.alwaha-nav-over-modal){visibility:hidden!
     <script src="./production-polish.js?v=3.0.4-iphone-pwa-20261118" defer></script>
     <script src="./alwaha-call-feedback.js?v=3.0.4-iphone-pwa-20261118" defer></script>
     <script src="./compatibility.js?v=3.0.4-iphone-pwa-20261118" defer></script>
-    <script src="./alwaha-local-vault.js?v=3.0.4-iphone-pwa-20261118" defer></script>
+    <script src="./alwaha-local-vault.js?v=3.0.4-chat-media-offline-20261119" defer></script>
     <script src="./alwaha-experience.js?v=3.0.4-iphone-pwa-20261118" defer></script>
     <script src="./alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118" defer></script>
     <script src="./alwaha-runtime-guard.js?v=3.0.4-iphone-pwa-20261118" defer></script>
@@ -1379,7 +1379,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.4-test-visibility-20261119', { scope: './', updateViaCache: 'none' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.4-chat-media-offline-20261119', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
