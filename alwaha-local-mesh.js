@@ -271,7 +271,7 @@
     await storeLocalEncrypted('mesh:file:'+fileId+':meta',meta);
     for(let index=0;index<total;index++){
       const bytes=new Uint8Array(await file.slice(index*FILE_CHUNK_BYTES,Math.min(file.size,(index+1)*FILE_CHUNK_BYTES)).arrayBuffer());
-      await vault().put('mesh:file:'+fileId+':'+index,{chunk:bytesToB64(bytes)});
+      await storeLocalEncrypted('mesh:file:'+fileId+':'+index,{chunk:bytesToB64(bytes)});
       await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:meta.name,mime:meta.mime,size:file.size,kind,context,chunk:bytesToB64(bytes)});
     }
     fileUrls.set(fileId,URL.createObjectURL(file));
