@@ -17,15 +17,17 @@ public final class AlwahaLocalSessionCryptoTest {
         bob.establish(alice.publicKeyEncoded(), alice.nonce());
 
         check(alice.comparisonCode().equals(bob.comparisonCode()), "both peers derive the same comparison code");
+        byte[] message = "رسالة محلية مشفرة".getBytes(StandardCharsets.UTF_8);
+        expectFailure(() -> alice.encrypt("text", "", message), "payload is blocked before both participants accept");
         byte[] aliceAccept = alice.acceptanceToken();
+        expectFailure(() -> alice.encrypt("text", "", message), "one-sided acceptance is insufficient");
         byte[] bobAccept = bob.acceptanceToken();
-        check(alice.verifyPeerAcceptance(bobAccept), "Alice verifies Bob's role-bound acceptance");
-        check(bob.verifyPeerAcceptance(aliceAccept), "Bob verifies Alice's role-bound acceptance");
         byte[] badAccept = bobAccept.clone();
         badAccept[0] ^= 0x01;
         check(!alice.verifyPeerAcceptance(badAccept), "tampered acceptance token is rejected");
-
-        byte[] message = "رسالة محلية مشفرة".getBytes(StandardCharsets.UTF_8);
+        expectFailure(() -> alice.encrypt("text", "", message), "tampered peer acceptance does not enable payloads");
+        check(alice.verifyPeerAcceptance(bobAccept), "Alice verifies Bob's role-bound acceptance");
+        check(bob.verifyPeerAcceptance(aliceAccept), "Bob verifies Alice's role-bound acceptance");
         AlwahaLocalSessionCrypto.Frame first = alice.encrypt("text", "", message);
         byte[] changedCiphertext = first.ciphertext();
         changedCiphertext[0] ^= 0x01;
@@ -59,6 +61,7 @@ public final class AlwahaLocalSessionCryptoTest {
         expectFailure(() -> alice.encrypt("text", "", new byte[16 * 1024 + 1]), "oversized text frame is rejected");
         expectFailure(() -> alice.encrypt("file-meta", "../unsafe", metadata), "unsafe transfer identifier is rejected");
         expectFailure(() -> bob.decrypt(new AlwahaLocalSessionCrypto.Frame("unknown", "", 1, new byte[12], new byte[16])), "unknown frame type is rejected");
+        expectFailure(() -> new AlwahaLocalSessionCrypto.Frame("text", "", 1, new byte[12], new byte[32 * 1024 + 17]), "oversized incoming frame is rejected before it can be used");
 
         AlwahaLocalSessionCrypto samePeer = new AlwahaLocalSessionCrypto();
         byte[] samePublic = samePeer.publicKeyEncoded();

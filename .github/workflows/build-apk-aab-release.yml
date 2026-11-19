@@ -115,6 +115,7 @@ jobs:
           test -s scripts/native-back-handler.mjs
           test -s scripts/android/AlwahaAudioRoutePlugin.java
           test -s scripts/android/AlwahaLocalNetworkPlugin.java
+          test -s scripts/android/AlwahaLocalSessionCrypto.java
           test -s scripts/local-network-native-audit.mjs
           test -s games.js
           test -s production-polish.js

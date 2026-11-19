@@ -47,6 +47,8 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
     private KeyPair keyPair;
     private byte[] localNonce;
     private boolean established;
+    private boolean localAccepted;
+    private boolean peerAccepted;
     private boolean localIsLow;
     private byte[] transcript;
     private byte[] sendKey;
@@ -148,7 +150,9 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
     public synchronized byte[] acceptanceToken() throws GeneralSecurityException {
         ensureEstablished();
         String role = localIsLow ? "LOW" : "HIGH";
-        return hmacSha256(confirmationKey, concat(utf8("accept:" + role + "|"), transcript));
+        byte[] token = hmacSha256(confirmationKey, concat(utf8("accept:" + role + "|"), transcript));
+        localAccepted = true;
+        return token;
     }
 
     /** Verify the other participant's role-bound explicit acceptance. */
@@ -159,12 +163,13 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
         byte[] expected = hmacSha256(confirmationKey, concat(utf8("accept:" + peerRole + "|"), transcript));
         boolean valid = MessageDigest.isEqual(expected, peerToken);
         wipe(expected);
+        if (valid) peerAccepted = true;
         return valid;
     }
 
     public synchronized Frame encrypt(String type, String transferId, byte[] plaintext)
         throws GeneralSecurityException {
-        ensureEstablished();
+        ensurePaired();
         validateTypeAndTransfer(type, transferId);
         validatePayloadSize(type, plaintext == null ? -1 : plaintext.length);
         if (sendSequence == Long.MAX_VALUE) throw new GeneralSecurityException("Session send sequence exhausted.");
@@ -179,7 +184,7 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
     }
 
     public synchronized byte[] decrypt(Frame frame) throws GeneralSecurityException {
-        ensureEstablished();
+        ensurePaired();
         if (frame == null) throw new GeneralSecurityException("Missing encrypted frame.");
         validateTypeAndTransfer(frame.type, frame.transferId);
         if (frame.sequence <= 0 || receiveSequence == Long.MAX_VALUE || frame.sequence != receiveSequence + 1) {
@@ -216,6 +221,7 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
         sendKey = receiveKey = sendNoncePrefix = receiveNoncePrefix = confirmationKey = transcript = localNonce = null;
         keyPair = null;
         established = false;
+        localAccepted = peerAccepted = false;
         sendSequence = receiveSequence = 0;
     }
 
@@ -226,6 +232,11 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
     private void ensureEstablished() {
         ensureOpen();
         if (!established) throw new IllegalStateException("Peer pairing and key agreement are not complete.");
+    }
+
+    private void ensurePaired() {
+        ensureEstablished();
+        if (!localAccepted || !peerAccepted) throw new IllegalStateException("Both participants must explicitly accept the verified pairing code.");
     }
 
     private static void validateTypeAndTransfer(String type, String transferId) throws GeneralSecurityException {
@@ -358,11 +369,15 @@ public final class AlwahaLocalSessionCrypto implements AutoCloseable {
         private final byte[] ciphertext;
 
         public Frame(String type, String transferId, long sequence, byte[] nonce, byte[] ciphertext) {
+            if (nonce == null || nonce.length != GCM_NONCE_BYTES) throw new IllegalArgumentException("Invalid encrypted frame nonce size.");
+            if (ciphertext == null || ciphertext.length < GCM_TAG_BYTES || ciphertext.length > MAX_FILE_CHUNK_BYTES + GCM_TAG_BYTES) {
+                throw new IllegalArgumentException("Invalid or oversized encrypted frame payload.");
+            }
             this.type = type;
             this.transferId = transferId == null ? "" : transferId;
             this.sequence = sequence;
-            this.nonce = nonce == null ? new byte[0] : nonce.clone();
-            this.ciphertext = ciphertext == null ? new byte[0] : ciphertext.clone();
+            this.nonce = nonce.clone();
+            this.ciphertext = ciphertext.clone();
         }
 
         public byte[] nonce() { return nonce.clone(); }
