@@ -17,15 +17,20 @@ GRANT SELECT ON public.comments TO anon, authenticated;
 
 DROP POLICY IF EXISTS ci_comments_anon_public_read ON public.comments;
 DROP POLICY IF EXISTS ci_comments_authenticated_read ON public.comments;
-DROP POLICY IF EXISTS comments_select_public ON public.comments;
 
-CREATE POLICY ci_comments_anon_public_read
-  ON public.comments FOR SELECT TO anon
+DO $roles$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ci_restricted_reader') THEN
+    CREATE ROLE ci_restricted_reader NOLOGIN NOBYPASSRLS;
+  END IF;
+END
+$roles$;
+
+GRANT SELECT ON public.comments TO ci_restricted_reader;
+DROP POLICY IF EXISTS ci_comments_restricted_reader ON public.comments;
+CREATE POLICY ci_comments_restricted_reader
+  ON public.comments FOR SELECT TO ci_restricted_reader
   USING (target_id <> 'hidden-post');
-
-CREATE POLICY ci_comments_authenticated_read
-  ON public.comments FOR SELECT TO authenticated
-  USING (true);
 
 INSERT INTO public.comments (target_id, target_type, user_id, author_name, content)
 VALUES
