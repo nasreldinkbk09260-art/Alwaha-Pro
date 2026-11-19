@@ -8,11 +8,6 @@ function hasVersionedScript(asset){
  const revision=html.slice(start+marker.length).split('"')[0];
  return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
 }
-function hasVersionedScript(asset){
- const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
- const revision=html.slice(start+marker.length).split('"')[0];
- return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
-}
 check('market button is beside buy/sell/my items and opens a dedicated page',html.includes('id="market-conversations-open"')&&html.includes('onclick="openMarketConversationsPage()"')&&html.includes('function openMarketConversationsPage()'));
 check('shared camera preview is queried by a scoped data attribute, not a duplicated ID',html.includes('data-camera-live-video')&&html.includes("document.querySelector('#camera-view-box video[data-camera-live-video]')")&&!html.includes('id="camera-live-video"'));
 check('original market conversation and transaction DOM is preserved and moved, not duplicated',html.includes('id="market-conversations-panel"')&&html.includes("placeholder.id='market-conversations-panel-placeholder'")&&html.includes("content.appendChild(panel)")&&html.includes('market-transactions-container'));
