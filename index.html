@@ -1959,7 +1959,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const hasUserFilter = /(?:^|&)(?:id|author_id|seller_id|user_id|follower_id|following_id|receiver_id|sender_id|sold_to)=/.test(query);
             const isPublicCommentThread = tableName === 'comments' && /(?:^|&)target_id=eq\./.test(query) && /(?:^|&)target_type=eq\./.test(query) && !hasUserFilter;
             const isPublicPostCommentCount = tableName === 'comments' && query.includes('select=target_id') && /(?:^|&)target_type=eq\.post(?:&|$)/.test(query) && !hasUserFilter;
-            const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread || isPublicPostCommentCount);
+            const isPublicPostCommentCounts = tableName === 'post_comment_counts' && query.includes('select=post_id,comments_count') && !hasUserFilter;
+            const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread || isPublicPostCommentCount || isPublicPostCommentCounts)
             const cacheKey = cacheable ? String(endpoint) : '';
             const localOnlyMode = window.AlwahaLocalMesh?.isEnabled() === true;
             if (requestMethod !== 'GET' && !localOnlyMode) apiCache.clear();
@@ -3089,6 +3090,42 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
             }
         }
 
+        async function loadHomePostCommentCounts(container, requestId) {
+            if (!container?.isConnected) return;
+            const counts = await alwahaUiDeadline(
+                supabaseFetch('post_comment_counts?select=post_id,comments_count'),
+                6000,
+                null
+            );
+            const countMap = new Map();
+            if (Array.isArray(counts)) {
+                for (const row of counts) {
+                    const postId = String(row.post_id || '');
+                    if (postId) countMap.set(postId, Math.max(0, Number(row.comments_count || 0)));
+                }
+            } else {
+                // Backward-compatible fallback until the aggregate view migration is applied.
+                const rows = await alwahaUiDeadline(
+                    supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000'),
+                    7000,
+                    null
+                );
+                if (!Array.isArray(rows)) return;
+                for (const row of rows) {
+                    const postId = String(row.target_id || '');
+                    if (postId) countMap.set(postId, (countMap.get(postId) || 0) + 1);
+                }
+            }
+            if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
+            for (const node of container.querySelectorAll('[id^="comment-count-"]')) {
+                const postId = node.id.slice('comment-count-'.length);
+                const count = countMap.get(postId) || 0;
+                node.textContent = String(count);
+                const button = node.closest('button');
+                if (button) button.setAttribute('aria-label', count + ' تعليق');
+            }
+        }
+
         async function renderHomePostsFeedInternal() {
             const container = document.getElementById('home-posts-feed-container');
             if (!container) return;
@@ -3099,10 +3136,9 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                 container.innerHTML = '<div class="alwaha-feed-loading" role="status" aria-live="polite" style="text-align:center;color:#38bdf8;font-size:12px;padding:12px;">جاري تحديث المنشورات...</div>';
             }
             try {
-                const [posts, counts, commentRows] = await Promise.all([
+                const [posts, counts] = await Promise.all([
                     alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null),
-                    alwahaUiDeadline(supabaseFetch('post_like_counts?select=post_id,likes_count'), 2200, []),
-                    alwahaUiDeadline(supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000'), 2200, [])
+                    alwahaUiDeadline(supabaseFetch('post_like_counts?select=post_id,likes_count'), 2200, [])
                 ]);
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 if (!Array.isArray(posts)) {
@@ -3120,11 +3156,6 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                 const mine = me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`), 1200, []) : [];
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 const countMap = new Map((Array.isArray(counts) ? counts : []).map(x => [String(x.post_id), Number(x.likes_count || 0)]));
-                const commentCountMap = new Map();
-                for (const row of (Array.isArray(commentRows) ? commentRows : [])) {
-                    const key = String(row.target_id || '');
-                    if (key) commentCountMap.set(key, (commentCountMap.get(key) || 0) + 1);
-                }
                 const mineSet = new Set((Array.isArray(mine) ? mine : []).map(x => String(x.post_id)));
                 container.setAttribute('aria-busy', 'false');
                 container.innerHTML = posts.map(post => {
@@ -3138,10 +3169,11 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                         <p style="font-size:13px;line-height:1.4;color:#fff;white-space:pre-wrap;">${escapeHtml(post.content || '')}</p>${imageMarkup}
                         <div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;">
                             <button class="btn-action ${liked ? 'liked' : ''}" style="background:transparent;color:${liked ? '#ff0055' : '#fff'};padding:4px 8px;font-size:12px;flex:1;" id="like-btn-${escapeJs(id)}" onclick="togglePostLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${escapeJs(id)}">${count}</span>)</button>
-                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق (<span id="comment-count-${escapeJs(id)}">${commentCountMap.get(id) || 0}</span>)</button>
+                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق (<span id="comment-count-${escapeJs(id)}">0</span>)</button>
                             <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="shareTextContent('منشور Alwaha-Pro','${escapeJs((post.content || '').slice(0,160))}')"><i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة</button>
                         </div>${ownerActions}${moderationActions}</div>`;
                 }).join('');
+                void loadHomePostCommentCounts(container, requestId);
             } catch (error) {
                 console.error('[Alwaha Feed] Render failed:', error);
                 if (requestId === alwahaHomeFeedRequestId && container.isConnected) renderHomeFeedProblem(container, 'حدث خطأ أثناء تجهيز المنشورات على الجهاز. أعد المحاولة.');
@@ -3534,6 +3566,14 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                     return;
                 }
                 if(input.value.trim()===content)input.value='';
+                if (targetType === 'post') {
+                    const countNode = document.getElementById('comment-count-' + targetId);
+                    if (countNode) {
+                        const nextCount = Math.max(0, Number(countNode.textContent || 0)) + 1;
+                        countNode.textContent = String(nextCount);
+                        countNode.closest('button')?.setAttribute('aria-label', nextCount + ' تعليق');
+                    }
+                }
                 await loadCommentsForTarget(targetId,targetType);
             }catch(error){
                 console.warn('[Alwaha Comments] Send failed:',error);
