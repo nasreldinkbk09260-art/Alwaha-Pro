@@ -2230,6 +2230,10 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             void (async()=>{
                 const detail=event?.detail,payload=detail?.payload,me=await getCurrentAuthUser(),senderId=String(detail?.senderAccountId||'');
                 if(!me||!senderId||!payload)return;
+                if(payload.type==='call-signal'||payload.type==='call-result'){
+                    if(!activeCallManager)activeCallManager=new CallSignalingManager();
+                    await activeCallManager.handleLocalMeshSignal(senderId,payload);return;
+                }
                 const id='mesh-'+String(detail.id||crypto.randomUUID()),created_at=detail.receivedAt||new Date().toISOString();
                 if(payload.type==='direct-text'){
                     const row={id,sender_id:senderId,receiver_id:me.id,message:String(payload.text||''),created_at,read_at:null,reply_to_id:payload.replyToId||null,local_mesh:true};
@@ -4917,8 +4921,25 @@ async function renderConversationsList() {
         }
 
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
-            if (mode === 'offline') return triggerToastNotification('الاتصال المحلي المباشر غير متاح في هذه النسخة؛ لا نعرضه كميزة عاملة قبل إضافة واختبار المكوّن الأصلي.', 'info');
             const video = mediaType === 'video';
+            const localMode=mode==='offline'||mode==='offline-market',localMarket=mode==='offline-market';
+            if(localMode){
+                const mesh=window.AlwahaLocalMesh;if(!mesh?.isEnabled())return triggerToastNotification('فعّل وضع الشبكة الحرة أولًا قبل الاتصال المحلي.','info');
+                const user=await requireAuthenticatedUser(video?'سجّل الدخول لإجراء مكالمة فيديو محلية.':'سجّل الدخول لإجراء مكالمة صوتية محلية.');if(!user)return;
+                const targetId=localMarket?(marketPeerId||currentMarketPeerId):(currentChatUserId||'');
+                if(!targetId||targetId===user.id)return triggerToastNotification('افتح محادثة موثوقة أولًا لتحديد الطرف الآخر.','error');
+                if(!await mesh.getPeerByAccountId(targetId))return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
+                if(localMarket&&(!marketConversationId||String(currentMarketPeerId||'')!==String(targetId)))return triggerToastNotification('افتح محادثة السوق الموثقة مع البائع قبل المكالمة المحلية.','error');
+                if(video&&(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection))return triggerToastNotification('مكالمات الفيديو غير مدعومة في WebView الحالي.','error');
+                setCallModal(true);if(!activeCallManager)activeCallManager=new CallSignalingManager();
+                activeCallManager.mediaType=video?'video':'audio';
+                updateCallUi('outgoing',{target:localMarket?(marketDisplayName||'بائع السوق'):(currentChatUser||targetId),text:video?'جارٍ بدء مكالمة فيديو محلية…':'جارٍ بدء مكالمة صوتية محلية…',indicator:'<i class="fa-solid fa-wifi"></i> تفاوض WebRTC عبر Wi‑Fi Direct والحزم المشفّرة'});
+                try{
+                    await activeCallManager.startOutgoing(targetId,mode,mediaType,localMarket?marketConversationId:null);
+                    updateCallUi('connecting',{target:localMarket?(marketDisplayName||'بائع السوق'):(currentChatUser||targetId),text:'بانتظار استجابة الجهاز الآخر عبر الشبكة المحلية…',indicator:'لا يستخدم مسار المكالمة المحلي خوادم STUN/TURN.'});
+                    return true;
+                }catch(error){console.warn('[Alwaha Local Call] setup failed:',error);await activeCallManager.end(false);setCallModal(false);triggerToastNotification(error?.message||'تعذر بدء المكالمة المحلية.','error');return false;}
+            }
             const user = await requireAuthenticatedUser(video ? 'سجّل الدخول لإجراء مكالمة فيديو.' : 'سجّل الدخول أولاً لإجراء مكالمة صوتية.');
             if (!user) return;
             const marketMode=mode==='market';
@@ -4958,11 +4979,11 @@ async function renderConversationsList() {
                 triggerToastNotification(message, 'error');
             }
         }
-        async function initiateVoiceCall(type = 'online') { return startAlwahaCall(type, 'audio'); }
+        async function initiateVoiceCall(type = 'online') { return startAlwahaCall(window.AlwahaLocalMesh?.isEnabled()?'offline':type,'audio'); }
         async function initiateVideoCall(mode = 'normal') {
             cancelPendingKidsRoomAfterConnect();
             pendingKidsRoomAfterConnect = mode === 'kids';
-            await startAlwahaCall('online', 'video');
+            await startAlwahaCall(window.AlwahaLocalMesh?.isEnabled()?'offline':'online', 'video');
             if (!activeCallManager?.call) cancelPendingKidsRoomAfterConnect();
             return !!activeCallManager?.call;
         }
@@ -5386,7 +5407,7 @@ async function submitNewProductToMarket() {
             if(!conversation)return triggerToastNotification('ابدأ محادثة السوق مع هذا البائع أولًا، ثم أعد الاتصال من الإعلان.','info');
             const participantId=conversation.buyer_id===me.id?conversation.seller_id:conversation.buyer_id;
             if(String(participantId)!==peerId)return triggerToastNotification('المحادثة لا تطابق البائع المحدد؛ لم نبدأ الاتصال.','error');
-            return startAlwahaCall('market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
+            return startAlwahaCall(window.AlwahaLocalMesh?.isEnabled()?'offline-market':'market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
         }
 
         async function updateMarketProductLifecycle(productId, patch, successMessage) {
