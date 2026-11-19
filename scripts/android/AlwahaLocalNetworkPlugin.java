@@ -618,7 +618,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         payload.put("state", state);
         payload.put("detail", detail);
         payload.put("transportReady", isTransportConnected());
-        payload.put("transport", "wifi-direct-tcp");
+        payload.put("transport", isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp");
         notifyListeners("transportState", payload);
     }
 
