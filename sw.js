@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-test-visibility-20261119';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-chat-media-offline-20261119';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -21,7 +21,7 @@ const PRECACHE_ASSETS = [
   './alwaha-profile-editor.js?v=3.0.4-iphone-pwa-20261118',
   './alwaha-call-feedback.js?v=3.0.4-iphone-pwa-20261118',
   './compatibility.js?v=3.0.4-iphone-pwa-20261118',
-  './alwaha-local-vault.js?v=3.0.4-iphone-pwa-20261118',
+  './alwaha-local-vault.js?v=3.0.4-chat-media-offline-20261119',
   './alwaha-experience.js?v=3.0.4-iphone-pwa-20261118',
   './alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118',
   './alwaha-runtime-guard.js?v=3.0.4-iphone-pwa-20261118',
