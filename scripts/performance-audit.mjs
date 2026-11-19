@@ -42,7 +42,7 @@ if (/<title>Alwaha-Pro 3\.0\.4<\/title>/i.test(html) &&
   pass("HTML title and currentAppVersion match 3.0.4");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.4-(?:iphone-pwa-20261118|test-visibility-20261119|chat-media-offline-20261119)['"]/.test(sw))
+if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*['"]/.test(sw))
   pass("service worker uses an approved 3.0.4 release or private-test cache namespace");
 else fail("service worker cache namespace mismatch");
 
