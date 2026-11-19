@@ -2724,10 +2724,22 @@ async function toggleInternalNotificationCenter() {
             center.style.display = 'flex';
             document.body.classList.add('modal-active');
             center.innerHTML = '<div class="alwaha-notification-panel"><div style="padding:14px;text-align:center;color:#00ffff;font-size:12px;">جاري تحميل التنبيهات...</div></div>';
-            const [rows, pendingFriendRequests] = await Promise.all([
-                supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`),
-                supabaseFetch(`friend_requests?target_id=eq.${encodeURIComponent(me.id)}&status=eq.pending&select=id,requester_id,created_at&order=created_at.desc&limit=30`)
-            ]);
+            const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            let rows=null,pendingFriendRequests=null,cachedRequesterDirectory=[];
+            if(offlineView){
+                [rows,pendingFriendRequests,cachedRequesterDirectory]=await Promise.all([
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications'),
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requests'),
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory')
+                ]);
+            }else{
+                [rows,pendingFriendRequests]=await Promise.all([
+                    supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&select=id,title,body,type,is_read,created_at&order=created_at.desc&limit=50`),
+                    supabaseFetch(`friend_requests?target_id=eq.${encodeURIComponent(me.id)}&status=eq.pending&select=id,requester_id,created_at&order=created_at.desc&limit=30`)
+                ]);
+                if(Array.isArray(rows))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'notifications',rows).catch(error=>console.warn('[Alwaha Vault] notification cache failed:',error));
+                if(Array.isArray(pendingFriendRequests))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-requests',pendingFriendRequests).catch(error=>console.warn('[Alwaha Vault] friend-request cache failed:',error));
+            }
             if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             const notificationRows=Array.isArray(rows)?rows:[];
             if (!Array.isArray(rows)) console.warn('Notification rows unavailable; still displaying pending friend requests.',window.__alwahaLastApiError||{});
@@ -2751,7 +2763,13 @@ async function toggleInternalNotificationCenter() {
             let directFriendRequestHtml='';
             if(Array.isArray(pendingFriendRequests)&&pendingFriendRequests.length){
                 const requesterIds=[...new Set(pendingFriendRequests.map(r=>r.requester_id).filter(Boolean))];
-                const requesterQuery=requesterIds.length?await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`):[];
+                let requesterQuery=[];
+                if(offlineView){
+                    requesterQuery=(Array.isArray(cachedRequesterDirectory)?cachedRequesterDirectory:[]).filter(user=>requesterIds.includes(String(user.id)));
+                }else if(requesterIds.length){
+                    requesterQuery=await supabaseFetch(`user_directory?id=in.(${requesterIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url`);
+                    if(Array.isArray(requesterQuery))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-directory',requesterQuery).catch(error=>console.warn('[Alwaha Vault] friend directory cache failed:',error));
+                }
                 if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
                 const requesterMap=new Map((Array.isArray(requesterQuery)?requesterQuery:[]).map(u=>[String(u.id),u]));
                 directFriendRequestHtml=`<section aria-label="طلبات الصداقة المعلقة" style="padding:8px 10px;background:rgba(115,30,63,.18);border-bottom:1px solid rgba(210,90,130,.22);"><div style="font-size:12px;font-weight:700;color:#f3aec6;padding:4px 0 8px;">طلبات صداقة بانتظار ردك (${pendingFriendRequests.length})</div>${pendingFriendRequests.map(r=>{const u=requesterMap.get(String(r.requester_id))||{};const name=`${u.first_name||''} ${u.last_name||''}`.trim()||'مستخدم';return `<div data-friend-request-id="${escapeJs(r.id)}" style="display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);"><img src="${escapeHtml(u.avatar_url||'icon.png')}" alt="" loading="lazy" style="width:34px;height:34px;object-fit:cover;border-radius:50%;"><div style="flex:1;min-width:0;color:#eee;font-size:11px;">${escapeHtml(name)}<div style="color:#999;font-size:9px;margin-top:3px;">${escapeHtml(r.created_at?new Date(r.created_at).toLocaleString('ar-EG'):'طلب صداقة')}</div></div><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#00b978;color:#07140f;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','accepted')">قبول</button><button type="button" class="btn-action" style="padding:6px 9px;border-radius:8px;background:#5b2435;color:#fff;font-size:10px;" onclick="respondFriendRequest('${escapeJs(r.id)}','rejected')">رفض</button></div>`;}).join('')}</section>`;
@@ -2787,7 +2805,7 @@ async function toggleInternalNotificationCenter() {
                 </section>`;
             }
             if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
-            center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
+            center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">${offlineView?'نسخة محلية مشفّرة لآخر التنبيهات والطلبات التي حُمّلت على هذا الجهاز. القراءة هنا محلية فقط حتى عودة الاتصال.':'طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.'}</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
 
         }
 
