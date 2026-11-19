@@ -62,8 +62,8 @@ if (workflow.includes("Alwaha-Pro-3.0.4.apk") &&
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
-const validatesEveryDevelopmentBranch = /branches:\s*\n\s+- ['"]\\*\\*['"]/.test(pushBranchBlock);
-const publicReleaseJobs = workflow.split("\\n").filter(line => line.trim() === "if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'");
+const validatesEveryDevelopmentBranch = /branches:\s*\n\s+- ['"]\*\*['"]/.test(pushBranchBlock);
+const publicReleaseJobs = workflow.split("\n").filter(line => line.trim() === "if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'");
 if (validatesEveryDevelopmentBranch && publicReleaseJobs.length >= 2)
   pass("all branches receive private validation while public publishing requires main and explicit approval");
 else fail("development CI must accept every branch; public publishing must remain main-only and explicitly approved");
