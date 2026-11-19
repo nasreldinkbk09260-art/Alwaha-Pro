@@ -18,7 +18,6 @@ const versionedCss=(asset)=>{
   const revision=html.slice(pos+marker.length).split('"')[0];
   return !!revision&&sw.includes("'./"+asset+"?v="+revision+"'")&&sw.includes("'./"+asset+"'");
 };
-const pageScriptAssets=html.split('<script').slice(1).map(chunk=>{
   const tag=chunk.slice(0,chunk.indexOf('>'));
   const marker='src="./',pos=tag.indexOf(marker);
   if(pos<0)return null;
