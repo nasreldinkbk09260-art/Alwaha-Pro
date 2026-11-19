@@ -23,7 +23,7 @@ const checks=[
  ['private keys remain non-extractable and are persisted in IndexedDB via local vault',mesh.includes('generateKey(algorithm,false,usages)')&&mesh.includes("mesh:identity-v1")&&mesh.includes("vault().put('mesh:identity-v1',identity)")],
  ['peer pairing requires fingerprint verification and explicit six-character confirmation',mesh.includes('fingerprintCode')&&mesh.includes("confirmationCode")&&mesh.includes("expected=fingerprint.slice(-6).toUpperCase()")],
  ['messages use rotating opaque route tokens and bounded expiry/hop limits',mesh.includes('routeTokens')&&mesh.includes('ROUTE_DAYS=3')&&mesh.includes('MAX_AGE_MS=72*60*60*1000')&&mesh.includes('MAX_HOPS=12')],
- ['end-to-end envelope signature is verified before dispatch',mesh.includes('crypto.subtle.sign({name:\'ECDSA\',hash:\'SHA-256\'}')&&mesh.includes('crypto.subtle.verify({name:\'ECDSA\',hash:\'SHA-256\'}')),
+ ['end-to-end envelope signature is verified before dispatch',mesh.includes('crypto.subtle.sign({name:\'ECDSA\',hash:\'SHA-256\'}')&&mesh.includes('crypto.subtle.verify({name:\'ECDSA\',hash:\'SHA-256\'}')],
  ['relays store ciphertext only and reject duplicate packet IDs',mesh.includes('enqueueRelay(packet')&&mesh.includes('mesh:relay:')&&mesh.includes('mesh:seen:')&&mesh.includes('duplicate:true')],
  ['file transfer chunks encrypted files and reassembles within explicit size limits',mesh.includes('FILE_CHUNK_BYTES=120*1024')&&mesh.includes('25*1024*1024')&&mesh.includes('file-ready')&&mesh.includes('restoreFile')],
  ['chat and market UIs expose explicit local mode and trusted identity pairing',html.includes('toggleAlwahaLocalChatMode()')&&html.includes('data-pair-peer')&&html.includes('createWifiDirectGroup')&&html.includes('connectWifiDirectPeer')],
