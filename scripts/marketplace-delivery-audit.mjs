@@ -42,7 +42,7 @@ check('older databases keep pickup history usable until the delivery migration i
 check('delivery address is not part of the public product listing or public cache',
   !html.includes('products?select=delivery_address')&&
   !html.includes('post_comment_counts: [\'delivery_address\']')&&
-  migration.includes('participant-only transaction SELECT RLS'));
+  migration.includes('participant-only SELECT RLS'));
 
 check('migration adds constrained pickup/delivery fields and a private participant-only update path',
   migration.includes("DEFAULT 'pickup'")&&
