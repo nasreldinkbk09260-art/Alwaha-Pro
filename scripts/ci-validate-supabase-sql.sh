@@ -146,3 +146,9 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/post-comment-counts-ci-bootstra
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120010000_post_comment_counts_view.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120010000_post_comment_counts_view.sql"
 
+echo 'APPLY TEST MIGRATION: 20261120210000_marketplace_delivery_workflow.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120210000_marketplace_delivery_workflow.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120210000_marketplace_delivery_workflow.sql"
+echo 'MARKETPLACE_DELIVERY_WORKFLOW=PASS'
+
+
