@@ -39,7 +39,7 @@ INSERT INTO public.market_conversations(product_id,buyer_id,seller_id)
 SELECT id,'41000000-0000-4000-8000-000000000001','41000000-0000-4000-8000-000000000002'
 FROM public.products WHERE title='private-attachment-test';
 SELECT set_config('alwaha.test.conversation_id',(
-  SELECT id::text FROM public.market_conversations c JOIN public.products p ON p.id=c.product_id WHERE p.title='private-attachment-test' LIMIT 1
+  SELECT c.id::text FROM public.market_conversations c JOIN public.products p ON p.id=c.product_id WHERE p.title='private-attachment-test' LIMIT 1
 ),true);
 
 SET LOCAL ROLE authenticated;
