@@ -117,6 +117,10 @@ echo 'APPLY TEST MIGRATION: 20261117010000_storage_upload_ownership.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/storage-upload-ci-bootstrap.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117010000_storage_upload_ownership.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117010000_storage_upload_ownership.sql"
+echo 'APPLY TEST MIGRATION: 20261119190000_private_chat_media_attachments.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261119190000_private_chat_media_attachments.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261119190000_private_chat_media_attachments.sql"
+echo 'PRIVATE_CHAT_ATTACHMENTS_SQL_REGRESSION=PASS'
 echo 'APPLY TEST MIGRATION: 20261117170000_child_safety_urgent_reports.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117170000_child_safety_urgent_reports.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117170000_child_safety_urgent_reports.sql"
