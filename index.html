@@ -1430,6 +1430,7 @@ img,video,canvas{max-width:100%}
         let currentChatUserId = "";
         let directMessageChannel = null;
         let currentMarketConversationId = '';
+        let currentMarketPeerId = '';
         let currentDirectMessages=[],currentDirectReplyTarget=null,directReplySchemaAvailable=false;
         let currentMarketMessages=[],currentMarketReplyTarget=null,marketReplySchemaAvailable=false;
         let marketMessageSendInFlight = false;
@@ -2186,6 +2187,18 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             try{const item=JSON.parse(raw.slice(ALWAHA_CHAT_MEDIA_PREFIX.length));if(item?.v!==1||!['image','video','audio'].includes(item.type)||typeof item.path!=='string'||item.path.split('/').length!==3||item.path.includes('..'))return null;return item;}catch{return null;}
         }
         async function renderAlwahaChatMessageContent(message){
+            const meshPrefix='ALWAHA_MESH_FILE_V1:';
+            if(String(message||'').startsWith(meshPrefix)){
+                try{
+                    const item=JSON.parse(String(message).slice(meshPrefix.length)),mesh=window.AlwahaLocalMesh;
+                    const url=await mesh?.restoreFile?.(String(item.fileId||''));if(!url)return '<span style="color:#ffd88b;font-size:10px;">ملف محلي مشفّر محفوظ؛ افتح الجهاز المتصل لاستعادة أجزائه.</span>';
+                    const safe=escapeHtml(url),name=escapeHtml(item.name||'ملف محلي');
+                    if(String(item.mime||'').startsWith('image/'))return '<a href="'+safe+'" target="_blank" rel="noopener"><img src="'+safe+'" alt="'+name+'" style="max-width:min(100%,280px);max-height:280px;object-fit:contain;border-radius:12px;"></a>';
+                    if(String(item.mime||'').startsWith('video/'))return '<video controls playsinline preload="metadata" src="'+safe+'" style="width:min(100%,300px);max-height:280px;border-radius:12px;background:#000;"></video>';
+                    if(String(item.mime||'').startsWith('audio/'))return '<audio controls preload="metadata" src="'+safe+'" style="width:min(100%,280px);"></audio>';
+                    return '<a href="'+safe+'" download="'+name+'" style="color:#8bf4ff;">تنزيل '+name+'</a>';
+                }catch(error){return '<span style="color:#ffd88b;font-size:10px;">تعذر فتح الملف المحلي.</span>';}
+            }
             const item=decodeAlwahaChatMedia(message);if(!item)return escapeHtml(String(message||''));
             if(!supabaseClient?.storage)return '<span style="color:#ffd88b;font-size:10px;">وسيط محفوظ — اتصل لعرض الملف المحمي.</span>';
             try{
@@ -2211,10 +2224,51 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             return path;
         }
         async function removePrivateChatMedia(path){if(path&&supabaseClient?.storage){try{await supabaseClient.storage.from('chat-media').remove([path]);}catch(error){console.warn('[Alwaha Chat Media] orphan cleanup failed:',error);}}}
+
+        function meshFileMessageRef(item){return 'ALWAHA_MESH_FILE_V1:'+JSON.stringify({fileId:item.fileId,name:item.name||'ملف محلي',mime:item.mime||'application/octet-stream',size:Number(item.size||0),kind:item.kind||'file'});}
+        window.addEventListener('alwaha:mesh-message',event=>{
+            void (async()=>{
+                const detail=event?.detail,payload=detail?.payload,me=await getCurrentAuthUser(),senderId=String(detail?.senderAccountId||'');
+                if(!me||!senderId||!payload)return;
+                const id='mesh-'+String(detail.id||crypto.randomUUID()),created_at=detail.receivedAt||new Date().toISOString();
+                if(payload.type==='direct-text'){
+                    const row={id,sender_id:senderId,receiver_id:me.id,message:String(payload.text||''),created_at,read_at:null,reply_to_id:payload.replyToId||null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,senderId)||[];if(!rows.some(item=>item.id===id)){rows.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,senderId,rows);}
+                    if(String(currentChatUserId||'')===senderId)await loadDirectMessages();
+                    return;
+                }
+                if(payload.type==='market-text'&&payload.conversationId){
+                    const conversationId=String(payload.conversationId),row={id,conversation_id:conversationId,sender_id:senderId,message:String(payload.text||''),created_at,read_at:null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||[];if(!rows.some(item=>item.id===id)){rows.push(row);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,conversationId,rows);}
+                    if(String(currentMarketConversationId||'')===conversationId)await loadMarketMessages();
+                    return;
+                }
+                if(payload.type==='file-ready'){
+                    const row={id,sender_id:senderId,receiver_id:me.id,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
+                    const direct=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,senderId)||[];if(!direct.some(item=>item.id===id)){direct.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,senderId,direct);}
+                    const marketId=String(currentMarketConversationId||'');
+                    if(marketId&&String(currentMarketPeerId||'')===senderId){
+                        const marketRow={id,conversation_id:marketId,sender_id:senderId,message:meshFileMessageRef(payload),created_at,read_at:null,local_mesh:true};
+                        const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,marketId)||[];rows.push(marketRow);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,marketId,rows);await loadMarketMessages();
+                    }else if(String(currentChatUserId||'')===senderId)await loadDirectMessages();
+                }
+            })().catch(error=>console.warn('[Alwaha Mesh] incoming local message could not be stored:',error));
+        });
+
         async function sendDirectChatMedia(file){
             if(!file||directMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط المحادثة.');const peerId=String(currentChatUserId||'');if(!me||!peerId)return;
-            if(!navigator.onLine)return triggerToastNotification('إرسال الوسائط دون اتصال غير متاح بعد؛ لم يُرفع الملف ولم يُرسل.','info');
+            if(window.AlwahaLocalMesh?.isEnabled()){
+                try{
+                    if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
+                    const kind=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
+                    const result=await window.AlwahaLocalMesh.sendFileToAccount(peerId,file,kind);
+                    const row={id:'mesh-'+result.fileId,sender_id:me.id,receiver_id:peerId,message:meshFileMessageRef(result),created_at:new Date().toISOString(),read_at:null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,peerId)||[];rows.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(me.id,peerId,rows);
+                    await loadDirectMessages();triggerToastNotification('تم تشفير الملف وتقسيمه إلى '+result.chunks+' حزمة للشبكة المحلية.','success');return;
+                }catch(error){triggerToastNotification(error?.message||'تعذر إرسال الملف عبر الشبكة المحلية.','error');return;}
+            }
+            if(!navigator.onLine)return triggerToastNotification('إرسال الوسائط دون اتصال غير متاح ما لم تفعل الشبكة الحرة وتوثّق الجهاز الآخر.','info');
             if(!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل إرسال الوسائط.','info');
             if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
             const conversationKey=directChatConversationKey(me.id,peerId),path=await uploadPrivateChatMedia(file,conversationKey,me);if(!path)return;
@@ -2230,7 +2284,18 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         async function sendMarketChatMedia(file){
             if(!file||marketMessageSendInFlight)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط السوق.');const conversationId=String(currentMarketConversationId||'');if(!me||!conversationId)return;
-            if(!navigator.onLine)return triggerToastNotification('إرسال وسائط السوق دون اتصال غير متاح بعد؛ لم يُرفع الملف ولم يُرسل.','info');
+            if(window.AlwahaLocalMesh?.isEnabled()){
+                try{
+                    if(!currentMarketPeerId)return triggerToastNotification('لم يتم تحديد الطرف الآخر لمحادثة السوق.','error');
+                    if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
+                    const kind=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
+                    const result=await window.AlwahaLocalMesh.sendFileToAccount(currentMarketPeerId,file,kind);
+                    const row={id:'mesh-'+result.fileId,conversation_id:conversationId,sender_id:me.id,message:meshFileMessageRef(result),created_at:new Date().toISOString(),read_at:null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||[];rows.push(row);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,conversationId,rows);
+                    await loadMarketMessages();triggerToastNotification('تم تقسيم الملف إلى '+result.chunks+' حزمة مشفّرة للشبكة المحلية.','success');return;
+                }catch(error){triggerToastNotification(error?.message||'تعذر إرسال الملف عبر الشبكة المحلية.','error');return;}
+            }
+            if(!navigator.onLine)return triggerToastNotification('إرسال وسائط السوق دون إنترنت يحتاج تفعيل الشبكة الحرة وتوثيق الجهاز الآخر.','info');
             const conversations=await supabaseFetch('market_conversations?id=eq.'+encodeURIComponent(conversationId)+'&select=id,buyer_id,seller_id&limit=1');
             const conversation=Array.isArray(conversations)?conversations[0]:null;
             if(!conversation||![conversation.buyer_id,conversation.seller_id].includes(me.id))return triggerToastNotification('لا تملك صلاحية إرسال الوسائط في هذه المحادثة.','error');
@@ -3593,7 +3658,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const container=document.getElementById('chat-messages-container'),me=await getCurrentAuthUser();
             if(!container||!me||!peerId||requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
-            let rows=null,fromLocal=!navigator.onLine;
+            let rows=null,fromLocal=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
             if(fromLocal){
                 rows=await window.AlwahaLocalVault?.getDirectChatCache?.(me.id,peerId)||null;
             }else{
@@ -3663,6 +3728,13 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             try{
                 const user=await requireAuthenticatedUser('سجل الدخول أولاً لإرسال رسالة.');
                 if(!user||peerId!==String(currentChatUserId||''))return;
+                if(window.AlwahaLocalMesh?.isEnabled()){
+                    const result=await window.AlwahaLocalMesh.sendToAccount(peerId,{type:'direct-text',text:content,replyToId:replyTarget?.id||null});
+                    const row={id:'mesh-'+result.id,sender_id:user.id,receiver_id:peerId,message:content,created_at:new Date().toISOString(),read_at:null,reply_to_id:replyTarget?.id||null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getDirectChatCache?.(user.id,peerId)||[];rows.push(row);await window.AlwahaLocalVault?.saveDirectChatCache?.(user.id,peerId,rows);
+                    if(input.value.trim()===content)input.value='';if(currentDirectReplyTarget?.id===replyTarget?.id){currentDirectReplyTarget=null;renderDirectReplyPreview();}
+                    await loadDirectMessages();triggerToastNotification(result.sent?'أُرسلت الرسالة عبر الجهاز المتصل مباشرة.':'حُفظت كحزمة مشفّرة للتمرير المرحّل.','success');return;
+                }
                 if(!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل الرسائل.','info');
                 if(peerId!==String(currentChatUserId||''))return;
                 const payload={sender_id:user.id,receiver_id:peerId,message:content};if(replyTarget)payload.reply_to_id=replyTarget.id;
@@ -3689,7 +3761,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
             if(!holder||!me||!conversationId||requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
-            let rows=null,fromLocal=!navigator.onLine;
+            let rows=null,fromLocal=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
             if(fromLocal)rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||null;
             else{
                 rows=await supabaseFetch(`market_messages?select=id,conversation_id,sender_id,message,created_at,read_at,reply_to_id&conversation_id=eq.${encodeURIComponent(conversationId)}&order=created_at.asc&limit=1000`);
@@ -3745,6 +3817,14 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const modal=document.getElementById('market-chat-modal'),button=modal?.querySelector('button[onclick="sendMarketMessage()"]');
             marketMessageSendInFlight=true;if(button){button.disabled=true;button.textContent='جارٍ الإرسال…';}
             try{
+                if(window.AlwahaLocalMesh?.isEnabled()){
+                    if(!currentMarketPeerId)throw new Error('لم يتم تحديد الطرف الآخر في محادثة السوق.');
+                    const result=await window.AlwahaLocalMesh.sendToAccount(currentMarketPeerId,{type:'market-text',text:message,conversationId:currentMarketConversationId,replyToId:currentMarketReplyTarget?.id||null});
+                    const row={id:'mesh-'+result.id,conversation_id:currentMarketConversationId,sender_id:me.id,message,created_at:new Date().toISOString(),read_at:null,reply_to_id:currentMarketReplyTarget?.id||null,local_mesh:true};
+                    const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,currentMarketConversationId)||[];rows.push(row);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,currentMarketConversationId,rows);
+                    if(input)input.value='';currentMarketReplyTarget=null;renderMarketReplyPreview();await loadMarketMessages();
+                    triggerToastNotification(result.sent?'أُرسلت الرسالة عبر الشبكة المحلية مباشرة.':'حُفظت كحزمة مشفّرة للتمرير المرحّل.','success');return;
+                }
                 const payload={conversation_id:currentMarketConversationId,sender_id:me.id,message};if(currentMarketReplyTarget)payload.reply_to_id=currentMarketReplyTarget.id;
                 const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
                 if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':(e.status===0?'انقطع الاتصال؛ بقي النص في خانة الكتابة ويمكن إعادة إرساله.':'تعذر إرسال الرسالة ('+(e.status||'خطأ اتصال')+'). بقي النص في خانة الكتابة.'),'error');return;}
@@ -3802,6 +3882,7 @@ async function subscribeToMarketConversation() {
             const activeUser=await getCurrentAuthUser();
             if(activeUser?.id!==me.id)return;
             if(!c||(c.buyer_id!==me.id&&c.seller_id!==me.id))return triggerToastNotification('هذه المحادثة غير متاحة لهذا الحساب.','error');
+            currentMarketPeerId=String(peerId||'');
             const previousMarketConversationId=currentMarketConversationId;currentMarketConversationId=String(c.id);
             if(previousMarketConversationId!==currentMarketConversationId){currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();}
             let modal=document.getElementById('market-chat-modal');
