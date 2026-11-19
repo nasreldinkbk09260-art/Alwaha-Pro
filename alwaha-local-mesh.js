@@ -162,7 +162,7 @@
         const blob=new Blob(parts,{type:String(chunk.mime||'application/octet-stream')});
         if(blob.size>25*1024*1024)throw new Error('Reassembled local file exceeds the 25 MB limit.');
         await vault().put(base+':meta',{total:chunk.total,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,kind:chunk.kind||'file'});\n        const url=URL.createObjectURL(blob);\n        fileUrls.set(chunk.fileId,url);
-        detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file'};
+        detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file',context:chunk.context||null};
       }
       window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail}));
       return {delivered:true};
@@ -228,17 +228,17 @@
     const blob=new Blob(parts,{type:meta.mime||'application/octet-stream'});if(blob.size>25*1024*1024)return null;
     const url=URL.createObjectURL(blob);fileUrls.set(fileId,url);return url;
   }
-  async function sendFileToAccount(accountUserId,file,kind='file'){
+  async function sendFileToAccount(accountUserId,file,kind='file',context={}){
     if(!file||!Number.isFinite(file.size)||file.size<=0)throw new Error('الملف غير صالح.');
     if(file.size>25*1024*1024)throw new Error('حد الملف المحلي 25 ميجابايت في هذه المرحلة.');
     const peer=await getPeerByAccountId(accountUserId),fileId=crypto.randomUUID(),total=Math.ceil(file.size/FILE_CHUNK_BYTES);
     if(!peer)throw new Error('الجهاز المقصود غير مقترن.');
-    const meta={total,name:String(file.name||'offline-file'),mime:file.type||'application/octet-stream',size:file.size,kind};
+    const meta={total,name:String(file.name||'offline-file'),mime:file.type||'application/octet-stream',size:file.size,kind,context};
     await vault().put('mesh:file:'+fileId+':meta',meta);
     for(let index=0;index<total;index++){
       const bytes=new Uint8Array(await file.slice(index*FILE_CHUNK_BYTES,Math.min(file.size,(index+1)*FILE_CHUNK_BYTES)).arrayBuffer());
       await vault().put('mesh:file:'+fileId+':'+index,{chunk:bytesToB64(bytes)});
-      await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:meta.name,mime:meta.mime,size:file.size,kind,chunk:bytesToB64(bytes)});
+      await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:meta.name,mime:meta.mime,size:file.size,kind,context,chunk:bytesToB64(bytes)});
     }
     fileUrls.set(fileId,URL.createObjectURL(file));
     return {queued:true,fileId,chunks:total,name:meta.name,mime:meta.mime,size:meta.size,kind};
