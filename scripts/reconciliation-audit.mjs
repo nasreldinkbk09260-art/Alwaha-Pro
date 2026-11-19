@@ -30,10 +30,11 @@ function check(label, condition) { condition ? pass(label) : fail(label); }
 check('release version 3.0.4 is consistent across package, lockfile, manifest and title',
   pkg.version === '3.0.4' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.4' && manifest.version === '3.0.4' && /<title>Alwaha-Pro 3\.0\.4<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
-check('service worker cache naming stays open for new 3.0.4 development revisions',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-") &&
-  read('scripts/performance-audit.mjs').includes("alwaha-pro-v3.0.4-") &&
-  read('scripts/field-repair-audit.mjs').includes("alwaha-pro-v3.0.4-") &&
+check('service worker cache uses an extensible 3.0.4 namespace without a closed revision allowlist',
+  /const CACHE_NAME = ['"]alwaha-pro-v3\.0\.4-[^'"]+['"]/.test(sw) &&
+  /name\.startsWith\('alwaha-pro-'\)/.test(sw) &&
+  /\.filter\(\(name\) => name\.startsWith\('alwaha-pro-'\) && name !== CACHE_NAME\)/.test(sw) &&
+  /alwaha-pro-v3\\.0\\.4-/.test(read('scripts/field-repair-audit.mjs')) &&
   read('scripts/compatibility-audit.mjs').includes("alwaha-pro-v3.0.4-"));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
@@ -107,9 +108,12 @@ check('kids effect sounds have a distinct WebRTC audio track and bridge to remot
 check('encrypted local backup supports export/import and excludes passwords/session/service keys',
   vault.includes('PBKDF2') && vault.includes('AES-GCM') && vault.includes('async function exportBackup') &&
   vault.includes('async function importBackup') && vault.includes('لا يتضمن كلمات المرور أو رموز الجلسة أو مفاتيح الخدمة'));
-check('three approved themes include the default plus two full-app image-free premium atmospheres',
+check('base themes stay available while new themes can register without a fixed UI-count allowlist',
   ['default','oasis','abyss'].every(x=>experience.includes(`id:'${x}'`)) &&
-  [...html.matchAll(/data-theme-choice="([^"]+)"/g)].length===3 &&
+  html.includes('window.AlwahaThemeRegistry') &&
+  html.includes('window.registerAlwahaTheme = function registerAlwahaTheme(definition)') &&
+  html.includes('window.AlwahaThemeRegistry[id] = theme') &&
+  html.includes('grid?.appendChild(button)') &&
   themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop') &&
   themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop') &&
   !themeCss.includes('bg-aurora.webp') && !themeCss.includes('bg-underwater.webp') &&
