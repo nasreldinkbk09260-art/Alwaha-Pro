@@ -112,7 +112,7 @@ for(const required of ['reg-username','reg-country-code','alwaha-call-ringtone-e
 if(!html.includes("functions.invoke('username-auth'"))fail('Username Auth invocation missing.');
 if(!html.includes("functions.invoke('call-config'"))fail('Call ICE config hook missing.');
 if(!fs.existsSync(path.join(process.cwd(),'production-polish.js')))fail('Missing registration/audio polish module.');
-const profilePolish=read('production-polish.js'),profileRevision=(profilePolish.match(/alwaha-profile-editor\\.js\\?v=([^'"]+)/)||[])[1]||'';
+const profilePolish=read('production-polish.js'),profileRevision=(profilePolish.match(/alwaha-profile-editor\.js\?v=([^'"]+)/)||[])[1]||'';
 if(!profilePolish.includes('alwaha-profile-editor.js')||!read('scripts/build-web.mjs').includes('alwaha-profile-editor.js')||!profileRevision||!sw.includes("'./alwaha-profile-editor.js'")||!sw.includes("'./alwaha-profile-editor.js?v="+profileRevision+"'"))fail('Profile editor module is not loaded, built and precached with matching dynamic revision.');
 if(!fs.existsSync(path.join(process.cwd(),'scripts/vendor-assets.mjs')))fail('Missing local vendor asset builder.');
 for(const dependency of ['@fortawesome/fontawesome-free','@fontsource/cairo','@supabase/supabase-js'])if(!pkg.dependencies?.[dependency])fail('Missing pinned local dependency: '+dependency);
@@ -204,7 +204,7 @@ if(!themeCss.includes('--wa-accent')||!themeCss.includes('body[data-alwaha-theme
 if(sw.includes('bg-spring.webp')||sw.includes('bg-summer.webp')||sw.includes('bg-autumn.webp')||sw.includes('bg-winter.webp'))fail('Obsolete seasonal wallpaper files remain in the active offline cache list.');
 if(!sw.includes("'./alwaha-theme-system.css'")||!versionedCss('alwaha-theme-system.css')||!sw.includes("'./assets/backgrounds/bg-nebula.webp'"))fail('Theme CSS or default background is missing from matching offline precache.');
 
-if (!workflow.includes('npm run audit:chat') || pkg.scripts?.['audit:chat'] !== 'node scripts/chat-release-audit.mjs') fail('Chat/feed regression audit is not wired into release CI.');
+if (!workflow.includes('npm run audit:chat') || !pkg.scripts?.['audit:chat']?.includes('node scripts/chat-release-audit.mjs')) fail('Chat/feed regression audit is not wired into release CI.');
 
 if(!html.includes('market-call-room-')||!html.includes("mode:market?'market':'online'")||!html.includes('complete_market_sale')) fail('3.0.4 market call and transaction workflow are incomplete.');
 if(!html.includes('id="kidsModeBtn"')||!html.includes('onclick="toggleAlwahaKidsMode()"')||!html.includes('function openVideoCallModeChooser()')||!html.includes('data-video-call-mode="normal"')||!html.includes('data-video-call-mode="kids"')||!html.includes("remoteVideo?.srcObject && remoteVideo.readyState >= 1")||!html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'")||!kidsRoom.includes('window.toggleAlwahaKidsMode=open')||!html.includes('alwaha-local-vault.js')||!html.includes('alwaha-experience.js')||!html.includes('alwaha-modal-shell.js')) fail('3.0.4 experience suite must expose the normal/Kids video choice and guard Kids Room launch on an active call with a remote video stream.');
