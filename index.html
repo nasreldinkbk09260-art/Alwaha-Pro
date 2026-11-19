@@ -1922,6 +1922,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             products: ['id','seller_id','title','price','category','description','image_url','image_urls','created_at','status','location_label','latitude','longitude','promoted_until'],
             post_like_counts: ['post_id','likes_count'],
             reel_like_counts: ['reel_id','likes_count'],
+            post_comment_counts: ['post_id','comments_count'],
             comments: ['id','target_id','target_type','user_id','author_name','content','created_at','parent_id','reply_to_id']
         };
         function sanitizeAlwahaPublicCacheRows(tableName,data) {
