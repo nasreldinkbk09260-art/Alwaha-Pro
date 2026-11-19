@@ -3727,6 +3727,9 @@ async function subscribeToMarketConversation() {
             const requestId=++marketConversationsRenderRequestId;
             const holder=document.getElementById('market-conversations-container');if(!holder)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me||requestId!==marketConversationsRenderRequestId)return;
+            if(navigator.onLine===false&&window.AlwahaOfflineStore){
+                try{const saved=await window.AlwahaOfflineStore.load(me.id,'market-conversations','list');if(saved?.html){holder.innerHTML='<div style="padding:5px 8px;color:#ffd86b;font:10px Cairo,sans-serif;">نسخة محلية محفوظة — قد لا تعرض آخر التحديثات</div>'+saved.html;return;}}catch(e){}
+            }
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:11px;padding:12px;">جاري تحميل محادثات السوق...</div>';
             const filter=`or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&order=created_at.desc&limit=100`;
             let rows=await supabaseFetch(`market_conversations?select=id,product_id,buyer_id,seller_id,created_at,archived_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&${filter}`);
@@ -3757,6 +3760,7 @@ async function subscribeToMarketConversation() {
                     <img src="${escapeHtml(peer.avatar_url||'icon.png')}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex:0 0 auto;">
                     <span style="min-width:0;flex:1;display:block;"><span style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;color:#8bf4ff;"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>${badge}</span><span style="display:block;font-size:10px;color:#ffd86b;margin-top:2px;">${escapeHtml(productTitle)}</span><span style="display:block;font-size:10px;color:#a9b7c9;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</span></span></button>${consentUi}</article>`;
             }).join('');
+            if(window.AlwahaOfflineStore&&navigator.onLine!==false)await window.AlwahaOfflineStore.save(me.id,'market-conversations','list',{html:holder.innerHTML}).catch(()=>false);
         }
         async function renderMarketTransactionsList() {
             const requestId=++marketTransactionsRenderRequestId;
@@ -3825,6 +3829,9 @@ async function subscribeToMarketConversation() {
 async function renderConversationsList() {
             const holder=document.getElementById('conversations-list'); if(!holder)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض المحادثات.'); if(!me)return;
+            if(navigator.onLine===false&&window.AlwahaOfflineStore){
+                try{const saved=await window.AlwahaOfflineStore.load(me.id,'direct-conversations','list');if(saved?.html){holder.innerHTML='<div style="padding:5px 8px;color:#ffd86b;font:10px Cairo,sans-serif;">نسخة محلية محفوظة — قد لا تعرض آخر التحديثات</div>'+saved.html;return;}}catch(e){}
+            }
             holder.innerHTML='<div style="text-align:center;color:#00ffff;font-size:11px;padding:15px;">جاري تحميل المحادثات...</div>';
             const rows=await supabaseFetch(`messages?or=(sender_id.eq.${encodeURIComponent(me.id)},receiver_id.eq.${encodeURIComponent(me.id)})&select=id,sender_id,receiver_id,message,created_at&order=created_at.desc&limit=100`);
             if(!Array.isArray(rows)||!rows.length){holder.innerHTML='<div style="text-align:center;color:#aaa;font-size:11px;padding:20px;">لا توجد محادثات بعد. افتح دليل المستخدمين لبدء محادثة.</div>';return;}
@@ -3833,6 +3840,7 @@ async function renderConversationsList() {
             const umap=new Map((users||[]).map(u=>[u.id,u])); const seen=new Set(); const conv=[];
             for(const r of rows){const pid=r.sender_id===me.id?r.receiver_id:r.sender_id;if(seen.has(pid))continue;seen.add(pid);const u=umap.get(pid)||{};conv.push({pid,u,last:r});}
             holder.innerHTML=conv.map(c=>{const name=`${c.u.first_name||''} ${c.u.last_name||''}`.trim()||'مستخدم';return `<div class="profile-menu-btn" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border-radius:8px;cursor:pointer;" onclick="openTargetUserDirectChat('${escapeJs(name)}','${escapeJs(c.u.identifier||'')}','${escapeJs(c.pid)}')"><img src="${escapeHtml(c.u.avatar_url||'icon.png')}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;"><div style="flex:1;min-width:0;"><div style="font-weight:bold;color:#fff;font-size:12px;">${escapeHtml(name)} ${c.u.is_verified?'<i class="fa-solid fa-circle-check" style="color:#00ffff;font-size:10px;"></i>':''}</div><div style="font-size:10px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c.last.message||'')}</div></div><span style="font-size:9px;color:#777;">${new Date(c.last.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span></div>`;}).join('');
+            if(window.AlwahaOfflineStore&&navigator.onLine!==false)await window.AlwahaOfflineStore.save(me.id,'direct-conversations','list',{html:holder.innerHTML}).catch(()=>false);
         }
 
         class VoiceCall {
