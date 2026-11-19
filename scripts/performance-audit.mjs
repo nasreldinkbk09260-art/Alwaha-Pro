@@ -62,11 +62,11 @@ if (workflow.includes("Alwaha-Pro-3.0.4.apk") &&
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
-const maintainedBranches = pushBranchBlock.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim());
-const expectedBranches = ["main", "alwaha-pro-3.0.3-dev", "alwaha-pro-recovery-20261118", "alwaha-pro-3.0.4-private-test-20261119"];
-if (maintainedBranches.length === expectedBranches.length && expectedBranches.every((name) => maintainedBranches.includes(name)))
-  pass("workflow includes main and only explicitly maintained validation/preparation branches");
-else fail("workflow branch allowlist contains an unexpected, missing, or unapproved branch");
+const validatesEveryDevelopmentBranch = /branches:\s*\n\s+- ['"]\\*\\*['"]/.test(pushBranchBlock);
+const publicReleaseJobs = workflow.split("\\n").filter(line => line.trim() === "if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'");
+if (validatesEveryDevelopmentBranch && publicReleaseJobs.length >= 2)
+  pass("all branches receive private validation while public publishing requires main and explicit approval");
+else fail("development CI must accept every branch; public publishing must remain main-only and explicitly approved");
 
 if (workflow.includes("npm run audit:performance"))
   pass("workflow invokes performance audit");
