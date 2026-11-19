@@ -4884,9 +4884,11 @@ async function renderConversationsList() {
                     const peerBundle=JSON.parse(modal.querySelector('#alwaha-mesh-peer-bundle')?.value||'{}');
                     const code=prompt('أدخل رمز التحقق المكوّن من 6 أحرف الذي يظهر على الهاتف الآخر.');
                     if(!code)return;
-                    const accountId=String(currentChatUserId||currentMarketPeerId||prompt('أدخل معرف حساب الشخص الذي يخصه هذا الجهاز:')||'').trim();
-                    if(!accountId)return say('لم يتم ربط الجهاز بحساب محادثة.');
-                    const paired=await mesh.pairPeer(peerBundle,{confirmationCode:code,accountUserId:accountId,label:currentChatUser||'جهة اتصال'});
+                    const accountId=String(currentChatUserId||currentMarketPeerId||'').trim();
+                    if(!accountId)return say('افتح محادثة الشخص المقصود أولًا، ثم نفّذ التوثيق منها حتى لا تربط الجهاز بحساب خاطئ.');
+                    const label=String(currentChatUser||modal.querySelector('#market-chat-title')?.textContent||'جهة اتصال');
+                    if(!confirm('سيتم ربط هذا الجهاز محليًا بالمحادثة المفتوحة: '+label+'. تحقق من رمز الهاتفين ومن الشخص المقصود قبل الموافقة.'))return;
+                    const paired=await mesh.pairPeer(peerBundle,{confirmationCode:code,accountUserId:accountId,label});
                     say('تم توثيق الجهاز محليًا. بصمته: '+paired.fingerprint.slice(0,16)+'…');
                 }catch(error){say(error?.message||'فشل توثيق الجهاز.');}
             });
@@ -4933,6 +4935,14 @@ async function renderConversationsList() {
             document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{button.setAttribute('aria-pressed',String(enabled));button.style.color=enabled?'#a8ffd7':'';});
             if(enabled)void openAlwahaLocalDiscovery();
         }
+        window.addEventListener('alwaha:mesh-mode',event=>{
+            const enabled=Boolean(event?.detail?.enabled);
+            document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{
+                button.setAttribute('aria-pressed',String(enabled));
+                button.style.color=enabled?'#a8ffd7':'';
+                button.title=enabled?'وضع محلي مفعّل — لا تُرسل محادثات هذا المسار إلى السحابة':'تفعيل الشبكة الحرة المحلية';
+            });
+        });
 
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
             const video = mediaType === 'video';
