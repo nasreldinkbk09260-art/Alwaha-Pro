@@ -838,10 +838,14 @@ img,video,canvas{max-width:100%}
         </div>
         <div id="chat-messages-container" style="height:calc(100dvh - 180px);overflow-y:auto;padding:10px 4px 76px;display:flex;flex-direction:column;overscroll-behavior:contain;"></div>
         <div id="direct-reply-preview" style="display:none;padding:7px 10px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-        <div class="alwaha-chat-composer">
-            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off">
-            <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة"><i class="fa-solid fa-paper-plane"></i></button>
+        <div class="alwaha-chat-composer" style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
+            <input type="file" id="direct-chat-media-file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden onchange="handleChatAttachmentSelection('direct',this)">
+            <button type="button" class="btn-action" onclick="document.getElementById('direct-chat-media-file').click()" aria-label="إرسال صورة أو فيديو" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;padding:8px;color:#8bf4ff;"><i class="fa-solid fa-paperclip"></i></button>
+            <button type="button" id="direct-voice-record-btn" class="btn-action" onclick="toggleChatVoiceRecording('direct')" aria-label="تسجيل مقطع صوتي" title="تسجيل صوتي" style="flex:0 0 38px;min-width:38px;padding:8px;color:#ff91c6;"><i class="fa-solid fa-microphone"></i></button>
+            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off" style="flex:1;min-width:0;">
+            <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة" title="إرسال" style="flex:0 0 40px;min-width:40px;"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
+        <div id="direct-chat-media-status" role="status" aria-live="polite" style="display:none;color:#ffd86b;font:10px Cairo,sans-serif;padding:4px 8px;"></div>
     </div>
 
     <!-- نافذة الاتصال الصوتي المطوّرة: WebRTC + Supabase Realtime -->
@@ -3557,6 +3561,140 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             return Array.isArray(rows)&&rows.length>0;
         }
 
+        const ALWAHA_CHAT_ATTACHMENT_MAX_BYTES=50*1024*1024;
+        const ALWAHA_CHAT_OFFLINE_MEDIA_MAX_BYTES=2*1024*1024;
+        const alwahaChatRecorders={direct:null,market:null};
+        function chatMediaStatus(scope,message,error=false){
+            const host=document.getElementById(scope==='market'?'market-chat-media-status':'direct-chat-media-status');
+            if(!host)return;host.textContent=message||'';host.style.display=message?'block':'none';host.style.color=error?'#ff9fb4':'#ffd86b';
+        }
+        function normalizedChatMime(type){
+            return String(type||'').split(';')[0].trim().toLowerCase();
+        }
+        function chatAttachmentKind(mime){
+            mime=normalizedChatMime(mime);
+            if(['image/jpeg','image/png','image/webp','image/gif','image/avif'].includes(mime))return 'image';
+            if(['video/mp4','video/webm','video/quicktime'].includes(mime))return 'video';
+            if(['audio/webm','audio/ogg','audio/mp4','audio/mpeg','audio/wav'].includes(mime))return 'audio';
+            return '';
+        }
+        function chatAttachmentExtension(mime){
+            return ({'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif','image/avif':'avif','video/mp4':'mp4','video/webm':'webm','video/quicktime':'mov','audio/webm':'webm','audio/ogg':'ogg','audio/mp4':'m4a','audio/mpeg':'mp3','audio/wav':'wav'})[mime]||'bin';
+        }
+        function safeChatAttachmentName(name){
+            const cleaned=String(name||'attachment').normalize('NFKC').replace(/[\\/\\\\\u0000-\\u001f]/g,'_').replace(/[^\\p{L}\\p{N}._ -]/gu,'_').slice(0,150);
+            return cleaned||'attachment';
+        }
+        async function blobToChatDataUrl(blob){
+            return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error||new Error('file_read_failed'));reader.readAsDataURL(blob);});
+        }
+        async function renderChatAttachment(row,scope,me){
+            if(!row?.attachment_path||!row?.attachment_kind)return '';
+            const cacheKind=scope==='market'?'market-media':'direct-media';
+            let source='';
+            if(window.AlwahaOfflineStore){
+                try{const cached=await window.AlwahaOfflineStore.load(me.id,cacheKind,String(row.id));if(cached?.dataUrl)source=cached.dataUrl;}catch(e){}
+            }
+            if(!source&&navigator.onLine!==false){
+                try{
+                    if(Number(row.attachment_size||0)>0&&Number(row.attachment_size)<=ALWAHA_CHAT_OFFLINE_MEDIA_MAX_BYTES&&window.AlwahaOfflineStore){
+                        const downloaded=await supabaseClient.storage.from('chat-attachments').download(row.attachment_path);
+                        if(downloaded?.data&&!downloaded.error){
+                            source=await blobToChatDataUrl(downloaded.data);
+                            await window.AlwahaOfflineStore.save(me.id,cacheKind,String(row.id),{dataUrl:source,mime:row.attachment_mime}).catch(()=>false);
+                        }
+                    }
+                    if(!source){
+                        const signed=await supabaseClient.storage.from('chat-attachments').createSignedUrl(row.attachment_path,3600);
+                        source=signed?.data?.signedUrl||'';
+                    }
+                }catch(error){console.warn('[Alwaha Chat] Attachment URL could not be resolved:',error);}
+            }
+            if(!source)return '<div style="color:#ffd86b;font:10px/1.8 Cairo,sans-serif;padding:7px 10px;border:1px dashed #ffd86b55;border-radius:9px;">مرفق محفوظ — يلزم الاتصال لتنزيله أول مرة</div>';
+            const url=escapeHtml(source),name=escapeHtml(row.attachment_name||'مرفق');
+            if(row.attachment_kind==='image')return `<a href="${url}" target="_blank" rel="noopener noreferrer"><img src="${url}" alt="${name}" loading="lazy" style="display:block;width:min(100%,280px);max-height:300px;object-fit:contain;border-radius:10px;margin-top:5px;background:#08111b;"></a>`;
+            if(row.attachment_kind==='video')return `<video controls playsinline preload="metadata" src="${url}" aria-label="${name}" style="display:block;width:min(100%,300px);max-height:340px;border-radius:10px;margin-top:5px;background:#000;"></video>`;
+            if(row.attachment_kind==='audio')return `<audio controls preload="metadata" src="${url}" aria-label="${name}" style="display:block;max-width:min(100%,300px);margin-top:5px;"></audio>`;
+            return '';
+        }
+        async function sendChatAttachment(scope,file){
+            const isMarket=scope==='market',user=await requireAuthenticatedUser('سجّل الدخول أولاً لإرسال مرفق.');
+            if(!user||!file)return false;
+            const peerId=String(currentChatUserId||''),conversationId=String(currentMarketConversationId||'');
+            if(!isMarket&&!peerId)return triggerToastNotification('اختر محادثة أولاً.','error'),false;
+            if(isMarket&&!conversationId)return triggerToastNotification('افتح محادثة السوق أولاً.','error'),false;
+            const mime=normalizedChatMime(file.type),kind=chatAttachmentKind(mime);
+            if(!kind)return triggerToastNotification('نوع الملف غير مدعوم. اختر صورة أو فيديو أو تسجيلًا صوتيًا بصيغة مدعومة.','error'),false;
+            if(!file.size||file.size>ALWAHA_CHAT_ATTACHMENT_MAX_BYTES)return triggerToastNotification('الحد الأقصى للمرفق 50MB.','error'),false;
+            if(!isMarket&&!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل تبادل مرفقات الدردشة.','info'),false;
+            const id=crypto?.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2);
+            const ext=chatAttachmentExtension(mime),path=isMarket?`${user.id}/market/${conversationId}/${id}.${ext}`:`${user.id}/direct/${peerId}/${id}.${ext}`;
+            const safeName=safeChatAttachmentName(file.name||('alwaha-'+kind+'.'+ext));
+            chatMediaStatus(scope,'جارٍ رفع المرفق بأمان…');
+            let uploaded=false;
+            try{
+                const up=await supabaseClient.storage.from('chat-attachments').upload(path,file,{cacheControl:'3600',contentType:mime,upsert:false});
+                if(up?.error)throw up.error;
+                uploaded=true;
+                const payload=isMarket
+                  ?{conversation_id:conversationId,sender_id:user.id,message:'',attachment_path:path,attachment_kind:kind,attachment_mime:mime,attachment_name:safeName,attachment_size:file.size}
+                  :{sender_id:user.id,receiver_id:peerId,message:'',attachment_path:path,attachment_kind:kind,attachment_mime:mime,attachment_name:safeName,attachment_size:file.size};
+                const table=isMarket?'market_messages':'messages';
+                const saved=await supabaseFetch(table,{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+                if(!Array.isArray(saved)||!saved.length)throw new Error(window.__alwahaLastApiError?.status===0?'انقطع الاتصال بعد رفع الملف. لم تُسجل الرسالة.':'لم تقبل قاعدة الرسائل بيانات المرفق. تأكد من تطبيق تحديث مرفقات الدردشة.');
+                chatMediaStatus(scope,'');
+                triggerToastNotification(kind==='audio'?'تم إرسال الرسالة الصوتية.':(kind==='video'?'تم إرسال الفيديو.':'تم إرسال الصورة.'),'success');
+                if(isMarket)void loadMarketMessages();else void loadDirectMessages();
+                if(isMarket)void renderMarketConversationsList();
+                return true;
+            }catch(error){
+                if(uploaded)try{await supabaseClient.storage.from('chat-attachments').remove([path]);}catch(cleanup){console.warn('[Alwaha Chat] Failed attachment cleanup:',cleanup);}
+                console.warn('[Alwaha Chat] Attachment send failed:',error);
+                chatMediaStatus(scope,'');
+                triggerToastNotification(error?.message||'تعذر إرسال المرفق. بقي الملف على جهازك؛ حاول مرة أخرى.','error');
+                return false;
+            }
+        }
+        async function handleChatAttachmentSelection(scope,input){
+            const file=input?.files?.[0];if(!file)return;
+            try{await sendChatAttachment(scope,file);}finally{if(input)input.value='';}
+        }
+        async function toggleChatVoiceRecording(scope){
+            const current=alwahaChatRecorders[scope],button=document.getElementById(scope==='market'?'market-voice-record-btn':'direct-voice-record-btn');
+            if(current){
+                if(button){button.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i>';button.disabled=true;}
+                current.recorder.stop();return;
+            }
+            if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')return triggerToastNotification('التسجيل الصوتي غير مدعوم في هذا الجهاز أو المتصفح.','error');
+            let stream;
+            try{
+                stream=await navigator.mediaDevices.getUserMedia({audio:true});
+                const types=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+                const type=types.find(t=>MediaRecorder.isTypeSupported(t))||'';
+                const recorder=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+                const chunks=[];
+                const state={recorder,stream,chunks,startedAt:Date.now(),timer:null};
+                alwahaChatRecorders[scope]=state;
+                recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
+                recorder.onerror=()=>{cleanup();triggerToastNotification('تعذر تسجيل المقطع الصوتي.','error');};
+                const cleanup=()=>{if(state.timer)clearTimeout(state.timer);try{stream.getTracks().forEach(t=>t.stop());}catch(e){}alwahaChatRecorders[scope]=null;if(button){button.disabled=false;button.innerHTML='<i class="fa-solid fa-microphone"></i>';button.style.color='#ff91c6';}};
+                recorder.onstop=async()=>{
+                    const blob=new Blob(chunks,{type:normalizedChatMime(recorder.mimeType||type)});
+                    cleanup();
+                    if(blob.size){const ext=chatAttachmentExtension(normalizedChatMime(blob.type));const file=new File([blob],`voice-note.${ext}`,{type:normalizedChatMime(blob.type),lastModified:Date.now()});await sendChatAttachment(scope,file);}
+                };
+                recorder.start(250);
+                if(button){button.disabled=false;button.style.color='#ff5d9e';button.innerHTML='<i class="fa-solid fa-stop"></i>';button.setAttribute('aria-label','إيقاف وإرسال التسجيل الصوتي');}
+                chatMediaStatus(scope,'جارٍ التسجيل… اضغط زر الميكروفون لإيقاف التسجيل وإرساله (حد أقصى دقيقتان).');
+                state.timer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},120000);
+            }catch(error){
+                try{stream?.getTracks().forEach(t=>t.stop());}catch(e){}
+                alwahaChatRecorders[scope]=null;
+                if(button){button.disabled=false;button.innerHTML='<i class="fa-solid fa-microphone"></i>';}
+                triggerToastNotification('تعذر فتح الميكروفون. تحقق من إذن التسجيل.','error');
+            }
+        }
+        
         async function sendLiveChatMessageFromUI() {
             if(directMessageSendInFlight)return;
             const input=document.getElementById('chat-message-input'),peerId=String(currentChatUserId||''),content=input?.value?.trim()||'',replyTarget=currentDirectReplyTarget;
@@ -3701,7 +3839,14 @@ async function subscribeToMarketConversation() {
                     <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
                     <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-                    <div style="display:flex;gap:7px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button></div>
+                    <div style="display:flex;gap:6px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;flex-wrap:nowrap;">
+                    <input type="file" id="market-chat-media-file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden onchange="handleChatAttachmentSelection('market',this)">
+                    <button type="button" onclick="document.getElementById('market-chat-media-file').click()" aria-label="إرسال صورة أو فيديو في السوق" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;border:0;border-radius:10px;background:#ffffff12;color:#8bf4ff;padding:10px;"><i class="fa-solid fa-paperclip"></i></button>
+                    <button type="button" id="market-voice-record-btn" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="تسجيل صوتي" style="flex:0 0 38px;min-width:38px;border:0;border-radius:10px;background:#ffffff12;color:#ff91c6;padding:10px;"><i class="fa-solid fa-microphone"></i></button>
+                    <textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea>
+                    <button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 12px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button>
+                </div>
+                <div id="market-chat-media-status" role="status" aria-live="polite" style="display:none;color:#ffd86b;font:10px Cairo,sans-serif;padding:4px 6px;"></div>
                     <div style="font-size:9px;color:#8294aa;padding:5px 2px 0;">رسائل السوق مستقلة عن طلبات الصداقة ودردشة الأصدقاء.</div></section>`;
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
             }
