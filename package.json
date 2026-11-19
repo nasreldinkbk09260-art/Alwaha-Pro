@@ -8,7 +8,7 @@
     "start": "npx serve .",
     "build": "node scripts/build-web.mjs",
     "cap:sync": "npx cap sync",
-    "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache && npm run audit:security-definers",
+    "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache && npm run audit:security-definers && npm run audit:marketplace-delivery",
     "prebuild": "node scripts/vendor-assets.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
@@ -36,7 +36,8 @@
     "audit:account-deletion": "node scripts/account-deletion-audit.mjs",
     "audit:support-tickets": "node scripts/support-tickets-audit.mjs",
     "audit:local-network-native": "node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs",
-    "audit:public-content-rls": "node scripts/public-content-anon-policy-audit.mjs"
+    "audit:public-content-rls": "node scripts/public-content-anon-policy-audit.mjs",
+    "audit:marketplace-delivery": "node scripts/marketplace-delivery-audit.mjs"
   },
   "engines": {
     "node": ">=22"
