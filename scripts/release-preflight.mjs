@@ -18,15 +18,6 @@ const versionedCss=(asset)=>{
   const revision=html.slice(pos+marker.length).split('"')[0];
   return !!revision&&sw.includes("'./"+asset+"?v="+revision+"'")&&sw.includes("'./"+asset+"'");
 };
-  const tag=chunk.slice(0,chunk.indexOf('>'));
-  const marker='src="./',pos=tag.indexOf(marker);
-  if(pos<0)return null;
-  const url=tag.slice(pos+marker.length).split('"')[0];
-  const query=url.indexOf('?v=');
-  if(query<0||!url.slice(0,query).endsWith('.js'))return null;
-  const asset=url.slice(0,query);
-  return asset.startsWith('assets/')?null:asset;
-}).filter(Boolean);
 const userSafetyUiAudit=read('scripts/user-safety-ui-audit.mjs');if(!userSafetyUiAudit.includes('USER_SAFETY_UI_AUDIT='))fail('User safety UI audit missing.');
 const accountRetention=read('supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql');
 for(const marker of ['ON DELETE SET NULL','BEFORE DELETE ON auth.users','detach_marketplace_user_before_auth_delete','delete_approved_by_buyer_at','delete_approved_by_seller_at'])if(!accountRetention.includes(marker))fail('Marketplace account deletion retention missing: '+marker);
@@ -109,8 +100,8 @@ if(!html.includes('function previewHomePostImage()')||!html.includes('async func
 
 for(const file of ['supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql','supabase/tests/20261114230000_user_safety_reports_and_blocks.sql','supabase/functions/user-safety/index.ts','supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql','supabase/tests/20261114235000_marketplace_account_deletion_retention.sql','supabase/migrations/20261115193000_exclude_admin_public_profiles.sql','supabase/tests/20261115193000_exclude_admin_public_profiles.sql','scripts/user-safety-ui-audit.mjs','alwaha-profile-editor.js','icon.png','manifest.json','sw.js','alwaha-call-feedback.js','scripts/build-web.mjs','production-polish.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','scripts/runtime-boot-audit.mjs','scripts/game-actions-audit.mjs','scripts/call-signaling-runtime-test.mjs','supabase/migrations/20261007082734_20261005000000_fix_like_count_security.sql','supabase/migrations/20261011204819_secure_contact_privacy_defaults.sql','supabase/migrations/20261013235236_multiplayer_game_rooms_v283.sql','supabase/migrations/20261014192321_username_follows_call_features_20261014090000.sql','supabase/migrations/20261014193854_legacy_archive_api_access_hardening.sql','supabase/migrations/20261014194007_safe_public_directory_invoker.sql','supabase/migrations/20261014194053_app_settings_api_privacy.sql','supabase/migrations/20261014194820_release_policy_performance_cleanup.sql','supabase/migrations/20261014194848_rls_initplan_optimization.sql','supabase/migrations/20261014195018_game_room_join_game_validation.sql','supabase/migrations/20261014195108_game_room_join_rpc_compatibility.sql','supabase/migrations/20261014195445_friend_request_column_privileges.sql','supabase/migrations/20261014195540_friend_request_policy_consolidation.sql','supabase/migrations/20261014232322_notification_fail_safe.sql','supabase/migrations/20261029035135_marketplace_lifecycle_reviews.sql','supabase/migrations/20261029035139_require_accepted_friendship_for_messages.sql','supabase/migrations/20261101022015_marketplace_conversation_messaging.sql','supabase/migrations/20261101022031_marketplace_conversation_policy_owner_fix.sql','supabase/migrations/20261029121330_add_marketplace_foreign_key_indexes.sql','supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','supabase/migrations/20261102010000_legacy_client_privileges_hardening.sql','supabase/migrations/20261102100000_marketplace_retention_policy_and_cleanup.sql','supabase/migrations/20261102150000_products_seller_email_privacy.sql','supabase/tests/20261102150000_products_seller_email_privacy.sql','supabase/migrations/20261108110000_marketplace_retention_two_party_consent.sql','supabase/tests/20261108110000_marketplace_retention_two_party_consent.sql','supabase/tests/20261102160000_marketplace_snapshot_column_privileges.sql'])if(!fs.existsSync(path.join(process.cwd(),file)))fail(`Missing release file: ${file}`);
 if(fs.statSync(path.join(process.cwd(),'icon.png')).size<1000)fail('icon.png unexpectedly small.');
-if (html.includes('openAlwahaLocalNetworkPanel') || html.includes('الشبكة الحرة للأصدقاء القريبين') || html.includes('إعدادات الشبكة القريبة')) fail('Local network UI entry points must remain removed as requested.');
-if (html.includes('free-mode-toggle-main-btn') || html.includes('toggleFreeMeshShareSystem') || html.includes('id="free-section"')) fail('Unsupported local-network/file-share page must remain removed.');
+if (!html.includes('async function openAlwahaLocalDiscovery()') || !html.includes('toggleAlwahaLocalChatMode()') || !html.includes('data-alwaha-mesh-toggle')) fail('Conversation and marketplace local-network controls must remain available.');
+if (!html.includes("sendToAccount(peerId,{type:'direct-text'") || !html.includes("sendFileToAccount(peerId,file,kind,{type:'direct'})") || !html.includes("sendToAccount(currentMarketPeerId,{type:'market-text'")) fail('Local encrypted chat and media transport entry points are missing.');
 const declaredFunctions=new Set([...html.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]));
 for (const source of [localVault,experience,kidsRoom]) for (const match of source.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function\b|[A-Za-z_$][\w$]*\s*=>)/g)) declaredFunctions.add(match[1]);
 if(kidsRoom.includes('window.toggleAlwahaKidsMode=open')) declaredFunctions.add('toggleAlwahaKidsMode');
@@ -259,6 +250,8 @@ if(!workflow.includes("      - '**'")||!workflow.includes("if: github.ref == 're
 const supportTicketIndexMigration=read('supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql');
 const supportTicketIndexTest=read('supabase/tests/20261118050000_support_tickets_assigned_to_index.sql');
 if(!supportTicketIndexMigration.includes('ON public.support_tickets (assigned_to)')||!supportTicketIndexTest.includes('support_tickets_assigned_to_idx')||!sqlCi.includes('20261118050000_support_tickets_assigned_to_index.sql'))fail('Support-ticket assignment index or its SQL regression test is missing from release CI.');
+const localMeshRuntime=read('scripts/mesh-protocol-runtime-test.mjs');
+if(!localMeshRuntime.includes('relay')||!localMeshRuntime.includes('duplicate')||!localMeshRuntime.includes('encrypted'))fail('Local mesh cryptographic runtime regression cases are incomplete.');
 if(!fs.existsSync('alwaha-local-mesh.js')||!fs.existsSync('scripts/mesh-protocol-runtime-test.mjs')||!read('package.json').includes('mesh-protocol-runtime-test.mjs')||!read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('startPacketTransport'))fail('Encrypted local mesh protocol/native transport or its runtime tests are missing.');
 if (process.exitCode) throw new Error('Alwaha-Pro 3.0.4 release preflight failed.');
 console.log('Alwaha-Pro 3.0.4 release preflight checks passed.');
