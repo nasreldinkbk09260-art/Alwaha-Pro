@@ -22,9 +22,9 @@ const checks=[
  ['mesh identities use P-256 ECDH and ECDSA with AES-GCM and HKDF',mesh.includes("name:'ECDH',namedCurve:'P-256'")&&mesh.includes("name:'ECDSA',namedCurve:'P-256'")&&mesh.includes("name:'AES-GCM'")&&mesh.includes("name:'HKDF'")],
  ['private keys remain non-extractable and are persisted in IndexedDB via local vault',mesh.includes('generateKey(algorithm,false,usages)')&&mesh.includes("mesh:identity-v1")&&mesh.includes("vault().put('mesh:identity-v1',identity)")],
  ['peer pairing requires fingerprint verification and explicit six-character confirmation',mesh.includes('fingerprintCode')&&mesh.includes("confirmationCode")&&mesh.includes("expected=fingerprint.slice(-6).toUpperCase()")],
- ['messages use rotating opaque route tokens and bounded expiry/hop limits',mesh.includes('routeTokens')&&mesh.includes('ROUTE_DAYS=3')&&mesh.includes('MAX_AGE_MS=72*60*60*1000')&&mesh.includes('MAX_HOPS=12')],
+ ['messages use rotating opaque route tokens and bounded expiry/hop limits',mesh.includes('routeTokensForPair')&&mesh.includes('deriveRouteHmacKey')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")&&mesh.includes('ROUTE_DAYS=3')&&mesh.includes('MAX_AGE_MS=72*60*60*1000')&&mesh.includes('MAX_HOPS=12')],
  ['end-to-end envelope signature is verified before dispatch',mesh.includes('crypto.subtle.sign({name:\'ECDSA\',hash:\'SHA-256\'}')&&mesh.includes('crypto.subtle.verify({name:\'ECDSA\',hash:\'SHA-256\'}')],
- ['relays store ciphertext only and reject duplicate packet IDs',mesh.includes('enqueueRelay(packet')&&mesh.includes('mesh:relay:')&&mesh.includes('mesh:seen:')&&mesh.includes('duplicate:true')],
+ ['relays store ciphertext only and reject duplicate packet IDs',mesh.includes('enqueueRelay(packet')&&mesh.includes('mesh:relay:')&&mesh.includes('mesh:seen:')&&mesh.includes('duplicate:true')&&mesh.includes("reason:'untrusted-neighbor'")],
  ['file transfer chunks encrypted files and reassembles within explicit size limits',mesh.includes('FILE_CHUNK_BYTES=120*1024')&&mesh.includes('25*1024*1024')&&mesh.includes('file-ready')&&mesh.includes('restoreFile')],
  ['chat and market UIs expose explicit local mode and trusted identity pairing',html.includes('toggleAlwahaLocalChatMode()')&&html.includes('data-pair-peer')&&html.includes('createWifiDirectGroup')&&html.includes('connectWifiDirectPeer')],
  ['direct and marketplace chat messages route through mesh in local mode',html.includes("sendToAccount(peerId,{type:'direct-text'")&&html.includes("sendToAccount(currentMarketPeerId,{type:'market-text'")],
@@ -33,6 +33,10 @@ const checks=[
  ['Android build generates and registers the native Wi-Fi Direct plugin',workflow.includes('AlwahaLocalNetworkPlugin.java')&&workflow.includes('registerPlugin(AlwahaLocalNetworkPlugin.class)')],
  ['standard CI runs native audit plus cryptographic runtime tests',pkg.scripts['audit:local-network-native']==='node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs']
 ];
+
+ ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
+ ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
+ ['mesh relay forwarding is restricted to an explicitly paired neighbor and bounded queue',mesh.includes("reason:'untrusted-neighbor'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
 let failures=0;
 for(const [label,ok] of checks){console.log((ok?'PASS: ':'FAIL: ')+label);if(!ok)failures++;}
 if(failures)process.exit(1);
