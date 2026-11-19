@@ -14,7 +14,7 @@ const context={
   sanitizeChannelPart:value=>String(value).replace(/[^A-Za-z0-9_-]/g,'_'),
   console,
   currentChatUser:'المتصل المتوقع',
-  window:{AlwahaCallFeedback:{play(kind){tones.push(kind);}}},
+  window:{addEventListener(){},AlwahaCallFeedback:{play(kind){tones.push(kind);}}},
   updateCallUi:(state,meta)=>ui.push({state,meta}),
   setCallModal:open=>ui.push({modal:open})
 };
