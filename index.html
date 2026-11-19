@@ -1381,7 +1381,7 @@ img,video,canvas{max-width:100%}
         async function registerAlwahaServiceWorker() {
             if (!('serviceWorker' in navigator)) return;
             try {
-                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.4-dev', { scope: './', updateViaCache: 'none' });
+                const registration = await navigator.serviceWorker.register('./sw.js?v=3.0.4-user-requests-20261120', { scope: './', updateViaCache: 'none' });
                 registration.update().catch(() => {});
                 registration.addEventListener('updatefound', () => {
                     const worker = registration.installing;
