@@ -3581,7 +3581,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 const nameEl=document.getElementById('current-chat-name');if(nameEl)nameEl.innerText=currentChatUser;
                 await loadDirectMessages();
                 if(requestId!==directChatOpenRequestId||String(currentChatUserId||'')!==String(resolvedUserId||''))return;
-                await subscribeToDirectMessages();
+                if(navigator.onLine)await subscribeToDirectMessages();
                 window.scrollTo({top:0,behavior:'smooth'});
             }
         }
@@ -3836,6 +3836,13 @@ async function subscribeToMarketConversation() {
             const holder=document.getElementById('market-conversations-container');if(!holder)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me||requestId!==marketConversationsRenderRequestId)return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:11px;padding:12px;">جاري تحميل محادثات السوق...</div>';
+            if(!navigator.onLine){
+                const cached=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
+                if(!cached.length){holder.innerHTML='<div style="color:#ffd88b;text-align:center;padding:12px;font-size:10px;">لا توجد محادثات سوق محفوظة محليًا بعد. افتح محادثة مرة واحدة أثناء الاتصال.</div>';return;}
+                holder.innerHTML=cached.map(c=>`<article style="margin:0 0 8px;padding:9px;border:1px solid #8bf4ff20;border-radius:13px;background:#ffffff04;"><button type="button" onclick="openMarketConversationChat('${escapeJs(c.id)}','${escapeJs(c.peerName||'محادثة السوق')} · ${escapeJs(c.productTitle||'إعلان')}','${escapeJs(c.peerId||'')}')" style="width:100%;display:flex;gap:10px;align-items:center;border:0;background:transparent;color:#fff;text-align:right;"><img src="${escapeHtml(c.avatar||'icon.png')}" alt="" style="width:38px;height:38px;border-radius:50%;"><span style="min-width:0;flex:1;"><strong style="display:block;color:#8bf4ff;font-size:11px;">${escapeHtml(c.peerName||'محادثة سوق محفوظة')}</strong><span style="display:block;color:#ffd86b;font-size:10px;">${escapeHtml(c.productTitle||'إعلان محفوظ')}</span><span style="display:block;color:#a9b7c9;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.preview||'افتح الرسائل المحفوظة')}</span></span></button></article>`).join('')+'<div style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">عرض محلي مشفّر؛ الإرسال والمزامنة متوقفان حتى عودة الاتصال.</div>';
+                return;
+            }
+
             const filter=`or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&order=created_at.desc&limit=100`;
             let rows=await supabaseFetch(`market_conversations?select=id,product_id,buyer_id,seller_id,created_at,archived_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&${filter}`);
             if(requestId!==marketConversationsRenderRequestId)return;
@@ -3855,6 +3862,11 @@ async function subscribeToMarketConversation() {
             if(requestId!==marketConversationsRenderRequestId||activeUser?.id!==me.id)return;
             const pm=new Map((Array.isArray(products)?products:[]).map(r=>[String(r.id),r])),um=new Map((Array.isArray(users)?users:[]).map(r=>[String(r.id),r])),txm=new Map((Array.isArray(transactions)?transactions:[]).map(r=>[String(r.conversation_id),r])),sm=new Map((Array.isArray(snapshots)?snapshots:[]).map(r=>[String(r.id),r.listing_snapshot||{}])),latest=new Map(),unread=new Map();
             (Array.isArray(messages)?messages:[]).forEach(m=>{const id=String(m.conversation_id);if(!latest.has(id))latest.set(id,m);if(m.sender_id!==me.id&&!m.read_at)unread.set(id,(unread.get(id)||0)+1);});
+            const cachedIndex=rows.map(c=>{
+                const id=String(c.id),peerId=c.buyer_id===me.id?c.seller_id:c.buyer_id,peer=um.get(String(peerId))||{},product=pm.get(String(c.product_id))||{},last=latest.get(id),snapshot=sm.get(id)||{};
+                return {id,product_id:c.product_id,buyer_id:c.buyer_id,seller_id:c.seller_id,peerId,peerName:([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'مستخدم'),avatar:peer.avatar_url||'icon.png',productTitle:product.title||snapshot.title||'إعلان محفوظ',preview:last?.message||'بدأت محادثة بخصوص الإعلان'};
+            });
+            window.AlwahaLocalVault?.saveMarketConversationIndex?.(me.id,cachedIndex).catch(error=>console.warn('[Alwaha Vault] market index cache failed:',error));
             holder.innerHTML=rows.map(c=>{
                 const id=String(c.id),peerId=c.buyer_id===me.id?c.seller_id:c.buyer_id,peer=um.get(String(peerId))||{},product=pm.get(String(c.product_id))||{},transaction=txm.get(id),snapshot=transaction?.listing_snapshot||sm.get(id)||{};
                 const name=([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'مستخدم'),last=latest.get(id),preview=last?.message||'بدأت محادثة بخصوص الإعلان',productTitle=product.title||snapshot.title||'إعلان محفوظ بعد الحذف';
