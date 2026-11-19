@@ -17,6 +17,7 @@ GRANT SELECT ON public.comments TO anon, authenticated;
 
 DROP POLICY IF EXISTS ci_comments_anon_public_read ON public.comments;
 DROP POLICY IF EXISTS ci_comments_authenticated_read ON public.comments;
+DROP POLICY IF EXISTS comments_select_public ON public.comments;
 
 CREATE POLICY ci_comments_anon_public_read
   ON public.comments FOR SELECT TO anon
@@ -26,11 +27,11 @@ CREATE POLICY ci_comments_authenticated_read
   ON public.comments FOR SELECT TO authenticated
   USING (true);
 
-INSERT INTO public.comments (target_id, target_type, content)
+INSERT INTO public.comments (target_id, target_type, user_id, author_name, content)
 VALUES
-  ('public-post', 'post', 'visible 1'),
-  ('public-post', 'post', 'visible 2'),
-  ('hidden-post', 'post', 'authenticated only'),
-  ('public-reel', 'reel', 'not part of post counts');
+  ('public-post', 'post', '00000000-0000-0000-0000-000000000001', 'CI user', 'visible 1'),
+  ('public-post', 'post', '00000000-0000-0000-0000-000000000001', 'CI user', 'visible 2'),
+  ('hidden-post', 'post', '00000000-0000-0000-0000-000000000001', 'CI user', 'authenticated only'),
+  ('public-reel', 'reel', '00000000-0000-0000-0000-000000000001', 'CI user', 'not part of post counts');
 
 COMMIT;
