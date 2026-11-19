@@ -4720,7 +4720,7 @@ async function renderConversationsList() {
         }
 
         let alwahaLocalDiscoverySession = null;
-        async async function openAlwahaLocalDiscovery() {
+        async function openAlwahaLocalDiscovery() {
             const user=await requireAuthenticatedUser('سجّل الدخول أولًا لتفعيل هوية الجهاز المحلي.');if(!user)return;
             const plugin=window.alwahaLocalNetwork,mesh=window.AlwahaLocalMesh;
             if(!plugin?.startDiscovery||!plugin?.addListener||!mesh)return triggerToastNotification('مكوّن الشبكة الحرة غير موجود في نسخة Android هذه.','error');
