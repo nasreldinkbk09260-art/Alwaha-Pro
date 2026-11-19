@@ -10,6 +10,8 @@
     'direct-messages',
     'market-conversations',
     'market-messages',
+    'direct-media',
+    'market-media',
     'notifications',
     'friends'
   ]);
