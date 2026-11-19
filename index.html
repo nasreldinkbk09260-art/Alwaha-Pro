@@ -869,7 +869,7 @@ img,video,canvas{max-width:100%}
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
         <audio id="remoteAudio" autoplay playsinline></audio>
-        <button class="btn-action" style="margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        <button id="callCloseBtn" type="button" class="btn-action" style="margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()" aria-label="إغلاق شاشة المكالمة"><i class="fa-solid fa-xmark"></i> إغلاق</button>
     </div>
 
     <!-- 4. قسم الملف الشخصي -->
@@ -2892,9 +2892,10 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                 container.innerHTML = '<div class="alwaha-feed-loading" role="status" aria-live="polite" style="text-align:center;color:#38bdf8;font-size:12px;padding:12px;">جاري تحديث المنشورات...</div>';
             }
             try {
-                const [posts, counts] = await Promise.all([
+                const [posts, counts, commentRows] = await Promise.all([
                     alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null),
-                    alwahaUiDeadline(supabaseFetch('post_like_counts?select=post_id,likes_count'), 2200, [])
+                    alwahaUiDeadline(supabaseFetch('post_like_counts?select=post_id,likes_count'), 2200, []),
+                    alwahaUiDeadline(supabaseFetch('comments?target_type=eq.post&select=target_id&limit=5000'), 2200, [])
                 ]);
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 if (!Array.isArray(posts)) {
@@ -2912,6 +2913,8 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                 const mine = me ? await alwahaUiDeadline(supabaseFetch(`post_likes?user_id=eq.${encodeURIComponent(me.id)}&select=post_id`), 1200, []) : [];
                 if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
                 const countMap = new Map((Array.isArray(counts) ? counts : []).map(x => [String(x.post_id), Number(x.likes_count || 0)]));
+                const commentCountMap=new Map();
+                if(Array.isArray(commentRows))for(const row of commentRows){const key=String(row.target_id||'');if(key)commentCountMap.set(key,(commentCountMap.get(key)||0)+1);}
                 const mineSet = new Set((Array.isArray(mine) ? mine : []).map(x => String(x.post_id)));
                 container.setAttribute('aria-busy', 'false');
                 container.innerHTML = posts.map(post => {
@@ -2925,7 +2928,7 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
                         <p style="font-size:13px;line-height:1.4;color:#fff;white-space:pre-wrap;">${escapeHtml(post.content || '')}</p>${imageMarkup}
                         <div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;">
                             <button class="btn-action ${liked ? 'liked' : ''}" style="background:transparent;color:${liked ? '#ff0055' : '#fff'};padding:4px 8px;font-size:12px;flex:1;" id="like-btn-${escapeJs(id)}" onclick="togglePostLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" style="color:#ff0055;"></i> إعجاب (<span id="like-count-${escapeJs(id)}">${count}</span>)</button>
-                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق</button>
+                            <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="openCommentsModal('${escapeJs(id)}','post')" aria-label="التعليقات: ${commentCountMap.get(id)||0}"><i class="fa-solid fa-comment" style="color:#00ffff;"></i> تعليق (<span id="comment-count-${escapeJs(id)}">${commentCountMap.get(id)||0}</span>)</button>
                             <button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:12px;flex:1;" onclick="shareTextContent('منشور Alwaha-Pro','${escapeJs((post.content || '').slice(0,160))}')"><i class="fa-solid fa-share" style="color:#00ff88;"></i> مشاركة</button>
                         </div>${ownerActions}${moderationActions}</div>`;
                 }).join('');
@@ -4711,10 +4714,16 @@ async function renderConversationsList() {
             await activeCallManager?.end(false);updateCallUi('idle');setCallModal(false);
         }
         async function terminateVoiceCall() {
-            try { await activeCallManager?.end(true); } catch (e) {}
+            const modal=document.getElementById('voice-call-modal');
+            const wasVisible=!!modal&&modal.style.display!=='none';
+            if(modal)modal.style.display='none';
+            const otherModalOpen=!!document.querySelector('.game-modal-overlay.is-open,.alwaha-fullscreen-layer.is-open,#comments-modal-box[style*="display: block"],#active-chat-box[style*="display: block"]');
+            if(!otherModalOpen)document.body.classList.remove('modal-active');
+            try { await activeCallManager?.end(true); }
+            catch (error) { console.warn('[Alwaha Call] close cleanup failed:',error); }
             updateCallUi('idle');
             setCallModal(false);
-            triggerToastNotification('تم إنهاء المكالمة.', 'info');
+            if(wasVisible)triggerToastNotification('تم إنهاء المكالمة وإغلاق شاشتها.', 'info');
         }
 
         function switchMarketSubView(view) {
