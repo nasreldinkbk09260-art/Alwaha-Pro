@@ -47,8 +47,12 @@ check('native audio-route and APK FileProvider plugin is retained',
 check('legacy unverified local-share panel stays retired while encrypted Mesh is present',
   !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section/.test(html+games) &&
   html.includes('openAlwahaLocalDiscovery') && read('alwaha-local-mesh.js').includes('deriveRouteHmacKey'));
-check('Bluetooth scope is explicit: discovery only, no claim of BLE data transport',
-  html.includes('Bluetooth مكتشف فقط في هذه المرحلة') && html.includes('نقل البيانات عبر Bluetooth'));
+check('Bluetooth Classic carries app-encrypted packet frames while BLE and live call media remain separately unclaimed',
+  html.includes('Bluetooth Classic RFCOMM') &&
+  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('startBluetoothPacketServer') &&
+  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('createInsecureRfcommSocketToServiceRecord') &&
+  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('result.put("callMediaReady", false)') &&
+  !html.includes('BLE data transport ready'));
 
 // 3.0.1 R2 post-branch repairs: notifications, non-friend market messaging, feed coalescing and archive.
 check('home feed has a single-flight guard and bounded secondary requests',
