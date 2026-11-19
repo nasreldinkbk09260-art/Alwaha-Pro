@@ -28,7 +28,7 @@ check('accepting a request removes only its related request rows and does not wa
 check('modal module is included with versioned URL, web build and both service-worker cache paths',html.includes('src="./alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118"')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'")&&sw.includes("'./alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118'"));
 check('modal observation is coalesced and duplicate navigation observer is removed',shell.includes('syncScheduled=false')&&shell.includes('function scheduleSync()')&&shell.includes('new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();})')&&shell.includes('if(changed)window.AlwahaExperience?.syncDock?.();')&&!exp.includes('modalObserver')&&!exp.includes('new MutationObserver'));
 
-check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.4-test-visibility-20261119')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
+check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.4-chat-media-offline-20261119')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 
 const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*[(]/g)].map(match=>match[1]);
