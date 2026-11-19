@@ -870,6 +870,7 @@ img,video,canvas{max-width:100%}
             <button id="cameraMuteBtn" class="btn-mute" style="display:none;" onclick="toggleCallCamera()"><i class="fa-solid fa-video"></i> إيقاف الكاميرا</button>
             <button id="cameraSwitchBtn" class="btn-mute" style="display:none;" onclick="switchCallCamera()"><i class="fa-solid fa-camera-rotate"></i> تبديل الكاميرا</button>
             <button id="kidsModeBtn" type="button" class="btn-mute" style="display:none;" onclick="toggleAlwahaKidsMode()" aria-pressed="false" title="فتح غرفة الأطفال أثناء مكالمة الفيديو"><i class="fa-solid fa-wand-magic-sparkles"></i> غرفة الأطفال</button>
+            <button id="addCallParticipantBtn" type="button" class="btn-mute" style="display:none;" onclick="showCallParticipantInfo()" aria-label="إضافة مشارك للمكالمة" title="إضافة مشارك"><i class="fa-solid fa-user-plus"></i> إضافة مشارك</button>
             <button id="endCallBtn" class="btn-hangup" style="display:none;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
@@ -2876,6 +2877,7 @@ async function toggleInternalNotificationCenter() {
             if (cameraMuteBtn) cameraMuteBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
             if (cameraSwitchBtn) cameraSwitchBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
             const kidsBtn=document.getElementById('kidsModeBtn');if(kidsBtn)kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none';
+            const addParticipantBtn=document.getElementById('addCallParticipantBtn');if(addParticipantBtn)addParticipantBtn.style.display=state==='connected'?'inline-block':'none';
             if (state === 'idle') {
                 if (callTimer) callTimer.textContent = '00:00';
             }
@@ -4666,6 +4668,18 @@ async function renderConversationsList() {
         }
 
         let alwahaLocalDiscoverySession = null;
+        async function openAlwahaLocalSystemSettings(kind){
+            const plugin=window.alwahaLocalNetwork;
+            if(!plugin)return triggerToastNotification('إعدادات الأجهزة القريبة متاحة في تطبيق Android فقط.','info');
+            try{
+                const method=kind==='wifi'?'openWifiSettings':(kind==='bluetooth'?'openBluetoothSettings':'openMobileDataSettings');
+                if(typeof plugin[method]!=='function')throw new Error('تحديث التطبيق مطلوب لفتح إعدادات النظام.');
+                await plugin[method]();
+                const labels={wifi:'Wi-Fi',bluetooth:'Bluetooth','mobile-data':'بيانات الهاتف'};
+                triggerToastNotification('اختر إعداد '+labels[kind]+' من شاشة النظام ثم ارجع إلى الواحة.','info');
+            }catch(error){triggerToastNotification(error?.message||'تعذر فتح إعدادات النظام.','error');}
+        }
+
         async function openAlwahaLocalDiscovery() {
             const user=await requireAuthenticatedUser('سجّل الدخول أولًا للبحث عن الأجهزة القريبة.');
             if(!user)return;
@@ -4684,6 +4698,8 @@ async function renderConversationsList() {
             modal.innerHTML='<section style="width:min(100%,480px);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px;border:1px solid #8bf4ff55;border-radius:18px;background:#101c2c;color:#eaf7ff;">'
               +'<header style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><h2 id="alwaha-local-discovery-title" style="margin:0;font:900 16px Cairo,sans-serif;color:#8bf4ff;">الأجهزة القريبة</h2><button type="button" data-close-local aria-label="إغلاق" style="border:0;border-radius:9px;background:#ffffff15;color:#fff;padding:7px 12px;">إغلاق</button></header>'
               +'<p style="font:11px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:10px 0;">يبحث التطبيق عن أجهزة Wi-Fi Direct وBluetooth القريبة بعد إذنك. هذه مرحلة اكتشاف فقط؛ الأجهزة غير موثّقة، ولا يتم الاتصال بها أو تبادل رسائل أو ملفات أو مكالمات محلية.</p>'
+              +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:10px 0;"><button type="button" data-open-wifi style="border:1px solid #8bf4ff55;border-radius:9px;background:#8bf4ff12;color:#8bf4ff;padding:8px 4px;font:10px Cairo,sans-serif;">إعدادات Wi-Fi</button><button type="button" data-open-bluetooth style="border:1px solid #8bf4ff55;border-radius:9px;background:#8bf4ff12;color:#8bf4ff;padding:8px 4px;font:10px Cairo,sans-serif;">Bluetooth</button><button type="button" data-open-mobile-data style="border:1px solid #ffd86b55;border-radius:9px;background:#ffd86b12;color:#ffd86b;padding:8px 4px;font:10px Cairo,sans-serif;">بيانات الهاتف</button></div>'
+              +'<p style="font:9px/1.8 Cairo,sans-serif;color:#ffd86b;margin:0 0 8px;">تُفتح إعدادات النظام لتختار بنفسك. لا يستطيع التطبيق العادي إيقاف بيانات الهاتف أو فرض تشغيل Wi-Fi/Bluetooth تلقائياً.</p>'
               +'<div id="alwaha-local-status" role="status" aria-live="polite" style="padding:9px 10px;border:1px solid #8bf4ff22;border-radius:10px;background:#8bf4ff0b;color:#c8e9f5;font:11px/1.8 Cairo,sans-serif;">جاهز لبدء البحث بعد موافقتك.</div>'
               +'<div style="display:flex;gap:8px;margin:12px 0;"><button type="button" data-start-local style="flex:1;min-height:42px;border:0;border-radius:10px;background:#8bf4ff;color:#09202b;font:800 11px Cairo,sans-serif;">بدء / إعادة البحث</button><button type="button" data-stop-local style="min-height:42px;border:1px solid #ffffff28;border-radius:10px;background:#253449;color:#fff;padding:8px 12px;">إيقاف</button></div>'
               +'<div id="alwaha-local-peers" aria-live="polite" style="display:grid;gap:7px;"><div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div></div>'
@@ -4729,6 +4745,9 @@ async function renderConversationsList() {
                 window.AlwahaModalShell?.sync?.();
             };
             modal.querySelector('[data-close-local]').addEventListener('click',()=>{void close();});
+            modal.querySelector('[data-open-wifi]')?.addEventListener('click',()=>openAlwahaLocalSystemSettings('wifi'));
+            modal.querySelector('[data-open-bluetooth]')?.addEventListener('click',()=>openAlwahaLocalSystemSettings('bluetooth'));
+            modal.querySelector('[data-open-mobile-data]')?.addEventListener('click',()=>openAlwahaLocalSystemSettings('mobile-data'));
             modal.addEventListener('click',event=>{if(event.target===modal)void close();});
             modal.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();void close();}});
             stop.addEventListener('click',async()=>{try{await plugin.stopDiscovery();say('تم إيقاف البحث؛ الأجهزة المكتشفة ما زالت غير موثّقة.');}catch(e){say('تعذر إيقاف البحث من الجهاز.');}});
@@ -4947,6 +4966,11 @@ async function renderConversationsList() {
             try { await activeCallManager?.rejectIncoming(); } catch (e) { console.warn('[Alwaha Call] Decline failed:',e); }
             await activeCallManager?.end(false);updateCallUi('idle');setCallModal(false);
         }
+        function showCallParticipantInfo(){
+            if(!activeCallManager?.call)return triggerToastNotification('لا توجد مكالمة نشطة لإضافة مشارك إليها.','info');
+            triggerToastNotification('المكالمة الحالية تدعم طرفين فقط. زر إضافة مشارك ظاهر للاختبار، لكن المؤتمر متعدد الأطراف غير منفذ بعد ولن نرسل دعوة غير صالحة.','error');
+        }
+
         async function terminateVoiceCall() {
             const modal=document.getElementById('voice-call-modal');
             const wasVisible=!!modal&&modal.style.display!=='none';
