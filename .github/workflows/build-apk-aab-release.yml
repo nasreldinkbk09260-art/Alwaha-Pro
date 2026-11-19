@@ -417,7 +417,7 @@ jobs:
           package_match = re.search(r'^package\s+([A-Za-z0-9_.]+);', source, re.M)
           if not package_match:
               raise SystemExit('Could not determine MainActivity package.')
-          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin'):
+          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin', 'AlwahaLocalSessionCrypto'):
               template_path = Path('scripts/android') / f'{plugin_name}.java'
               if not template_path.is_file():
                   raise SystemExit(f'Missing native plugin template: {template_path}')
