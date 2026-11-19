@@ -157,6 +157,6 @@
     host.querySelector('#alwaha-vault-clean').onclick=async()=>{if(!confirm('سيتم مسح المسودات المحلية المحفوظة فقط. لن تُحذف منشوراتك أو رسائلك السحابية. أنشئ نسخة احتياطية أولاً. هل تتابع؟'))return;await clearDrafts();await render();};
   }
   function bindDrafts(){const fields=[['home-post-textarea','home-post'],['prod-name','market-listing:prod-name'],['prod-price','market-listing:prod-price'],['prod-desc-location','market-listing:prod-desc-location']];for(const [id,key] of fields){const el=document.getElementById(id);if(!el)continue;let timer=null;el.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>saveDraft(key,el.value).catch(console.warn),450);});}}
-  window.AlwahaLocalVault={put,getAll:all,getRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
+  window.AlwahaLocalVault={put,getAll:all,getRecord,removeRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
   window.addEventListener('DOMContentLoaded',()=>{render().catch(console.warn);bindDrafts();restoreDrafts().catch(console.warn);});
 })();
