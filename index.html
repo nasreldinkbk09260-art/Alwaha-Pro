@@ -1491,12 +1491,68 @@ img,video,canvas{max-width:100%}
         let notificationChannel = null;
         let notificationRenderRequestId = 0;
 
+        // Extensible theme registry: new themes can be registered without changing a fixed allow-list.
+        window.AlwahaThemeRegistry = window.AlwahaThemeRegistry || Object.create(null);
+        window.registerAlwahaTheme = function registerAlwahaTheme(definition) {
+            if (!definition || typeof definition !== 'object') return false;
+            const id = String(definition.id || '').trim().toLowerCase();
+            if (!/^[a-z][a-z0-9-]{0,31}$/.test(id)) return false;
+            const name = String(definition.name || id).trim().slice(0, 60);
+            if (!name) return false;
+            const theme = {
+                id,
+                name,
+                emoji: String(definition.emoji || '🎨').slice(0, 4),
+                description: String(definition.description || 'مظهر قابل للتخصيص في الواحة برو.').slice(0, 140)
+            };
+            window.AlwahaThemeRegistry[id] = theme;
+            const grid = document.querySelector('.alwaha-theme-grid');
+            let button = grid?.querySelector('[data-theme-choice="' + id + '"]');
+            if (!button && grid) {
+                button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'alwaha-theme-choice';
+                button.dataset.themeChoice = id;
+                button.setAttribute('aria-pressed', 'false');
+                const icon = document.createElement('span');
+                icon.className = 'theme-choice-icon';
+                const copy = document.createElement('span');
+                copy.className = 'theme-choice-copy';
+                const title = document.createElement('span');
+                title.className = 'theme-choice-name';
+                const description = document.createElement('span');
+                description.className = 'theme-choice-description';
+                const state = document.createElement('span');
+                state.className = 'theme-choice-state';
+                state.textContent = 'اضغط للتفعيل';
+                copy.append(title, description, state);
+                button.append(icon, copy);
+                button.addEventListener('click', () => changeAppTheme(id));
+                grid.appendChild(button);
+            }
+            if (button) {
+                const icon = button.querySelector('.theme-choice-icon');
+                const title = button.querySelector('.theme-choice-name');
+                const description = button.querySelector('.theme-choice-description');
+                if (icon) icon.textContent = theme.emoji;
+                if (title) title.textContent = theme.name;
+                if (description) description.textContent = theme.description;
+                button.setAttribute('aria-label', 'تفعيل ثيم ' + theme.name);
+            }
+            return true;
+        };
+        [
+            {id:'default',name:'الواحة الأصلية المطوّرة',emoji:'✨',description:'الطابع الداكن المعروف مع وضوح وتباين وترتيب أفضل'},
+            {id:'oasis',name:'الواحة الغامرة',emoji:'🌿',description:'طيف زمردي عميق وطبقات زجاجية وإضاءة هادئة'},
+            {id:'abyss',name:'العالم الزجاجي',emoji:'🌊',description:'طيف أزرق كوني وواجهات زجاجية بتدرجات ضوئية'}
+        ].forEach(window.registerAlwahaTheme);
+
         function changeAppTheme(themeName, showToast = true) {
             const legacyThemeMap = { nature:'oasis', spring:'oasis', summer:'oasis', autumn:'oasis', tech:'abyss', winter:'abyss', soft:'default' };
             const requested = String(themeName || 'default').trim().toLowerCase();
             const normalized = legacyThemeMap[requested] || requested;
-            const allowedThemes = new Set(['default','oasis','abyss']);
-            const selectedTheme = allowedThemes.has(normalized) ? normalized : 'default';
+            const themeRegistry = window.AlwahaThemeRegistry || {};
+            const selectedTheme = Object.prototype.hasOwnProperty.call(themeRegistry, normalized) ? normalized : 'default';
             if (!document.body) return selectedTheme;
             const previousTheme = document.body.dataset.alwahaTheme || 'default';
             const changed = previousTheme !== selectedTheme;
@@ -1505,15 +1561,17 @@ img,video,canvas{max-width:100%}
             const staleClass = oldThemeClasses.some(name=>document.body.classList.contains(name));
             const staleDefault = selectedTheme==='default' && Object.prototype.hasOwnProperty.call(document.body.dataset,'alwahaTheme');
             if(changed||staleClass||staleDefault){
-                document.body.classList.remove(...legacyClasses);
+                const previousThemeClass = previousTheme === 'default' ? [] : ['theme-' + previousTheme];
+                document.body.classList.remove(...legacyClasses, ...previousThemeClass);
                 if(selectedTheme==='default') delete document.body.dataset.alwahaTheme;
-                else {document.body.dataset.alwahaTheme=selectedTheme;document.body.classList.add(`theme-${selectedTheme}`);}
+                else {document.body.dataset.alwahaTheme=selectedTheme;document.body.classList.add('theme-'+selectedTheme);}
             }
             let backdrop=document.getElementById('alwaha-theme-backdrop');
             if(!backdrop){backdrop=document.createElement('div');backdrop.id='alwaha-theme-backdrop';backdrop.setAttribute('aria-hidden','true');document.body.insertBefore(backdrop,document.body.firstChild);}
             if(backdrop.dataset.theme!==selectedTheme)backdrop.dataset.theme=selectedTheme;
             // The app theme must not change browser/Android host chrome colours.
-            const themeNames={default:'الواحة الأصلية المطوّرة',oasis:'الواحة الغامرة',abyss:'العالم الزجاجي'};
+            const selectedMeta = themeRegistry[selectedTheme] || themeRegistry.default || {name:selectedTheme};
+            const themeLabel = selectedMeta.name || selectedTheme;
             try{if(localStorage.getItem('alwaha_theme')!==selectedTheme)localStorage.setItem('alwaha_theme',selectedTheme);}catch(error){console.warn('Unable to persist theme selection:',error);}
             document.querySelectorAll('[data-theme-choice]').forEach(button=>{
                 const active=button.dataset.themeChoice===selectedTheme,pressed=active?'true':'false';
@@ -1522,9 +1580,9 @@ img,video,canvas{max-width:100%}
                 if(state&&state.textContent!==label)state.textContent=label;
             });
             const label=document.getElementById('alwaha-theme-label');
-            if(label){const nextLabel=`الثيم الحالي: ${themeNames[selectedTheme]}`;if(label.textContent!==nextLabel)label.textContent=nextLabel;}
+            if(label){const nextLabel='الثيم الحالي: '+themeLabel;if(label.textContent!==nextLabel)label.textContent=nextLabel;}
             if(changed||window.__alwahaAppliedTheme!==selectedTheme){window.__alwahaAppliedTheme=selectedTheme;window.dispatchEvent(new CustomEvent('alwaha:themechange',{detail:{theme:selectedTheme}}));}
-            if(showToast)triggerToastNotification(`تم تطبيق مظهر ${themeNames[selectedTheme]} بنجاح.`,'success');
+            if(showToast)triggerToastNotification('تم تطبيق مظهر '+themeLabel+' بنجاح.','success');
             return selectedTheme;
         }
 
