@@ -8,7 +8,6 @@ function hasVersionedScript(asset){
  const revision=html.slice(start+marker.length).split('"')[0];
  return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
 }
-const hasValidCacheNamespace=/^alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*$/.test(cacheName);
 function hasVersionedScript(asset){
  const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
  const revision=html.slice(start+marker.length).split('"')[0];
