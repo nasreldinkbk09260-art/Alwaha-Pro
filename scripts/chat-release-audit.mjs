@@ -7,7 +7,11 @@ const replyTest=fs.readFileSync('supabase/tests/20261108120000_message_reply_sco
 const friendAcceptMigration=fs.readFileSync('supabase/migrations/20261108130000_friend_request_acceptance_notification.sql','utf8');
 const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_request_acceptance_notification.sql','utf8');
 const marketCallMigration=fs.readFileSync('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','utf8');
+const attachmentMigration=fs.readFileSync('supabase/migrations/20261119190000_private_chat_media_attachments.sql','utf8');
+const attachmentTest=fs.readFileSync('supabase/tests/20261119190000_private_chat_media_attachments.sql','utf8');
 const checks = [
+  ['direct and marketplace chat attachments use a private participant-only bucket',attachmentMigration.includes("VALUES (\n  'chat-attachments'")&&attachmentMigration.includes('public=false')&&attachmentMigration.includes('chat_attachments_read_participants')&&attachmentMigration.includes('chat_attachments_upload_own_folder')&&attachmentMigration.includes('createSignedUrl')],
+  ['attachment policy tests verify sender, recipient and non-participant access',attachmentTest.includes('PRIVATE_CHAT_ATTACHMENTS=PASS')&&attachmentTest.includes('A non-participant read private chat attachments')&&attachmentTest.includes('Anonymous users read private chat attachments')],
   ['audio action', 'initiateVoiceCall(\'online\')'],
   ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
   ['chat header exposes native nearby Wi-Fi/Bluetooth discovery dialog', html.includes('onclick="openAlwahaLocalDiscovery()"') && html.includes('async function openAlwahaLocalDiscovery()') && html.includes('plugin.startDiscovery()') && html.includes('peerDiscovered')],
