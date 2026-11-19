@@ -5756,7 +5756,7 @@ async function submitNewProductToMarket() {
             if(!conversation)return triggerToastNotification('ابدأ محادثة السوق مع هذا البائع أولًا، ثم أعد الاتصال من الإعلان.','info');
             const participantId=conversation.buyer_id===me.id?conversation.seller_id:conversation.buyer_id;
             if(String(participantId)!==peerId)return triggerToastNotification('المحادثة لا تطابق البائع المحدد؛ لم نبدأ الاتصال.','error');
-            return startAlwahaCall(window.AlwahaLocalMesh?.isEnabled()?'offline-market':'market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
+            return startAlwahaCall('market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
         }
 
         async function updateMarketProductLifecycle(productId, patch, successMessage) {
