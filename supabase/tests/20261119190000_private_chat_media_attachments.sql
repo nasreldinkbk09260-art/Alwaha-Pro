@@ -23,10 +23,10 @@ BEGIN
 END
 $schema$;
 
-INSERT INTO auth.users(id) VALUES
- ('41000000-0000-4000-8000-000000000001'),
- ('41000000-0000-4000-8000-000000000002'),
- ('41000000-0000-4000-8000-000000000003')
+INSERT INTO auth.users(id,raw_user_meta_data) VALUES
+ ('41000000-0000-4000-8000-000000000001','{"username":"chat_attach_a","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
+ ('41000000-0000-4000-8000-000000000002','{"username":"chat_attach_b","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
+ ('41000000-0000-4000-8000-000000000003','{"username":"chat_attach_c","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public.friend_requests(requester_id,target_id,status)
