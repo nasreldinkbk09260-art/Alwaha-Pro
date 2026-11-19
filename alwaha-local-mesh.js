@@ -279,11 +279,13 @@
   }
   async function flushRelayQueue(){
     if(!window.alwahaLocalNetwork?.sendLocalPacket||!transportPeerFingerprint)return {sent:0};
+    const trusted=await getTrustedPeers();
+    if(!trusted.some(peer=>peer.fingerprint===transportPeerFingerprint))return {sent:0,blocked:true,reason:'untrusted-neighbor'};
     const rows=await vault().getAll(),out=[];
     for(const row of rows||[]){
       if(typeof row.key!=='string'||!row.key.startsWith('mesh:relay:')||!row.value?.packet)continue;
       const packet=row.value.packet,expires=Date.parse(packet.expiresAt||'');
-      if(!Number.isFinite(expires)||expires<Date.now()){await vault().put('mesh:expired:'+packet.id,{expiredAt:new Date().toISOString()});continue;}
+      if(!Number.isFinite(expires)||expires<Date.now()){await vault().removeRecord?.('mesh:relay:'+packet.id);await vault().put('mesh:expired:'+packet.id,{expiredAt:new Date().toISOString()});continue;}
       if(row.value.lastHopFingerprint===transportPeerFingerprint)continue;
       try{await sendRawPacket(packet);out.push(packet.id);}catch(error){console.warn('[Alwaha Mesh] relay send failed:',error);break;}
     }
