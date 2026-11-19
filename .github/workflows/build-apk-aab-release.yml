@@ -10,6 +10,7 @@ on:
       - alwaha-pro-3.0.3-dev
       - alwaha-pro-recovery-20261118
       - alwaha-pro-3.0.4-private-test-20261119
+      - alwaha-pro-3.0.4-user-reported-fixes-20261119
   workflow_dispatch:
 
 permissions:
