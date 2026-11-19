@@ -1952,7 +1952,8 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             const query = String(endpoint).split('?')[1] || '';
             const hasUserFilter = /(?:^|&)(?:id|author_id|seller_id|user_id|follower_id|following_id|receiver_id|sender_id|sold_to)=/.test(query);
             const isPublicCommentThread = tableName === 'comments' && /(?:^|&)target_id=eq\./.test(query) && /(?:^|&)target_type=eq\./.test(query) && !hasUserFilter;
-            const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread);
+            const isPublicCommentSummary = tableName === 'comments' && query.includes('target_type=eq.post') && query.includes('select=target_id') && query.includes('limit=5000') && !hasUserFilter;
+            const cacheable = requestMethod === 'GET' && ((safePublicTables.has(tableName) && query.includes('select=') && !hasUserFilter) || isPublicCommentThread || isPublicCommentSummary);
             const cacheKey = cacheable ? String(endpoint) : '';
             if (requestMethod !== 'GET') apiCache.clear();
 
