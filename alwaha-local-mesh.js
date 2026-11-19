@@ -292,18 +292,23 @@
   }
   async function setMode(enabled){
     modeEnabled=Boolean(enabled);
+    try{localStorage.setItem('alwaha_mesh_mode_enabled_v1',String(modeEnabled));}catch(error){}
     try{await vault().put('mesh:mode-enabled-v1',{enabled:modeEnabled,updatedAt:new Date().toISOString()});}catch(error){console.warn('[Alwaha Mesh] mode preference could not be saved:',error);}
     await installTransportListeners();
     window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled}}));
     return modeEnabled;
   }
   async function restoreMode(){
-    try{const row=await vault()?.getRecord?.('mesh:mode-enabled-v1');modeEnabled=Boolean(row?.value?.enabled);}
-    catch(error){modeEnabled=false;console.warn('[Alwaha Mesh] mode preference restore failed:',error);}
+    try{
+      const fastFlag=localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';
+      const row=await vault()?.getRecord?.('mesh:mode-enabled-v1');
+      modeEnabled=row?.value?.enabled===true||fastFlag;
+      if(row?.value?.enabled===false&&fastFlag!==true)modeEnabled=false;
+    }catch(error){modeEnabled=false;console.warn('[Alwaha Mesh] mode preference restore failed:',error);}
     window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled,restored:true}}));
     return modeEnabled;
   }
-  function isEnabled(){return modeEnabled;}
+  function isEnabled(){try{return modeEnabled||localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';}catch{return modeEnabled;}}
   function getTransportPeer(){return transportPeerFingerprint;}
   function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
   function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
