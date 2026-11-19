@@ -12,9 +12,21 @@
   async function sha(bytes){return new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));}
   function hex(bytes){return [...bytes].map(x=>x.toString(16).padStart(2,'0')).join('');}
   function utcDay(date=Date.now()){return new Date(date).toISOString().slice(0,10);}
-  async function routeToken(fingerprint,day){return bytesToB64(await sha(enc.encode('AlwahaMeshRouteV1|'+fingerprint+'|'+day)));}
-  async function routeTokens(fingerprint,now=Date.now()){
-    const values=[];for(let shift=-1;shift<ROUTE_DAYS;shift++){const d=new Date(now);d.setUTCDate(d.getUTCDate()+shift);values.push(await routeToken(fingerprint,utcDay(d)));}
+  async function deriveRouteHmacKey(privateKey,publicKey){
+    const shared=await crypto.subtle.deriveBits({name:'ECDH',public:publicKey},privateKey,256);
+    const material=await crypto.subtle.importKey('raw',shared,'HKDF',false,['deriveKey']);
+    return crypto.subtle.deriveKey(
+      {name:'HKDF',hash:'SHA-256',salt:enc.encode('AlwahaMeshRouteSaltV1'),info:enc.encode('AlwahaMeshRouteHmacV1')},
+      material,{name:'HMAC',hash:'SHA-256',length:256},false,['sign']
+    );
+  }
+  async function routeTokensForPair(privateKey,publicKey,now=Date.now()){
+    const routeKey=await deriveRouteHmacKey(privateKey,publicKey),values=[];
+    for(let shift=-1;shift<ROUTE_DAYS;shift++){
+      const d=new Date(now);d.setUTCDate(d.getUTCDate()+shift);
+      const digest=await crypto.subtle.sign('HMAC',routeKey,enc.encode('AlwahaMeshRouteV1|'+utcDay(d)));
+      values.push(bytesToB64(new Uint8Array(digest)));
+    }
     return values;
   }
   async function fingerprintFor(ecdhPublicKey,signingPublicKey){
@@ -96,7 +108,7 @@
     const context='AlwahaMeshV1|'+sender.fingerprint+'|'+recipient.fingerprint+'|'+id;
     const key=await deriveAesKey(ephemeral.privateKey,recipientPublic,salt,context);
     const ephemeralPub=bytesToB64(new Uint8Array(await crypto.subtle.exportKey('raw',ephemeral.publicKey)));
-    const toRoutes=await routeTokens(recipient.fingerprint,now),fromRoute=await routeToken(sender.fingerprint,utcDay(now));
+    const toRoutes=await routeTokensForPair(sender.ecdh.privateKey,recipientPublic,now),fromRoute=bytesToB64(crypto.getRandomValues(new Uint8Array(16)));
     const packet={v:VERSION,id,toRoutes,fromRoute,createdAt,expiresAt,hopLimit:MAX_HOPS,hops:0,ephemeralPublicKey:ephemeralPub,salt:bytesToB64(salt),iv:bytesToB64(iv),ciphertext:''};
     const plain={protocol:PREFIX,senderFingerprint:sender.fingerprint,senderSigningPublicKey:sender.signingPublicKey,recipientFingerprint:recipient.fingerprint,payload};
     packet.ciphertext=bytesToB64(new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv,additionalData:associatedData(packet)},key,enc.encode(JSON.stringify(plain)))));
@@ -105,8 +117,14 @@
     return packet;
   }
   async function isForThisDevice(packet,identity){
-    const tokens=await routeTokens(identity.fingerprint);
-    return Array.isArray(packet.toRoutes)&&packet.toRoutes.some(token=>tokens.includes(token));
+    if(!Array.isArray(packet.toRoutes)||!packet.toRoutes.length)return false;
+    const trusted=await getTrustedPeers();
+    for(const peer of trusted){
+      const publicKey=await importEcdhPublic(peer.ecdhPublicKey);
+      const tokens=await routeTokensForPair(identity.ecdh.privateKey,publicKey);
+      if(packet.toRoutes.some(token=>tokens.includes(token)))return true;
+    }
+    return false;
   }
   async function saveSeen(packet,sourceFingerprint=''){
     const key='mesh:seen:'+packet.id,exists=await vault().getRecord(key);if(exists)return false;
