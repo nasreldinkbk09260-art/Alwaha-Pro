@@ -1,5 +1,10 @@
-/* Alwaha-Pro 3.0.4 — unified three-theme system. */
+/* Alwaha-Pro 3.0.4 — extensible theme system with three maintained baseline palettes. */
 :root{--alwaha-theme-duration:260ms;}
+/* A newly registered theme receives a readable fallback until its own palette is added.
+   Specific theme selectors declared later can override these baseline variables. */
+:where(body[data-alwaha-theme]:not([data-alwaha-theme="oasis"]):not([data-alwaha-theme="abyss"])){--wa-text:#f7f5fb;--wa-muted:#c6c4d2;--wa-accent:#ff9abd;--wa-accent-2:#79dff0;--wa-warm:#f1c17b;--wa-surface:rgba(18,10,20,.90);--wa-surface-soft:rgba(23,12,25,.78);--wa-border:rgba(255,154,189,.30);--wa-glow:rgba(255,105,160,.18);--wa-input:rgba(8,6,14,.86);--wa-orb-a:#ffc8df;--wa-orb-b:#d76c9a;--wa-orb-c:#713b69;--wa-chrome:#10070d;color:var(--wa-text);background-image:none!important;background-color:#10070d!important;}
+:where(body[data-alwaha-theme]:not([data-alwaha-theme="oasis"]):not([data-alwaha-theme="abyss"])) #alwaha-theme-backdrop{display:block!important;opacity:1;background-image:linear-gradient(145deg,#211225 0%,#15101f 48%,#0c1020 100%)!important;}
+
 #alwaha-theme-backdrop{display:none!important;position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;overflow:hidden!important;background-position:center center!important;background-repeat:no-repeat!important;background-size:cover!important;transform:translateZ(0);opacity:0;transition:opacity var(--alwaha-theme-duration) ease;}
 body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop,body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop{display:block!important;opacity:1;}
 body[data-alwaha-theme="oasis"]{--alwaha-theme-image:none;--wa-text:#f7fffd;--wa-muted:#d3e6e4;--wa-accent:#9ce7d5;--wa-accent-2:#ffd2df;--wa-warm:#f6d49b;--wa-surface:rgba(7,31,39,.74);--wa-surface-soft:rgba(8,42,49,.60);--wa-border:rgba(166,232,218,.40);--wa-glow:rgba(112,226,201,.22);--wa-input:rgba(4,24,32,.82);--wa-orb-a:#c8fff0;--wa-orb-b:#5dc8b9;--wa-orb-c:#276c78;--wa-chrome:#0a2730;color:var(--wa-text);background-image:none!important;background-color:#0a202a!important;}
