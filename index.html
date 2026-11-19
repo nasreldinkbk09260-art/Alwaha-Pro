@@ -2678,6 +2678,13 @@ async function toggleInternalNotificationCenter() {
             const badges=[document.getElementById('notification-badge-home'),document.getElementById('notification-badge-nav')];
             const me=await getCurrentAuthUser();
             if(!me){badges.forEach(el=>{if(el){el.textContent='';el.style.display='none';}});return 0;}
+            const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            if(offlineView){
+                const saved=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications');
+                const count=Array.isArray(saved)?saved.filter(row=>row.is_read!==true).length:0;
+                badges.forEach(el=>{if(!el)return;el.textContent=count>99?'99+':String(count);el.style.display=count?'inline-block':'none';el.setAttribute('aria-label',count+' إشعار محفوظ غير مقروء');});
+                return count;
+            }
             const rows=await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false&select=id&limit=100`);
             if(!Array.isArray(rows)){
                 console.warn('[Alwaha Notifications] Badge refresh failed; retaining the last known count.',window.__alwahaLastApiError||{});
@@ -2698,17 +2705,54 @@ async function toggleInternalNotificationCenter() {
         }
         async function markSingleNotificationRead(notificationId) {
             const me=await getCurrentAuthUser();if(!me||!notificationId)return;
+            const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            if(offlineView){
+                const rows=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications')||[];
+                if(!Array.isArray(rows))return;
+                const updated=rows.map(row=>String(row.id)===String(notificationId)?{...row,is_read:true}:row);
+                await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'notifications',updated);
+                const pending=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'pending-notification-reads')||[];
+                const ids=[...new Set([...(Array.isArray(pending)?pending:[]),String(notificationId)])].slice(0,200);
+                await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'pending-notification-reads',ids);
+                const card=[...document.querySelectorAll('[data-notification-id]')].find(node=>node.dataset.notificationId===String(notificationId));
+                if(card)card.style.background='transparent';
+                void refreshAlwahaNotificationBadge();
+                return;
+            }
             const result=await supabaseFetch(`notifications?id=eq.${encodeURIComponent(notificationId)}&recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
             if(result===null)return;
+            const cached=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications');
+            if(Array.isArray(cached))await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'notifications',cached.map(row=>String(row.id)===String(notificationId)?{...row,is_read:true}:row));
             const card=[...document.querySelectorAll('[data-notification-id]')].find(node=>node.dataset.notificationId===String(notificationId));
             if(card)card.style.background='transparent';
             void refreshAlwahaNotificationBadge();
         }
         async function markAllNotificationsRead() {
-            const me = await requireAuthenticatedUser('سجل الدخول أولاً.'); if (!me) return;
-            const result = await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`, {method:'PATCH', body:JSON.stringify({is_read:true}), prefer:'return=minimal'});
-            if (result === null) return triggerToastNotification('تعذر تحديث الإشعارات.', 'error');
-            await refreshAlwahaNotificationBadge();
+            const me=await requireAuthenticatedUser('سجّل الدخول أولاً.');if(!me)return;
+            const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            if(offlineView){
+                const rows=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications')||[];
+                if(!Array.isArray(rows))return triggerToastNotification('لا توجد نسخة تنبيهات محفوظة على هذا الجهاز بعد.','info');
+                const ids=rows.filter(row=>row.is_read!==true).map(row=>String(row.id)).filter(Boolean);
+                await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'notifications',rows.map(row=>({...row,is_read:true})));
+                const pending=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'pending-notification-reads')||[];
+                await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'pending-notification-reads',[...new Set([...(Array.isArray(pending)?pending:[]),...ids])].slice(0,200));
+                await refreshAlwahaNotificationBadge();
+                triggerToastNotification('تم تعليم التنبيهات المحفوظة كمقروءة على هذا الجهاز؛ ستُزامن عند عودة الاتصال.','success');
+            }else{
+                const pending=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'pending-notification-reads')||[];
+                const ids=Array.isArray(pending)?pending.filter(Boolean):[];
+                if(ids.length){
+                    const sync=await supabaseFetch(`notifications?id=in.(${ids.map(encodeURIComponent).join(',')})&recipient_id=eq.${encodeURIComponent(me.id)}`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
+                    if(sync===null)return triggerToastNotification('تعذر مزامنة قراءات التنبيهات المحلية؛ بقيت محفوظة.','error');
+                    await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'pending-notification-reads',[]);
+                }
+                const result=await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
+                if(result===null)return triggerToastNotification('تعذر تحديث الإشعارات.','error');
+                const cached=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications');
+                if(Array.isArray(cached))await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'notifications',cached.map(row=>({...row,is_read:true})));
+                await refreshAlwahaNotificationBadge();
+            }
             const center=document.getElementById('internal-notification-center');
             if(center?.classList.contains('alwaha-notifications-open'))await renderInternalNotificationCenter();
         }
