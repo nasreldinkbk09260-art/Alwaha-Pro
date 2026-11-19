@@ -25,9 +25,9 @@ ALTER TABLE public.messages ADD CONSTRAINT messages_message_or_attachment_check 
       AND num_nonnulls(attachment_kind,attachment_mime,attachment_name,attachment_size)=4
       AND attachment_kind IN ('image','video','audio')
       AND (
-        (attachment_kind='image' AND attachment_mime LIKE 'image/%')
-        OR (attachment_kind='video' AND attachment_mime LIKE 'video/%')
-        OR (attachment_kind='audio' AND attachment_mime LIKE 'audio/%')
+        (attachment_kind='image' AND attachment_mime IN ('image/jpeg','image/png','image/webp','image/gif','image/avif'))
+        OR (attachment_kind='video' AND attachment_mime IN ('video/mp4','video/webm','video/quicktime'))
+        OR (attachment_kind='audio' AND attachment_mime IN ('audio/webm','audio/ogg','audio/mp4','audio/mpeg','audio/wav'))
       )
       AND char_length(attachment_name) BETWEEN 1 AND 180
       AND attachment_name !~ '[/\\\\]'
@@ -50,9 +50,9 @@ ALTER TABLE public.market_messages ADD CONSTRAINT market_messages_message_or_att
       AND num_nonnulls(attachment_kind,attachment_mime,attachment_name,attachment_size)=4
       AND attachment_kind IN ('image','video','audio')
       AND (
-        (attachment_kind='image' AND attachment_mime LIKE 'image/%')
-        OR (attachment_kind='video' AND attachment_mime LIKE 'video/%')
-        OR (attachment_kind='audio' AND attachment_mime LIKE 'audio/%')
+        (attachment_kind='image' AND attachment_mime IN ('image/jpeg','image/png','image/webp','image/gif','image/avif'))
+        OR (attachment_kind='video' AND attachment_mime IN ('video/mp4','video/webm','video/quicktime'))
+        OR (attachment_kind='audio' AND attachment_mime IN ('audio/webm','audio/ogg','audio/mp4','audio/mpeg','audio/wav'))
       )
       AND char_length(attachment_name) BETWEEN 1 AND 180
       AND attachment_name !~ '[/\\\\]'
