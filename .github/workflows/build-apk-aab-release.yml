@@ -192,6 +192,8 @@ jobs:
           test -s supabase/functions/account-deletion/index.ts
           test -s supabase/migrations/20261117010000_storage_upload_ownership.sql
           test -s supabase/tests/20261117010000_storage_upload_ownership.sql
+          test -s supabase/migrations/20261119190000_private_chat_media_attachments.sql
+          test -s supabase/tests/20261119190000_private_chat_media_attachments.sql
           test -s supabase/migrations/20261117170000_child_safety_urgent_reports.sql
           test -s supabase/tests/20261117170000_child_safety_urgent_reports.sql
           test -s supabase/tests/storage-upload-ci-bootstrap.sql
