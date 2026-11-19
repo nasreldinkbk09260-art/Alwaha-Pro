@@ -5,15 +5,29 @@ const read = (file) => { const full=path.join(process.cwd(),file); if(!fs.exists
 const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('package.json')||'{}'), cap=JSON.parse(read('capacitor.config.json')||'{}'), lock=JSON.parse(read('package-lock.json')||'{}'), manifest=JSON.parse(read('manifest.json')||'{}');
 const officialSite=read('official-site/index.html');
 const versionedScript=(asset)=>{
-  const escaped=asset.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\const officialSite=read('official-site/index.html');');
-  const match=html.match(new RegExp('src=["\\\\]\\\\./'+escaped+'\\\\?v=([^"\\\\]+)["\\\\]'));
-  return !!match&&sw.includes("'./"+asset+"?v="+match[1]+"'")&&sw.includes("'./"+asset+"'");
+  const marker='src="./'+asset+'?v=';
+  const pos=html.indexOf(marker);
+  if(pos<0)return false;
+  const revision=html.slice(pos+marker.length).split('"')[0];
+  return !!revision&&sw.includes("'./"+asset+"?v="+revision+"'")&&sw.includes("'./"+asset+"'");
 };
 const versionedCss=(asset)=>{
-  const match=html.match(new RegExp('href=["\\\\]\\\\./'+asset.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\const officialSite=read('official-site/index.html');')+'\\\\?v=([^"\\\\]+)["\\\\]'));
-  return !!match&&sw.includes("'./"+asset+"?v="+match[1]+"'")&&sw.includes("'./"+asset+"'");
+  const marker='href="./'+asset+'?v=';
+  const pos=html.indexOf(marker);
+  if(pos<0)return false;
+  const revision=html.slice(pos+marker.length).split('"')[0];
+  return !!revision&&sw.includes("'./"+asset+"?v="+revision+"'")&&sw.includes("'./"+asset+"'");
 };
-
+const pageScriptAssets=html.split('<script').slice(1).map(chunk=>{
+  const tag=chunk.slice(0,chunk.indexOf('>'));
+  const marker='src="./',pos=tag.indexOf(marker);
+  if(pos<0)return null;
+  const url=tag.slice(pos+marker.length).split('"')[0];
+  const query=url.indexOf('?v=');
+  if(query<0||!url.slice(0,query).endsWith('.js'))return null;
+  const asset=url.slice(0,query);
+  return asset.startsWith('assets/')?null:asset;
+}).filter(Boolean);
 const userSafetyUiAudit=read('scripts/user-safety-ui-audit.mjs');if(!userSafetyUiAudit.includes('USER_SAFETY_UI_AUDIT='))fail('User safety UI audit missing.');
 const accountRetention=read('supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql');
 for(const marker of ['ON DELETE SET NULL','BEFORE DELETE ON auth.users','detach_marketplace_user_before_auth_delete','delete_approved_by_buyer_at','delete_approved_by_seller_at'])if(!accountRetention.includes(marker))fail('Marketplace account deletion retention missing: '+marker);
@@ -79,8 +93,7 @@ const themeChoices=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1
 if(themeChoices.length!==3||new Set(themeChoices).size!==3||!['default','oasis','abyss'].every(theme=>themeChoices.includes(theme)))fail('The app must expose exactly the three approved theme choices.');
 const themeCss=read('alwaha-theme-system.css');
 if(!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop'))fail('Premium image-free theme atmospheres are incomplete.');
-if(!html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد'))fail('Bluetooth is not labelled honestly.');
-if(!html.includes('aria-disabled="true"'))fail('Bluetooth control should not pretend to work.');
+if(!html.includes('Bluetooth مكتشف فقط في هذه المرحلة')||!html.includes('نقل البيانات عبر Bluetooth'))fail('Bluetooth discovery-only limitation must remain explicit until its data transport is implemented.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
 if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine\s*\(/.test(html)||html.includes('لعبة الذاكرة التقنية 🧠')||html.includes('تحدي كسر التشفير 🔐'))fail('Obsolete inline game UI must not shadow the dedicated multiplayer games module.');
 if(!games.includes('window.renderGamesSection = renderGamesSection')||!games.includes('window.launchGameEngine = function(gameTitle)'))fail('Dedicated multiplayer games module must own the games UI and launcher.');
@@ -125,7 +138,7 @@ if (!sw.includes("'./alwaha-native-back-handler.js'")) fail('Native back handler
 if (!sw.includes("'./alwaha-local-vault.js'") || !sw.includes("'./alwaha-experience.js'") || !sw.includes("'./alwaha-modal-shell.js'") || !sw.includes("'./alwaha-kids-room.js'")) fail('3.0.4 local experience modules are not precached.');
 if (!sw.includes("'./alwaha-runtime-guard.js'")) fail('Runtime resilience guard is not precached.');
 if (!versionedScript('alwaha-runtime-guard.js')) fail('Runtime resilience guard must use a matching versioned precache path with offline retry fallback.');
-const pageScriptAssets=[...html.matchAll(/<script\\b[^>]*src=["']\\.\\/([^"']+\\.js)\\?v=([^"']+)["'][^>]*>/g)].map(match=>match[1]).filter(asset=>!asset.startsWith('assets/'));
+const pageScriptAssets=html.split('<script').slice(1).map(chunk=>{const tag=chunk.slice(0,chunk.indexOf('>')),marker='src="./',pos=tag.indexOf(marker);if(pos<0)return null;const url=tag.slice(pos+marker.length).split('"')[0],query=url.indexOf('?v=');if(query<0||!url.slice(0,query).endsWith('.js'))return null;const asset=url.slice(0,query);return asset.startsWith('assets/')?null:asset;}).filter(Boolean);
 for(const asset of pageScriptAssets){if(!versionedScript(asset)||!read('scripts/build-web.mjs').includes(asset))fail('Offline script URL does not match the current build and Service Worker precache: '+asset);}
 if (!experience.includes('syncDock,initialize') || !experience.includes('if(initialized||!document.body)return;')) fail('Experience module initialization must be exported and idempotent.');
 if (!fs.readFileSync('alwaha-modal-shell.js','utf8').includes('hasRelevantMutation(records)')) fail('Modal mutation observer is not scoped to relevant dialog mutations.');
