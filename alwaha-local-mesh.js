@@ -147,13 +147,28 @@
     const now=Date.now(),expiry=Date.parse(packet.expiresAt||'');
     if(!Number.isFinite(expiry)||expiry<now||expiry>now+MAX_AGE_MS+60000)return {expired:true};
     if(Number(packet.hops||0)>MAX_HOPS||Number(packet.hopLimit||MAX_HOPS)>MAX_HOPS)return {invalid:true};
-    if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
+    const existing=await vault().getRecord('mesh:seen:'+packet.id);if(existing)return {duplicate:true};
     const identity=await getIdentity();
     if(await isForThisDevice(packet,identity)){
       const opened=await decryptEnvelope(packet,identity);
-      window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail:{id:packet.id,senderFingerprint:opened.peer.fingerprint,senderAccountId:opened.peer.accountUserId||'',payload:opened.payload,receivedAt:new Date().toISOString(),local:true}}));
+      if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
+      const detail={id:packet.id,senderFingerprint:opened.peer.fingerprint,senderAccountId:opened.peer.accountUserId||'',payload:opened.payload,receivedAt:new Date().toISOString(),local:true};
+      if(opened.payload?.type==='file-chunk'){
+        const chunk=opened.payload,base='mesh:file:'+String(chunk.fileId||''),key=base+':'+String(chunk.index);
+        if(!chunk.fileId||!Number.isInteger(chunk.index)||!Number.isInteger(chunk.total)||chunk.total<1||chunk.total>512||chunk.index<0||chunk.index>=chunk.total)throw new Error('Invalid local file chunk metadata.');
+        await vault().put(key,{chunk,receivedAt:new Date().toISOString()});
+        const all=await vault().getAll(),parts=[];
+        for(let i=0;i<chunk.total;i++){const row=all.find(item=>item.key===base+':'+i);if(!row?.value?.chunk)return {delivered:true,fileProgress:{fileId:chunk.fileId,received:i,total:chunk.total}};parts.push(b64ToBytes(row.value.chunk.chunk));}
+        const blob=new Blob(parts,{type:String(chunk.mime||'application/octet-stream')});
+        if(blob.size>25*1024*1024)throw new Error('Reassembled local file exceeds the 25 MB limit.');
+        const url=URL.createObjectURL(blob);
+        detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file'};
+        for(let i=0;i<chunk.total;i++)await vault().put(base+':'+i,{completed:true,receivedAt:new Date().toISOString()});
+      }
+      window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail}));
       return {delivered:true};
     }
+    if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
     const relayed=await enqueueRelay(packet,transportPeerFingerprint);
     return {relayed};
   }
@@ -193,7 +208,10 @@
     const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('لم تقترن بهذا الحساب بجهاز موثوق بعد.');
     const packet=await createEnvelope(peer,payload);
     const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
-    if(transportPeerFingerprint===peer.fingerprint&&window.alwahaLocalNetwork?.sendLocalPacket){await sendRawPacket(packet);return {sent:true,id:packet.id,route:'direct'};}
+    if(transportPeerFingerprint&&window.alwahaLocalNetwork?.sendLocalPacket){
+      const neighbors=await getTrustedPeers();
+      if(neighbors.some(item=>item.fingerprint===transportPeerFingerprint)){await sendRawPacket(packet);return {sent:true,id:packet.id,route:transportPeerFingerprint===peer.fingerprint?'direct':'relay-hop'};}
+    }
     await enqueueRelay(packet,'');
     return {sent:false,queued:true,id:packet.id,route:'store-and-forward'};
   }
