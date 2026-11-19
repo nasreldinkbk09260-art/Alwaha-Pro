@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 const html=fs.readFileSync('index.html','utf8'),sw=fs.readFileSync('sw.js','utf8');
+const hasVersionedScript=(asset)=>{
+ const marker='src="./'+asset+'?v=',pos=html.indexOf(marker);if(pos<0)return false;
+ const revision=html.slice(pos+marker.length).split('"')[0];
+ return !!revision&&sw.includes("'./"+asset+"?v="+revision+"'")&&sw.includes("'./"+asset+"'");
+};
 const checks=[
  ['native audio plugin source exists',fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java')],
  ['Android CI registers native plugin',fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8').includes('Register Alwaha native call audio routing plugin')],
@@ -17,6 +22,11 @@ const checks=[
  ['busy, no-answer and unavailable outcomes preserve market routing',html.includes("'busy',payload.mode==='market'?'market':'online'")&&html.includes("'no-answer',this.mode")&&html.includes("'unavailable','market'")],
  ['call results validate recipient, peer and session identity',html.includes('payload.to!==this.myId||payload.from!==this.peerId')&&html.includes('payload.sessionId!==this.sessionId')],
  ['market/friend call signaling has an executable VM regression test',fs.existsSync('scripts/call-signaling-runtime-test.mjs')&&fs.readFileSync('package.json','utf8').includes('call-signaling-runtime-test.mjs')],
+ ['local voice/video WebRTC disables public STUN/TURN and uses host ICE only',html.includes("this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 }")],
+ ['local call offers, answers, candidates and results use encrypted mesh packets',html.includes("type:'call-signal'")&&html.includes("type:'call-result'")&&html.includes('handleLocalMeshSignal')&&html.includes('sendToAccount(this.peerId')],
+ ['outgoing local calls require a paired peer and active local mode',html.includes("mode==='offline'||mode==='offline-market'")&&html.includes("mesh.getPeerByAccountId(targetId)")&&html.includes("mesh.isEnabled()")],
+ ['local calls never call the cloud call-config ICE service',html.includes("this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 }")&&html.includes("this.rtcConfig =")],
+ ['local market calls are bound to the active buyer-seller conversation',html.includes("mode==='offline-market'")&&html.includes('currentMarketPeerId')&&html.includes('conversationId')],
  ['call termination clears call feedback and timeout',html.includes('AlwahaCallFeedback?.stop()')&&html.includes('clearCallTimeout()')],
  ['closing an ended call hides the call screen before asynchronous media cleanup',/async function terminateVoiceCall\(\)\s*\{\s*\/\/ Hide the terminal call screen immediately[\s\S]{0,260}modal\.style\.display = 'none'[\s\S]{0,180}await activeCallManager\?\.end\(true\)/.test(html)],
  ['Termux deploy copy preserves native audio plugin',/rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8'))&&fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")]
