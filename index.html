@@ -2347,6 +2347,11 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function getCurrentAuthUser() {
             if (!supabaseClient) return null;
+            // Local mesh mode reads only the persisted session marker and never calls Auth over the network.
+            if (window.AlwahaLocalMesh?.isEnabled()) {
+                try { const { data:{session} } = await supabaseClient.auth.getSession(); return session?.user || null; }
+                catch (error) { console.warn('[Alwaha Auth] Local session lookup failed:',error); return null; }
+            }
             try {
                 const { data, error } = await supabaseClient.auth.getUser();
                 if (!error && data?.user) return data.user;
@@ -2368,7 +2373,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
         async function getCurrentProfile() {
             const user = await getCurrentAuthUser();
             if (!user) return null;
-            if (navigator.onLine === false) return await window.AlwahaLocalVault?.getProfileCache?.(user.id) || null;
+            if (navigator.onLine === false || window.AlwahaLocalMesh?.isEnabled()) return await window.AlwahaLocalVault?.getProfileCache?.(user.id) || null;
             const rows = await supabaseFetch(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
             if (Array.isArray(rows) && rows[0]) {
                 window.AlwahaLocalVault?.saveProfileCache?.(user.id,rows[0]).catch(error=>console.warn('[Alwaha Vault] profile cache failed:',error));
@@ -3879,7 +3884,7 @@ async function subscribeToMarketConversation() {
         async function openMarketConversationChat(conversationId,title,peerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لفتح محادثة السوق.');if(!me||!conversationId)return;
             let c=null;
-            if(navigator.onLine){
+            if(navigator.onLine&&!window.AlwahaLocalMesh?.isEnabled()){
                 const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,buyer_id,seller_id&limit=1`);
                 c=Array.isArray(rows)?rows[0]:null;
             }else{
@@ -3904,7 +3909,7 @@ async function subscribeToMarketConversation() {
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
             }
             const titleEl=document.getElementById('market-chat-title');if(titleEl)titleEl.textContent=title||'إعلان السوق';
-            modal.classList.add('is-open');modal.style.display='flex';document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();await loadMarketMessages();if(navigator.onLine)await subscribeToMarketConversation();const input=document.getElementById('market-chat-input');if(input){input.onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMarketMessage();}};input.focus({preventScroll:true});}
+            modal.classList.add('is-open');modal.style.display='flex';document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();await loadMarketMessages();if(navigator.onLine&&!window.AlwahaLocalMesh?.isEnabled())await subscribeToMarketConversation();const input=document.getElementById('market-chat-input');if(input){input.onkeydown=event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMarketMessage();}};input.focus({preventScroll:true});}
         }
         function closeMarketConversationChat() {marketMessagesRequestId++;currentMarketReplyTarget=null;currentMarketMessages=[];renderMarketReplyPreview();
             const modal=document.getElementById('market-chat-modal');if(modal)modal.remove();
@@ -3926,7 +3931,7 @@ async function subscribeToMarketConversation() {
             const holder=document.getElementById('market-conversations-container');if(!holder)return;
             const me=await requireAuthenticatedUser('سجّل الدخول لعرض محادثات السوق.');if(!me||requestId!==marketConversationsRenderRequestId)return;
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;font-size:11px;padding:12px;">جاري تحميل محادثات السوق...</div>';
-            if(!navigator.onLine){
+            if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled()){
                 const cached=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
                 if(!cached.length){holder.innerHTML='<div style="color:#ffd88b;text-align:center;padding:12px;font-size:10px;">لا توجد محادثات سوق محفوظة محليًا بعد. افتح محادثة مرة واحدة أثناء الاتصال.</div>';return;}
                 holder.innerHTML=cached.map(c=>`<article style="margin:0 0 8px;padding:9px;border:1px solid #8bf4ff20;border-radius:13px;background:#ffffff04;"><button type="button" onclick="openMarketConversationChat('${escapeJs(c.id)}','${escapeJs(c.peerName||'محادثة السوق')} · ${escapeJs(c.productTitle||'إعلان')}','${escapeJs(c.peerId||'')}')" style="width:100%;display:flex;gap:10px;align-items:center;border:0;background:transparent;color:#fff;text-align:right;"><img src="${escapeHtml(c.avatar||'icon.png')}" alt="" style="width:38px;height:38px;border-radius:50%;"><span style="min-width:0;flex:1;"><strong style="display:block;color:#8bf4ff;font-size:11px;">${escapeHtml(c.peerName||'محادثة سوق محفوظة')}</strong><span style="display:block;color:#ffd86b;font-size:10px;">${escapeHtml(c.productTitle||'إعلان محفوظ')}</span><span style="display:block;color:#a9b7c9;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.preview||'افتح الرسائل المحفوظة')}</span></span></button></article>`).join('')+'<div style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">عرض محلي مشفّر؛ الإرسال والمزامنة متوقفان حتى عودة الاتصال.</div>';
@@ -4036,7 +4041,7 @@ async function renderConversationsList() {
             const holder=document.getElementById('conversations-list'); if(!holder)return;
             const me=await requireAuthenticatedUser('سجل الدخول أولاً لعرض المحادثات.'); if(!me)return;
             holder.innerHTML='<div style="text-align:center;color:#00ffff;font-size:11px;padding:15px;">جاري تحميل المحادثات...</div>';
-            if(!navigator.onLine){
+            if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled()){
                 const cached=await window.AlwahaLocalVault?.getAllDirectChatCaches?.(me.id)||[];
                 if(!cached.length){holder.innerHTML='<div style="color:#ffd88b;text-align:center;padding:15px;font-size:10px;">لا توجد محادثات محفوظة على هذا الجهاز بعد. افتح المحادثة مرة واحدة أثناء الاتصال.</div>';return;}
                 holder.innerHTML=cached.map(c=>{const last=c.messages[c.messages.length-1],peer=c.peerId,name='محادثة محفوظة · '+peer.slice(0,8);const preview=decodeAlwahaChatMedia(last?.message)?'وسيط محفوظ':String(last?.message||'محادثة محفوظة');return `<button type="button" class="profile-menu-btn" onclick="openTargetUserDirectChat('${escapeJs(name)}','','${escapeJs(peer)}')" style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);padding:10px;border:0;border-radius:8px;color:#fff;text-align:right;"><img src="icon.png" alt="" style="width:40px;height:40px;border-radius:50%;"><span style="flex:1;min-width:0;"><strong style="display:block;font-size:11px;">${escapeHtml(name)}</strong><span style="display:block;color:#9fb1c8;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(preview)}</span></span></button>`;}).join('')+'<div style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">نسخة محلية مشفّرة؛ الإرسال والمزامنة متوقفان دون اتصال.</div>';
@@ -5392,6 +5397,15 @@ async function submitNewProductToMarket() {
             const listingId=String(productId||'');
             if(!peerId||peerId===me.id)return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.','info');
             if(!listingId)return triggerToastNotification('تعذر تحديد الإعلان لإجراء مكالمة السوق.','error');
+            if(window.AlwahaLocalMesh?.isEnabled()){
+                const cached=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
+                const conversation=(String(currentMarketPeerId||'')===peerId&&currentMarketConversationId)
+                    ?{id:currentMarketConversationId,peerId}
+                    :cached.find(row=>String(row.product_id)===listingId&&String(row.peerId)===peerId);
+                if(!conversation)return triggerToastNotification('لا توجد محادثة سوق محفوظة محليًا مع هذا البائع. افتح محادثته أثناء الاتصال أولًا.','error');
+                currentMarketConversationId=String(conversation.id);currentMarketPeerId=peerId;
+                return startAlwahaCall('offline-market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
+            }
             const filter='product_id=eq.'+encodeURIComponent(listingId)
                 +'&archived_at=is.null'
                 +'&or=(and(buyer_id.eq.'+encodeURIComponent(me.id)+',seller_id.eq.'+encodeURIComponent(peerId)+'),and(buyer_id.eq.'+encodeURIComponent(peerId)+',seller_id.eq.'+encodeURIComponent(me.id)+'))'
