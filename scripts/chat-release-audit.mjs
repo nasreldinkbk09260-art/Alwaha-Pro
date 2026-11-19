@@ -74,6 +74,11 @@ const checks = [
 
   ['image themes persist locally', "safeSet('alwaha_theme',theme)"],
   ['floating navigation group position persists', 'safeSet(FREE_POSITION_KEY,JSON.stringify({x:point.x,y:point.y,orientation:pos}))'],
+  ['home post comment counts load asynchronously from an RLS-preserving aggregate with legacy fallback', html.includes('post_comment_counts?select=post_id,comments_count') && html.includes('async function loadHomePostCommentCounts(') && html.includes('void loadHomePostCommentCounts(container, requestId)') && html.includes('comments?select=target_id&target_type=eq.post&limit=20000')],
+  ['direct chat exposes voice note and image/video upload controls', html.includes('id="direct-chat-voice-button"') && html.includes("toggleChatVoiceRecording('direct')") && html.includes('id="direct-chat-media-input"') && html.includes('accept="image/*,video/*"')],
+  ['market chat exposes voice note and image/video upload controls', html.includes('id="market-chat-voice-button"') && html.includes("toggleChatVoiceRecording('market')") && html.includes('id="market-chat-media-input"') && html.includes('accept="image/*,video/*"')],
+  ['call end button remains bound to deterministic close cleanup', html.includes("if (endBtn) endBtn.onclick = () => terminateVoiceCall()") && html.includes('window.__alwahaCallTerminationRequested') && html.includes("if(window.__alwahaCallTerminationRequested)return")],
+  ['Kids Room remounts the active video streams and restores their original state', kids.includes("remotePort.appendChild(remote)") && kids.includes("remote.play?.()") && kids.includes("local.play?.()") && kids.includes("remote.muted=remoteWasMuted") && kids.includes("overlay.querySelector('#kids-exit').onclick=()=>close(true)")],
   ['feed retry state', 'إعادة المحاولة'],
   ['feed no network state', 'لا يوجد اتصال بالإنترنت'],
   ['feed request race guard', 'alwahaHomeFeedRequestId'],
