@@ -62,9 +62,9 @@
 
 ## حالة البناء الحالية — 19 نوفمبر 2026
 
-- **المصدر:** الفرع `alwaha-pro-recovery-20261118`، commit `8519e9249df1c97e3a3fcaee9c18a9cafbcd1526`.
-- **CI:** [Build #655 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44476635882). نجح PostgreSQL المؤقت وبناء/توقيع Android. نشر APK العام والموقع `skipped` عمدًا.
-- **Artifact:** `Alwaha-Pro-3.0.4-build-655`, ID `14507121216`, الحجم `54,544,862 bytes`, SHA-256 digest `37f3b28f228a02e75b4a324d807075522214f1bbcf6c27d1b49bdd924b266589`, انتهاء الصلاحية `2026-12-19T07:07:57Z`. [تحميل Artifact Build 655](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44476635882/artifacts/14507121216).
+- **المصدر التنفيذي:** الفرع `alwaha-pro-recovery-20261118`، commit `8519e9249df1c97e3a3fcaee9c18a9cafbcd1526`. أحدث HEAD حالي `c6ae4d1cfad3a604710916f5223fec363975a306` توثيقي فقط ولا يغير كود التطبيق.
+- **CI:** [Build #655 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44476635882) و[Build #656 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44477707242)؛ #656 يعيد بناء نفس كود التطبيق بعد تحديث الوثائق. نجح PostgreSQL المؤقت وبناء/توقيع Android. نشر APK العام والموقع `skipped` عمدًا.
+- **Artifact الأحدث:** `Alwaha-Pro-3.0.4-build-656`, ID `14506363666`, الحجم `54,553,315 bytes`, SHA-256 digest `7aaceeda30de8776990257571ffff5ac83fe0664961c5522d4048022c2db45eb`, انتهاء الصلاحية `2026-12-19T07:14:10Z`. [تحميل Artifact Build 656](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44477707242/artifacts/14506363666). Build 656 توثيقي فقط ويحتوي كود التطبيق نفسه المختبَر في Build 655.
 - **الهوية:** version `3.0.4`, version_code `655`, application_id `pro.alwaha.app`, target SDK `36`. بصمة شهادة التوقيع SHA-256: `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`.
 - **نتائج التدقيق:** الملف الشخصي 42/42، السوق 55 فحصًا، الألعاب الجماعية، Kids Room/النسخ 44 فحصًا، سلامة المستخدم 24 فحصًا، حذف الحساب 12 فحصًا، تطبيق الإدارة 25 فحصًا، واختبارات signaling وجودة الفيديو نجحت في CI.
 - **التغييرات المشمولة:** تصحيح قراءة أحداث حالة اكتشاف الأجهزة من `state/detail`، وإزالة إذن `BLUETOOTH_ADVERTISE` غير المستخدم؛ بقيت أذونات المسح والاتصال اللازمة للاكتشاف فقط.

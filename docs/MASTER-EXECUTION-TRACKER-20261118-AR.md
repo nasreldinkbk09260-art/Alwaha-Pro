@@ -266,3 +266,11 @@
 - ثبّت Artifact Build 655 على هاتفين اختبار فقط بعد مطابقة بصمة شهادة التوقيع مع النسخة المرجعية، ثم سجّل نتائج الألعاب والفيديو وKids Room والسوق والإشعارات.
 - ابدأ تنفيذ النقل المحلي على مراحل في هذا الفرع فقط، مع اختبارات تشفير/رفض/إعادة إرسال/قطع اتصال/ملف تالف قبل اختبار هاتفين. أبقِ جميع readiness flags false حتى إغلاق كل البوابات.
 - لا merge إلى `main`، ولا نشر APK أو الموقع، ولا deploy Edge Functions، ولا تعديل Auth/RLS، ولا حذف/تغيير بيانات إنتاج دون موافقة حديثة مستقلة للعملية.
+
+
+## توثيق اكتمال دفعة السجل — CI #656 (19 نوفمبر 2026)
+- تم إنشاء commit توثيقي `c6ae4d1cfad3a604710916f5223fec363975a306` فوق مصدر التطبيق المختبَر في #655؛ أضاف تحديث سجل التغطية وتصميم النقل المحلي فقط، ولم يغيّر كود التطبيق.
+- **CI #656:** [Run #656 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44477707242). نجحت PostgreSQL المؤقتة وبناء/توقيع Android؛ نشر APK العام وGitHub Pages كانا `skipped`.
+- Artifact الأحدث: `Alwaha-Pro-3.0.4-build-656`, ID `14506363666`, الحجم `54,553,315 bytes`, SHA-256 digest `7aaceeda30de8776990257571ffff5ac83fe0664961c5522d4048022c2db45eb`, انتهاء الصلاحية `2026-12-19T07:14:10Z`. [Artifact Build 656](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44477707242/artifacts/14506363666).
+- بيانات البناء: version `3.0.4`, version_code `656`, application_id `pro.alwaha.app`, target SDK `36`, certificate SHA-256 `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`. الكود التنفيذي داخل artifact مطابق لكود Build 655؛ الاختلاف توثيقي فقط.
+- عند إنشاء هذا التحديث كان HEAD هو `c6ae4d1cfad3a604710916f5223fec363975a306`. سيضيف هذا التحديث التوثيقي commit جديدًا فقط؛ لا توجد تغييرات تنفيذية جديدة بعد Build 655.
