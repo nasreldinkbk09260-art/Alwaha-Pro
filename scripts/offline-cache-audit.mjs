@@ -15,7 +15,7 @@ const hasVersionedAsset=(asset)=>{
   const assetVersion=html.slice(pos+marker.length).split('"')[0];
   return !!assetVersion&&sw.includes("'./"+asset+"?v="+assetVersion+"'")&&sw.includes("'./"+asset+"'");
 };
-const assets=['production-polish.js','alwaha-call-feedback.js','compatibility.js','alwaha-local-vault.js','alwaha-experience.js','alwaha-modal-shell.js','alwaha-runtime-guard.js','alwaha-kids-room.js','alwaha-smart-assistant.js','games.js','alwaha-native-back-handler.js'];
+const assets=[...html.matchAll(/<script\\b[^>]*src=["']\\.\\/([^"']+\\.js)\\?v=([^"']+)["'][^>]*>/g)].map(match=>match[1]).filter(asset=>!asset.startsWith('assets/'));
 let failed=0;
 const check=(label,ok)=>{if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}};
 check('public feed cache is a dedicated IndexedDB database',html.includes("ALWAHA_PUBLIC_CACHE_DB = 'alwaha-public-feed-cache-v1'")&&html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)'));
@@ -28,7 +28,7 @@ check('reconnect keeps cached public rows visible while refresh runs',html.inclu
 check('Service Worker excludes Auth, REST, Storage and Functions endpoints',sw.includes('url.pathname')&&sw.includes('rest\\/v1')&&sw.includes('functions\\/v1')&&sw.includes("request.headers.has('Authorization')"));
 check('public image cache is bounded to 2 MiB per image and 40 images',sw.includes('size<=2*1024*1024')&&sw.includes('media.length-40'));
 const themeHref=(html.match(/href="\\.\\/alwaha-theme-system\\.css\\?v=([^"]+)"/)||[])[1]||'';
-check('all first-party modules use versioned URLs and have offline fallback entries',assets.every(asset=>hasVersionedAsset(asset))&&!!themeHref&&sw.includes("'./alwaha-theme-system.css?v="+themeHref+"'")&&sw.includes("'./alwaha-theme-system.css'"));
+check('all first-party modules use versioned URLs and have offline fallback entries',assets.length>0&&assets.every(asset=>hasVersionedAsset(asset)&&build.includes(asset))&&!!themeHref&&sw.includes("'./alwaha-theme-system.css?v="+themeHref+"'")&&sw.includes("'./alwaha-theme-system.css'"));
 check('Service Worker precache bypasses stale HTTP cache responses',sw.includes("cache.addAll(PRECACHE_ASSETS.map(asset => new Request(new URL(asset, self.registration.scope), { cache: 'reload' })))"));
 check('dynamic profile editor module is loaded locally, included in the web build and precached with versioned/fallback URLs',polish.includes('alwaha-profile-editor.js')&&build.includes('alwaha-profile-editor.js')&&hasVersionedAsset('alwaha-profile-editor.js')&&sw.includes("'./alwaha-profile-editor.js'"));
 check('Service Worker has a fresh namespace and cache-bypassing versioned registration',sw.includes("const CACHE_NAME = '"+cache+"'")&&html.includes("navigator.serviceWorker.register('./sw.js?v="+serviceWorkerVersion+"', { scope: './', updateViaCache: 'none' });"));
