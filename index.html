@@ -4196,23 +4196,31 @@ async function subscribeToMarketConversation() {
             const requestId=++marketTransactionsRenderRequestId;
             const holder=document.getElementById('market-transactions-container');if(!holder)return;
             const me=await getCurrentAuthUser();if(requestId!==marketTransactionsRenderRequestId)return;if(!me){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">سجّل الدخول لعرض سجلك.</div>';return;}
+            const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
             holder.innerHTML='<div style="color:#8bf4ff;font-size:10px;text-align:center;padding:8px;">جاري تحميل سجل المعاملات...</div>';
-            if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">تعذر التحقق من مخطط سجل المعاملات. لم يتم تحميل السجل؛ راجع حالة الخدمة ثم أعد المحاولة.</div>';return;}
-            const deliveryReady=await hasMarketDeliverySchema();
-            const baseFields='id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status';
-            const deliveryFields=deliveryReady?',fulfillment_method,delivery_status,delivery_recipient_name,delivery_recipient_phone,delivery_address,delivery_instructions,delivery_fee,delivery_provider,tracking_reference,delivery_updated_at,delivered_at':'';
-            const rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=${baseFields}${deliveryFields}&order=created_at.desc&limit=100`);
+            let rows=null,deliveryReady=false;
+            if(offlineView){
+                rows=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'market-transactions');
+                deliveryReady=Array.isArray(rows)&&rows.some(tx=>Object.prototype.hasOwnProperty.call(tx,'delivery_status')||Object.prototype.hasOwnProperty.call(tx,'delivery_address'));
+            }else{
+                if(!(await detectMarketTransactionSchema())){if(requestId!==marketTransactionsRenderRequestId)return;holder.innerHTML='<div role="status" style="color:#ffd86b;font-size:10px;text-align:center;padding:12px;line-height:1.8;">تعذر التحقق من مخطط سجل المعاملات. لم يتم تحميل السجل؛ راجع حالة الخدمة ثم أعد المحاولة.</div>';return;}
+                deliveryReady=await hasMarketDeliverySchema();
+                const baseFields='id,conversation_id,product_id,buyer_id,seller_id,listing_snapshot,agreement_note,guarantee_days,sold_at,guarantee_expires_at,retention_until,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at,buyer_confirmed_at,status';
+                const deliveryFields=deliveryReady?',fulfillment_method,delivery_status,delivery_recipient_name,delivery_recipient_phone,delivery_address,delivery_instructions,delivery_fee,delivery_provider,tracking_reference,delivery_updated_at,delivered_at':'';
+                rows=await supabaseFetch(`market_transactions?or=(buyer_id.eq.${encodeURIComponent(me.id)},seller_id.eq.${encodeURIComponent(me.id)})&select=${baseFields}${deliveryFields}&order=created_at.desc&limit=100`);
+                if(Array.isArray(rows))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'market-transactions',rows).catch(error=>console.warn('[Alwaha Vault] market transaction cache failed:',error));
+            }
             const activeUser=await getCurrentAuthUser();
             if(requestId!==marketTransactionsRenderRequestId||activeUser?.id!==me.id)return;
-            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). تأكد من ترحيلات السوق الآمنة.</div>`;return;}
+            if(!Array.isArray(rows)){const e=window.__alwahaLastApiError||{};holder.innerHTML=`<div style="color:#ffb1c5;font-size:10px;text-align:center;padding:8px;">سجل المعاملات غير متاح (${escapeHtml(e.status||'قاعدة البيانات')}). لا توجد نسخة محلية لهذا الجهاز بعد.</div>`;return;}
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;font-size:10px;text-align:center;padding:8px;">لا توجد معاملات مسجلة بعد.</div>';return;}
-            holder.innerHTML=rows.map(tx=>{
+            holder.innerHTML=(offlineView?'<div role="status" style="padding:7px;text-align:center;color:#ffd88b;font-size:9px;">سجل معاملات مشفّر للقراءة فقط دون اتصال. بيانات العناوين وأرقام الهاتف محفوظة داخل مخزن الحساب المحلي.</div>':'')+rows.map(tx=>{
                 const snap=tx.listing_snapshot||{},warranty=Number(tx.guarantee_days||0),expiry=tx.guarantee_expires_at?new Date(tx.guarantee_expires_at).toLocaleDateString('ar-EG'):'—',retention=tx.retention_until?new Date(tx.retention_until).toLocaleDateString('ar-EG'):'—';
                 const buyer=tx.buyer_id===me.id,role=buyer?'مشتري':'بائع';
                 const method=deliveryReady?(tx.fulfillment_method||'pickup'):'pickup';
                 const deliveryStatus=deliveryReady?(tx.delivery_status||'not_requested'):'not_requested';
                 const confirmAllowed=method==='pickup'||(method==='delivery'&&deliveryStatus==='out_for_delivery');
-                const confirm=buyer&&!tx.buyer_confirmed_at&&tx.status==='active'&&confirmAllowed
+                const confirm=!offlineView&&buyer&&!tx.buyer_confirmed_at&&tx.status==='active'&&confirmAllowed
                     ?`<button type="button" onclick="confirmMarketTransactionReceipt('${escapeJs(tx.id)}')" style="margin-top:8px;background:#173a2b;color:#a8ffd7;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">${method==='delivery'?'تأكيد استلام التوصيل':'تأكيد استلام السلعة'}</button>`:'';
                 const deliveryNext={
                     requested:{status:'accepted',label:'قبول طلب التوصيل'},
@@ -4237,14 +4245,14 @@ async function subscribeToMarketConversation() {
                               رقم التتبع: ${escapeHtml(tx.tracking_reference||'—')}<br>
                               آخر تحديث: ${tx.delivery_updated_at?new Date(tx.delivery_updated_at).toLocaleString('ar-EG'):'—'}
                             </div>
-                            ${buyer&&deliveryStatus==='requested'&&!tx.buyer_confirmed_at?`<button type="button" onclick="requestMarketDelivery('${escapeJs(tx.id)}')" style="margin-top:7px;background:#25405c;color:#d9f2ff;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">تعديل عنوان وبيانات التوصيل</button>`:''}
-                            ${!buyer&&deliveryNext&&tx.status==='active'&&!tx.buyer_confirmed_at?`<button type="button" onclick="updateMarketDelivery('${escapeJs(tx.id)}','${deliveryNext.status}')" style="margin-top:7px;background:#173a2b;color:#a8ffd7;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">${deliveryNext.label}</button>`:''}
+                            ${!offlineView&&buyer&&deliveryStatus==='requested'&&!tx.buyer_confirmed_at?`<button type="button" onclick="requestMarketDelivery('${escapeJs(tx.id)}')" style="margin-top:7px;background:#25405c;color:#d9f2ff;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">تعديل عنوان وبيانات التوصيل</button>`:''}
+                            ${!offlineView&&!buyer&&deliveryNext&&tx.status==='active'&&!tx.buyer_confirmed_at?`<button type="button" onclick="updateMarketDelivery('${escapeJs(tx.id)}','${deliveryNext.status}')" style="margin-top:7px;background:#173a2b;color:#a8ffd7;border:0;border-radius:7px;padding:6px 9px;font:10px Cairo,sans-serif;">${deliveryNext.label}</button>`:''}
                           </div>`
                         :buyer&&tx.status==='active'&&!tx.buyer_confirmed_at
                             ?'<button type="button" onclick="requestMarketDelivery(\''+escapeJs(tx.id)+'\')" style="margin-top:8px;background:#16445a;color:#bdeeff;border:0;border-radius:8px;padding:7px 10px;font:11px Cairo,sans-serif;">طلب توصيل إلى عنواني</button><div style="font-size:8px;color:#a9bfd2;margin-top:4px;">يمكنك أيضاً الاتفاق مع البائع على الاستلام الشخصي؛ لا توجد رسوم أو شركة شحن مفروضة تلقائياً.</div>'
                             :'';
                 const ownConsent=buyer?tx.delete_approved_by_buyer_at:tx.delete_approved_by_seller_at,otherConsent=buyer?tx.delete_approved_by_seller_at:tx.delete_approved_by_buyer_at;
-                const consentUi=tx.retention_notice_sent_at&&tx.status==='archived'?`<div style="margin-top:8px;padding:8px;border:1px solid #ffd86b33;border-radius:9px;background:#ffd86b0a;color:#d9c99c;font-size:9px;line-height:1.8;">الحذف الاختياري: موافقتك ${ownConsent?'مسجلة':'غير مسجلة'} · موافقة الطرف الآخر ${otherConsent?'مسجلة':'غير مسجلة'}. لا يتم حذف سجل المعاملة أو الضمان تلقائياً؛ يلزم موافقة الطرفين وانقضاء مهلة 7 أيام كاملة بعد الإشعار.<br><button type="button" onclick="approveMarketArchiveDeletion('transaction','${escapeJs(tx.id)}',${ownConsent?'false':'true'})" style="margin-top:6px;border:0;border-radius:7px;padding:6px 9px;background:${ownConsent?'#493044':'#173a2b'};color:${ownConsent?'#ffd1df':'#a8ffd7'};font:10px Cairo,sans-serif;">${ownConsent?'إلغاء موافقتي':'الموافقة على حذف سجل الأرشيف'}</button></div>`:'';
+                const consentUi=!offlineView&&tx.retention_notice_sent_at&&tx.status==='archived'?`<div style="margin-top:8px;padding:8px;border:1px solid #ffd86b33;border-radius:9px;background:#ffd86b0a;color:#d9c99c;font-size:9px;line-height:1.8;">الحذف الاختياري: موافقتك ${ownConsent?'مسجلة':'غير مسجلة'} · موافقة الطرف الآخر ${otherConsent?'مسجلة':'غير مسجلة'}. لا يتم حذف سجل المعاملة أو الضمان تلقائياً؛ يلزم موافقة الطرفين وانقضاء مهلة 7 أيام كاملة بعد الإشعار.<br><button type="button" onclick="approveMarketArchiveDeletion('transaction','${escapeJs(tx.id)}',${ownConsent?'false':'true'})" style="margin-top:6px;border:0;border-radius:7px;padding:6px 9px;background:${ownConsent?'#493044':'#173a2b'};color:${ownConsent?'#ffd1df':'#a8ffd7'};font:10px Cairo,sans-serif;">${ownConsent?'إلغاء موافقتي':'الموافقة على حذف سجل الأرشيف'}</button></div>`:'';
                 return `<article style="padding:10px;margin:0 0 8px;border:1px solid #8bf4ff25;border-radius:12px;background:#ffffff07;">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><strong style="font-size:11px;color:#8bf4ff;">${escapeHtml(snap.title||'معاملة محفوظة')}</strong><span style="font-size:9px;color:#a8ffd7;">${role} · ${tx.status==='disputed'?'قيد اعتراض — محفوظة':tx.status==='archived'?'مؤرشفة':'نشطة'}</span></div>
                   <div style="font-size:10px;color:#ffd86b;margin-top:4px;">${escapeHtml(snap.price||'السعر غير مسجل')} · ${escapeHtml(snap.category||'أخرى')}</div>
