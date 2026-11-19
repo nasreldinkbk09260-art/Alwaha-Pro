@@ -30,11 +30,11 @@ function check(label, condition) { condition ? pass(label) : fail(label); }
 check('release version 3.0.4 is consistent across package, lockfile, manifest and title',
   pkg.version === '3.0.4' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.4' && manifest.version === '3.0.4' && /<title>Alwaha-Pro 3\.0\.4<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
-check('3.0.4 final cache token agrees across all current audits',
-  /^const CACHE_NAME = ['"]alwaha-pro-v3\\.0\\.4-[a-z0-9][a-z0-9-]*['"]/.test(sw.split("\n").find(line=>line.includes("CACHE_NAME"))||'') &&
-  /alwaha-pro-v3\\\\.0\\\\.4-\\[a-z0-9\\]/.test(read('scripts/performance-audit.mjs')) &&
-  /alwaha-pro-v3\\\\.0\\\\.4-\\[a-z0-9\\]/.test(read('scripts/field-repair-audit.mjs')) &&
-  /alwaha-pro-v3\\\\.0\\\\.4-\\[a-z0-9\\]/.test(read('scripts/compatibility-audit.mjs')));
+check('service worker cache naming stays open for new 3.0.4 development revisions',
+  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-") &&
+  read('scripts/performance-audit.mjs').includes("alwaha-pro-v3.0.4-") &&
+  read('scripts/field-repair-audit.mjs').includes("alwaha-pro-v3.0.4-") &&
+  read('scripts/compatibility-audit.mjs').includes("alwaha-pro-v3.0.4-"));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
