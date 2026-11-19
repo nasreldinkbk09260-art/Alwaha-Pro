@@ -840,7 +840,7 @@ img,video,canvas{max-width:100%}
         <div id="direct-reply-preview" style="display:none;padding:7px 10px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
         <div class="alwaha-chat-composer" style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;">
             <input type="file" id="direct-chat-media-file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden onchange="handleChatAttachmentSelection('direct',this)">
-            <button type="button" class="btn-action" onclick="document.getElementById('direct-chat-media-file').click()" aria-label="إرسال صورة أو فيديو" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;padding:8px;color:#8bf4ff;"><i class="fa-solid fa-paperclip"></i></button>
+            <button type="button" class="btn-action" onclick="openChatMediaPicker('direct')" aria-label="إرسال صورة أو فيديو" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;padding:8px;color:#8bf4ff;"><i class="fa-solid fa-paperclip"></i></button>
             <button type="button" id="direct-voice-record-btn" class="btn-action" onclick="toggleChatVoiceRecording('direct')" aria-label="تسجيل مقطع صوتي" title="تسجيل صوتي" style="flex:0 0 38px;min-width:38px;padding:8px;color:#ff91c6;"><i class="fa-solid fa-microphone"></i></button>
             <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off" style="flex:1;min-width:0;">
             <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة" title="إرسال" style="flex:0 0 40px;min-width:40px;"><i class="fa-solid fa-paper-plane"></i></button>
@@ -3661,6 +3661,11 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 return false;
             }
         }
+        function openChatMediaPicker(scope){
+            const input=document.getElementById(scope==='market'?'market-chat-media-file':'direct-chat-media-file');
+            if(!input)return triggerToastNotification('زر اختيار المرفق غير متاح في هذه المحادثة.','info');
+            input.click();
+        }
         async function handleChatAttachmentSelection(scope,input){
             const file=input?.files?.[0];if(!file)return;
             try{await sendChatAttachment(scope,file);}finally{if(input)input.value='';}
@@ -3850,7 +3855,7 @@ async function subscribeToMarketConversation() {
                     <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
                     <div style="display:flex;gap:6px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;flex-wrap:nowrap;">
                     <input type="file" id="market-chat-media-file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime" hidden onchange="handleChatAttachmentSelection('market',this)">
-                    <button type="button" onclick="document.getElementById('market-chat-media-file').click()" aria-label="إرسال صورة أو فيديو في السوق" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;border:0;border-radius:10px;background:#ffffff12;color:#8bf4ff;padding:10px;"><i class="fa-solid fa-paperclip"></i></button>
+                    <button type="button" onclick="openChatMediaPicker('market')" aria-label="إرسال صورة أو فيديو في السوق" title="صورة أو فيديو" style="flex:0 0 38px;min-width:38px;border:0;border-radius:10px;background:#ffffff12;color:#8bf4ff;padding:10px;"><i class="fa-solid fa-paperclip"></i></button>
                     <button type="button" id="market-voice-record-btn" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="تسجيل صوتي" style="flex:0 0 38px;min-width:38px;border:0;border-radius:10px;background:#ffffff12;color:#ff91c6;padding:10px;"><i class="fa-solid fa-microphone"></i></button>
                     <textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea>
                     <button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 12px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button>
