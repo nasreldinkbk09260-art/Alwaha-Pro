@@ -2173,16 +2173,45 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function getCurrentAuthUser() {
             if (!supabaseClient) return null;
-            const { data, error } = await supabaseClient.auth.getUser();
-            if (error) return null;
-            return data?.user || null;
+            try {
+                // getSession reads the persisted local Supabase session; getUser requires a server round-trip.
+                const sessionResult=await supabaseClient.auth.getSession();
+                const sessionUser=sessionResult?.data?.session?.user||null;
+                if(sessionUser?.id){
+                    try{localStorage.setItem('alwaha_offline_last_user_id',String(sessionUser.id));}catch(e){}
+                    if(navigator.onLine===false)return sessionUser;
+                    try{
+                        const verified=await supabaseClient.auth.getUser();
+                        if(verified?.data?.user?.id===sessionUser.id)return verified.data.user;
+                        if(verified?.error&&navigator.onLine===false)return sessionUser;
+                        return verified?.data?.user||null;
+                    }catch(error){if(navigator.onLine===false)return sessionUser;return null;}
+                }
+                // Do not resurrect an account after an intentional sign-out. The offline identity is only a hint
+                // when Supabase still holds a session object for this browser profile.
+                return null;
+            } catch(error) {
+                if(navigator.onLine===false)return null;
+                console.warn('[Alwaha Offline] Auth session unavailable:',error);
+                return null;
+            }
         }
 
         async function getCurrentProfile() {
             const user = await getCurrentAuthUser();
             if (!user) return null;
-            const rows = await supabaseFetch(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
-            return Array.isArray(rows) && rows[0] ? rows[0] : null;
+            try{
+                const rows = await supabaseFetch(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
+                if(Array.isArray(rows)&&rows[0]){
+                    if(window.AlwahaOfflineStore)await window.AlwahaOfflineStore.save(user.id,'profile','self',rows[0]).catch(()=>false);
+                    return rows[0];
+                }
+            }catch(error){console.warn('[Alwaha Offline] Profile sync failed:',error);}
+            if(window.AlwahaOfflineStore){
+                try{return await window.AlwahaOfflineStore.load(user.id,'profile','self');}
+                catch(error){console.warn('[Alwaha Offline] Cached profile unavailable:',error);}
+            }
+            return null;
         }
 
         async function requireAuthenticatedUser(message = 'سجل الدخول أولاً لتنفيذ هذه العملية.') {
@@ -2240,6 +2269,9 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function signOutAlwaha() {
             if (!supabaseClient) return;
+            let signedOutUserId='';
+            try{const session=await supabaseClient.auth.getSession();signedOutUserId=String(session?.data?.session?.user?.id||'');}catch(e){}
+            try{localStorage.removeItem('alwaha_offline_last_user_id');}catch(e){}
             for (const channel of [marketConversationChannel, marketInboxChannel]) { if (channel) { try { await supabaseClient.removeChannel(channel); } catch (e) {} } }
             marketConversationChannel = null; marketInboxChannel = null; currentMarketConversationId = '';
             marketMyItemsRenderRequestId++;
@@ -2254,6 +2286,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             for(const id of ['my-market-items-container','market-conversations-container','market-transactions-container','market-chat-messages','market-reply-preview']){const node=document.getElementById(id);if(node)node.innerHTML='';}
             const privateMarketItems=document.getElementById('my-market-items-container');if(privateMarketItems)privateMarketItems.innerHTML='';
             try { await supabaseClient.auth.signOut(); } catch (e) { console.warn(e); }
+            if(signedOutUserId&&window.AlwahaOfflineStore)await window.AlwahaOfflineStore.clearUser(signedOutUserId).catch(error=>console.warn('[Alwaha Offline] User cache cleanup failed:',error));
             await clearLocalProfileCache();
             clearPendingProfileAvatar();
             currentChatUser = '';
