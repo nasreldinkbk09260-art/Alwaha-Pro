@@ -120,6 +120,49 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void openWifiSettings(PluginCall call) {
+        try {
+            Intent intent = Build.VERSION.SDK_INT >= 29
+                ? new Intent(Settings.Panel.ACTION_WIFI)
+                : new Intent(Settings.ACTION_WIFI_SETTINGS);
+            getActivity().startActivity(intent);
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            result.put("setting", "wifi");
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("تعذر فتح إعدادات Wi-Fi. افتح لوحة الإعدادات السريعة يدوياً.");
+        }
+    }
+
+    @PluginMethod
+    public void openBluetoothSettings(PluginCall call) {
+        try {
+            getActivity().startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            result.put("setting", "bluetooth");
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("تعذر فتح إعدادات Bluetooth. افتح الإعدادات يدوياً.");
+        }
+    }
+
+    @PluginMethod
+    public void openMobileDataSettings(PluginCall call) {
+        try {
+            getActivity().startActivity(new Intent(Settings.ACTION_DATA_USAGE_SETTINGS));
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            result.put("setting", "mobile-data");
+            result.put("automaticToggleSupported", false);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("تعذر فتح إعدادات بيانات الهاتف. استخدم لوحة الإعدادات السريعة.");
+        }
+    }
+
+    @PluginMethod
     public void stopDiscovery(PluginCall call) {
         stopDiscoveryInternal("user");
         JSObject result = new JSObject();
