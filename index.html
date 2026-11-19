@@ -5078,10 +5078,11 @@ async function renderConversationsList(){
             modal.style.cssText='position:fixed;inset:0;z-index:2147483400;display:flex;align-items:center;justify-content:center;overflow:auto;box-sizing:border-box;padding:max(16px,env(safe-area-inset-top)) 14px max(16px,env(safe-area-inset-bottom));background:rgba(2,8,18,.97);';
             modal.innerHTML='<section style="width:min(100%,500px);max-height:100%;overflow:auto;box-sizing:border-box;padding:18px;border:1px solid #8bf4ff55;border-radius:18px;background:#101c2c;color:#eaf7ff;">'
               +'<header style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><h2 id="alwaha-local-discovery-title" style="margin:0;font:900 16px Cairo,sans-serif;color:#8bf4ff;">الشبكة الحرة المحلية</h2><button type="button" data-close-local aria-label="إغلاق" style="border:0;border-radius:9px;background:#ffffff15;color:#fff;padding:7px 12px;">إغلاق</button></header>'
-              +'<p style="font:11px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:10px 0;">اتصال مباشر بين أجهزة Android عبر Wi‑Fi Direct، مع حزم مشفّرة من طرف إلى طرف وتخزين مرحّل عند انتقال الجهاز بين الجيران. البلوتوث يكتشف الأجهزة الآن؛ نقل البيانات عبر Bluetooth سيضاف كمسار مستقل. لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا؛ وضعه المحلي يمنع إرسال رسائل هذه المحادثة إلى السحابة فقط.</p>' 
+              +'<p style="font:11px/1.9 Cairo,sans-serif;color:#b8c9d8;margin:10px 0;">اتصال مباشر بين أجهزة Android عبر Wi‑Fi Direct أو Bluetooth Classic RFCOMM لنقل حزم التطبيق المشفّرة. يحتاج استقبال Bluetooth إلى موافقة Android على إظهار الهاتف لمدة محدودة؛ التشفير بين حسابي التطبيق يبقى مستقلاً عن اقتران النظام. لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا؛ وضعه المحلي يمنع إرسال رسائل هذا المسار إلى السحابة فقط.</p>' 
               +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;"><button type="button" data-open-internet-settings style="flex:1;min-height:38px;border:1px solid #8bf4ff55;border-radius:9px;background:#15354b;color:#8bf4ff;font:800 10px Cairo,sans-serif;">إعدادات Wi‑Fi وبيانات الهاتف</button><button type="button" data-open-bluetooth-settings style="flex:1;min-height:38px;border:1px solid #8bf4ff55;border-radius:9px;background:#26364a;color:#d5e7f7;font:800 10px Cairo,sans-serif;">إعدادات Bluetooth</button></div>'
               +'<div id="alwaha-local-status" role="status" aria-live="polite" style="padding:9px 10px;border:1px solid #8bf4ff22;border-radius:10px;background:#8bf4ff0b;color:#c8e9f5;font:11px/1.8 Cairo,sans-serif;">جارٍ تجهيز هوية الجهاز…</div>'
               +'<div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;"><button type="button" data-start-local style="flex:1;min-height:42px;border:0;border-radius:10px;background:#8bf4ff;color:#09202b;font:800 11px Cairo,sans-serif;">بحث عن الأجهزة</button><button type="button" data-create-group style="flex:1;min-height:42px;border:0;border-radius:10px;background:#17442f;color:#a8ffd7;font:800 11px Cairo,sans-serif;">إنشاء شبكة Wi‑Fi Direct</button><button type="button" data-stop-local style="min-height:42px;border:1px solid #ffffff28;border-radius:10px;background:#253449;color:#fff;padding:8px 12px;">إيقاف البحث</button></div>'
+              +'<button type="button" data-bluetooth-server style="width:100%;min-height:42px;margin:0 0 12px;border:1px solid #6dd7ff55;border-radius:10px;background:#18364b;color:#c6efff;font:800 11px Cairo,sans-serif;">استقبال عبر Bluetooth · إظهار الجهاز لمدة 5 دقائق</button>'
               +'<div style="padding:10px;border:1px solid #8bf4ff30;border-radius:12px;margin-bottom:10px;"><strong style="font-size:11px;color:#8bf4ff;">هوية هذا الجهاز</strong><p style="font-size:10px;color:#c5d3e3;line-height:1.7;">شارك بيانات الهوية العامة فقط مع الطرف الآخر، ثم طابق رمز التحقق من الجهازين قبل الوثوق به. المفتاح الخاص لا يغادر الهاتف.</p><div id="alwaha-mesh-own-code" style="font:900 18px monospace;color:#a8ffd7;letter-spacing:3px;">••••••</div><textarea id="alwaha-mesh-own-bundle" readonly rows="3" style="width:100%;margin-top:7px;background:#07111d;color:#a9d9ed;border:1px solid #ffffff20;border-radius:8px;padding:7px;font:9px monospace;direction:ltr;"></textarea><button type="button" data-copy-identity style="margin-top:7px;width:100%;padding:8px;border:0;border-radius:8px;background:#263c54;color:#fff;font:10px Cairo,sans-serif;">نسخ هوية الجهاز العامة</button></div>'
               +'<div style="padding:10px;border:1px solid #8bf4ff30;border-radius:12px;margin-bottom:10px;"><strong style="font-size:11px;color:#8bf4ff;">توثيق جهاز آخر</strong><textarea id="alwaha-mesh-peer-bundle" rows="3" placeholder="الصق هوية الجهاز الآخر هنا" style="width:100%;margin-top:7px;background:#07111d;color:#fff;border:1px solid #ffffff20;border-radius:8px;padding:7px;font:9px monospace;direction:ltr;"></textarea><button type="button" data-pair-peer style="margin-top:7px;width:100%;padding:8px;border:0;border-radius:8px;background:#17442f;color:#a8ffd7;font:800 10px Cairo,sans-serif;">التحقق من الرمز وتوثيق الجهاز</button></div>'
               +'<div id="alwaha-local-peers" aria-live="polite" style="display:grid;gap:7px;"><div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div></div>'
@@ -5096,18 +5097,22 @@ async function renderConversationsList(){
                 const values=[...session.peers.values()];
                 if(!values.length){peerHost.innerHTML='<div style="text-align:center;padding:14px;color:#8297ad;font:10px Cairo,sans-serif;">لم يتم اكتشاف أجهزة بعد.</div>';return;}
                 peerHost.innerHTML=values.map(peer=>{
-                    const transport=peer.transport==='wifi-direct'?'Wi‑Fi Direct':'Bluetooth (اكتشاف)';
-                    const canConnect=peer.transport==='wifi-direct'&&peer.address;
+                    const transport=peer.transport==='wifi-direct'?'Wi‑Fi Direct · نقل حزم': 'Bluetooth Classic · نقل حزم';
+                    const canConnect=!!peer.address&&(peer.transport==='wifi-direct'||peer.transport==='bluetooth');
                     return '<article style="padding:10px;border:1px solid #8bf4ff25;border-radius:10px;background:#ffffff08;">'
                       +'<strong style="color:#e8fbff;font:800 11px Cairo,sans-serif;">'+escapeHtml(peer.name||'جهاز قريب')+'</strong>'
                       +'<div style="margin-top:4px;color:#8bf4ff;font:10px Cairo,sans-serif;">'+transport+'</div>'
                       +'<div style="margin-top:4px;color:#8fa5bc;font:9px;overflow-wrap:anywhere;">'+escapeHtml(peer.address||'')+'</div>'
-                      +(canConnect?'<button type="button" data-connect-address="'+escapeHtml(peer.address)+'" style="margin-top:8px;width:100%;padding:8px;border:0;border-radius:8px;background:#17442f;color:#a8ffd7;font:800 10px Cairo,sans-serif;">الاتصال بهذا الجهاز</button>':'<div style="margin-top:6px;color:#ffd88b;font:9px Cairo,sans-serif;">Bluetooth مكتشف فقط في هذه المرحلة</div>')+'</article>';
+                      +(canConnect?'<button type="button" data-connect-address="'+escapeHtml(peer.address)+'" data-connect-transport="'+escapeHtml(peer.transport)+'" style="margin-top:8px;width:100%;padding:8px;border:0;border-radius:8px;background:#17442f;color:#a8ffd7;font:800 10px Cairo,sans-serif;">الاتصال بهذا الجهاز</button>':'<div style="margin-top:6px;color:#ffd88b;font:9px Cairo,sans-serif;">لا يتوفر عنوان اتصال لهذا الجهاز</div>')+'</article>';
                 }).join('');
                 peerHost.querySelectorAll('[data-connect-address]').forEach(button=>button.addEventListener('click',async()=>{
                     button.disabled=true;say('جارٍ طلب اتصال Wi‑Fi Direct…');
-                    try{const result=await plugin.connectWifiDirectPeer({address:button.dataset.connectAddress});say(result?.message||'قبل Android طلب الاتصال؛ ننتظر تكوين المجموعة.');}
-                    catch(error){say(error?.message||'تعذر الاتصال بالجهاز.');}
+                    try{
+                        const result=button.dataset.connectTransport==='bluetooth'
+                            ?await plugin.connectBluetoothPeer({address:button.dataset.connectAddress})
+                            :await plugin.connectWifiDirectPeer({address:button.dataset.connectAddress});
+                        say(result?.connected?'قناة نقل الحزم المحلية متصلة؛ سيجري التحقق من هوية الجهاز قبل قبول الرسائل.':(result?.message||'قبل Android طلب الاتصال؛ ننتظر تكوين الرابط.'));
+                    }catch(error){say(error?.message||'تعذر الاتصال بالجهاز.');}
                     finally{button.disabled=false;}
                 }));
             };
@@ -5148,6 +5153,14 @@ async function renderConversationsList(){
                 try{say('جارٍ طلب الأذونات وبدء اكتشاف الأجهزة…');const result=await plugin.startDiscovery();if(!session.closed)say(result?.message||'بدأ البحث.');}
                 catch(error){if(!session.closed)say(error?.message||'تعذر بدء البحث؛ راجع أذونات Android.');}
                 finally{session.starting=false;if(startBtn.isConnected&&!session.closed)startBtn.disabled=false;}
+            });
+            modal.querySelector('[data-bluetooth-server]').addEventListener('click',async event=>{
+                const button=event.currentTarget;button.disabled=true;
+                try{
+                    const result=await plugin.startBluetoothPacketServer();
+                    say(result?.listening?'بدأ استقبال Bluetooth بعد موافقة Android. اجعل الهاتف الآخر قابلاً للاكتشاف ثم اتصل به من قائمة الأجهزة.':'تعذر تشغيل استقبال Bluetooth.');
+                }catch(error){say(error?.message||'تعذر تشغيل استقبال Bluetooth. فعّل Bluetooth وامنح إذن الأجهزة القريبة.');}
+                finally{button.disabled=false;}
             });
             modal.querySelector('[data-create-group]').addEventListener('click',async event=>{
                 const button=event.currentTarget;button.disabled=true;
