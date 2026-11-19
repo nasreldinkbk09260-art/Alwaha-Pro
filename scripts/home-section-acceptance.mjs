@@ -49,7 +49,7 @@ check('like action checks auth and reports success/failure',html.includes('requi
 check('sharing uses native API and copies post text plus URL as fallback',html.includes("typeof navigator.share==='function'")&&html.includes("clipboard.writeText(shareText)")&&html.includes('تم نسخ نص المنشور ورابطه للمشاركة.'));
 check('share cancellation is silent but real failures are reported',html.includes("error?.name==='AbortError'")&&html.includes('تعذرت المشاركة من هذا الجهاز.'));
 check('comments target requests are race-protected',html.includes('commentsLoadRequestId')&&html.includes('requestId!==commentsLoadRequestId'));
-check('home feed fetches and displays per-post comment totals',html.includes("comments?target_type=eq.post&select=target_id&limit=5000")&&html.includes('commentCountMap')&&html.includes('id=\\"comment-count-${escapeJs(id)}\\"'));
+check('home feed fetches and displays per-post comment totals',html.includes("comments?target_type=eq.post&select=target_id&limit=5000")&&html.includes('commentCountMap')&&html.includes('id="comment-count-${escapeJs(id)}"')&&html.includes('commentCountMap.get(id)||0'));
 check('comments differentiate empty and failed states with retry',html.includes('لا توجد تعليقات بعد. كن أول من يعلّق.')&&html.includes('تعذر تحميل التعليقات')&&html.includes('إعادة المحاولة'));
 check('comment send has lock, length limit and loading state',html.includes('if(commentSendInFlight)return')&&html.includes('content.length>3000')&&html.includes("button.textContent='جارٍ الإرسال…'"));
 check('comment text is retained after failed send',html.includes('بقي النص في الحقل حتى لا تفقده')&&html.includes("if(input.value.trim()===content)input.value=''"));
