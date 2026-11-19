@@ -34,7 +34,13 @@ check('publish retains draft on failed upload or row creation',html.includes('ب
 check('publish clears text and image only after successful insert',/if\(textEl\)textEl\.value='';[\s\S]{0,350}pendingHomePostFile=null/.test(html));
 
 check('feed request has deadline and a single-flight guard',html.includes("alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null)")&&html.includes('window.__alwahaHomeFeedInFlight'));
-check('home comment totals are cached as public target-id-only rows for offline display',html.includes("supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000')")&&html.includes('isPublicPostCommentCount')&&html.includes('commentCountMap'));
+check('home comment totals use the aggregate count view with a bounded public-only offline fallback',
+  html.includes("supabaseFetch('post_comment_counts?select=post_id,comments_count')")&&
+  html.includes('isPublicPostCommentCounts')&&
+  html.includes("supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000')")&&
+  html.includes('isPublicPostCommentCount')&&
+  html.includes('countMap.set(postId, Math.max(0, Number(row.comments_count || 0)))')&&
+  html.includes("node.textContent = String(count)"));
 check('one-time cleanup invalidates only the legacy home-post cache snapshot',html.includes("ALWAHA_HOME_POST_CACHE_KEY = 'posts?select=*&order=created_at.desc&limit=100'")&&html.includes("ALWAHA_HOME_POST_CACHE_RESET_MARKER = 'alwaha_home_post_cache_reset_20261117'")&&html.includes('resetLegacyHomePostCacheOnce')&&html.includes("tx.objectStore(ALWAHA_PUBLIC_CACHE_STORE).delete(ALWAHA_HOME_POST_CACHE_KEY)")&&!html.includes("deleteDatabase(ALWAHA_PUBLIC_CACHE_DB)"));
 check('online home feed bypasses stale cached posts while local-only mode blocks network refresh',html.includes("const shouldBypassHomePostCache = tableName === 'posts' && navigator.onLine !== false && !localOnlyMode;")&&(html.match(/shouldBypassHomePostCache/g)||[]).length>=4&&html.includes('await resetLegacyHomePostCacheOnce()'));
 check('offline fallback remains scoped so marketplace and reels keep their cached data',html.includes("safePublicTables.has(tableName)")&&html.includes("if (cacheable && !__alwahaBackgroundRefresh && !shouldBypassHomePostCache)"));
