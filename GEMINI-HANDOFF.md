@@ -1,54 +1,41 @@
-# Alwaha-Pro handoff for another coding assistant
+# Alwaha-Pro — handoff for Gemini / another coding assistant
 
-Repository: `https://github.com/nasreldinkbk09260-art/Alwaha-Pro`
+Repository: https://github.com/nasreldinkbk09260-art/Alwaha-Pro
+**Active work branch:** `alwaha-pro-3.0.4-user-requests-20261120`
+**Release line:** 3.0.4 (private development only)
+**Product identity:** `appId=pro.alwaha.app`, `appName=Alwaha-Pro`, `webDir=dist`
 
-Active private development branch: `alwaha-pro-3.0.4-private-test-20261119`
+Read `DEVELOPMENT-CONTRACT.md` and `docs/ALWAHA-USER-REQUESTS-20261120-AR.md` first. Fetch the branch HEAD before editing. Continue on this exact branch; do not create a replacement branch, merge to `main`, publish the APK/website or write to production Supabase without explicit approval.
 
-Recovery baseline (preserve; do not overwrite): `alwaha-pro-recovery-20261118`
+## Current change set
 
-Read `DEVELOPMENT-CONTRACT.md` first. Continue on the active branch, inspect its latest HEAD before editing, and never publish feature-branch artifacts to the public site or public release. Do not change production Supabase data from the assistant session.
+- Home feed paints posts without waiting for a large comments-table scan. It loads `post_comment_counts` asynchronously, updates visible counts and increments the displayed count after a successful comment. A legacy query fallback remains for environments before the new migration is applied.
+- Added `supabase/migrations/20261120010000_post_comment_counts_view.sql`: read-only aggregate view `post_comment_counts` with `security_invoker=true`; underlying `comments` RLS remains authoritative. A partial index supports post counts. Migration and dedicated RLS tests are wired into disposable PostgreSQL CI only. **Not applied to production Supabase.**
+- Direct chat and marketplace already had voice-note and image/video controls; the change set adds audit coverage rather than duplicate controls.
+- Fixed the call-hangup UI race in which a remote-ended callback could reopen the call modal after the local user tapped End.
+- Kids Room now remounts the real local/remote video elements, enables safe playback while the room is open, restores their original state on close and makes its return-to-call action exit the overlay directly.
+- Local mesh discovery panel exposes Android Internet/Wi-Fi and Bluetooth settings panels. Android remains in control: the app does not claim to switch cellular data silently.
+- Trusted-neighbor hello now triggers automatic ciphertext relay-queue flushing. Pairing remains explicit and verified; queued packets remain opaque to relays.
+- Added runtime coverage for trusted-neighbor auto-forward, offline inbox fallback, local UI visibility and Kids Room/call-close regressions.
+- Offline direct inbox now falls back to previously cached encrypted messages even if the device reports online but the REST request fails. Safe peer display labels/avatars are cached in the encrypted local vault.
+- Removed source-audit restrictions that banned local-network UI or required exactly three themes. Development workflow accepts all branch names; public publishing remains `main` only plus `ALWAHA_PUBLIC_RELEASE_ENABLED=true`.
+- Bumped the Service Worker registration/cache namespace to `3.0.4-user-requests-20261120` to avoid reusing the previous development cache.
 
-## Product identity
+## Known incomplete work — do not mark as complete
 
-- Capacitor app ID: `pro.alwaha.app`
-- App name: `Alwaha-Pro`
-- Web directory: `dist`
-- Release line: `3.0.4`
-- Preserve the existing signing key and app identity.
+1. Bluetooth is still discovery-only; BLE GATT/RFCOMM data transport has not been implemented.
+2. Wi-Fi Direct and multi-hop still need physical validation on two or more Android phones. Auto-forward starts only after a trusted neighbor handshake; automatic radio/topology discovery and distance-aware route selection are not complete.
+3. Local WebRTC call signaling can travel through the encrypted mesh, but live voice/video media is not relayed over multiple hops.
+4. Group/conference calls and “add another participant” are not implemented. Current call manager is designed around one remote peer/one peer connection; do not add a cosmetic button. Implement multi-peer signaling, membership authorization, lifecycle and cleanup before exposing it.
+5. Full offline replica of all app sections and account data is not complete. Previously cached public content, profile data, direct chats and selected marketplace data are available. The user must still have a valid locally persisted session; do not bypass account identity checks to expose another user's private data. Uncached content cannot be reconstructed offline.
+6. Android apps cannot silently turn off mobile data; the UI opens the Android settings panel and instructs the user to toggle manually.
+7. Voice/media controls and marketplace caller paths exist in source, but still need hands-on tests between two real accounts/devices.
+8. Kids Room has source fixes and CI assertions but needs a real connected video call test on two phones.
 
-## Current scope in this branch
+## CI / release rules
 
-- Home feed comment totals are fetched and rendered.
-- Direct chat and marketplace chat show voice-note, image and video controls.
-- Private chat-media bucket migration and participant-scoped storage policies were added, plus a disposable-Postgres regression test.
-- Chat media uses an opaque message reference and signed URLs; legacy text rows remain readable.
-- A local encrypted vault now caches previously opened direct/market chats, a conversation index and selected profile fields.
-- Local mode blocks app-level REST/Edge/Storage/Realtime cloud requests on the gated paths; uncached pages remain unavailable offline.
-- Native Android Wi-Fi Direct create/connect plus a bounded TCP frame transport is implemented in `scripts/android/AlwahaLocalNetworkPlugin.java`.
-- `alwaha-local-mesh.js` contains P-256 ECDH/ECDSA identities, pairwise HKDF/AES-GCM envelopes, ECDSA verification, HMAC route tokens, TTL/hop bounds, duplicate rejection, a ciphertext relay queue and chunked file transfer.
-- Local direct/market chat sends and local WebRTC call signaling are wired to the Mesh path. Local WebRTC media itself is direct peer-to-peer and uses no public STUN/TURN servers.
-- A dynamic development cache revision `3.0.4-dev` is used by the page and Service Worker.
-- `scripts/mesh-protocol-runtime-test.mjs`, `scripts/local-network-native-audit.mjs` and `scripts/chat-media-offline-audit.mjs` are intended regression gates.
-
-## Remaining work and known limitations — do not claim these are finished
-
-1. Bluetooth is discovery-only. BLE/GATT or RFCOMM data transport is not implemented.
-2. Wi-Fi Direct TCP transport, mesh cryptography and local WebRTC signaling have not yet been verified on two physical Android phones.
-3. Multi-hop is explicit store-carry-forward when a trusted neighbor is connected; there is not yet automatic background topology discovery, route optimization or distance-based routing.
-4. Live WebRTC audio/video media is direct between the two peers. Real-time media is not relayed through multiple mesh hops.
-5. Group/conference calls and the “add another participant” flow are not implemented.
-6. Offline UI can show only records cached/restored on that phone. A complete offline replica of all app sections, account data, pages, games and sync conflict resolution remains to be built.
-7. Kids Room must be verified on a real two-phone video call with remote video. Do not treat a static room render or CI source audit as a real call test.
-8. Build and CI success is not a substitute for device testing.
-
-## Working procedure
-
-1. Fetch the latest branch head.
-2. Read the changed source and all relevant audit scripts before editing.
-3. Keep changes on this branch; use sequential commits (avoid racing file writes to the same branch).
-4. Run the GitHub Actions workflow. Fix syntax/audit failures without weakening security checks.
-5. Inspect the APK/AAB artifact, SHA-256 and signing certificate from the successful run.
-6. Record what was actually tested on a handset separately from CI.
-7. Never merge to `main` or publish publicly without explicit release approval.
-
-A second assistant can continue the same GitHub repository and branch if it has authenticated access to the GitHub account/repository. This handoff file supplies project context; the previous chat conversation itself is not automatically shared.
+- SQL tests run against a disposable PostgreSQL instance; never use this feature branch to apply migrations to production Supabase.
+- Every branch gets private validation. Website and public Android release jobs require `main` and `vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'`.
+- Do not weaken RLS, grants, membership checks, E2E cryptography, anti-replay, packet expiry/hop limits, file limits or account privacy to make CI green.
+- A successful CI run is not a physical-device test. Record hardware/API pair and observed result separately.
+- Latest known run #862 (commit `65deed14412470d570002abdb6155251a91153ac`) passed the disposable PostgreSQL job; its Android build job was cancelled by a subsequent source update. Check the latest Actions run for the current branch HEAD before proceeding.
