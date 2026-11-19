@@ -3894,7 +3894,7 @@ async function subscribeToMarketConversation() {
             const [products,users,messages,transactions,snapshots]=await Promise.all([
                 productIds.length?supabaseFetch(`products?id=in.(${productIds.map(encodeURIComponent).join(',')})&select=id,title,status`):Promise.resolve([]),
                 peerIds.length?supabaseFetch(`user_directory?id=in.(${peerIds.map(encodeURIComponent).join(',')})&select=id,first_name,last_name,avatar_url,username`):Promise.resolve([]),
-                supabaseFetch(`market_messages?conversation_id=in.(${idFilter})&select=id,conversation_id,sender_id,message,created_at,read_at&order=created_at.desc&limit=500`),
+                supabaseFetch(`market_messages?conversation_id=in.(${idFilter})&select=id,conversation_id,sender_id,message,created_at,read_at,attachment_path&order=created_at.desc&limit=500`),
                 supabaseFetch(`market_transactions?conversation_id=in.(${idFilter})&select=id,conversation_id,listing_snapshot,guarantee_days,guarantee_expires_at,retention_until,status,retention_notice_sent_at,delete_approved_by_buyer_at,delete_approved_by_seller_at&order=created_at.desc&limit=100`),
                 supabaseFetch(`market_conversations?id=in.(${idFilter})&select=id,listing_snapshot`)
             ]);
@@ -3904,7 +3904,7 @@ async function subscribeToMarketConversation() {
             (Array.isArray(messages)?messages:[]).forEach(m=>{const id=String(m.conversation_id);if(!latest.has(id))latest.set(id,m);if(m.sender_id!==me.id&&!m.read_at)unread.set(id,(unread.get(id)||0)+1);});
             holder.innerHTML=rows.map(c=>{
                 const id=String(c.id),peerId=c.buyer_id===me.id?c.seller_id:c.buyer_id,peer=um.get(String(peerId))||{},product=pm.get(String(c.product_id))||{},transaction=txm.get(id),snapshot=transaction?.listing_snapshot||sm.get(id)||{};
-                const name=([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'مستخدم'),last=latest.get(id),preview=last?.message||'بدأت محادثة بخصوص الإعلان',productTitle=product.title||snapshot.title||'إعلان محفوظ بعد الحذف';
+                const name=([peer.first_name||'',peer.last_name||''].join(' ').trim()||peer.username||'مستخدم'),last=latest.get(id),preview=last?.message||(last?.attachment_path?'مرفق':'بدأت محادثة بخصوص الإعلان'),productTitle=product.title||snapshot.title||'إعلان محفوظ بعد الحذف';
                 const badge=unread.get(id)?`<span style="background:#ff5d9e;color:#160915;border-radius:12px;padding:3px 7px;font-size:9px;font-weight:800;">${unread.get(id)} جديدة</span>`:'';
                 const buyer=c.buyer_id===me.id,ownConsent=buyer?c.delete_approved_by_buyer_at:c.delete_approved_by_seller_at,otherConsent=buyer?c.delete_approved_by_seller_at:c.delete_approved_by_buyer_at;
                 const consentUi=c.retention_notice_sent_at?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:7px 10px;margin-top:5px;border:1px solid #ffd86b33;border-radius:9px;background:#ffd86b0a;font-size:9px;color:#d9c99c;"><span>الأرشيف: ${ownConsent?'وافقتَ على الحذف':'لم توافق بعد'} · الطرف الآخر: ${otherConsent?'وافق':'لم يوافق بعد'}</span><button type="button" onclick="approveMarketArchiveDeletion('conversation','${escapeJs(id)}',${ownConsent?'false':'true'})" style="border:0;border-radius:7px;padding:6px 9px;background:${ownConsent?'#493044':'#173a2b'};color:${ownConsent?'#ffd1df':'#a8ffd7'};font:10px Cairo,sans-serif;">${ownConsent?'إلغاء موافقتي':'الموافقة على حذف الأرشيف'}</button></div>`:'';
