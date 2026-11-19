@@ -4,7 +4,7 @@
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
   let identityPromise=null, transportHandles=[], transportPeerFingerprint='', modeEnabled=false, receiving=false;
-  const queued=new Map(), seen=new Map(), peers=new Map();
+  const queued=new Map(), seen=new Map(), peers=new Map(), fileUrls=new Map();
 
   function vault(){return window.AlwahaLocalVault;}
   function bytesToB64(bytes){let raw='';for(let i=0;i<bytes.length;i+=0x8000)raw+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
@@ -161,7 +161,7 @@
         for(let i=0;i<chunk.total;i++){const row=all.find(item=>item.key===base+':'+i);if(!row?.value?.chunk)return {delivered:true,fileProgress:{fileId:chunk.fileId,received:i,total:chunk.total}};parts.push(b64ToBytes(row.value.chunk.chunk));}
         const blob=new Blob(parts,{type:String(chunk.mime||'application/octet-stream')});
         if(blob.size>25*1024*1024)throw new Error('Reassembled local file exceeds the 25 MB limit.');
-        const url=URL.createObjectURL(blob);
+        await vault().put(base+':meta',{total:chunk.total,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,kind:chunk.kind||'file'});\n        const url=URL.createObjectURL(blob);\n        fileUrls.set(chunk.fileId,url);
         detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file'};
         for(let i=0;i<chunk.total;i++)await vault().put(base+':'+i,{completed:true,receivedAt:new Date().toISOString()});
       }
@@ -215,16 +215,29 @@
     await enqueueRelay(packet,'');
     return {sent:false,queued:true,id:packet.id,route:'store-and-forward'};
   }
+  async function restoreFile(fileId){
+    if(fileUrls.has(fileId))return fileUrls.get(fileId);
+    const rows=await vault().getAll(),metaRow=rows.find(row=>row.key==='mesh:file:'+fileId+':meta'),meta=metaRow?.value;
+    if(!meta||!Number.isInteger(meta.total)||meta.total<1||meta.total>512)return null;
+    const parts=[];
+    for(let index=0;index<meta.total;index++){const row=rows.find(item=>item.key==='mesh:file:'+fileId+':'+index);if(!row?.value?.chunk)return null;parts.push(b64ToBytes(row.value.chunk));}
+    const blob=new Blob(parts,{type:meta.mime||'application/octet-stream'});if(blob.size>25*1024*1024)return null;
+    const url=URL.createObjectURL(blob);fileUrls.set(fileId,url);return url;
+  }
   async function sendFileToAccount(accountUserId,file,kind='file'){
     if(!file||!Number.isFinite(file.size)||file.size<=0)throw new Error('الملف غير صالح.');
     if(file.size>25*1024*1024)throw new Error('حد الملف المحلي 25 ميجابايت في هذه المرحلة.');
     const peer=await getPeerByAccountId(accountUserId),fileId=crypto.randomUUID(),total=Math.ceil(file.size/FILE_CHUNK_BYTES);
     if(!peer)throw new Error('الجهاز المقصود غير مقترن.');
+    const meta={total,name:String(file.name||'offline-file'),mime:file.type||'application/octet-stream',size:file.size,kind};
+    await vault().put('mesh:file:'+fileId+':meta',meta);
     for(let index=0;index<total;index++){
       const bytes=new Uint8Array(await file.slice(index*FILE_CHUNK_BYTES,Math.min(file.size,(index+1)*FILE_CHUNK_BYTES)).arrayBuffer());
-      await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:file.name,mime:file.type||'application/octet-stream',size:file.size,kind,chunk:bytesToB64(bytes)});
+      await vault().put('mesh:file:'+fileId+':'+index,{chunk:bytesToB64(bytes)});
+      await sendToAccount(accountUserId,{type:'file-chunk',fileId,index,total,name:meta.name,mime:meta.mime,size:file.size,kind,chunk:bytesToB64(bytes)});
     }
-    return {queued:true,fileId,chunks:total};
+    fileUrls.set(fileId,URL.createObjectURL(file));
+    return {queued:true,fileId,chunks:total,name:meta.name,mime:meta.mime,size:meta.size,kind};
   }
   async function flushRelayQueue(){
     if(!window.alwahaLocalNetwork?.sendLocalPacket||!transportPeerFingerprint)return {sent:0};
@@ -244,6 +257,6 @@
   function getTransportPeer(){return transportPeerFingerprint;}
   function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
   function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,setMode,isEnabled,getTransportPeer,setTransportPeer,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,setMode,isEnabled,getTransportPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void installTransportListeners().catch(error=>console.warn('[Alwaha Mesh] listener setup failed:',error));});
 })();
