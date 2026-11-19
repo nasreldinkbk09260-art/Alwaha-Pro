@@ -43,10 +43,11 @@ check('native call speaker routing is bundled and defaults to earpiece',
   has(html,'speakerRouteBtn') && has(html,'setAlwahaCallSpeaker(false,true)') && native.includes('setRoute'));
 check('native audio-route and APK FileProvider plugin is retained',
   native.includes('FileProvider.getUriForFile') && native.includes('setRoute'));
-check('local network/mesh share remains intentionally absent',
-  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section/.test(html+games));
-check('Bluetooth is honestly disabled, not represented as an implemented call path',
-  html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد') && /aria-disabled=["']true["']/.test(html));
+check('legacy unverified local-share panel stays retired while encrypted Mesh is present',
+  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section/.test(html+games) &&
+  html.includes('openAlwahaLocalDiscovery') && read('alwaha-local-mesh.js').includes('deriveRouteHmacKey'));
+check('Bluetooth scope is explicit: discovery only, no claim of BLE data transport',
+  html.includes('Bluetooth مكتشف فقط في هذه المرحلة') && html.includes('نقل البيانات عبر Bluetooth'));
 
 // 3.0.1 R2 post-branch repairs: notifications, non-friend market messaging, feed coalescing and archive.
 check('home feed has a single-flight guard and bounded secondary requests',
@@ -130,13 +131,9 @@ check('nav drag has a lightweight comic follower with falling/recovered hat or s
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
-// Maintained application branches plus explicitly named validation branches; publish from main only.
-const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
-const workflowBranches = pushBranchBlock.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2).trim());
-const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev','alwaha-pro-recovery-20261118','alwaha-pro-3.0.4-private-test-20261119'];
-check('APK/AAB workflow watches main and only explicitly maintained validation/preparation branches',
-  workflowBranches.length === expectedWorkflowBranches.length &&
-  expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
+// Development validation is intentionally open to new branch names; public publishing remains main-only.
+check('APK/AAB validation runs on every development branch without a branch allowlist',
+  workflow.includes("  push:\n    branches:\n      - '**'"));
 check('public website publication is gated to main',
   workflow.includes("if: github.ref == 'refs/heads/main'") &&
   workflow.includes('name: Publish Alwaha-Pro 3.0.4 website'));
