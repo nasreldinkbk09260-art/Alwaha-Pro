@@ -85,12 +85,14 @@ check('market_messages.sender_id foreign-key advisor finding has a migration ind
   nonfriendTest.includes('Missing index for market_messages.sender_id foreign key'));
 
 // Kids Room is selectable from the video-call mode chooser; real-device acceptance remains a release gate.
-check('Kids Room is selectable and guarded until the video call has a remote stream',
-  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && kids.includes('kids-parent-exit') &&
-  html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') &&
-  html.includes('data-video-call-mode="kids"') && html.includes('onclick="toggleAlwahaKidsMode()"') &&
-  html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'") &&
-  html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1'));
+check('Kids Room is selectable only after an active video call has decoded a live remote video track',
+  kids.includes('وضع الأطفال متاح بعد اتصال الفيديو ووصول بث الطرف الآخر.') && kids.includes('window.isAlwahaRemoteVideoReady()') &&
+  html.includes('function isAlwahaRemoteVideoReady()') && html.includes('video.readyState >= 2') &&
+  html.includes('video.videoWidth > 0') && html.includes('currentState === \'connected\' && isAlwahaRemoteVideoReady()') &&
+  html.includes('window.isAlwahaRemoteVideoReady = isAlwahaRemoteVideoReady;') &&
+  kids.includes('kids-parent-exit') && html.includes('function openVideoCallModeChooser()') &&
+  html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"') &&
+  html.includes('onclick="toggleAlwahaKidsMode()"'));
 check('kids room includes local scene, both video streams, camera filters, toys, balloon, key and door lock',
   kids.includes('kids-video-port') && kids.includes('kids-local-port') && kids.includes('const filters=') &&
   kids.includes('data-toy') && kids.includes('kids-balloon') && kids.includes('kids-key') && kids.includes('kids-lock') && kids.includes('kids-door'));

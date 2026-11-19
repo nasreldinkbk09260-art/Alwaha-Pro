@@ -2847,7 +2847,29 @@ async function toggleInternalNotificationCenter() {
         async function toggleCallSpeaker(){await setAlwahaCallSpeaker(!alwahaCallSpeakerOn,false);}
         async function resetAlwahaCallAudioRoute(){alwahaCallSpeakerOn=false;updateCallSpeakerButton();try{if(isAlwahaNativeAndroid()&&window.alwahaAudioRoute?.resetRoute)await window.alwahaAudioRoute.resetRoute();}catch(error){console.warn('[Alwaha Audio] route reset failed:',error);}}
 
+        function isAlwahaRemoteVideoReady() {
+            const video = document.getElementById('remoteVideo');
+            const tracks = video?.srcObject?.getVideoTracks?.() || [];
+            return !!(
+                activeCallManager?.call &&
+                activeCallManager.mediaType === 'video' &&
+                video?.srcObject &&
+                video.readyState >= 2 &&
+                video.videoWidth > 0 &&
+                video.videoHeight > 0 &&
+                tracks.some(track => track.readyState === 'live')
+            );
+        }
+        window.isAlwahaRemoteVideoReady = isAlwahaRemoteVideoReady;
+        function updateKidsRoomButtonVisibility(state = window.__alwahaCallUiState) {
+            const button = document.getElementById('kidsModeBtn');
+            const currentState = String(state || 'idle');
+            const isVideo = activeCallManager?.mediaType === 'video' && ['outgoing', 'connecting', 'connected'].includes(currentState);
+            if (button) button.style.display = isVideo && currentState === 'connected' && isAlwahaRemoteVideoReady() ? 'inline-block' : 'none';
+        }
+
         function updateCallUi(state, meta = {}) {
+            window.__alwahaCallUiState = state;
             const stateEl = document.getElementById('call-state-pill');
             const indicator = document.getElementById('call-method-indicator');
             const startBtn = document.getElementById('startCallBtn');
@@ -2876,7 +2898,7 @@ async function toggleInternalNotificationCenter() {
             if (videoStage) videoStage.style.display = isVideo ? 'block' : 'none';
             if (cameraMuteBtn) cameraMuteBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
             if (cameraSwitchBtn) cameraSwitchBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';
-            const kidsBtn=document.getElementById('kidsModeBtn');if(kidsBtn)kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none';
+            updateKidsRoomButtonVisibility(state);
             const addParticipantBtn=document.getElementById('addCallParticipantBtn');if(addParticipantBtn)addParticipantBtn.style.display=state==='connected'?'inline-block':'none';
             if (state === 'idle') {
                 if (callTimer) callTimer.textContent = '00:00';
@@ -4084,7 +4106,12 @@ async function renderConversationsList() {
                     if (this.remoteAudio) { this.remoteAudio.srcObject = combined; this.remoteAudio.play?.().catch(() => {}); }
                     if (this.remoteVideo && this.mediaType === 'video') {
                         this.remoteVideo.srcObject = combined;
-                        this.remoteVideo.play?.().catch(() => {});
+                        const refreshKidsButton = () => updateKidsRoomButtonVisibility();
+                        this.remoteVideo.addEventListener('loadeddata', refreshKidsButton, { once: true });
+                        this.remoteVideo.addEventListener('playing', refreshKidsButton, { once: true });
+                        if (incomingTrack) incomingTrack.addEventListener('ended', refreshKidsButton, { once: true });
+                        const playPromise = this.remoteVideo.play?.();
+                        if (playPromise?.then) playPromise.then(refreshKidsButton).catch(() => {});
                     }
                 };
                 this.peerConnection.onicecandidate = (event) => {
@@ -4881,7 +4908,7 @@ async function renderConversationsList() {
                     return;
                 }
                 const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo?.srcObject && remoteVideo.readyState >= 1) {
+                if (isAlwahaRemoteVideoReady()) {
                     pendingKidsRoomAfterConnect = false;
                     if (typeof window.toggleAlwahaKidsMode === 'function') window.toggleAlwahaKidsMode();
                     else triggerToastNotification('غرفة الأطفال غير محمّلة في هذه النسخة. أغلق التطبيق وافتحه بعد اكتمال التحديث.', 'error');
