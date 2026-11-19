@@ -3,6 +3,7 @@ import process from 'node:process';
 
 const read=(file)=>fs.readFileSync(file,'utf8');
 const migration=read('supabase/migrations/20261113040000_security_definer_api_isolation.sql');
+const deliveryMigration=read('supabase/migrations/20261120210000_marketplace_delivery_workflow.sql');
 const regression=read('supabase/tests/20261113040000_security_definer_api_isolation.sql');
 const triggerMigration=read('supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql');
 const triggerRegression=read('supabase/tests/20261113050000_trigger_definer_empty_search_path.sql');
@@ -18,6 +19,7 @@ check('SECURITY DEFINER implementations are isolated in app_private',migration.i
 check('private schema is not granted to anon or public and is non-creatable by clients',migration.includes('REVOKE ALL ON SCHEMA app_private FROM PUBLIC, anon, authenticated')&&migration.includes('GRANT USAGE ON SCHEMA app_private TO authenticated, service_role'));
 check('all private helpers and public wrappers use an empty search_path',((migration.match(/SET search_path TO ''/g)||[]).length)>=11);
 check('public business RPCs remain SECURITY INVOKER',migration.includes('CREATE OR REPLACE FUNCTION public.approve_market_archive_deletion')&&migration.includes('CREATE OR REPLACE FUNCTION public.complete_market_sale')&&migration.includes('CREATE OR REPLACE FUNCTION public.join_game_room')&&migration.includes('CREATE OR REPLACE FUNCTION public.can_review_marketplace_product')&&migration.includes('SECURITY INVOKER'));
+check('marketplace delivery public RPCs are SECURITY INVOKER and authenticated-only',deliveryMigration.includes('CREATE OR REPLACE FUNCTION public.request_market_delivery')&&deliveryMigration.includes('CREATE OR REPLACE FUNCTION public.update_market_delivery')&&(deliveryMigration.match(/SECURITY INVOKER/g)||[]).length>=2&&deliveryMigration.includes('REVOKE ALL ON FUNCTION public.request_market_delivery')&&deliveryMigration.includes('REVOKE ALL ON FUNCTION public.update_market_delivery')&&deliveryMigration.includes('TO authenticated'));
 check('RLS reply and review policies use private helper functions',migration.includes('app_private.can_reply_to_direct_message')&&migration.includes('app_private.can_reply_to_market_message')&&migration.includes('app_private.can_review_marketplace_product'));
 check('old public reply helper RPCs are removed',migration.includes('DROP FUNCTION public.can_reply_to_direct_message(bigint,uuid,uuid)')&&migration.includes('DROP FUNCTION public.can_reply_to_market_message(uuid,uuid,uuid)'));
 check('SQL regression test blocks exposed SECURITY DEFINER execution',regression.includes('Public SECURITY DEFINER functions remain executable')&&regression.includes('app_private must not be exposed through PostgREST')&&regression.includes('SECURITY INVOKER'));
