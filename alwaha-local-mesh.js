@@ -163,7 +163,6 @@
         if(blob.size>25*1024*1024)throw new Error('Reassembled local file exceeds the 25 MB limit.');
         await vault().put(base+':meta',{total:chunk.total,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,kind:chunk.kind||'file'});\n        const url=URL.createObjectURL(blob);\n        fileUrls.set(chunk.fileId,url);
         detail.payload={type:'file-ready',fileId:chunk.fileId,name:String(chunk.name||'offline-file'),mime:blob.type,size:blob.size,url,kind:chunk.kind||'file'};
-        for(let i=0;i<chunk.total;i++)await vault().put(base+':'+i,{completed:true,receivedAt:new Date().toISOString()});
       }
       window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail}));
       return {delivered:true};
@@ -210,7 +209,12 @@
     const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
     if(transportPeerFingerprint&&window.alwahaLocalNetwork?.sendLocalPacket){
       const neighbors=await getTrustedPeers();
-      if(neighbors.some(item=>item.fingerprint===transportPeerFingerprint)){await sendRawPacket(packet);return {sent:true,id:packet.id,route:transportPeerFingerprint===peer.fingerprint?'direct':'relay-hop'};}
+      if(neighbors.some(item=>item.fingerprint===transportPeerFingerprint)){
+        if(transportPeerFingerprint===peer.fingerprint){await sendRawPacket(packet);return {sent:true,id:packet.id,route:'direct'};}
+        await enqueueRelay(packet,'');
+        await sendRawPacket(packet);
+        return {sent:true,queued:true,id:packet.id,route:'relay-hop'};
+      }
     }
     await enqueueRelay(packet,'');
     return {sent:false,queued:true,id:packet.id,route:'store-and-forward'};
