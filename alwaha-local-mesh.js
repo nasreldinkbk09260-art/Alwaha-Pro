@@ -134,6 +134,8 @@
   async function enqueueRelay(packet,lastHopFingerprint=''){
     if(Number(packet.hops||0)>=Math.min(Number(packet.hopLimit||MAX_HOPS),MAX_HOPS))return false;
     const key='mesh:relay:'+packet.id,row=await vault().getRecord(key);if(row)return false;
+    const all=await vault().getAll(),relayCount=all.filter(item=>typeof item.key==='string'&&item.key.startsWith('mesh:relay:')).length;
+    if(relayCount>=300)throw new Error('طابور التمرير المحلي ممتلئ مؤقتًا؛ أفرغ الحزم إلى جار موثوق قبل إضافة المزيد.');
     const relay={...packet,hops:Math.min(MAX_HOPS,Number(packet.hops||0)+1)};
     await vault().put(key,{packet:relay,lastHopFingerprint,queuedAt:new Date().toISOString()});
     queued.set(packet.id,relay);window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-queued',{detail:{id:packet.id,hops:relay.hops}}));
@@ -223,7 +225,7 @@
     }));
   }
   async function sendToAccount(accountUserId,payload){
-    if(!modeEnabled)throw new Error('وضع الشبكة الحرة غير مفعل في هذه المحادثة.');
+    if(!isEnabled())throw new Error('وضع الشبكة الحرة غير مفعل في هذه المحادثة.');
     const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('لم تقترن بهذا الحساب بجهاز موثوق بعد.');
     const packet=await createEnvelope(peer,payload);
     const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
@@ -279,10 +281,29 @@
     fileUrls.set(fileId,URL.createObjectURL(file));
     return {queued:true,fileId,chunks:total,name:meta.name,mime:meta.mime,size:meta.size,kind};
   }
+  async function pruneExpiredState(){
+    const now=Date.now(),rows=await vault().getAll();
+    let removed=0;
+    for(const row of rows||[]){
+      if(typeof row.key!=='string')continue;
+      if(row.key.startsWith('mesh:seen:')){
+        const expiry=Date.parse(row.value?.expiresAt||'');
+        if(!Number.isFinite(expiry)||expiry<now){await vault().removeRecord(row.key);removed++;}
+      }else if(row.key.startsWith('mesh:relay:')){
+        const expiry=Date.parse(row.value?.packet?.expiresAt||'');
+        if(!Number.isFinite(expiry)||expiry<now){await vault().removeRecord(row.key);removed++;}
+      }else if(row.key.startsWith('mesh:outbox:')){
+        const created=Date.parse(row.value?.createdAt||'');
+        if(!Number.isFinite(created)||now-created>MAX_AGE_MS){await vault().removeRecord(row.key);removed++;}
+      }
+    }
+    return removed;
+  }
   async function flushRelayQueue(){
     if(!window.alwahaLocalNetwork?.sendLocalPacket||!transportPeerFingerprint)return {sent:0};
     const trusted=await getTrustedPeers();
     if(!trusted.some(peer=>peer.fingerprint===transportPeerFingerprint))return {sent:0,blocked:true,reason:'untrusted-neighbor'};
+    await pruneExpiredState();
     const rows=await vault().getAll(),out=[];
     for(const row of rows||[]){
       if(typeof row.key!=='string'||!row.key.startsWith('mesh:relay:')||!row.value?.packet)continue;
@@ -316,6 +337,6 @@
   function getTransportPeer(){return transportPeerFingerprint;}
   function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
   function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,setMode,isEnabled,getTransportPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,getTransportPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
