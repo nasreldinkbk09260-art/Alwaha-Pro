@@ -140,3 +140,9 @@ echo 'APPLY TEST MIGRATION: 20261117190000_admin_action_logs_report_and_support_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117190000_admin_action_logs_report_and_support_actions.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117190000_admin_action_logs_report_and_support_actions.sql"
 echo 'ADMIN_ACTION_ALLOWLIST_REGRESSION=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261120010000_post_comment_counts_view.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/post-comment-counts-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120010000_post_comment_counts_view.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120010000_post_comment_counts_view.sql"
+
