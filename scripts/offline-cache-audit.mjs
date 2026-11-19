@@ -46,6 +46,30 @@ check('private direct chat and peer identity labels are encrypted in the separat
 check('direct inbox renders prior local caches when offline or when the online request fails',html.includes('async function renderCachedDirectConversationList')&&html.includes('if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled())')&&html.includes('if(!Array.isArray(rows))'));
 check('home comment aggregate cache stores only post identifiers and totals',html.includes("post_comment_counts: ['post_id','comments_count']")&&html.includes("tableName === 'post_comment_counts'")&&html.includes("query.includes('select=post_id,comments_count')"));
 
+check('private account views are encrypted, bounded and use an explicit account-scoped cache contract',
+  vault.includes('async function saveAccountViewCache')&&vault.includes('async function getAccountViewCache')&&
+  vault.includes('ACCOUNT_VIEW_CACHE_NAMES')&&vault.includes("putEncryptedCache('cache:view:'")&&vault.includes('size>2*1024*1024'));
+check('previous authenticated sessions remain available locally after transient network failures',
+  html.includes('supabaseClient.auth.getSession()')&&html.includes('async function getCurrentAuthUser()')&&
+  html.includes('Offline session lookup failed'));
+check('notifications and pending friend requests render from encrypted account snapshots offline',
+  html.includes("getAccountViewCache?.(me.id,'notifications')")&&html.includes("getAccountViewCache?.(me.id,'friend-requests')")&&
+  html.includes("getAccountViewCache?.(me.id,'friend-requester-directory')")&&html.includes('const offlineView=!navigator.onLine'));
+check('offline notification reads are local-only, queued, and synchronized after reconnection',
+  html.includes("saveAccountViewCache?.(me.id,'pending-notification-reads'")&&
+  html.includes('async function syncPendingNotificationReads(userId)')&&
+  html.includes('await syncPendingNotificationReads(me.id)')&&html.includes("saveAccountViewCache?.(uid,'pending-notification-reads',[])"));
+check('friend directory and relationship state are available as encrypted read-only offline snapshots',
+  html.includes("getAccountViewCache?.(me.id,'friend-relations')")&&html.includes("saveAccountViewCache?.(me.id,'friend-relations',requests)")&&
+  html.includes('إجراءات الصداقة تحتاج اتصالاً للمزامنة'));
+check('market transaction and delivery snapshots remain encrypted and read-only while offline',
+  html.includes("getAccountViewCache?.(me.id,'market-transactions')")&&html.includes("saveAccountViewCache?.(me.id,'market-transactions',rows)")&&
+  html.includes('سجل معاملات مشفّر للقراءة فقط دون اتصال')&&html.includes('!offlineView&&!buyer&&deliveryNext'));
+check('the own-profile encrypted cache retains private fields without storing credentials or service keys',
+  vault.includes('birthdate:profile.birthdate')&&vault.includes('phone:profile.phone')&&vault.includes('is_admin:profile.is_admin===true')&&
+  !/saveProfileCache[\\s\\S]{0,600}(?:password|access_token|refresh_token|service_role)/.test(vault));
+
+
 
 check('R7.5.1 runtime observer loop protections remain present',read('alwaha-modal-shell.js').includes('hasRelevantMutation(records)')&&read('alwaha-modal-shell.js').includes('scheduleSync()')&&read('alwaha-modal-shell.js').includes('nodeContainsLayer')&&read('alwaha-experience.js').includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel'));
 check('offline cache audit is part of npm release and Android CI',pkg.scripts?.['audit:offline-cache']==='node scripts/offline-cache-audit.mjs'&&pkg.scripts?.['audit:release']?.includes('audit:offline-cache')&&workflow.includes('npm run audit:release'));
