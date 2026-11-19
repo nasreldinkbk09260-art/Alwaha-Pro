@@ -59,9 +59,24 @@
     for(const row of rows){if(typeof row.key==='string'&&row.key.startsWith(prefix)){const messages=await getEncryptedCache(row.key);out.push({conversationId:row.key.slice(prefix.length),messages:Array.isArray(messages)?messages:[]});}}
     return out;
   }
+  const ACCOUNT_VIEW_CACHE_NAMES=new Set(['notifications','friend-requests','friend-directory','market-transactions']);
+  async function saveAccountViewCache(userId,viewName,value){
+    const name=String(viewName||'');
+    if(!userId||!ACCOUNT_VIEW_CACHE_NAMES.has(name))return false;
+    const safe=Array.isArray(value)?value.slice(0,500):value;
+    const size=enc.encode(JSON.stringify(safe)).byteLength;
+    if(size>2*1024*1024)throw new Error('Account view cache exceeds the 2 MB limit.');
+    await putEncryptedCache('cache:view:'+String(userId)+':'+name,safe);
+    return true;
+  }
+  async function getAccountViewCache(userId,viewName){
+    const name=String(viewName||'');
+    if(!userId||!ACCOUNT_VIEW_CACHE_NAMES.has(name))return null;
+    return await getEncryptedCache('cache:view:'+String(userId)+':'+name);
+  }
   async function saveProfileCache(userId,profile){
     if(!userId||!profile)return;
-    const safe={id:profile.id,first_name:profile.first_name,last_name:profile.last_name,username:profile.username,avatar_url:profile.avatar_url,gender:profile.gender,is_verified:profile.is_verified,hide_email:profile.hide_email,hide_phone:profile.hide_phone};
+    const safe={id:profile.id,first_name:profile.first_name,last_name:profile.last_name,username:profile.username,avatar_url:profile.avatar_url,gender:profile.gender,birthdate:profile.birthdate,bio:profile.bio,city:profile.city,country:profile.country,phone:profile.phone,website:profile.website,created_at:profile.created_at,updated_at:profile.updated_at,is_verified:profile.is_verified,is_admin:profile.is_admin===true,hide_email:profile.hide_email,hide_phone:profile.hide_phone};
     await putEncryptedCache('cache:profile:'+String(userId),safe);
   }
   async function getProfileCache(userId){return userId?getEncryptedCache('cache:profile:'+String(userId)):null;}
@@ -166,6 +181,6 @@
     host.querySelector('#alwaha-vault-clean').onclick=async()=>{if(!confirm('سيتم مسح المسودات المحلية المحفوظة فقط. لن تُحذف منشوراتك أو رسائلك السحابية. أنشئ نسخة احتياطية أولاً. هل تتابع؟'))return;await clearDrafts();await render();};
   }
   function bindDrafts(){const fields=[['home-post-textarea','home-post'],['prod-name','market-listing:prod-name'],['prod-price','market-listing:prod-price'],['prod-desc-location','market-listing:prod-desc-location']];for(const [id,key] of fields){const el=document.getElementById(id);if(!el)continue;let timer=null;el.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>saveDraft(key,el.value).catch(console.warn),450);});}}
-  window.AlwahaLocalVault={put,getAll:all,getRecord,removeRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,savePeerProfileCache,getPeerProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
+  window.AlwahaLocalVault={put,getAll:all,getRecord,removeRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveAccountViewCache,getAccountViewCache,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,savePeerProfileCache,getPeerProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
   window.addEventListener('DOMContentLoaded',()=>{render().catch(console.warn);bindDrafts();restoreDrafts().catch(console.warn);});
 })();
