@@ -15,7 +15,14 @@ const hasVersionedAsset=(asset)=>{
   const assetVersion=html.slice(pos+marker.length).split('"')[0];
   return !!assetVersion&&sw.includes("'./"+asset+"?v="+assetVersion+"'")&&sw.includes("'./"+asset+"'");
 };
-const assets=[...html.matchAll(/<script\\b[^>]*src=["']\\.\\/([^"']+\\.js)\\?v=([^"']+)["'][^>]*>/g)].map(match=>match[1]).filter(asset=>!asset.startsWith('assets/'));
+const assets=html.split('<script').slice(1).map(chunk=>{
+  const tag=chunk.slice(0,chunk.indexOf('>')),marker='src="./',pos=tag.indexOf(marker);
+  if(pos<0)return null;
+  const url=tag.slice(pos+marker.length).split('"')[0],query=url.indexOf('?v=');
+  if(query<0||!url.slice(0,query).endsWith('.js'))return null;
+  const asset=url.slice(0,query);
+  return asset.startsWith('assets/')?null:asset;
+}).filter(Boolean);
 let failed=0;
 const check=(label,ok)=>{if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failed++;}};
 check('public feed cache is a dedicated IndexedDB database',html.includes("ALWAHA_PUBLIC_CACHE_DB = 'alwaha-public-feed-cache-v1'")&&html.includes('indexedDB.open(ALWAHA_PUBLIC_CACHE_DB,1)'));
@@ -27,7 +34,8 @@ check('reconnect forces a background refresh even before memory TTL expiry',html
 check('reconnect keeps cached public rows visible while refresh runs',html.includes('window.__alwahaOnlineRefreshPulse=Date.now()||1')&&html.includes('__alwahaPublicRefreshStarted?.clear?.()'));
 check('Service Worker excludes Auth, REST, Storage and Functions endpoints',sw.includes('url.pathname')&&sw.includes('rest\\/v1')&&sw.includes('functions\\/v1')&&sw.includes("request.headers.has('Authorization')"));
 check('public image cache is bounded to 2 MiB per image and 40 images',sw.includes('size<=2*1024*1024')&&sw.includes('media.length-40'));
-const themeHref=(html.match(/href="\\.\\/alwaha-theme-system\\.css\\?v=([^"]+)"/)||[])[1]||'';
+const themeMarker='href="./alwaha-theme-system.css?v=',themePosition=html.indexOf(themeMarker);
+const themeHref=themePosition>=0?html.slice(themePosition+themeMarker.length).split('"')[0]:'';
 check('all first-party modules use versioned URLs and have offline fallback entries',assets.length>0&&assets.every(asset=>hasVersionedAsset(asset)&&build.includes(asset))&&!!themeHref&&sw.includes("'./alwaha-theme-system.css?v="+themeHref+"'")&&sw.includes("'./alwaha-theme-system.css'"));
 check('Service Worker precache bypasses stale HTTP cache responses',sw.includes("cache.addAll(PRECACHE_ASSETS.map(asset => new Request(new URL(asset, self.registration.scope), { cache: 'reload' })))"));
 check('dynamic profile editor module is loaded locally, included in the web build and precached with versioned/fallback URLs',polish.includes('alwaha-profile-editor.js')&&build.includes('alwaha-profile-editor.js')&&hasVersionedAsset('alwaha-profile-editor.js')&&sw.includes("'./alwaha-profile-editor.js'"));
