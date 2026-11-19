@@ -176,6 +176,10 @@ jobs:
           test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/migrations/20261118180810_split_anon_public_content_policies.sql
+          test -s supabase/migrations/20261120010000_post_comment_counts_view.sql
+          test -s supabase/tests/20261120010000_post_comment_counts_view.sql
+          test -s supabase/tests/post-comment-counts-ci-bootstrap.sql
+
           test -s supabase/tests/20261118180810_split_anon_public_content_policies.sql
           test -s scripts/public-content-anon-policy-audit.mjs
           test -s supabase/functions/user-safety/index.ts
