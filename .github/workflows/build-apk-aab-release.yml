@@ -774,7 +774,7 @@ jobs:
 
   publish-release:
     name: Publish verified public Android APK release
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
     needs:
       - sql-regression
       - build-android
@@ -829,7 +829,7 @@ jobs:
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.4 website
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
     needs:
       - sql-regression
       - build-android
