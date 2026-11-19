@@ -2674,6 +2674,23 @@ async function toggleInternalNotificationCenter() {
             document.body.classList.add('modal-active');
             await renderInternalNotificationCenter();
         }
+        async function syncPendingNotificationReads(userId){
+            const uid=String(userId||'');
+            if(!uid||navigator.onLine===false||window.AlwahaLocalMesh?.isEnabled())return false;
+            const pending=await window.AlwahaLocalVault?.getAccountViewCache?.(uid,'pending-notification-reads')||[];
+            const ids=Array.isArray(pending)?[...new Set(pending.map(String).filter(Boolean))].slice(0,200):[];
+            if(!ids.length)return true;
+            const result=await supabaseFetch(`notifications?id=in.(${ids.map(encodeURIComponent).join(',')})&recipient_id=eq.${encodeURIComponent(uid)}`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
+            if(result===null)return false;
+            await window.AlwahaLocalVault?.saveAccountViewCache?.(uid,'pending-notification-reads',[]);
+            const cached=await window.AlwahaLocalVault?.getAccountViewCache?.(uid,'notifications');
+            if(Array.isArray(cached)){
+                const readIds=new Set(ids);
+                await window.AlwahaLocalVault?.saveAccountViewCache?.(uid,'notifications',cached.map(row=>readIds.has(String(row.id))?{...row,is_read:true}:row));
+            }
+            return true;
+        }
+
         async function refreshAlwahaNotificationBadge(){
             const badges=[document.getElementById('notification-badge-home'),document.getElementById('notification-badge-nav')];
             const me=await getCurrentAuthUser();
@@ -2740,13 +2757,7 @@ async function toggleInternalNotificationCenter() {
                 await refreshAlwahaNotificationBadge();
                 triggerToastNotification('تم تعليم التنبيهات المحفوظة كمقروءة على هذا الجهاز؛ ستُزامن عند عودة الاتصال.','success');
             }else{
-                const pending=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'pending-notification-reads')||[];
-                const ids=Array.isArray(pending)?pending.filter(Boolean):[];
-                if(ids.length){
-                    const sync=await supabaseFetch(`notifications?id=in.(${ids.map(encodeURIComponent).join(',')})&recipient_id=eq.${encodeURIComponent(me.id)}`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
-                    if(sync===null)return triggerToastNotification('تعذر مزامنة قراءات التنبيهات المحلية؛ بقيت محفوظة.','error');
-                    await window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'pending-notification-reads',[]);
-                }
+                if(!await syncPendingNotificationReads(me.id))return triggerToastNotification('تعذر مزامنة قراءات التنبيهات المحلية؛ بقيت محفوظة.','error');
                 const result=await supabaseFetch(`notifications?recipient_id=eq.${encodeURIComponent(me.id)}&is_read=eq.false`,{method:'PATCH',body:JSON.stringify({is_read:true}),prefer:'return=minimal'});
                 if(result===null)return triggerToastNotification('تعذر تحديث الإشعارات.','error');
                 const cached=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'notifications');
@@ -2763,6 +2774,8 @@ async function toggleInternalNotificationCenter() {
             const requestId=++notificationRenderRequestId;
             const me = await requireAuthenticatedUser('سجل الدخول أولاً لعرض التنبيهات.');
             if (!me || requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open')) return;
+            if(!navigator.onLine&&!window.AlwahaLocalMesh?.isEnabled()){}else if(navigator.onLine)await syncPendingNotificationReads(me.id);
+            if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
             if(center.parentElement!==document.body)document.body.appendChild(center);
             center.classList.add('alwaha-notifications-open');
             center.style.display = 'flex';
