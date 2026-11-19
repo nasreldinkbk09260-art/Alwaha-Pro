@@ -4535,8 +4535,34 @@ async function renderConversationsList() {
                 await bind('peerDiscovered',payload=>addPeer(payload?.peer));
                 await bind('peersDiscovered',payload=>(Array.isArray(payload?.peers)?payload.peers:[]).forEach(addPeer));
                 await bind('discoveryState',payload=>{
-                    const map={scanning:'جارٍ البحث عن الأجهزة القريبة…','wifi-direct-scanning':'يبحث عبر Wi-Fi Direct…','wifi-location-required':'يلزم تشغيل خدمة الموقع في إعدادات Android لاكتشاف Wi-Fi Direct.','wifi-direct-unavailable':'تعذر بدء Wi-Fi Direct على هذا الجهاز.','bluetooth-unavailable':'Bluetooth غير متاح أو لم تسمح الأذونات.',stopped:'انتهى البحث عن الأجهزة القريبة.',timeout:'انتهت مهلة البحث المحدودة.'};
-                    say(map[payload?.status]||payload?.message||('حالة الاكتشاف: '+String(payload?.status||'غير معروفة')));
+                    const state=String(payload?.state||'');
+                    const detail=String(payload?.detail||'');
+                    const map={
+                        scanning:'جارٍ البحث عن الأجهزة القريبة…',
+                        'wifi-direct-scanning':'يبحث عبر Wi-Fi Direct…',
+                        'wifi-location-required':'يلزم تشغيل خدمة الموقع في إعدادات Android لاكتشاف Wi-Fi Direct.',
+                        'wifi-direct-unavailable':'تعذر بدء Wi-Fi Direct على هذا الجهاز.',
+                        'wifi-permission-denied':'لم تسمح أذونات Wi-Fi ببدء البحث.',
+                        'wifi-peer-list-permission-denied':'تعذر قراءة قائمة أجهزة Wi-Fi القريبة بسبب الأذونات.',
+                        'wifi-link-info-permission-denied':'تعذر قراءة حالة رابط Wi-Fi Direct بسبب الأذونات.',
+                        'wifi-direct-enabled':'خدمة Wi-Fi Direct مفعّلة.',
+                        'wifi-direct-disabled':'خدمة Wi-Fi Direct متوقفة في إعدادات Android.',
+                        'wifi-direct-error':'حدث خطأ أثناء البحث عبر Wi-Fi Direct.',
+                        'bluetooth-disabled':'Bluetooth غير مفعّل في إعدادات Android.',
+                        'bluetooth-scanning':'يبحث عبر Bluetooth…',
+                        'bluetooth-scan-unavailable':'تعذر بدء بحث Bluetooth على هذا الجهاز.',
+                        'bluetooth-permission-denied':'لم تسمح أذونات Bluetooth ببدء البحث.',
+                        'bluetooth-error':'حدث خطأ أثناء البحث عبر Bluetooth.',
+                        'bluetooth-discovery-finished':'انتهى البحث عبر Bluetooth.',
+                        'bluetooth-state-changed':'تغيّرت حالة Bluetooth في إعدادات Android.',
+                        'bluetooth-device-read-failed':'تعذر قراءة معلومات أحد أجهزة Bluetooth المكتشفة.',
+                        'receiver-registration-failed':'تعذر تهيئة مستمع أحداث الأجهزة القريبة.'
+                    };
+                    if(state==='stopped'){
+                        say(detail==='timeout'?'انتهت مهلة البحث المحدودة.':'تم إيقاف البحث عن الأجهزة القريبة.');
+                        return;
+                    }
+                    say(map[state]||('حالة الاكتشاف: '+(state||'غير معروفة')+(detail?' — '+detail:'')));
                 });
                 if(session.closed)return;
                 const caps=await plugin.getCapabilities().catch(()=>null);
