@@ -837,9 +837,12 @@ img,video,canvas{max-width:100%}
         </div>
         <div id="chat-messages-container" style="height:calc(100dvh - 180px);overflow-y:auto;padding:10px 4px 76px;display:flex;flex-direction:column;overscroll-behavior:contain;"></div>
         <div id="direct-reply-preview" style="display:none;padding:7px 10px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-        <div class="alwaha-chat-composer">
-            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off">
+        <div class="alwaha-chat-composer" style="flex-wrap:wrap;gap:6px;">
+            <input type="text" id="chat-message-input" placeholder="اكتب رسالتك هنا..." class="keyboard-target" aria-label="نص الرسالة" autocomplete="off" style="flex:1;min-width:130px;">
             <button type="button" class="btn-action" onclick="sendLiveChatMessageFromUI()" aria-label="إرسال الرسالة"><i class="fa-solid fa-paper-plane"></i></button>
+            <button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('direct-chat-media-input').click()" aria-label="إرسال صورة أو فيديو" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button>
+            <button type="button" class="alwaha-chat-icon-btn" id="direct-chat-voice-button" onclick="toggleChatVoiceRecording('direct')" aria-label="تسجيل رسالة صوتية" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button>
+            <input type="file" id="direct-chat-media-input" accept="image/*,video/*" hidden onchange="handleDirectChatFileInput(this)">
         </div>
     </div>
 
@@ -2169,6 +2172,106 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             return data?.publicUrl || null;
         }
 
+
+        const ALWAHA_CHAT_MEDIA_PREFIX='ALWAHA_MEDIA_V1:';
+        let activeChatMediaRecorder=null,activeChatMediaStream=null,activeChatMediaContext=null,activeChatMediaChunks=[];
+        function directChatConversationKey(userA,userB){return 'dm-'+[String(userA),String(userB)].sort().join('-');}
+        function encodeAlwahaChatMedia(type,path,file){
+            return ALWAHA_CHAT_MEDIA_PREFIX+JSON.stringify({v:1,type,path,name:String(file?.name||'media').slice(0,160),size:Number(file?.size||0),mime:String(file?.type||'application/octet-stream').slice(0,100)});
+        }
+        function decodeAlwahaChatMedia(message){
+            const raw=String(message||'');if(!raw.startsWith(ALWAHA_CHAT_MEDIA_PREFIX))return null;
+            try{const item=JSON.parse(raw.slice(ALWAHA_CHAT_MEDIA_PREFIX.length));if(item?.v!==1||!['image','video','audio'].includes(item.type)||typeof item.path!=='string'||item.path.split('/').length!==3||item.path.includes('..'))return null;return item;}catch{return null;}
+        }
+        async function renderAlwahaChatMessageContent(message){
+            const item=decodeAlwahaChatMedia(message);if(!item)return escapeHtml(String(message||''));
+            if(!supabaseClient?.storage)return '<span style="color:#ffd88b;font-size:10px;">وسيط محفوظ — اتصل لعرض الملف المحمي.</span>';
+            try{
+                const result=await supabaseClient.storage.from('chat-media').createSignedUrl(item.path,3600);
+                const url=result?.data?.signedUrl;if(result?.error||!url)throw result?.error||new Error('Signed URL unavailable');
+                const safe=escapeHtml(url),name=escapeHtml(item.name||'وسيط');
+                if(item.type==='image')return '<a href="'+safe+'" target="_blank" rel="noopener" style="display:block;"><img src="'+safe+'" alt="'+name+'" loading="lazy" style="max-width:min(100%,280px);max-height:280px;object-fit:contain;border-radius:12px;"></a>';
+                if(item.type==='video')return '<video controls playsinline preload="metadata" src="'+safe+'" style="width:min(100%,300px);max-height:280px;border-radius:12px;background:#000;"></video>';
+                return '<audio controls preload="metadata" src="'+safe+'" style="width:min(100%,280px);"></audio>';
+            }catch(error){console.warn('[Alwaha Chat Media] signed media unavailable:',error);return '<span style="color:#ffd88b;font-size:10px;">الملف محفوظ ومقيد بأطراف المحادثة؛ تعذر جلب رابط عرضه الآن.</span>';}
+        }
+        async function uploadPrivateChatMedia(file,conversationKey,user){
+            if(!file||!user||!supabaseClient?.storage)return null;
+            const allowed=file.type.startsWith('image/')||file.type.startsWith('video/')||file.type.startsWith('audio/');
+            if(!allowed)return triggerToastNotification('نوع الملف غير مدعوم. اختر صورة أو فيديو أو صوتًا.','error'),null;
+            const maxBytes=file.type.startsWith('video/')?50*1024*1024:15*1024*1024;
+            if(!file.size||file.size>maxBytes)return triggerToastNotification('حجم الملف غير مقبول؛ الحد الأقصى '+Math.round(maxBytes/1024/1024)+' ميجابايت.','error'),null;
+            const safeName=String(file.name||'media').toLowerCase().replace(/[^a-z0-9._-]/g,'_').slice(-60)||'media.bin';
+            const ext=(safeName.match(/\.([a-z0-9]+)$/)||[,'bin'])[1];
+            const path=user.id+'/'+String(conversationKey).replace(/[^a-zA-Z0-9_-]/g,'_')+'/'+(crypto.randomUUID?.()||String(Date.now())+'-'+Math.random().toString(36).slice(2))+'.'+ext;
+            const {error}=await supabaseClient.storage.from('chat-media').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});
+            if(error){console.warn('[Alwaha Chat Media] upload failed:',error);triggerToastNotification(error.statusCode===403?'رفضت صلاحية التخزين الخاص. تأكد من تطبيق ترحيل وسائط المحادثات.':'تعذر رفع الملف إلى مساحة المحادثات الخاصة.','error');return null;}
+            return path;
+        }
+        async function removePrivateChatMedia(path){if(path&&supabaseClient?.storage){try{await supabaseClient.storage.from('chat-media').remove([path]);}catch(error){console.warn('[Alwaha Chat Media] orphan cleanup failed:',error);}}}
+        async function sendDirectChatMedia(file){
+            if(!file||directMessageSendInFlight)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط المحادثة.');const peerId=String(currentChatUserId||'');if(!me||!peerId)return;
+            if(!navigator.onLine)return triggerToastNotification('حُفظ اختيار الملف مؤقتًا في الهاتف؛ الإرسال ينتظر عودة الاتصال أو اكتمال شبكة Mesh.','info');
+            if(!(await hasAcceptedAlwahaFriendship(peerId)))return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل إرسال الوسائط.','info');
+            let file=file;
+            if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
+            const conversationKey=directChatConversationKey(me.id,peerId),path=await uploadPrivateChatMedia(file,conversationKey,me);if(!path)return;
+            const type=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
+            const payload={sender_id:me.id,receiver_id:peerId,message:encodeAlwahaChatMedia(type,path,file)};
+            directMessageSendInFlight=true;
+            try{
+                const result=await supabaseFetch('messages',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
+                if(!Array.isArray(result)||!result.length){await removePrivateChatMedia(path);const e=window.__alwahaLastApiError||{};return triggerToastNotification('لم تُرسل الوسائط ('+(e.status||'اتصال')+').','error');}
+                void loadDirectMessages();
+            }finally{directMessageSendInFlight=false;}
+        }
+        async function sendMarketChatMedia(file){
+            if(!file||marketMessageSendInFlight)return;
+            const me=await requireAuthenticatedUser('سجّل الدخول لإرسال وسائط السوق.');const conversationId=String(currentMarketConversationId||'');if(!me||!conversationId)return;
+            if(!navigator.onLine)return triggerToastNotification('حُفظ اختيار الملف مؤقتًا؛ الإرسال ينتظر عودة الاتصال أو اكتمال شبكة Mesh.','info');
+            const conversations=await supabaseFetch('market_conversations?id=eq.'+encodeURIComponent(conversationId)+'&select=id,buyer_id,seller_id&limit=1');
+            const conversation=Array.isArray(conversations)?conversations[0]:null;
+            if(!conversation||![conversation.buyer_id,conversation.seller_id].includes(me.id))return triggerToastNotification('لا تملك صلاحية إرسال الوسائط في هذه المحادثة.','error');
+            if(file.type.startsWith('image/'))file=await compressImageFile(file,1600,.84);
+            const path=await uploadPrivateChatMedia(file,conversationId,me);if(!path)return;
+            const type=file.type.startsWith('image/')?'image':file.type.startsWith('video/')?'video':'audio';
+            const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify({conversation_id:conversationId,sender_id:me.id,message:encodeAlwahaChatMedia(type,path,file)}),prefer:'return=representation'});
+            if(!Array.isArray(result)||!result.length){await removePrivateChatMedia(path);const e=window.__alwahaLastApiError||{};return triggerToastNotification('لم تُرسل وسائط السوق ('+(e.status||'اتصال')+').','error');}
+            void loadMarketMessages();void renderMarketConversationsList();
+        }
+        function handleDirectChatFileInput(input){const file=input?.files?.[0];if(input)input.value='';if(file)void sendDirectChatMedia(file);}
+        function handleMarketChatFileInput(input){const file=input?.files?.[0];if(input)input.value='';if(file)void sendMarketChatMedia(file);}
+        async function toggleChatVoiceRecording(context){
+            if(activeChatMediaRecorder&&activeChatMediaRecorder.state==='recording'){
+                if(activeChatMediaContext!==context)return triggerToastNotification('أوقف التسجيل الحالي أولاً.','info');
+                activeChatMediaRecorder.stop();return;
+            }
+            if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')return triggerToastNotification('تسجيل الصوت غير مدعوم في هذا الجهاز أو WebView.','error');
+            try{
+                const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+                const preferred=['audio/webm;codecs=opus','audio/mp4','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported?.(t))||'';
+                const recorder=new MediaRecorder(stream,preferred?{mimeType:preferred}:undefined);
+                activeChatMediaRecorder=recorder;activeChatMediaStream=stream;activeChatMediaContext=context;activeChatMediaChunks=[];
+                const button=document.getElementById(context==='market'?'market-chat-voice-button':'direct-chat-voice-button');
+                if(button){button.innerHTML='<i class="fa-solid fa-stop"></i>';button.style.color='#ff8fa8';button.setAttribute('aria-label','إيقاف التسجيل وإرسال الصوت');}
+                recorder.ondataavailable=event=>{if(event.data?.size)activeChatMediaChunks.push(event.data);};
+                recorder.onerror=event=>{console.warn('[Alwaha Voice Note] recorder error:',event.error);triggerToastNotification('حدث خطأ أثناء تسجيل الصوت.','error');};
+                recorder.onstop=async()=>{
+                    stream.getTracks().forEach(track=>track.stop());
+                    const blob=new Blob(activeChatMediaChunks,{type:recorder.mimeType||'audio/webm'});
+                    const ext=blob.type.includes('mp4')?'m4a':blob.type.includes('ogg')?'ogg':'webm';
+                    const file=new File([blob],'voice-note-'+Date.now()+'.'+ext,{type:blob.type||'audio/webm'});
+                    activeChatMediaRecorder=null;activeChatMediaStream=null;activeChatMediaChunks=[];
+                    if(button){button.innerHTML='<i class="fa-solid fa-microphone"></i>';button.style.color='';button.setAttribute('aria-label',context==='market'?'تسجيل رسالة صوتية للبائع':'تسجيل رسالة صوتية');}
+                    if(file.size>0){if(context==='market')await sendMarketChatMedia(file);else await sendDirectChatMedia(file);}
+                };
+                recorder.start(500);
+                triggerToastNotification('بدأ تسجيل الرسالة الصوتية. اضغط زر الإيقاف لإرسالها.','info');
+            }catch(error){console.warn('[Alwaha Voice Note] permission/record failed:',error);triggerToastNotification(error?.name==='NotAllowedError'?'لم تسمح بإذن الميكروفون.':'تعذر بدء تسجيل الصوت.','error');}
+        }
+        window.addEventListener('beforeunload',()=>{try{if(activeChatMediaRecorder?.state==='recording')activeChatMediaRecorder.stop();activeChatMediaStream?.getTracks().forEach(t=>t.stop());}catch{}});
+
         async function getCurrentAuthUser() {
             if (!supabaseClient) return null;
             const { data, error } = await supabaseClient.auth.getUser();
@@ -3482,12 +3585,14 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             if(requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
             if(!rows.length){container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">لا توجد رسائل بعد. ابدأ المحادثة.</div>';renderDirectReplyPreview();return;}
             const messageMap=new Map(rows.map(m=>[String(m.id),m]));
-            container.innerHTML=rows.map(m=>{
+            const renderedRows=await Promise.all(rows.map(async m=>{
                 const mine=m.sender_id===me.id,parent=m.reply_to_id?messageMap.get(String(m.reply_to_id)):null;
                 const quote=m.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;color:inherit;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
                 const replyButton=directReplySchemaAvailable?`<button type="button" onclick="setDirectMessageReply('${escapeJs(m.id)}')" style="margin-top:4px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
-                return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};"><div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:80%;direction:rtl;text-align:right;">${quote}${escapeHtml(m.message)}</div><span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
-            }).join('');
+                const body=await renderAlwahaChatMessageContent(m.message);
+                return `<div style="text-align:${mine?'left':'right'};margin:10px 0;display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};"><div style="display:inline-block;background:${mine?'linear-gradient(135deg,#3a86ff,#00ffff)':'rgba(255,255,255,.08)'};color:${mine?'#000':'#fff'};padding:10px 15px;border-radius:15px;max-width:90%;direction:rtl;text-align:right;overflow-wrap:anywhere;">${quote}${body}</div><span style="font-size:9px;color:#777;margin-top:3px;">${new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
+            }));
+            container.innerHTML=renderedRows.join('');
             renderDirectReplyPreview();container.scrollTop=container.scrollHeight;
         }
         function renderDirectReplyPreview(){
@@ -3566,12 +3671,14 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             if(requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
             if(!rows.length){holder.innerHTML='<div style="color:#9fb1c8;text-align:center;padding:22px;font-size:11px;">ابدأ المحادثة بخصوص هذا الإعلان.</div>';renderMarketReplyPreview();return;}
             const messageMap=new Map(rows.map(row=>[String(row.id),row]));
-            holder.innerHTML=rows.map(row=>{
+            const renderedRows=await Promise.all(rows.map(async row=>{
                 const mine=row.sender_id===me.id,parent=row.reply_to_id?messageMap.get(String(row.reply_to_id)):null;
                 const quote=row.reply_to_id?`<div style="border-right:3px solid #8bf4ff;padding:5px 8px;margin-bottom:7px;background:#00000012;border-radius:7px;font-size:10px;opacity:.9;">رد على: ${escapeHtml(parent?.message||'الرسالة الأصلية غير متاحة')}</div>`:'';
                 const replyButton=marketReplySchemaAvailable?`<button type="button" onclick="setMarketMessageReply('${escapeJs(row.id)}')" style="margin-top:3px;border:0;background:transparent;color:#8bf4ff;font:10px Cairo,sans-serif;padding:2px 5px;">رد ↩</button>`:'';
-                return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:86%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${quote}${escapeHtml(row.message)}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
-            }).join('');
+                const body=await renderAlwahaChatMessageContent(row.message);
+                return `<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'};margin:9px 0;"><div style="max-width:90%;padding:10px 13px;border-radius:14px;background:${mine?'linear-gradient(135deg,#2875a5,#53c9d5)':'#ffffff12'};color:${mine?'#05131e':'#fff'};font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;">${quote}${body}</div><span style="font-size:9px;color:#8192a8;margin-top:3px;">${new Date(row.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}</span>${replyButton}</div>`;
+            }));
+            holder.innerHTML=renderedRows.join('');
             renderMarketReplyPreview();holder.scrollTop=holder.scrollHeight;
         }
         function renderMarketReplyPreview(){
@@ -3656,7 +3763,7 @@ async function subscribeToMarketConversation() {
                     <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
                     <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
-                    <div style="display:flex;gap:7px;align-items:flex-end;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:0;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button></div>
+                    <div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:120px;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button><button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('market-chat-media-input').click()" aria-label="إرسال صورة أو فيديو للبائع" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button><button type="button" class="alwaha-chat-icon-btn" id="market-chat-voice-button" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button><input type="file" id="market-chat-media-input" accept="image/*,video/*" hidden onchange="handleMarketChatFileInput(this)"></div>
                     <div style="font-size:9px;color:#8294aa;padding:5px 2px 0;">رسائل السوق مستقلة عن طلبات الصداقة ودردشة الأصدقاء.</div></section>`;
                 modal.addEventListener('click',event=>{if(event.target===modal)closeMarketConversationChat();});document.body.appendChild(modal);
             }
