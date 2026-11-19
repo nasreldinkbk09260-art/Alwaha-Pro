@@ -23,7 +23,7 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='alwaha_chat_media_delete_own' AND cmd='DELETE') THEN
     RAISE EXCEPTION 'chat media own-delete policy missing';
   END IF;
-  IF NOT row_security_active('storage.objects'::regclass) THEN
+  IF NOT (SELECT relrowsecurity FROM pg_class WHERE oid='storage.objects'::regclass) THEN
     RAISE EXCEPTION 'storage.objects RLS is not active';
   END IF;
 END
