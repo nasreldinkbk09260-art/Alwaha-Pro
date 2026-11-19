@@ -35,6 +35,10 @@ const checks=[
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
  ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
  ['mesh relay forwarding is restricted to an explicitly paired neighbor and bounded queue',mesh.includes("reason:'untrusted-neighbor'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
+ ['encrypted relay queue resumes automatically after a trusted neighbor handshake',mesh.includes("if(trusted&&isEnabled())await flushRelayQueue()")&&mesh.includes("row.value.lastHopFingerprint===transportPeerFingerprint")&&mesh.includes("reason:'untrusted-neighbor'")],
+ ['Android opens only user-approved Internet and Bluetooth system panels',plugin.includes('openInternetSettings')&&plugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')&&plugin.includes('openBluetoothSettings')&&plugin.includes('Settings.Panel.ACTION_BLUETOOTH')&&html.includes('data-open-internet-settings')&&html.includes('data-open-bluetooth-settings')],
+ ['Android does not claim app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا')],
+
 
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
  ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
