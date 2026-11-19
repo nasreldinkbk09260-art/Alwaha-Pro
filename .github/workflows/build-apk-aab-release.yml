@@ -497,7 +497,6 @@ jobs:
               ('android.permission.NEARBY_WIFI_DEVICES', 'android:usesPermissionFlags="neverForLocation"'),
               ('android.permission.BLUETOOTH_SCAN', 'android:usesPermissionFlags="neverForLocation"'),
               ('android.permission.BLUETOOTH_CONNECT', ''),
-              ('android.permission.BLUETOOTH_ADVERTISE', ''),
               ('android.permission.BLUETOOTH', 'android:maxSdkVersion="30"'),
               ('android.permission.BLUETOOTH_ADMIN', 'android:maxSdkVersion="30"'),
           )
