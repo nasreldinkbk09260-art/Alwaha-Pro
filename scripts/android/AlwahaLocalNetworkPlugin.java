@@ -99,7 +99,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("permissionsGranted", hasDiscoveryPermissions());
         result.put("transportReady", isTransportConnected());
         result.put("chatReady", isTransportConnected());
-        result.put("fileTransferReady", false);
+        result.put("fileTransferReady", isTransportConnected());
         result.put("callMediaReady", false);
         result.put("requiresAccessLocalNetworkPermission", Build.VERSION.SDK_INT >= 37 && targetSdk >= 37);
         call.resolve(result);
@@ -454,7 +454,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("bluetoothDiscoveryStarted", bluetoothStarted);
         result.put("phase", "discovery-only");
         result.put("transportReady", false);
-        result.put("message", "Nearby devices can be discovered, but encrypted data transport is not enabled in this build.");
+        result.put("message", "Nearby devices can be discovered. Connect a Wi-Fi Direct peer to start the encrypted local packet transport.");
         call.resolve(result);
         emitDiscoveryState("scanning", "user");
     }
