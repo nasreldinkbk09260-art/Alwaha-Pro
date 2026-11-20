@@ -2415,10 +2415,37 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
 
         async function getCurrentAuthUser() {
             if (!supabaseClient) return null;
-            // Local mesh mode reads only the persisted session marker and never calls Auth over the network.
+            const localOnly=()=>navigator.onLine===false||window.AlwahaLocalMesh?.isEnabled();
+            const cachedLocalIdentity=async()=>{
+                if(!localOnly())return null;
+                const id=String(localStorage.getItem('alwaha_auth_user_id')||'').trim();
+                if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))return null;
+                const profile=await window.AlwahaLocalVault?.getProfileCache?.(id).catch(()=>null);
+                const storedName=String(localStorage.getItem('alwaha_profile_name')||'').trim();
+                const parts=storedName.split(/\\s+/).filter(Boolean);
+                return {
+                    id,
+                    email:String(localStorage.getItem('alwaha_profile_email')||''),
+                    user_metadata:{
+                        first_name:String(profile?.first_name||parts[0]||''),
+                        last_name:String(profile?.last_name||parts.slice(1).join(' ')),
+                        username:String(profile?.username||''),
+                        gender:String(profile?.gender||localStorage.getItem('alwaha_profile_gender')||''),
+                        avatar_url:String(profile?.avatar_url||localStorage.getItem('alwaha_profile_avatar')||'')
+                    },
+                    alwaha_local_identity:true
+                };
+            };
+            // Local mesh mode reads the persisted Auth session first and never refreshes it via the cloud.
             if (window.AlwahaLocalMesh?.isEnabled()) {
-                try { const { data:{session} } = await supabaseClient.auth.getSession(); return session?.user || null; }
-                catch (error) { console.warn('[Alwaha Auth] Local session lookup failed:',error); return null; }
+                try {
+                    const { data:{session} } = await supabaseClient.auth.getSession();
+                    if(session?.user)return session.user;
+                    return await cachedLocalIdentity();
+                } catch (error) {
+                    console.warn('[Alwaha Auth] Local session lookup failed:',error);
+                    return await cachedLocalIdentity();
+                }
             }
             try {
                 const { data, error } = await supabaseClient.auth.getUser();
@@ -2427,15 +2454,14 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
             } catch (error) {
                 if (navigator.onLine !== false && !/fetch|network|timeout|offline/i.test(String(error?.message||error?.name||''))) return null;
             }
-            // A persisted session may be used only to identify cached local data offline.
-            // All server writes remain subject to authenticated Supabase checks when online.
+            // A persisted Auth session may identify the account for local cached reads; it is not a write credential.
             try {
                 const { data:{session} } = await supabaseClient.auth.getSession();
-                return session?.user || null;
+                if(session?.user)return session.user;
             } catch (error) {
                 console.warn('[Alwaha Auth] Offline session lookup failed:',error);
-                return null;
             }
+            return await cachedLocalIdentity();
         }
 
         async function getCurrentProfile() {
