@@ -48,7 +48,7 @@ check('home comment aggregate cache stores only post identifiers and totals',htm
 check('home comment totals are cached per account and restored offline without a network request',
   html.includes("getAccountViewCache?.(me.id,'post-comment-counts')")&&
   html.includes("saveAccountViewCache?.(me.id,'post-comment-counts',counts)")&&
-  html.includes("if(offlineView){\\n                counts=me?await")&&
+  html.includes("if(offlineView){")&&html.includes("counts=me?await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'post-comment-counts'):null")&&
   vault.includes("'post-comment-counts'"));
 
 
@@ -60,7 +60,7 @@ check('previous authenticated sessions remain available locally after transient 
   html.includes('Offline session lookup failed'));
 
 check('expired or unavailable offline Auth session can identify the previously signed-in local account for read-only views',
-  html.includes('async function cachedLocalIdentity()')&&html.includes("localStorage.getItem('alwaha_auth_user_id')")&&
+  html.includes('const cachedLocalIdentity=async()=>')&&html.includes("localStorage.getItem('alwaha_auth_user_id')")&&
   html.includes("getProfileCache?.(id)")&&html.includes('alwaha_local_identity:true')&&
   html.includes('A persisted Auth session may identify the account for local cached reads; it is not a write credential')&&
   html.includes("return await cachedLocalIdentity()"));
