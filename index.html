@@ -5816,7 +5816,9 @@ async function submitNewProductToMarket() {
             const q=String(searchQuery||'').trim().toLowerCase();
             const radiusValue=document.getElementById('market-radius-select')?.value||'all';
             let filtered=products.filter(prod=>(!prod.status||prod.status==='active')&&(!q||`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`.toLowerCase().includes(q)));
-            if(marketSearchLatitude!==null&&marketSearchLongitude!==null&&radiusValue!=='all') {
+            const localMeshEnabled=Boolean(window.AlwahaLocalMesh?.isEnabled());
+            const configuredLocalRadiusKm=15;
+            if(!localMeshEnabled&&marketSearchLatitude!==null&&marketSearchLongitude!==null&&radiusValue!=='all') {
                 const radius=Number(radiusValue);
                 filtered=filtered.filter(prod=>Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))&&prod.latitude!==null&&prod.longitude!==null&&alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude))<=radius);
             }
@@ -5827,21 +5829,27 @@ async function submitNewProductToMarket() {
             else filtered.sort((a,b)=>(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0));
             if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:11px;padding:20px;line-height:1.8;">لا توجد نتائج في هذا النطاق. جرّب توسيع النطاق أو حذف البحث.</div>';return;}
             container.innerHTML=filtered.map(prod=>{
+              const hasBuyerLocation=marketSearchLatitude!==null&&marketSearchLongitude!==null;
+              const hasProductLocation=prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude));
+              const productDistanceKm=hasBuyerLocation&&hasProductLocation?alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)):null;
+              const localRadiusKm=radiusValue==='all'?configuredLocalRadiusKm:Math.min(configuredLocalRadiusKm,Math.max(1,Number(radiusValue)||configuredLocalRadiusKm));
+              const requiresInternet=localMeshEnabled&&(productDistanceKm===null||productDistanceKm>localRadiusKm);
               const urls=Array.isArray(prod.image_urls)?prod.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
               if(!urls.length&&typeof prod.image_url==='string'&&/^https?:\/\//i.test(prod.image_url))urls.push(prod.image_url);
               const distanceLabel=marketSearchLatitude!==null&&marketSearchLongitude!==null&&prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))?`${alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)).toFixed(1)} كم`:'';
               const gallery=urls.length?`<div style="display:grid;grid-template-columns:repeat(${Math.min(3,Math.max(1,urls.length))},1fr);gap:4px;margin-bottom:8px;">${urls.map(url=>`<img src="${escapeHtml(url)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;" loading="lazy" alt="">`).join('')}</div>`:'<img src="icon.png" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" loading="lazy" alt="">';
               return `
-                <article data-market-card="true" data-search="${escapeHtml(`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`)}" style="background:rgba(255,255,255,.05);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.1);">
+                <article data-market-card="true" data-local-internet-required="${requiresInternet?'true':'false'}" data-search="${escapeHtml(`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`)}" style="position:relative;overflow:hidden;background:rgba(255,255,255,.05);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.1);${requiresInternet?'opacity:.58;filter:grayscale(.14);':''}">
                   ${gallery}
+                  ${requiresInternet?'<div role="note" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(5,12,24,.48);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);pointer-events:auto;"><span style="background:#091522ed;border:1px solid #ffd88b88;border-radius:18px;padding:8px 13px;color:#ffd88b;font-size:11px;font-weight:800;box-shadow:0 5px 18px #0008;"><i class="fa-solid fa-wifi"></i> يحتاج إنترنت</span></div>':''}
                   <div style="font-weight:bold;color:#00ffff;margin-bottom:3px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(prod.title||'منتج')}</div>
                   <div style="color:#ffd700;font-weight:bold;margin-bottom:5px;font-size:14px;">💰 ${escapeHtml(prod.price||'')}</div>
                   <div style="font-size:10px;color:#aaa;margin-bottom:8px;min-height:30px;max-height:46px;overflow:hidden;">${escapeHtml(prod.description||'لا يوجد وصف')}</div>
                   <div style="font-size:9px;color:#888;margin-bottom:6px;">${escapeHtml(prod.category||'أخرى')}${prod.location_label?` · ${escapeHtml(prod.location_label)}`:''}${distanceLabel?` · على بُعد ${distanceLabel}`:''}</div>
                   ${prod.promoted_until&&Date.parse(prod.promoted_until)>Date.now()?'<div style="font-size:9px;color:#ffd86b;margin-bottom:7px;">✦ إعلان مروّج</div>':''}
                   <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="btn-action" style="flex:1;background:#253449;color:#fff;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="openMarketProductDetails('${escapeJs(prod.id)}')"><i class="fa-solid fa-circle-info"></i> التفاصيل</button>
-                    <button type="button" class="btn-action" style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;" onclick="contactMarketSeller('${escapeJs(prod.id)}','${escapeJs(prod.title||'المنتج')}','${escapeJs(prod.seller_id||'')}')"><i class="fa-solid fa-comments"></i> هل ما زال متوفرًا؟</button>
+                    <button type="button" class="btn-action" ${requiresInternet?'disabled aria-disabled="true" title="يحتاج اتصالاً بالإنترنت"':''} style="flex:1;background:#253449;color:#fff;padding:8px 6px;border-radius:6px;font-size:10px;${requiresInternet?'opacity:.5;':''}" ${requiresInternet?'':'onclick="openMarketProductDetails(\''+escapeJs(prod.id)+'\')"'}><i class="fa-solid fa-circle-info"></i> التفاصيل</button>
+                    <button type="button" class="btn-action" ${requiresInternet?'disabled aria-disabled="true" title="يحتاج اتصالاً بالإنترنت"':''} style="flex:1;background:linear-gradient(90deg,#00ffff,#3a86ff);color:#000;padding:8px 6px;border-radius:6px;font-size:10px;${requiresInternet?'opacity:.5;':''}" ${requiresInternet?'':'onclick="contactMarketSeller(\''+escapeJs(prod.id)+'\',\''+escapeJs(prod.title||'المنتج')+'\',\''+escapeJs(prod.seller_id||'')+'\')"'}><i class="fa-solid fa-comments"></i> هل ما زال متوفرًا؟</button>
                   </div>
                 </article>`;
             }).join('');
