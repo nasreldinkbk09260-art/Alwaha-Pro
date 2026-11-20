@@ -96,6 +96,11 @@ async function click(selector,label){
  await sleep(180);
  console.log('PASS click: '+label);
 }
+async function exists(selector,label){
+ const result=await evaluate('!!document.querySelector('+JSON.stringify(selector)+')');
+ assert.equal(result,true,label+' must exist in the DOM.');
+ console.log('PASS exists: '+label);
+}
 async function section(id,label){
  const actual=await evaluate('document.querySelector(".app-section.active-section")?.id||""');
  assert.equal(actual,id,label+' should navigate to '+id+' (got '+actual+').');
@@ -135,10 +140,13 @@ try{
  await click('.nav-item.chat','chat navigation');
  await section('chat-section','chat lobby');
  await visible('#chat-main-lobby-wrapper','chat lobby');
- await visible('#conversations-list','conversation list host');
+ await visible('#chat-main-lobby-wrapper button[onclick*="recent"]','recent conversations entry');
+ await visible('#chat-main-lobby-wrapper button[onclick*="all-users"]','user directory entry');
+ await exists('#conversations-list','empty recent-conversations list host (height may be zero when no user is signed in)');
  await screenshot('03-chat-lobby.png');
- await evaluate('expandChatSubWindow("all-users")');
+ await click('#chat-main-lobby-wrapper button[onclick*="all-users"]','user directory entry');
  await visible('#all-users-tab','user directory view');
+ await visible('#chat-search-users-input','user directory search');
  await evaluate('document.getElementById("active-chat-box").style.display="flex"');
  await visible('#direct-chat-voice-button','direct voice-note button in active chat layout');
  await visible('.alwaha-chat-composer button[aria-label="إرسال صورة أو فيديو"]','direct photo/video action button in active chat layout');
