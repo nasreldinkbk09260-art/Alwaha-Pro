@@ -192,8 +192,9 @@ try{
      listing_snapshot:{title:"إعلان توصيل تجريبي",price:"100",category:"اختبار",description:"معاملة تجريبية غير محفوظة"},guarantee_days:7,sold_at:new Date().toISOString(),guarantee_expires_at:new Date().toISOString(),retention_until:new Date().toISOString()
    }];
    if(path==="rpc/request_market_delivery"){const body=JSON.parse(options.body);Object.assign(window.__ciDelivery,{method:"delivery",status:"requested",recipient:body.p_recipient_name,phone:body.p_recipient_phone,address:body.p_delivery_address,instructions:body.p_delivery_instructions});return [{id:"ci-transaction"}];}
-   if(path==="rpc/update_market_delivery"){const body=JSON.parse(options.body);Object.assign(window.__ciDelivery,{status:body.p_delivery_status,fee:body.p_delivery_fee,provider:body.p_delivery_provider,tracking:body.p_tracking_reference});return [{id:"ci-transaction"}];}
+   if(path==="rpc/update_market_delivery"){const body=JSON.parse(options.body);Object.assign(window.__ciDelivery,{status:body.p_delivery_status,fee:body.p_delivery_fee??window.__ciDelivery.fee,provider:body.p_delivery_provider??window.__ciDelivery.provider,tracking:body.p_tracking_reference??window.__ciDelivery.tracking});return [{id:"ci-transaction"}];}
    if(path.startsWith("market_transactions?id=eq.ci-transaction")&&options.method==="PATCH"){Object.assign(window.__ciDelivery,{confirmed:true,status:"delivered",method:"delivery"});return [{id:"ci-transaction"}];}
+   if(path.startsWith("market_transactions?id=eq.ci-transaction"))return [{id:"ci-transaction",buyer_confirmed_at:window.__ciDelivery.confirmed?new Date().toISOString():null,fulfillment_method:window.__ciDelivery.method,delivery_status:window.__ciDelivery.status}];
    return [];
  };
  window.__ciPromptQueue=["مستلم تجريبي","01000000000","عنوان اختبار خاص داخل CI","اتصل عند الوصول","35","توصيل تجريبي","CI-TRACK-988"];
