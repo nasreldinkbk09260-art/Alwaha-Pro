@@ -5350,9 +5350,10 @@ async function renderConversationsList(){
                     finally{session.transportStarting=false;}
                 });
                 await bind('transportState',payload=>{
-                    if(payload?.state==='packet-transport-connected')say('اتصال Wi‑Fi Direct لنقل الحزم قائم. يجري التحقق من هوية الجار.');
+                    if(payload?.state==='packet-transport-connected')say((payload.transport==='bluetooth-rfcomm'?'اتصال Bluetooth Classic RFCOMM':'اتصال Wi‑Fi Direct')+' لنقل الحزم قائم. يجري التحقق من هوية الجار.');
                     else if(payload?.state==='packet-transport-disconnected')say('انقطع رابط الجار. الحزم المرحّلة تبقى محفوظة محليًا.');
-                    else if(payload?.state==='packet-transport-listening')say('الجهاز يستمع لاتصالات Wi‑Fi Direct.');
+                    else if(payload?.state==='bluetooth-server-listening')say('الهاتف يستقبل اتصال Bluetooth بعد موافقة النظام؛ افتح البحث من الهاتف الآخر.');
+                    else if(payload?.state==='packet-server-listening')say('الجهاز يستمع لاتصالات Wi‑Fi Direct.');
                 });
                 if(session.closed)return;
                 const [caps,bundle]=await Promise.all([plugin.getCapabilities().catch(()=>null),mesh.getIdentityBundle()]);
