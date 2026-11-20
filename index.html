@@ -4066,11 +4066,35 @@ async function subscribeToMarketConversation() {
             syncAlwahaModalBodyLock();window.AlwahaModalShell?.sync?.();
         }
 
+        async function callCurrentMarketConversation(){
+            const me=await requireAuthenticatedUser('سجّل الدخول لإجراء مكالمة السوق.');
+            if(!me)return;
+            const conversationId=String(currentMarketConversationId||'');
+            const peerId=String(currentMarketPeerId||'');
+            if(!conversationId||!peerId||peerId===me.id)return triggerToastNotification('افتح محادثة سوق صحيحة مع الطرف الآخر أولاً.','error');
+            let conversation=null;
+            if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled()){
+                const cached=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
+                conversation=cached.find(row=>String(row.id)===conversationId)||null;
+            }else{
+                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,product_id,buyer_id,seller_id,archived_at&limit=1`);
+                if(!Array.isArray(rows))return triggerToastNotification('تعذر التحقق من محادثة السوق قبل الاتصال.','error');
+                conversation=rows[0]||null;
+            }
+            const active=await getCurrentAuthUser();
+            if(active?.id!==me.id)return;
+            if(!conversation||!((conversation.buyer_id===me.id&&conversation.seller_id===peerId)||(conversation.seller_id===me.id&&conversation.buyer_id===peerId)))
+                return triggerToastNotification('لم تتطابق هوية طرفي المحادثة؛ لم نبدأ الاتصال.','error');
+            if(conversation.archived_at)return triggerToastNotification('هذه محادثة مؤرشفة ولا يمكن بدء مكالمة سوق جديدة منها.','info');
+            const title=document.getElementById('market-chat-title')?.textContent||'بائع السوق';
+            return startAlwahaCall(window.AlwahaLocalMesh?.isEnabled()?'offline-market':'market','audio',conversationId,peerId,title);
+        }
+
         async function openMarketConversationChat(conversationId,title,peerId) {
             const me=await requireAuthenticatedUser('سجّل الدخول لفتح محادثة السوق.');if(!me||!conversationId)return;
             let c=null;
             if(navigator.onLine&&!window.AlwahaLocalMesh?.isEnabled()){
-                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,buyer_id,seller_id&limit=1`);
+                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(conversationId)}&select=id,product_id,buyer_id,seller_id,archived_at&limit=1`);
                 c=Array.isArray(rows)?rows[0]:null;
             }else{
                 const cached=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
@@ -4086,7 +4110,7 @@ async function subscribeToMarketConversation() {
             if(!modal){
                 modal=document.createElement('div');modal.id='market-chat-modal';modal.className='game-modal-overlay alwaha-fullscreen-layer';modal.style.zIndex='2147483200';
                 modal.innerHTML=`<section role="dialog" aria-modal="true" aria-label="محادثة السوق" style="box-sizing:border-box;width:100vw;height:100dvh;max-width:none;max-height:none;min-height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#0c1728;border:0;border-radius:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));box-shadow:none;">
-                    <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></header>
+                    <header style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #ffffff18;"><div style="min-width:0;"><div style="font-size:13px;font-weight:800;color:#8bf4ff;">محادثة السوق</div><div id="market-chat-title" style="font-size:10px;color:#a9b9cd;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;"><button type="button" class="btn-action" onclick="callCurrentMarketConversation()" aria-label="اتصال صوتي بطرف محادثة السوق" title="اتصال صوتي" style="background:#174c42;color:#d8fff5;border-radius:10px;padding:7px 10px;"><i class="fa-solid fa-phone"></i> اتصال</button><button type="button" class="btn-action" onclick="closeMarketConversationChat()" aria-label="إغلاق" style="background:#ffffff13;color:#fff;border-radius:10px;padding:7px 12px;">إغلاق</button></div></header>
                     <div id="market-chat-messages" aria-live="polite" style="flex:1;min-height:120px;overflow:auto;padding:9px 3px;overscroll-behavior:contain;"></div>
                     <div id="market-reply-preview" style="display:none;padding:7px 9px;border-top:1px solid #ffffff14;background:#ffffff08;color:#cbd8e8;font-size:10px;"></div>
                     <div style="display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid #ffffff18;padding-top:10px;"><textarea id="market-chat-input" rows="2" maxlength="4000" placeholder="اكتب رسالتك بخصوص الإعلان..." style="flex:1;min-width:120px;resize:vertical;background:#ffffff0d;color:#fff;border:1px solid #ffffff25;border-radius:12px;padding:10px;font:12px Cairo,sans-serif;outline:none;"></textarea><button type="button" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" title="الشبكة الحرة المحلية" style="border:1px solid #8bf4ff55;background:#102e3a;color:#8bf4ff;border-radius:10px;padding:7px 9px;font:10px Cairo,sans-serif;">شبكة حرة</button><button type="button" onclick="sendMarketMessage()" style="background:linear-gradient(120deg,#8bf4ff,#a8ffd7);color:#09202b;border:0;border-radius:12px;padding:11px 14px;font:800 11px Cairo,sans-serif;min-height:42px;">إرسال</button><button type="button" class="alwaha-chat-icon-btn" onclick="document.getElementById('market-chat-media-input').click()" aria-label="إرسال صورة أو فيديو للبائع" title="صورة أو فيديو"><i class="fa-solid fa-image"></i></button><button type="button" class="alwaha-chat-icon-btn" id="market-chat-voice-button" onclick="toggleChatVoiceRecording('market')" aria-label="تسجيل رسالة صوتية للبائع" title="رسالة صوتية"><i class="fa-solid fa-microphone"></i></button><input type="file" id="market-chat-media-input" accept="image/*,video/*" hidden onchange="handleMarketChatFileInput(this)"></div>
