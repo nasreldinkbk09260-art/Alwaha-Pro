@@ -63,6 +63,7 @@ const securityDefinerAudit=read('scripts/security-definer-audit.mjs');
 const triggerDefinerMigration=read('supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql');
 const triggerDefinerTest=read('supabase/tests/20261113050000_trigger_definer_empty_search_path.sql');
 const localVault=read('alwaha-local-vault.js'), experience=read('alwaha-experience.js'), modalShell=read('alwaha-modal-shell.js'), kidsRoom=read('alwaha-kids-room.js');
+const localNetworkPlugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
 if(!localVault.includes("appVersion:'3.0.4'"))fail('Encrypted backup metadata must record the final app version 3.0.4.');
 for(const id of ['home-section','market-section','chat-section','reels-section','profile-section']){if(!html.includes(`id="${id}"`))fail(`Missing main section: ${id}`);if(!html.includes(`showSection('${id}'`))fail(`Missing navigation handler for ${id}`);}
 const gamesNavMatch=html.match(/<button\b[^>]*class="nav-item games-nav"[^>]*>/);
@@ -257,7 +258,6 @@ const postCommentCountMigration=read('supabase/migrations/20261120010000_post_co
 const postCommentCountTest=read('supabase/tests/20261120010000_post_comment_counts_view.sql');
 const postCommentCountFixture=read('supabase/tests/post-comment-counts-ci-bootstrap.sql');
 if(!postCommentCountMigration.includes('security_invoker = true')||!postCommentCountMigration.includes('GROUP BY target_id')||!postCommentCountMigration.includes('comments_post_target_count_idx')||!postCommentCountTest.includes('security_invoker=true')||!postCommentCountTest.includes('POST_COMMENT_COUNTS_RLS_REGRESSION=PASS')||!postCommentCountFixture.includes('ci_comments_restricted_reader')||!sqlCi.includes('20261120010000_post_comment_counts_view.sql'))fail('RLS-preserving post comment aggregate view or disposable SQL regression is missing.');
-const localNetworkPlugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
 if(!localNetworkPlugin.includes('openInternetSettings')||!localNetworkPlugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')||!localNetworkPlugin.includes('openBluetoothSettings')||!html.includes('data-open-internet-settings')||!html.includes('data-open-bluetooth-settings'))fail('The local-network panel must expose user-approved Android Internet and Bluetooth settings shortcuts.');
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 if(!workflow.includes("      - '**'")||!workflow.includes("if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'"))fail('Development CI must watch all branches while public publishing requires main plus explicit approval.');
