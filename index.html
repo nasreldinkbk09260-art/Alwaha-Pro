@@ -5396,9 +5396,9 @@ async function renderConversationsList(){
             if (!targetId) return triggerToastNotification(marketMode?'تعذر تحديد البائع لمكالمة السوق.':'افتح محادثة صديق من دليل المستخدمين أولاً.', 'error');
             if (targetId === user.id) return triggerToastNotification('لا يمكن الاتصال بالحساب نفسه.', 'error');
             if (marketMode) {
-                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(marketConversationId||'')}&select=id,buyer_id,seller_id&limit=1`);
+                const rows=await supabaseFetch(`market_conversations?id=eq.${encodeURIComponent(marketConversationId||'')}&select=id,buyer_id,seller_id,archived_at&limit=1`);
                 const c=Array.isArray(rows)?rows[0]:null;
-                if(!c||!((c.buyer_id===user.id&&c.seller_id===targetId)||(c.seller_id===user.id&&c.buyer_id===targetId)))return triggerToastNotification('المكالمة غير مسموحة: لا توجد محادثة سوق موثقة بين الطرفين.', 'error');
+                if(!c||c.archived_at||!((c.buyer_id===user.id&&c.seller_id===targetId)||(c.seller_id===user.id&&c.buyer_id===targetId)))return triggerToastNotification('المكالمة غير مسموحة: المحادثة غير نشطة أو لا تطابق طرفَي السوق.', 'error');
             } else if (!(await hasAcceptedAlwahaFriendship(targetId))) return triggerToastNotification('يجب قبول طلب الصداقة أولاً قبل الاتصال.', 'info');
             if (video && (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection)) return triggerToastNotification('مكالمات الفيديو غير مدعومة في إصدار WebView الحالي.', 'error');
             setCallModal(true);
