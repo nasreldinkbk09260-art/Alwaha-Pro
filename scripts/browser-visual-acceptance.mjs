@@ -86,8 +86,8 @@ async function screenshot(name){
  fs.writeFileSync(path.join(outputDir,name),Buffer.from(r.data,'base64'));
 }
 async function visible(selector,label){
- const result=await evaluate('(()=>{const e=document.querySelector('+JSON.stringify(selector)+');if(!e)return false;const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity)>0&&r.width>0&&r.height>0;})()');
- assert.equal(result,true,label+' must be visible at mobile viewport.');
+ const result=await evaluate('(()=>{const e=document.querySelector('+JSON.stringify(selector)+');if(!e)return {visible:false,reason:"missing"};const s=getComputedStyle(e),r=e.getBoundingClientRect();return {visible:s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity)>0&&r.width>0&&r.height>0,display:s.display,visibility:s.visibility,opacity:s.opacity,rect:{x:r.x,y:r.y,width:r.width,height:r.height},bodyClass:document.body.className,privacyDisplay:getComputedStyle(document.getElementById("alwaha-privacy-notice")||document.body).display,activeModals:[...document.querySelectorAll(".game-modal-overlay,.alwaha-fullscreen-layer")].filter(x=>{const z=getComputedStyle(x),b=x.getBoundingClientRect();return z.display!=="none"&&z.visibility!=="hidden"&&b.width>0&&b.height>0}).map(x=>x.id||x.className)}})()');
+ assert.equal(result?.visible,true,label+' must be visible at mobile viewport. '+JSON.stringify(result));
  console.log('PASS visible: '+label);
 }
 async function click(selector,label){
@@ -116,6 +116,7 @@ try{
  await waitFor(()=>evaluate('document.readyState==="complete"&&!!document.querySelector(".bottom-nav-bar .nav-item")'),'Alwaha-Pro DOM and navigation',30000);
  await sleep(1800);
  await evaluate('if(typeof deferAlwahaPrivacyNotice==="function")deferAlwahaPrivacyNotice()');
+ await screenshot('00-startup-after-privacy.png');
  assert.equal(await evaluate('document.querySelectorAll(".bottom-nav-bar .nav-item").length'),7,'Seven primary navigation actions must be present.');
  await visible('.bottom-nav-bar','primary navigation');
  await visible('.nav-item.main-home','home navigation button');
