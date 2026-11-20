@@ -20,7 +20,7 @@ const checks=[
  ['offline direct chat list reads local encrypted cache',html.includes('getAllDirectChatCaches?.(me.id)')&&html.includes('نسخة محلية مشفّرة')],
  ['offline marketplace list and chat use locally cached conversation index',html.includes('getMarketConversationIndex?.(me.id)')&&vault.includes("cache:market-index:")],
  ['offline UI distinguishes local encrypted relay queueing from unavailable cloud delivery',html.includes('الإرسال والمزامنة السحابية متوقفان دون اتصال')&&html.includes('إرسال الوسائط دون اتصال غير متاح ما لم تفعل الشبكة الحرة')&&html.includes('حُفظت كحزمة مشفّرة للتمرير المرحّل.')&&html.includes('result.sent?')],
- ['offline auth fallback only reads persisted local session for local display',html.includes('A persisted session may be used only to identify cached local data offline')&&html.includes('supabaseClient.auth.getSession()')]
+  ['offline account identity fallback is local-only and never becomes a server write credential',html.includes('const cachedLocalIdentity=async()=>')&&html.includes('if(!localOnly())return null;')&&html.includes('alwaha_local_identity:true')&&html.includes('A persisted Auth session may identify the account for local cached reads; it is not a write credential')&&html.includes('supabaseClient.auth.getSession()')&&html.includes('return await cachedLocalIdentity()')],
 ];
 let failures=0;
 for(const [name,ok] of checks){if(ok)console.log('PASS:',name);else{failures++;console.error('FAIL:',name);}}
