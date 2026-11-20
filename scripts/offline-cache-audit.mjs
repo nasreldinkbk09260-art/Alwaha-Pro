@@ -73,6 +73,17 @@ check('the own-profile encrypted cache retains private fields without storing cr
   vault.includes('birthdate:profile.birthdate')&&vault.includes('phone:profile.phone')&&vault.includes('is_admin:profile.is_admin===true')&&
   !/saveProfileCache[\\s\\S]{0,600}(?:password|access_token|refresh_token|service_role)/.test(vault));
 
+check('public member profiles open from encrypted per-account peer snapshots while offline',
+  html.includes('async function openPublicUserProfile(targetId)')&&
+  html.includes("getPeerProfileCache?.(me.id,targetId)")&&
+  html.includes("getAccountViewCache?.(me.id,'friend-directory')")&&
+  html.includes('if(offlineView){')&&html.includes("if(!u)return triggerToastNotification('لم يُحفظ هذا الملف الشخصي على الجهاز بعد."));
+check('offline public profiles hide server mutations and allow chat only for a paired Mesh peer',
+  html.includes("const safeFriend=self||offlineView||interactionBlocked||!safetyReady?'':friendControl")&&
+  html.includes("const reportControl=self||offlineView?'':")&&
+  html.includes("getPeerByAccountId?.(targetId)")&&html.includes('المراسلة المحلية متاحة للأجهزة الموثّقة فقط'));
+
+
 
 
 check('R7.5.1 runtime observer loop protections remain present',read('alwaha-modal-shell.js').includes('hasRelevantMutation(records)')&&read('alwaha-modal-shell.js').includes('scheduleSync()')&&read('alwaha-modal-shell.js').includes('nodeContainsLayer')&&read('alwaha-experience.js').includes('if(handle.textContent!==handleLabel)handle.textContent=handleLabel'));
