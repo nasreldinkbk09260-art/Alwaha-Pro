@@ -78,6 +78,8 @@ jobs:
 
       - name: Type-check authenticated admin API
         run: deno check --node-modules-dir=auto supabase/functions/admin-api/index.ts
+      - name: Type-check authenticated ICE and public quota configuration API
+        run: deno check --node-modules-dir=auto supabase/functions/call-config/index.ts
       - name: Type-check username registration and login API
         run: deno check --node-modules-dir=auto supabase/functions/username-auth/index.ts
       - name: Type-check authenticated profile update API
