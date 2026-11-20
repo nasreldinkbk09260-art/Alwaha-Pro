@@ -108,7 +108,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     public void openBluetoothSettings(PluginCall call) {
         Intent intent;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            intent = new Intent(Settings.Panel.ACTION_BLUETOOTH);
+            intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
         } else {
             intent = new Intent(Settings.ACTION_BLUETOOTH_SETTINGS);
         }
@@ -382,7 +382,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         Socket socket = transportSocket;
         BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
         boolean wifiReady = socket != null && !socket.isClosed() && socket.isConnected();
-        boolean bluetoothReady = bluetoothSocket != null && !bluetoothSocket.isClosed() && bluetoothSocket.isConnected();
+        boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected();
         if (!wifiReady && !bluetoothReady) {
             call.reject("No Wi-Fi Direct or Bluetooth packet transport is connected.");
             return;
@@ -518,7 +518,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void readBluetoothFrames(BluetoothSocket socket) {
         try {
             DataInputStream input = new DataInputStream(socket.getInputStream());
-            while (!transportClosed && socket.isConnected() && !socket.isClosed()) {
+            while (!transportClosed && socket.isConnected()) {
                 int length = input.readInt();
                 if (length <= 0 || length > MAX_LOCAL_PACKET_BYTES) throw new IllegalStateException("Invalid Bluetooth packet length.");
                 byte[] packet = new byte[length];
@@ -558,7 +558,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         Socket socket = transportSocket;
         BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
         boolean wifiReady = socket != null && socket.isConnected() && !socket.isClosed();
-        boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected() && !bluetoothSocket.isClosed();
+        boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected();
         return wifiReady || bluetoothReady;
     }
 
