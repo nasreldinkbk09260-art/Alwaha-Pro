@@ -117,7 +117,7 @@ check('base themes stay available while new themes can register without a fixed 
   html.includes('window.AlwahaThemeRegistry') &&
   html.includes('window.registerAlwahaTheme = function registerAlwahaTheme(definition)') &&
   html.includes('window.AlwahaThemeRegistry[id] = theme') &&
-  html.includes('grid?.appendChild(button)') &&
+  html.includes('grid.appendChild(button)') &&
   themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop') &&
   themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop') &&
   !themeCss.includes('bg-aurora.webp') && !themeCss.includes('bg-underwater.webp') &&
