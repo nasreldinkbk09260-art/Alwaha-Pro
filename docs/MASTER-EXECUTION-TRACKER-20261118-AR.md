@@ -336,3 +336,43 @@
 - هذا التحديث للسجل فقط؛ لا يدّعي اجتياز CI جديد أو نشرًا إلى Supabase أو اختبار هاتف.
 - لم يحدث أي تغيير على `main` أو Supabase الإنتاجية أو الأسرار أو الصلاحيات، ولم تُحذف بيانات أو ملفات، ولم يُنشر APK/AAB أو الموقع رسميًا.
 - **الخطوة التالية:** انتظار نتائج اختبار Build 715 على هاتفين وحسابين، ثم معالجة العيوب المحددة الناتجة عنه قبل الانتقال إلى اختبار الفيديو.
+
+
+## متابعة التنفيذ اليومي — 20 نوفمبر 2026
+
+### نقطة البداية والتحقق من CI
+- تمت قراءة HEAD مباشرة من الفرع `alwaha-pro-recovery-20261118` في بداية التشغيل: `f62fe5bf21bc0858147beaa5f37e9436b1115abb`.
+- تمت قراءة هذا السجل من الفرع نفسه قبل التحديث؛ blob SHA: `ae512c77379087c878dd0a335d888fad76756d14`.
+- أحدث تشغيل على SHA المصدر هو **CI #718**، [Run #718 — success](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44605262088). اكتملت وظيفتا PostgreSQL المؤقتة وبناء Android بنجاح. وظيفتا نشر APK العام وGitHub Pages كانتا `skipped` كما تقتضي قواعد فرع الاسترداد.
+- التشغيل #717 على SHA مختلف نتيجته `cancelled` ولا يُحسب نجاحًا. لم يظهر تشغيل جارٍ على HEAD عند الفحص، ولم نُعد تشغيل فحوص ناجحة بلا تغيير مصدر.
+
+### نتائج الفحوص على SHA `f62fe5b`
+- `audit:release`: PASS.
+- `audit:performance`: PASS؛ أضيف في هذا المصدر حارس قبول يطابق polling للألعاب: ثانية واحدة في الواجهة النشطة، وست ثوانٍ بالخلفية، مع تسجيل/إزالة مستمع `visibilitychange`. مراجعة المصدر أكدت وجود إزالة المستمع عند إيقاف الغرفة. هذا اختبار مصدر/CI وليس قياس أداء على هاتف.
+- `audit:chat`: PASS، 77 فحصًا.
+- `audit:fullscreen-ui`: PASS.
+- `audit:reconciliation`: PASS.
+- `audit:games`: `SERVER_AUTHORITATIVE_GAMES_AUDIT=PASS` و`QR_RUNTIME_PASS` و`GAME_UI_RUNTIME_PASS` مع 43 assertion لدورة الإنشاء/الانضمام/QR/الاستعادة والتحقق من العضوية.
+- `audit:retention-kids-vault`: `RETENTION_KIDS_VAULT_AUDIT=PASS` (44 check).
+- `audit:user-safety`: `USER_SAFETY_UI_AUDIT=PASS` (24 check).
+- `audit:native-call-ui`: `NATIVE_CALL_UI_AUDIT=PASS` و`CALL_FEEDBACK_RUNTIME_AUDIT=PASS` و`CALL_SIGNALING_RUNTIME_AUDIT=PASS`.
+- فحوص إضافية ناجحة في التشغيل نفسه: `PROFILE_UI_ACCEPTANCE=PASS (42/42)`، `HOME_SECTION_ACCEPTANCE=PASS)، `MARKETPLACE_COLUMN_AUDIT=PASS (11 queries)`، `MARKETPLACE_BUY_SELL_ACCEPTANCE=PASS (55 checks)`، `SUPPORT_TICKETS_AUDIT=PASS)، `ACCOUNT_DELETION_AUDIT=PASS (12 checks)`، `ADMIN_APP_AUDIT=PASS (25 checks)`، و`LOCAL_SESSION_CRYPTO=PASS (23 assertions)`.
+- نجح بناء الويب ومزامنة Capacitor وبناء APK/AAB الموقّعين والتحقق من توقيعي APK/AAB وملف `SHA256SUMS`.
+
+### بيانات Build 718
+- version `3.0.4`، version code `718`، application ID `pro.alwaha.app`، target SDK `36`، والفرع `alwaha-pro-recovery-20261118`، ومصدر التطبيق المختبَر `f62fe5bf21bc0858147beaa5f37e9436b1115abb`.
+- بصمة شهادة توقيع APK SHA-256: `41d039324101241546173f196c0f781ec23b33003ca7d7be2eca5dc329a925fb`؛ تطابق بصمة الشهادة المرجعية المسجلة، لكن لم تُجرَ مقارنة تثبيت فعلية على الهاتف في هذا التشغيل.
+- Artifact: `Alwaha-Pro-3.0.4-build-718`، ID `14570088255`، الحجم `54,609,864 bytes`، digest `sha256:4cadd42e82cb3ebf94afde608e7e9244e12193f8f25e5f84ecb508de264ea1a8`، انتهاء الصلاحية `2026-12-19T20:09:25Z`. [Artifact Build 718 — APK/AAB/Source](https://github.com/nasreldinkbk09260-art/Alwaha-Pro/actions/runs/44605262088/artifacts/14570088255).
+- لا يُعد هذا artifact إصدارًا عامًا ولا دليلًا على اختبار الهاتف؛ نشر APK العام وPages تخطّيا عمدًا على فرع الاسترداد.
+
+### ملاحظة تبعيات أمنية
+- خطوة `npm audit --audit-level=high` اكتملت دون فشل للعتبة العالية، لكنها أبلغت عن **6 ثغرات متوسطة** في تبعيات تطوير متعدية، أبرزها `glob` و`minimatch` و`uuid` عبر `rimraf` و`xcode` و`@capacitor/cli` المثبت على `8.5.2`.
+- لم ننفذ `npm audit fix --force`؛ سجل npm يوضح أنه سيغيّر `@capacitor/cli` إلى `8.6.2` خارج التثبيت الدقيق الحالي. يلزم إعداد تحديث متوافق لكل حزم Capacitor معًا ثم فحوص التوافق والبناء قبل اعتماده. هذه ملاحظة مفتوحة وليست فشلًا في CI #718.
+
+### حالة الأولويات والعائق
+- أعلى بوابة غير مكتملة ما زالت **اختبار الألعاب بين حسابين وهاتفين حقيقيين**. اختبارات VM/QR وCI لا تشغّل كاميرا هاتف ولا تثبت اللعب المتزامن بين حسابين مستقلين.
+- المطلوب على Build 718: تثبيت على هاتفين بحسابين منفصلين؛ إنشاء غرفة شطرنج/ليدو/حرب من الأول؛ الانضمام بالكود ثم QR من الثاني؛ تبادل النقلات/الأدوار؛ قطع الاتصال وإعادته؛ ثم استعادة الغرفة على الجهازين. يجب تسجيل النتيجة لكل لعبة.
+- بعد إغلاق الألعاب: اختبار مكالمة فيديو واردة وصادرة على الهاتفين، التحقق من وصول/فك remote video track، دخول وخروج Kids Room وإنهاؤها الآمن. بعد ذلك فقط نتابع مرحلة نقل Wi-Fi Direct الفعلي.
+- لا يوجد حتى الآن نقل محلي فعلي: لا اتصال P2P/socket ولا إرسال رسائل/ملفات/وسائط؛ جميع readiness flags تبقى false. لا نستعيد كود mesh القديم ولا نعرض الميزة كأنها جاهزة.
+- لم تُكتب بيانات أو migrations أو SQL إلى Supabase الإنتاجية، ولم تُنشر Edge Functions، ولم تتغير Auth/RLS أو الأسرار أو الصلاحيات، ولم يُعدّل `main`، ولم تُنشر نسخة APK أو صفحة رسمية.
+- **الخطوة التالية:** استخدام Artifact Build 718 لإكمال اختبار الألعاب الميداني على هاتفين وحسابين. لا يمكن لـ CI أو بيئة GitHub إكمال هذا الاختبار بدلًا من الجهازين؛ عند توفر نتائجه تُعالج الأعطال المحددة ثم ننتقل إلى بوابة الفيديو.
