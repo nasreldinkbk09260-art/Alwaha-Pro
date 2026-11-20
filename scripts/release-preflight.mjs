@@ -83,7 +83,14 @@ const themeChoices=[...html.matchAll(/data-theme-choice="([^"]+)"/g)].map(m=>m[1
 if(themeChoices.length<3||new Set(themeChoices).size!==themeChoices.length||!['default','oasis','abyss'].every(theme=>themeChoices.includes(theme)))fail('The baseline default/oasis/abyss themes must remain available; additional unique theme choices are allowed.');
 const themeCss=read('alwaha-theme-system.css');
 if(!themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop')||!themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop'))fail('Premium image-free theme atmospheres are incomplete.');
-if(!html.includes('Bluetooth مكتشف فقط في هذه المرحلة')||!html.includes('نقل البيانات عبر Bluetooth'))fail('Bluetooth discovery-only limitation must remain explicit until its data transport is implemented.');
+if(!localNetworkPlugin.includes('startBluetoothPacketServer')||
+   !localNetworkPlugin.includes('connectBluetoothPeer')||
+   !localNetworkPlugin.includes('createInsecureRfcommSocketToServiceRecord')||
+   !localNetworkPlugin.includes('readBluetoothFrames')||
+   !html.includes('data-bluetooth-server')||
+   !html.includes('Bluetooth Classic RFCOMM')||
+   !html.includes('لم نعتمد بعد مكالمات الصوت والفيديو عبر Bluetooth أو عدة قفزات')||
+   !localNetworkPlugin.includes('result.put("callMediaReady", false)'))fail('Bluetooth packet transport must be present while BLE and live Bluetooth/multi-hop call media remain explicitly unverified.');
 if(games.includes('الألعاب الفردية الحالية')||games.includes('data-mp-legacy')||games.includes('LEGACY_TITLES'))fail('Legacy single-player games remain visible or launchable.');
 if(/function\s+renderGamesSection\s*\(/.test(html)||/function\s+launchGameEngine\s*\(/.test(html)||html.includes('لعبة الذاكرة التقنية 🧠')||html.includes('تحدي كسر التشفير 🔐'))fail('Obsolete inline game UI must not shadow the dedicated multiplayer games module.');
 if(!games.includes('window.renderGamesSection = renderGamesSection')||!games.includes('window.launchGameEngine = function(gameTitle)'))fail('Dedicated multiplayer games module must own the games UI and launcher.');
