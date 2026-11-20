@@ -49,6 +49,7 @@ const checks=[
  ['Kids Room video panel renders a visible Arabic scene/status placeholder rather than an empty black panel',kids.includes('id="kids-video-status"')&&kids.includes('غرفة الأطفال جاهزة')&&kids.includes('.kids-video-status{')&&kids.includes('z-index:3;pointer-events:none')],
  ['Kids Room switches from waiting state after decoded video dimensions become available',kids.includes('remote.readyState>=2&&remote.videoWidth>0&&remote.videoHeight>0')&&kids.includes("loadedmetadata','loadeddata','canplay','playing'")&&kids.includes("status.style.display=hasVideo?'none':'grid'")],
  ['Kids Room removes all temporary remote video listeners and restores original media elements on close',kids.includes('remote.removeEventListener(eventName,listener)')&&kids.includes('parent.insertBefore(el,next&&next.parentNode===parent?next:null)')],
+ ['closing Kids Room resynchronizes the still-open call modal backdrop and body lock',kids.includes("document.body.classList.remove('modal-active');window.AlwahaModalShell?.sync?.();")],
 
  ['kids room handles pointercancel and keyboard toy movement',kids.includes("addEventListener('pointercancel',finishDrag)")&&kids.includes("addEventListener('keydown',keyboardMove)")],
  ['kids room traps focus and restores previous focus',kids.includes("if(e.key==='Tab')")&&kids.includes('oldFocus.focus()')],
