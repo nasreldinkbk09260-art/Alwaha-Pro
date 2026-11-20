@@ -151,4 +151,10 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120210000_marketplace
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120210000_marketplace_delivery_workflow.sql"
 echo 'MARKETPLACE_DELIVERY_WORKFLOW=PASS'
 
+echo 'APPLY TEST MIGRATION: 20261120213000_reel_view_metrics.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/reel-views-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120213000_reel_view_metrics.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120213000_reel_view_metrics.sql"
+echo 'REEL_METRICS_RLS_REGRESSION=PASS'
+
 
