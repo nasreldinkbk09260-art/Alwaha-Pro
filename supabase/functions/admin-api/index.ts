@@ -103,9 +103,9 @@ function normalizeManagementConfig(input: unknown) {
     seenPaymentTypes.add(type);
     return {
       type,
-      label: String(row.label || defaults[index]?.label || 'وسيلة دفع').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 60),
-      account_reference: String(row.account_reference || '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 120),
-      instructions: String(row.instructions || '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 400),
+      label: String(row.label || defaults[index]?.label || 'وسيلة دفع').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 60),
+      account_reference: String(row.account_reference || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 120),
+      instructions: String(row.instructions || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 400),
       enabled: row.enabled === true,
     };
   });
@@ -117,7 +117,7 @@ function normalizeManagementConfig(input: unknown) {
     if (!allowedPlanIds.has(id)) throw new Error('معرّف الخطة غير صالح.');
     return {
       id,
-      name: String(row.name || id).replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, 40),
+      name: String(row.name || id).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 40),
       enabled: row.enabled === true,
       monthly_price_egp: boundedConfigInteger(row.monthly_price_egp, 0, 0, 100_000),
       daily_direct_messages: boundedConfigInteger(row.daily_direct_messages, 1000, 0, 100_000),
@@ -127,6 +127,9 @@ function normalizeManagementConfig(input: unknown) {
     };
   });
   if (new Set(plans.map((plan) => plan.id)).size !== plans.length) throw new Error('لا يمكن تكرار الخطة نفسها.');
+  if (plans.some(plan => plan.weekly_direct_messages < plan.daily_direct_messages || plan.weekly_market_messages < plan.daily_market_messages)) {
+    throw new Error('يجب أن يكون الحد الأسبوعي للخطة مساوياً للحد اليومي أو أكبر منه.');
+  }
   return { version: 1, currency: 'EGP', free, plans, payment_methods };
 }
 
