@@ -7008,19 +7008,44 @@ async function setAlwahaUserBlock(userId,shouldBlock){
 
 async function openPublicUserProfile(targetId){
   const me=await requireAuthenticatedUser('سجّل الدخول أولًا لعرض ملفات الأعضاء.');if(!me||!targetId)return;
-  const [users,follows,requests]=await Promise.all([
-    supabaseFetch('user_directory?id=eq.'+encodeURIComponent(targetId)+'&select=id,first_name,last_name,avatar_url,is_verified,created_at,gender,username&limit=1'),
-    supabaseFetch('follows?follower_id=eq.'+encodeURIComponent(me.id)+'&following_id=eq.'+encodeURIComponent(targetId)+'&select=follower_id&limit=1'),
-    supabaseFetch('friend_requests?or=(and(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(targetId)+'),and(requester_id.eq.'+encodeURIComponent(targetId)+',target_id.eq.'+encodeURIComponent(me.id)+'))&select=id,requester_id,target_id,status&order=created_at.desc&limit=1')
-  ]);
-  if(!Array.isArray(users)||!users[0])return triggerToastNotification('تعذر العثور على الملف الشخصي.','error');
-  if(!Array.isArray(follows)||!Array.isArray(requests))return triggerToastNotification('تعذر تحميل حالة العلاقة. تحقق من الاتصال ثم أعد المحاولة.','error');
-  let safetyStatus=null;
-  try{safetyStatus=await callAlwahaUserSafety('block_status',{userId:String(targetId)})}
-  catch(error){console.warn('[Alwaha Safety] Block status unavailable:',error)}
-  const u=users[0],req=requests[0]||null,name=([u.first_name||'',u.last_name||''].join(' ').trim()||'عضو في الواحة'),self=me.id===u.id,isFollowing=follows.length>0;
+  const offlineView=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
+  let u=null,req=null,isFollowing=false,safetyStatus=null,safetyReady=false,paired=false;
+  if(offlineView){
+    const [peer,directory,requesters,relations]=await Promise.all([
+      window.AlwahaLocalVault?.getPeerProfileCache?.(me.id,targetId),
+      window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory'),
+      window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requester-directory'),
+      window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-relations')
+    ]);
+    u=peer||(Array.isArray(directory)?directory.find(item=>String(item.id)===String(targetId)):null)||
+      (Array.isArray(requesters)?requesters.find(item=>String(item.id)===String(targetId)):null)||null;
+    req=(Array.isArray(relations)?relations:[]).filter(row=>
+      String(row.requester_id)===String(me.id)&&String(row.target_id)===String(targetId)||
+      String(row.requester_id)===String(targetId)&&String(row.target_id)===String(me.id)
+    ).sort((a,b)=>Date.parse(b.created_at||0)-Date.parse(a.created_at||0))[0]||null;
+    paired=Boolean(await window.AlwahaLocalMesh?.getPeerByAccountId?.(targetId).catch(()=>null));
+    if(!u)return triggerToastNotification('لم يُحفظ هذا الملف الشخصي على الجهاز بعد. افتحه مرة واحدة أثناء الاتصال أولًا.','info');
+  }else{
+    const [users,follows,requests]=await Promise.all([
+      supabaseFetch('user_directory?id=eq.'+encodeURIComponent(targetId)+'&select=id,first_name,last_name,avatar_url,is_verified,created_at,gender,username&limit=1'),
+      supabaseFetch('follows?follower_id=eq.'+encodeURIComponent(me.id)+'&following_id=eq.'+encodeURIComponent(targetId)+'&select=follower_id&limit=1'),
+      supabaseFetch('friend_requests?or=(and(requester_id.eq.'+encodeURIComponent(me.id)+',target_id.eq.'+encodeURIComponent(targetId)+'),and(requester_id.eq.'+encodeURIComponent(targetId)+',target_id.eq.'+encodeURIComponent(me.id)+'))&select=id,requester_id,target_id,status,created_at&order=created_at.desc&limit=1')
+    ]);
+    if(!Array.isArray(users)||!users[0])return triggerToastNotification('تعذر العثور على الملف الشخصي.','error');
+    if(!Array.isArray(follows)||!Array.isArray(requests))return triggerToastNotification('تعذر تحميل حالة العلاقة. تحقق من الاتصال ثم أعد المحاولة.','error');
+    u=users[0];req=requests[0]||null;isFollowing=follows.length>0;
+    try{safetyStatus=await callAlwahaUserSafety('block_status',{userId:String(targetId)});safetyReady=!!safetyStatus;}
+    catch(error){console.warn('[Alwaha Safety] Block status unavailable:',error);}
+    void window.AlwahaLocalVault?.savePeerProfileCache?.(me.id,targetId,u).catch(error=>console.warn('[Alwaha Vault] peer profile cache failed:',error));
+    const cachedRelations=await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-relations');
+    if(Array.isArray(cachedRelations)){
+      const rest=cachedRelations.filter(row=>!(String(row.requester_id)===String(me.id)&&String(row.target_id)===String(targetId))&&!(String(row.requester_id)===String(targetId)&&String(row.target_id)===String(me.id)));
+      if(req)rest.push(req);
+      void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'friend-relations',rest).catch(error=>console.warn('[Alwaha Vault] friend relations refresh failed:',error));
+    }
+  }
+  const name=([u.first_name||'',u.last_name||''].join(' ').trim()||'عضو في الواحة'),self=me.id===u.id;
   const interactionBlocked=!!(safetyStatus&&(safetyStatus.blockedByMe||safetyStatus.blockedMe));
-  const safetyReady=!!safetyStatus;
   let friendControl='<button class="btn-action" style="background:#a8ffd7;color:#102033;padding:9px 13px;border-radius:18px" onclick="requestFriendFromProfile(\''+escapeJs(u.id)+'\')"><i class="fa-solid fa-user-plus"></i> إضافة صديق</button>';
   if(req?.status==='accepted')friendControl='<span style="color:#a8ffd7;font-size:12px;padding:8px">✓ صديقان</span>';
   else if(req?.status==='pending'&&req.requester_id===me.id)friendControl='<span style="color:#ffe7a3;font-size:11px;padding:8px">طلب الصداقة قيد الانتظار</span>';
@@ -7030,18 +7055,18 @@ async function openPublicUserProfile(targetId){
   const avatar=u.avatar_url||getDefaultAvatar(u.gender||''),joined=u.created_at?new Date(u.created_at).toLocaleDateString('ar-EG'):'غير متاح';
   const followControl=self?'':'<button class="btn-action" style="background:'+(isFollowing?'#283849':'#8bf4ff')+';color:'+(isFollowing?'#fff':'#102033')+';padding:9px 13px;border-radius:18px" onclick="toggleUserFollow(\''+escapeJs(u.id)+'\')"><i class="fa-solid '+(isFollowing?'fa-user-check':'fa-user-plus')+'"></i> '+(isFollowing?'إلغاء المتابعة':'متابعة')+'</button>';
   const messageControl=self?'':'<button class="btn-action" style="background:rgba(255,255,255,.08);color:#fff;padding:9px 13px;border:1px solid #8bf4ff55;border-radius:18px" onclick="closePublicUserProfile();openTargetUserDirectChat(\''+escapeJs(name)+'\',\'\',\''+escapeJs(u.id)+'\')"><i class="fa-solid fa-paper-plane"></i> مراسلة</button>';
-  const safeFriend=self?'':interactionBlocked?'<span style="color:#ffccba;font-size:11px;padding:8px">التواصل محظور بين الحسابين</span>':safetyReady?friendControl:'<span style="color:#ffe7a3;font-size:10px;padding:8px">تعذر التحقق من حالة الحظر</span>';
-  const safeFollow=self||interactionBlocked||!safetyReady?'':followControl;
-  const safeMessage=self||interactionBlocked||!safetyReady?'':messageControl;
-  const blockControl=self||!safetyReady?'':safetyStatus.blockedByMe
+  const safeFriend=self||offlineView||interactionBlocked||!safetyReady?'':friendControl;
+  const safeFollow=self||offlineView||interactionBlocked||!safetyReady?'':followControl;
+  const safeMessage=self||interactionBlocked||(!safetyReady&&!paired)?(offlineView?'<span style="color:#ffd88b;font-size:10px;">يلزم توثيق الجهاز لبدء مراسلة محلية</span>':''):messageControl;
+  const blockControl=self||offlineView||!safetyReady?'':safetyStatus.blockedByMe
     ?'<button class="btn-action" style="background:#30465b;color:#fff;padding:9px 13px;border-radius:18px" onclick="setAlwahaUserBlock(\''+escapeJs(u.id)+'\',false)">إلغاء الحظر</button>'
     :safetyStatus.blockedMe?'<span style="color:#ffbf9f;font-size:11px;padding:8px">هذا العضو حظرك</span>'
     :'<button class="btn-action" style="background:#4c1524;color:#fecdd3;padding:9px 13px;border-radius:18px" onclick="setAlwahaUserBlock(\''+escapeJs(u.id)+'\',true)">حظر</button>';
-  const reportControl=self?'':'<button class="btn-action" style="background:#26364f;color:#fff;padding:9px 13px;border-radius:18px" onclick="reportAlwahaContent(\'user\',\''+escapeJs(u.id)+'\')"><i class="fa-solid fa-flag"></i> إبلاغ</button>';
-  modal.innerHTML='<div role="dialog" aria-modal="true" style="width:min(100%,410px);max-height:88vh;overflow:auto;background:#101827;border:1px solid #8bf4ff66;border-radius:22px;padding:22px;text-align:center;box-shadow:0 20px 70px #0009"><button class="btn-action" style="float:left;background:transparent;color:#fff;font-size:23px" onclick="closePublicUserProfile()" aria-label="إغلاق">×</button><img src="'+escapeHtml(avatar)+'" alt="الصورة الشخصية" style="width:94px;height:94px;border-radius:50%;object-fit:cover;border:2px solid #8bf4ff;margin:8px auto 12px;display:block"><h2 style="color:#fff;font-size:20px;margin:6px 0">'+escapeHtml(name)+(u.is_verified?' <i class="fa-solid fa-circle-check" style="color:#8bf4ff" aria-label="موثق"></i>':'')+'</h2><div style="font-size:11px;color:#9fb1c6;margin:8px 0">@'+escapeHtml(u.username||'member')+'</div><div style="font-size:11px;color:#9fb1c6;margin:8px 0 18px">عضو في الواحة منذ '+escapeHtml(joined)+'</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0">'+safeFollow+safeFriend+safeMessage+blockControl+reportControl+'</div><div style="font-size:10px;color:#75879d;margin-top:16px">بيانات التواصل الشخصية لا تظهر هنا.</div></div>';
+  const reportControl=self||offlineView?'':'<button class="btn-action" style="background:#26364f;color:#fff;padding:9px 13px;border-radius:18px" onclick="reportAlwahaContent(\'user\',\''+escapeJs(u.id)+'\')"><i class="fa-solid fa-flag"></i> إبلاغ</button>';
+  const offlineNote=offlineView?'<div role="status" style="margin-top:12px;padding:8px;border-radius:9px;background:#ffffff08;color:#ffd88b;font-size:9px;line-height:1.7;">نسخة ملف محفوظة محليًا ومشفّرة. إجراءات الصداقة والمتابعة والحظر والبلاغات تحتاج اتصالاً؛ المراسلة المحلية متاحة للأجهزة الموثّقة فقط.</div>':'';
+  modal.innerHTML='<div role="dialog" aria-modal="true" style="width:min(100%,410px);max-height:88vh;overflow:auto;background:#101827;border:1px solid #8bf4ff66;border-radius:22px;padding:22px;text-align:center;box-shadow:0 20px 70px #0009"><button class="btn-action" style="float:left;background:transparent;color:#fff;font-size:23px" onclick="closePublicUserProfile()" aria-label="إغلاق">×</button><img src="'+escapeHtml(avatar)+'" alt="الصورة الشخصية" style="width:94px;height:94px;border-radius:50%;object-fit:cover;border:2px solid #8bf4ff;margin:8px auto 12px;display:block"><h2 style="color:#fff;font-size:20px;margin:6px 0">'+escapeHtml(name)+(u.is_verified?' <i class="fa-solid fa-circle-check" style="color:#8bf4ff" aria-label="موثق"></i>':'')+'</h2><div style="font-size:11px;color:#9fb1c6;margin:8px 0">@'+escapeHtml(u.username||'member')+'</div><div style="font-size:11px;color:#9fb1c6;margin:8px 0 18px">عضو في الواحة منذ '+escapeHtml(joined)+'</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0">'+safeFollow+safeFriend+safeMessage+blockControl+reportControl+'</div>'+offlineNote+'<div style="font-size:10px;color:#75879d;margin-top:16px">بيانات التواصل الشخصية لا تظهر هنا.</div></div>';
   modal.style.display='flex';document.body.classList.add('modal-active');
 }
-
 function closePublicUserProfile(){const modal=document.getElementById('alwaha-public-profile-modal');if(modal)modal.style.display='none';document.body.classList.remove('modal-active');}
         async function toggleUserFollow(targetId){
             const me=await requireAuthenticatedUser('سجل الدخول أولًا للمتابعة.');if(!me)return;if(!targetId||targetId===me.id)return triggerToastNotification('لا يمكنك متابعة حسابك الشخصي.','info');
