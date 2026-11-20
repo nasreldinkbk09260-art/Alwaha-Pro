@@ -5413,12 +5413,15 @@ async function renderConversationsList(){
                 const user=await requireAuthenticatedUser(video?'سجّل الدخول لإجراء مكالمة فيديو محلية.':'سجّل الدخول لإجراء مكالمة صوتية محلية.');if(!user)return;
                 const targetId=localMarket?(marketPeerId||currentMarketPeerId):(currentChatUserId||'');
                 if(!targetId||targetId===user.id)return triggerToastNotification('افتح محادثة موثوقة أولًا لتحديد الطرف الآخر.','error');
-                if(!await mesh.getPeerByAccountId(targetId))return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
+                const pairedPeer=await mesh.getPeerByAccountId(targetId);
+                if(!pairedPeer)return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
+                if(mesh.getTransportPeer()!==pairedPeer.fingerprint)return triggerToastNotification('المكالمة المحلية تحتاج اتصالاً مباشراً حالياً بالجهاز الموثّق؛ لا يمكن بدء مكالمة من طابور تمرير مؤجل.','error');
+                if(mesh.getTransportType()!=='wifi-direct-tcp')return triggerToastNotification('Bluetooth ينقل الرسائل والملفات المشفّرة فقط حالياً؛ المكالمات الحية المحلية تحتاج رابط Wi‑Fi Direct مباشر.','error');
                 if(localMarket&&(!marketConversationId||String(currentMarketPeerId||'')!==String(targetId)))return triggerToastNotification('افتح محادثة السوق الموثقة مع البائع قبل المكالمة المحلية.','error');
                 if(video&&(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection))return triggerToastNotification('مكالمات الفيديو غير مدعومة في WebView الحالي.','error');
                 setCallModal(true);if(!activeCallManager)activeCallManager=new CallSignalingManager();
                 activeCallManager.mediaType=video?'video':'audio';
-                updateCallUi('outgoing',{target:localMarket?(marketDisplayName||'بائع السوق'):(currentChatUser||targetId),text:video?'جارٍ بدء مكالمة فيديو محلية…':'جارٍ بدء مكالمة صوتية محلية…',indicator:'<i class="fa-solid fa-wifi"></i> تفاوض WebRTC عبر Wi‑Fi Direct والحزم المشفّرة'});
+                updateCallUi('outgoing',{target:localMarket?(marketDisplayName||'بائع السوق'):(currentChatUser||targetId),text:video?'جارٍ بدء مكالمة فيديو محلية…':'جارٍ بدء مكالمة صوتية محلية…',indicator:'<i class="fa-solid fa-wifi"></i> مكالمة مباشرة بين الجهازين عبر Wi‑Fi Direct؛ لا تشمل مسارات التمرير المتعدد'});
                 try{
                     await activeCallManager.startOutgoing(targetId,mode,mediaType,localMarket?marketConversationId:null);
                     updateCallUi('connecting',{target:localMarket?(marketDisplayName||'بائع السوق'):(currentChatUser||targetId),text:'بانتظار استجابة الجهاز الآخر عبر الشبكة المحلية…',indicator:'لا يستخدم مسار المكالمة المحلي خوادم STUN/TURN.'});
