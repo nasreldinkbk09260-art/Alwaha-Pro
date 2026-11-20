@@ -247,6 +247,8 @@ try{
  subscribeToDirectMessages=async()=>{};
  true;`);
  await evaluate('openTargetUserDirectChat("صديق تجريبي","","ci-peer")');
+ // The active direct-chat overlay uses the same 300ms slide-up/fade-in transition.
+ await sleep(400);
  await waitFor(()=>evaluate('getComputedStyle(document.getElementById("active-chat-box")).display!=="none"&&getComputedStyle(document.getElementById("all-users-tab")).display==="none"'),'active direct chat layout');
  await visible('#active-chat-box','active direct chat overlay');
  await visible('#direct-chat-voice-button','direct voice-note button in active chat layout');
