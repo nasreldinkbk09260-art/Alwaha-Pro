@@ -9,7 +9,7 @@
     "build": "node scripts/build-web.mjs",
     "cap:sync": "npx cap sync",
     "audit:release": "node scripts/release-preflight.mjs && npm run audit:offline-cache && npm run audit:security-definers && npm run audit:marketplace-delivery",
-    "prebuild": "node scripts/vendor-assets.mjs",
+    "prebuild": "node scripts/vendor-assets.mjs && node scripts/generate-notification-tones.mjs",
     "audit:performance": "node scripts/performance-audit.mjs",
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
     "audit:chat": "node scripts/chat-release-audit.mjs && node scripts/chat-media-offline-audit.mjs",
@@ -37,7 +37,9 @@
     "audit:support-tickets": "node scripts/support-tickets-audit.mjs",
     "audit:local-network-native": "node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs",
     "audit:public-content-rls": "node scripts/public-content-anon-policy-audit.mjs",
-    "audit:marketplace-delivery": "node scripts/marketplace-delivery-audit.mjs"
+    "audit:marketplace-delivery": "node scripts/marketplace-delivery-audit.mjs",
+    "audit:notification-tones": "node scripts/notification-tone-audit.mjs",
+    "audit:reels": "node scripts/reels-metrics-acceptance.mjs"
   },
   "engines": {
     "node": ">=22"
