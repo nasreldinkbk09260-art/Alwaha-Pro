@@ -196,7 +196,8 @@ try{
    if(path.startsWith("market_transactions?id=eq.ci-transaction")&&options.method==="PATCH"){Object.assign(window.__ciDelivery,{confirmed:true,status:"delivered",method:"delivery"});return [{id:"ci-transaction"}];}
    return [];
  };
- window.prompt=()=>["مستلم تجريبي","01000000000","عنوان اختبار خاص داخل CI","اتصل عند الوصول","35","توصيل تجريبي","CI-TRACK-988"].shift()||"قيمة تجريبية";
+ window.__ciPromptQueue=["مستلم تجريبي","01000000000","عنوان اختبار خاص داخل CI","اتصل عند الوصول","35","توصيل تجريبي","CI-TRACK-988"];
+ window.prompt=()=>window.__ciPromptQueue.shift()??"";
  window.confirm=()=>true;
  true;`);
  assert.equal(deliverySetup,true,"disposable delivery mock must be installed");
