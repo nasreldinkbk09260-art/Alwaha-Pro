@@ -82,7 +82,7 @@
   async function getProfileCache(userId){return userId?getEncryptedCache('cache:profile:'+String(userId)):null;}
   async function savePeerProfileCache(userId,peerId,profile){
     if(!userId||!peerId||!profile)return;
-    const safe={id:String(profile.id||peerId),first_name:String(profile.first_name||'').slice(0,80),last_name:String(profile.last_name||'').slice(0,80),avatar_url:String(profile.avatar_url||'').slice(0,2048),is_verified:profile.is_verified===true};
+    const safe={id:String(profile.id||peerId),first_name:String(profile.first_name||'').slice(0,80),last_name:String(profile.last_name||'').slice(0,80),username:String(profile.username||'').slice(0,40),gender:String(profile.gender||'').slice(0,24),created_at:profile.created_at||null,avatar_url:String(profile.avatar_url||'').slice(0,2048),is_verified:profile.is_verified===true};
     await putEncryptedCache('cache:peer-profile:'+String(userId)+':'+String(peerId),safe);
   }
   async function getPeerProfileCache(userId,peerId){
