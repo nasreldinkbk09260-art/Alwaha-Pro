@@ -7153,7 +7153,8 @@ function closePublicUserProfile(){const modal=document.getElementById('alwaha-pu
         function hideAlwahaPrivacyNotice() {
             const notice=document.getElementById('alwaha-privacy-notice');
             if(notice){notice.style.display='none';notice.setAttribute('aria-hidden','true');}
-            document.body.classList.remove('modal-active');
+            if(typeof syncAlwahaModalBodyLock==='function')syncAlwahaModalBodyLock();
+            else document.body.classList.remove('modal-active');
             try { privacyNoticePreviousFocus?.focus?.({preventScroll:true}); } catch(error) {}
         }
         function acknowledgeAlwahaPrivacyNotice() {
