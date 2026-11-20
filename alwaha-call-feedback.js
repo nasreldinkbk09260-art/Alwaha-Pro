@@ -6,6 +6,8 @@
   connected:[{delay:0,duration:.12,frequencies:[660],volume:.026},{delay:145,duration:.18,frequencies:[880],volume:.026}],
   declined:[{delay:0,duration:.18,frequencies:[540],volume:.024},{delay:230,duration:.24,frequencies:[360],volume:.022}],
   'no-answer':[{delay:0,duration:.14,frequencies:[490],volume:.022},{delay:210,duration:.14,frequencies:[390],volume:.021},{delay:420,duration:.25,frequencies:[300],volume:.020}],
+  message:[{delay:0,duration:.56,frequencies:[880,1760,2640],volume:.014}],
+  notification:[{delay:0,duration:.78,frequencies:[740,1480,2220],volume:.016}],
   busy:[{delay:0,duration:.32,frequencies:[480,620],volume:.024},{delay:430,duration:.32,frequencies:[480,620],volume:.024}],
   unavailable:[{delay:0,duration:.12,frequencies:[520],volume:.021},{delay:170,duration:.12,frequencies:[420],volume:.021},{delay:340,duration:.22,frequencies:[320],volume:.020}],
   failed:[{delay:0,duration:.20,frequencies:[390],volume:.022},{delay:260,duration:.20,frequencies:[300],volume:.020}],
