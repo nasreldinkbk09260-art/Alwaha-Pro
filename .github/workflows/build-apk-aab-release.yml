@@ -366,6 +366,14 @@ jobs:
         shell: bash
         run: npm ci --no-audit --no-fund
 
+      - name: Generate original notification chimes and run sound/reels audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run prebuild
+          npm run audit:notification-tones
+          npm run audit:reels
+
       - name: Audit dependency vulnerabilities
         shell: bash
         run: npm audit --audit-level=high
@@ -427,6 +435,13 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+          test -s assets/sounds/message_chime.wav
+          test -s assets/sounds/notification_chime.wav
+          mkdir -p android/app/src/main/res/raw
+          cp assets/sounds/message_chime.wav android/app/src/main/res/raw/alwaha_message_chime.wav
+          cp assets/sounds/notification_chime.wav android/app/src/main/res/raw/alwaha_notification_chime.wav
+          test -s android/app/src/main/res/raw/alwaha_message_chime.wav
+          test -s android/app/src/main/res/raw/alwaha_notification_chime.wav
           test -s android/gradlew
           test -s android/app/build.gradle
           test -s android/app/src/main/AndroidManifest.xml
