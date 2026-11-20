@@ -3536,7 +3536,7 @@ async function renderReelsFeed() {
             const requestId=++reelsFeedRequestId;
             const reelsContainer=document.getElementById('reels-container'); if(!reelsContainer) return;
             if(!reelsContainer.querySelector('.reel-card'))reelsContainer.innerHTML='<div style="text-align:center;color:#ff0055;padding:20px;font-size:12px;">جاري تحديث الريلز في الخلفية...</div>';
-            const [reels,counts]=await Promise.all([supabaseFetch('reels?select=*&order=created_at.desc&limit=50'),supabaseFetch('reel_like_counts?select=reel_id,likes_count')]);
+            const [reels,counts,viewCounts,reelCommentCounts]=await Promise.all([supabaseFetch('reels?select=*&order=created_at.desc&limit=50'),supabaseFetch('reel_like_counts?select=reel_id,likes_count'),supabaseFetch('reel_view_counts?select=reel_id,views_count'),supabaseFetch('reel_comment_counts?select=reel_id,comments_count')]);
             if(requestId!==reelsFeedRequestId)return;
             if(!Array.isArray(reels)) { const e=window.__alwahaLastApiError||{}; reelsContainer.innerHTML=`<div style="text-align:center;color:#ff9ab4;padding:22px;font-size:11px;line-height:1.8;">تعذر تحميل الريلز (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من الاتصال أو أعد المحاولة.')}</div>`;return; }
             if(!reels.length){reelsContainer.innerHTML='<div style="text-align:center;color:#aaa;padding:30px;font-size:12px;">لا توجد ريلز بعد. استخدم زر الإضافة لتصوير فيديو أو اختياره من الهاتف.</div>';return;}
@@ -3547,12 +3547,14 @@ async function renderReelsFeed() {
             ]),1200,[[],[]]):[[],[]];
             if(requestId!==reelsFeedRequestId)return;
             const countMap=new Map((Array.isArray(counts)?counts:[]).map(x=>[String(x.reel_id),Number(x.likes_count||0)]));
+            const viewCountMap=Array.isArray(viewCounts)?new Map(viewCounts.map(x=>[String(x.reel_id),Number(x.views_count||0)])):null;
+            const reelCommentCountMap=Array.isArray(reelCommentCounts)?new Map(reelCommentCounts.map(x=>[String(x.reel_id),Number(x.comments_count||0)])):null;
             const mineSet=new Set((Array.isArray(mine)?mine:[]).map(x=>String(x.reel_id)));
             const followingSet=new Set((Array.isArray(following)?following:[]).map(x=>String(x.following_id)));
             reelsContainer.innerHTML=reels.map((reel,index)=>{
-                const id=String(reel.id), authorId=String(reel.author_id||''), liked=mineSet.has(id), count=countMap.get(id)||0, own=!!(me&&authorId===me.id), isFollowing=followingSet.has(authorId);
+                const id=String(reel.id), authorId=String(reel.author_id||''), liked=mineSet.has(id), count=countMap.get(id)||0, views=viewCountMap?viewCountMap.get(id)||0:null, reelComments=reelCommentCountMap?reelCommentCountMap.get(id)||0:null, own=!!(me&&authorId===me.id), isFollowing=followingSet.has(authorId);
                 const safeTitle=escapeHtml(reel.title||'ريلز'), safeUrl=escapeHtml(reel.media_url||'');
-                const media=reel.media_url?`<video src="${safeUrl}" controls playsinline preload="${index===0?'metadata':'none'}" style="width:100%;height:100%;max-height:calc(100dvh - 205px);object-fit:contain;background:#000;border-radius:12px;" aria-label="فيديو ${safeTitle}"></video>`:`<div style="text-align:center;color:#aaa;padding:35px;"><i class="fa-solid fa-circle-play fa-4x" style="color:#ff0055;margin-bottom:10px;"></i></div>`;
+                const media=reel.media_url?`<video src="${safeUrl}" controls playsinline preload="${index===0?'metadata':'none'}" onplay="recordReelView('${escapeJs(id)}')" style="width:100%;height:100%;max-height:calc(100dvh - 205px);object-fit:contain;background:#000;border-radius:12px;" aria-label="فيديو ${safeTitle}"></video>`:`<div style="text-align:center;color:#aaa;padding:35px;"><i class="fa-solid fa-circle-play fa-4x" style="color:#ff0055;margin-bottom:10px;"></i></div>`;
                 const followBtn=own?'':`<button type="button" class="reels-floating-btn" aria-label="${isFollowing?'إلغاء متابعة':'متابعة'} صاحب الريلز" title="${isFollowing?'إلغاء متابعة':'متابعة'}" onclick="toggleReelFollow('${escapeJs(authorId)}')"><i class="fa-solid ${isFollowing?'fa-user-check':'fa-user-plus'}" style="color:${isFollowing?'#8cffc1':'#fff'}"></i><span class="reels-btn-label">${isFollowing?'متابَع':'متابعة'}</span></button>`;
                 const reelReportBtn=me&&!own?'<button type="button" class="reels-floating-btn" aria-label="الإبلاغ عن الريلز" title="إبلاغ" onclick="event.stopPropagation();reportAlwahaContent(\'reel\',\''+escapeJs(id)+'\')"><i class="fa-solid fa-flag" style="color:#ffcf9c"></i><span class="reels-btn-label">إبلاغ</span></button>':'';
                 const ownerActions=own?`<div style="position:absolute;bottom:14px;left:12px;z-index:13;display:flex;gap:6px;max-width:calc(100% - 75px);flex-wrap:wrap;"><button type="button" class="btn-action" style="background:#101a2bcc;color:#fff;border:1px solid #ffffff55;padding:7px 9px;border-radius:20px;font-size:10px;" onclick="editOwnReel('${escapeJs(id)}')"><i class="fa-solid fa-pen"></i> تعديل</button><button type="button" class="btn-action" style="background:#401e2dcc;color:#ffb1c5;border:1px solid #ff739555;padding:7px 9px;border-radius:20px;font-size:10px;" onclick="deleteOwnReel('${escapeJs(id)}')"><i class="fa-solid fa-trash"></i> حذف</button></div>`:'';
@@ -3564,7 +3566,8 @@ async function renderReelsFeed() {
                     <div class="reels-floating-tools" aria-label="إجراءات الريلز">
                       <button type="button" class="reels-floating-btn" aria-label="إضافة محتوى" title="إنشاء أو رفع محتوى" onclick="toggleFloatingAddMenu(undefined,'${escapeJs(id)}')"><i class="fa-solid fa-plus" style="color:#8bf4ff"></i><span class="reels-btn-label">إنشاء</span></button>
                       <button type="button" class="reels-floating-btn ${liked?'liked':''}" id="reel-like-btn-${escapeJs(id)}" aria-label="إعجاب" title="إعجاب" onclick="toggleReelLike('${escapeJs(id)}')"><i class="fa-solid fa-heart" id="reel-like-icon-${escapeJs(id)}" style="color:${liked?'#ff0055':'#fff'}"></i><span class="reels-count" id="reel-like-count-${escapeJs(id)}">${count}</span></button>
-                      <button type="button" class="reels-floating-btn" aria-label="التعليقات" title="تعليق" onclick="openCommentsModal('${escapeJs(id)}','reel')"><i class="fa-solid fa-comment-dots" style="color:#8bf4ff"></i><span class="reels-btn-label">تعليق</span></button>
+                      <button type="button" class="reels-floating-btn" aria-label="التعليقات" title="تعليق" onclick="openCommentsModal('${escapeJs(id)}','reel')"><i class="fa-solid fa-comment-dots" style="color:#8bf4ff"></i><span class="reels-count" id="reel-comment-count-${escapeJs(id)}">${reelComments===null?'—':reelComments}</span></button>
+                      <span class="reels-floating-btn" role="status" aria-label="عدد المشاهدات" title="مشاهدة" style="pointer-events:none;background:#09152299;"><i class="fa-solid fa-eye" style="color:#ffe19a"></i><span class="reels-count" id="reel-view-count-${escapeJs(id)}">${views===null?'—':views}</span></span>
                       ${followBtn}
                       ${reelReportBtn}
                       <button type="button" class="reels-floating-btn" aria-label="مشاركة الريلز" title="مشاركة" onclick="shareReelContent('${escapeJs(reel.title||'ريلز')}','${escapeJs(reel.media_url||'')}')"><i class="fa-solid fa-share-nodes" style="color:#8cffc1"></i><span class="reels-btn-label">مشاركة</span></button>
@@ -3572,6 +3575,23 @@ async function renderReelsFeed() {
                       <button type="button" class="reels-floating-btn" aria-label="خيارات الريلز" title="خيارات" onclick="toggleFloatingAddMenu(undefined,'${escapeJs(id)}')"><i class="fa-solid fa-ellipsis" style="color:#fff"></i><span class="reels-btn-label">خيارات</span></button>
                     </div>${ownerActions}</article>`;
             }).join('');
+        }
+
+        async function recordReelView(reelId) {
+            const id=String(reelId||'');
+            if(!id||!navigator.onLine||window.AlwahaLocalMesh?.isEnabled())return false;
+            const locks=window.__alwahaReelViewLocks||(window.__alwahaReelViewLocks=new Set());
+            if(locks.has(id))return false;
+            locks.add(id);
+            try{
+                const user=await getCurrentAuthUser();if(!user)return false;
+                const result=await supabaseFetch('reel_views',{method:'POST',body:JSON.stringify({reel_id:Number(id),user_id:user.id}),prefer:'return=representation'});
+                if(!Array.isArray(result)||!result.length)return false;
+                const node=document.getElementById('reel-view-count-'+id);
+                if(node)node.textContent=String(Math.max(0,Number(node.textContent)||0)+1);
+                return true;
+            }catch(error){console.warn('[Alwaha Reels] View metric could not be recorded:',error);return false;}
+            finally{locks.delete(id);}
         }
 
 async function toggleReelFollow(targetId) {
@@ -3713,6 +3733,10 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                     return;
                 }
                 if(input.value.trim()===content)input.value='';
+                if (targetType === 'reel') {
+                    const reelCountNode=document.getElementById('reel-comment-count-'+targetId);
+                    if(reelCountNode&&reelCountNode.textContent!=='—')reelCountNode.textContent=String(Math.max(0,Number(reelCountNode.textContent)||0)+1);
+                }
                 if (targetType === 'post') {
                     const countNode = document.getElementById('comment-count-' + targetId);
                     if (countNode) {
