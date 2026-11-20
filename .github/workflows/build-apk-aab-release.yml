@@ -395,6 +395,29 @@ jobs:
           test -s dist/alwaha-theme-system.css
           echo 'Web build validated.'
 
+      - name: Set up Chrome for mobile visual acceptance
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          install-dependencies: true
+
+      - name: Run mobile browser visual acceptance
+        shell: bash
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          node --check scripts/browser-visual-acceptance.mjs
+          node scripts/browser-visual-acceptance.mjs
+
+      - name: Upload browser visual screenshots
+        if: always() && hashFiles('artifacts/browser-visual/**') != ''
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Alwaha-Pro-Browser-Visual-${{ github.run_number }}
+          path: artifacts/browser-visual/
+          if-no-files-found: warn
+
       - name: Create or sync Android project
         shell: bash
         run: |
