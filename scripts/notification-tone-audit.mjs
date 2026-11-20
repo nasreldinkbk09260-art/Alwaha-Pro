@@ -8,6 +8,7 @@ assert.ok(source.includes("name:'message_chime.wav'")&&source.includes("name:'no
 assert.ok(feedback.includes("message:[{delay:0")&&feedback.includes("notification:[{delay:0"),'message and notification are one-shot sounds');
 assert.ok(feedback.includes('function playAmbient(kind)')&&feedback.includes('playAmbient,diagnostics:')&&feedback.includes('Math.min(3000'),'message sounds do not stop live call ringback and support bright bell harmonics');
 assert.ok(app.includes('alwaha-message-sounds-enabled')&&app.includes('alwaha-notification-sounds-enabled')&&app.includes('alwaha_message_sounds_enabled')&&app.includes('alwaha_notification_sounds_enabled'),'users can independently toggle and preview both sounds');
+assert.ok(app.includes('playAlwahaInboundSound(kind)')&&app.includes('playAmbient?.(kind)'),'incoming one-shot sounds are independent of the active call-progress ringtone');
 assert.ok(workflow.includes('alwaha_message_chime.wav')&&workflow.includes('alwaha_notification_chime.wav'),'Android build copies both WAV resources into res/raw');
 const app=read('index.html');
 assert.ok(app.includes("playAlwahaInboundSound('message')")&&app.includes("playAlwahaInboundSound('notification')"),'incoming messages and notifications are wired to the one-shot sounds');
