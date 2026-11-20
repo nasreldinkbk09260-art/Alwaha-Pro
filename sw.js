@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120-ringtone-v3';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120-audio-reels-v4';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -39,6 +39,8 @@ const PRECACHE_ASSETS = [
   './assets/qr/jsQR.min.js',
   './assets/sounds/saffron_tide.mp3',
   './assets/sounds/marimba_bloom.mp3',
+  './assets/sounds/message_chime.wav',
+  './assets/sounds/notification_chime.wav',
   './assets/backgrounds/bg-nebula.webp',
   './assets/vendor/fontawesome/css/all.min.css',
   './assets/vendor/supabase/supabase.js',
