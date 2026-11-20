@@ -45,7 +45,7 @@ const checks=[
  ['Mesh exposes the authenticated active link type and clears it when the native transport disconnects',mesh.includes('function getTransportType(){return transportType;}')&&mesh.includes("transportType=String(event.transport||'unknown')")&&mesh.includes("transportType=''")&&mesh.includes('getTransportType,')],
  ['native transport status distinguishes Bluetooth RFCOMM from Wi-Fi Direct TCP',plugin.includes('isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp"')&&plugin.includes('payload.put("transport", isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp")')],
 
- ['Android opens only user-approved Internet and Bluetooth system panels',plugin.includes('openInternetSettings')&&plugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')&&plugin.includes('openBluetoothSettings')&&plugin.includes('Settings.Panel.ACTION_BLUETOOTH')&&html.includes('data-open-internet-settings')&&html.includes('data-open-bluetooth-settings')],
+ ['Android opens only user-approved Internet and Bluetooth system panels',plugin.includes('openInternetSettings')&&plugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')&&plugin.includes('openBluetoothSettings')&&plugin.includes('Settings.ACTION_BLUETOOTH_SETTINGS')&&html.includes('data-open-internet-settings')&&html.includes('data-open-bluetooth-settings')],
  ['Android does not claim app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا')],
 
 
