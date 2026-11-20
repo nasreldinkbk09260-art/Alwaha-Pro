@@ -33,6 +33,12 @@ check('test-media cleanup uses Supabase Storage API, not SQL metadata deletion',
 check('cleanup stays behind JWT and server-side admin authorization',api.indexOf('auth.getUser(token)')<api.indexOf("server.storage.from('media').remove")&&api.indexOf("if (!profile?.is_admin)")<api.indexOf("server.storage.from('media').remove"));
 check('maintenance UI asks for confirmation and calls only the fixed cleanup action',html.includes('purgeTestMedia')&&html.includes('تأكيد نهائي')&&html.includes("adminApi('purge_test_media'"));
 check('archive purge and audit-action SQL migrations are committed',fs.existsSync('supabase/migrations/20261114153423_purge_test_legacy_archives_20261114.sql')&&fs.existsSync('supabase/migrations/20261114153527_admin_api_test_media_cleanup_action_20261114.sql'));
+check('admin UI has a plans, quotas and payment settings tab with reload/save controls',html.includes('data-tab="plans"')&&html.includes('plansPane')&&html.includes('managementConfigJson')&&html.includes('saveManagementConfig'));
+check('admin API exposes audited get/save management configuration actions',api.includes("'get_management_config'")&&api.includes("'save_management_config'")&&api.includes(".from('app_settings')")&&api.includes("key: 'management_config_v1'"));
+check('management settings reject unsupported currency and payment-method types and bound quotas',api.includes("source.currency !== 'EGP'")&&api.includes("new Set(['instapay', 'vodafone_cash', 'bank_transfer', 'manual'])")&&api.includes('daily_direct_messages')&&api.includes('weekly_market_messages')&&api.includes('boundedConfigInteger'));
+check('payment settings are manual instructions only; no card or provider secrets are accepted',html.includes('لا تضع كلمات مرور أو مفاتيح بوابات دفع أو بيانات بطاقات أو رموز CVV')&&!html.includes('stripe_secret_key')&&!html.includes('card_number'));
+check('cloud message quotas are database-enforced for direct and marketplace messages',read('supabase/migrations/20261120220000_cloud_chat_quotas.sql').includes('enforce_direct_chat_message_quota')&&read('supabase/migrations/20261120220000_cloud_chat_quotas.sql').includes('enforce_market_chat_message_quota')&&read('supabase/tests/20261120220000_cloud_chat_quotas.sql').includes('CHAT_QUOTA_SQL_REGRESSION'));
+
 
 console.log(`ADMIN_APP_AUDIT=${failed?'FAIL':'PASS'} (${checks} checks)`);
 if(failed)process.exit(1);
