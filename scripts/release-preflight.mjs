@@ -145,6 +145,9 @@ if (!workflow.includes('npm run audit:runtime') || !runtimeAuditCommand.includes
 if (!workflow.includes('npm run audit:release') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs' || !pkg.scripts?.['audit:release']?.includes('audit:offline-cache')) fail('Offline cache budget/reconnect audit is not wired into the single release gate.');
 
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
+if(!fs.existsSync('supabase/functions/call-config/index.ts')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/call-config/index.ts'))fail('Authenticated call-config and managed public free-radius/quotas function must be present and type-checked.');
+const quotaMigration=read('supabase/migrations/20261120220000_cloud_chat_quotas.sql');
+if(!quotaMigration.includes('enforce_direct_chat_message_quota')||!quotaMigration.includes('enforce_market_chat_message_quota')||!quotaMigration.includes('ALWAHA_QUOTA_EXCEEDED'))fail('Daily and weekly cloud chat quotas must be enforced by database triggers.');
 if (!polish.includes("alwaha_call_ringtone_choice_version') !== '3'") || !polish.includes("safeSet('alwaha_ringtone_choice', 'saffron_tide')") || !polish.includes("return saved === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide'")) fail('Requested Saffron Tide default migration or persistent manual ringtone choice is missing.');
 if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
 if (!nativeBack.includes('window.alwahaExitNativeApp = () => App.exitApp()') || !html.includes('window.alwahaExitNativeApp')) fail('Android exit confirmation does not invoke the native exit action.');
