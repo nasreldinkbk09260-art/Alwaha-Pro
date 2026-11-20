@@ -44,6 +44,12 @@ const checks=[
  ['kids room resets key/lock/score/filter for each session',kids.includes('keyCollected=false;doorUnlocked=false;score=0;filterIndex=0')],
  ['kids room uses camera colour filters rather than pretending face tracking',kids.includes('ألوان الكاميرا')],
  ['kids room shows muted floating copies of the remote participant video inside a CSS perspective room',kids.includes('perspective:1100px')&&kids.includes('transform:perspective(720px) rotateX(48deg)')&&kids.includes('v.srcObject=remote.srcObject')&&kids.includes('muted playsinline autoplay')],
+
+ ['Kids Room scene opens for a connected video call even before the first remote video frame',kids.includes("activeVideoCall=!!stage&&stage.style.display!=='none'&&!!kidsButton&&kidsButton.style.display!=='none'")&&!kids.includes("||!remoteVideo?.srcObject")],
+ ['Kids Room video panel renders a visible Arabic scene/status placeholder rather than an empty black panel',kids.includes('id="kids-video-status"')&&kids.includes('غرفة الأطفال جاهزة')&&kids.includes('.kids-video-status{')&&kids.includes('z-index:3;pointer-events:none')],
+ ['Kids Room switches from waiting state after decoded video dimensions become available',kids.includes('remote.readyState>=2&&remote.videoWidth>0&&remote.videoHeight>0')&&kids.includes("loadedmetadata','loadeddata','canplay','playing'")&&kids.includes("status.style.display=hasVideo?'none':'grid'")],
+ ['Kids Room removes all temporary remote video listeners and restores original media elements on close',kids.includes('remote.removeEventListener(eventName,listener)')&&kids.includes('parent.insertBefore(el,next&&next.parentNode===parent?next:null)')],
+
  ['kids room handles pointercancel and keyboard toy movement',kids.includes("addEventListener('pointercancel',finishDrag)")&&kids.includes("addEventListener('keydown',keyboardMove)")],
  ['kids room traps focus and restores previous focus',kids.includes("if(e.key==='Tab')")&&kids.includes('oldFocus.focus()')],
  ['kids room has parent emergency exit',kids.includes('close(true)')],
