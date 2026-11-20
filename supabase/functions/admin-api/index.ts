@@ -223,7 +223,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(supportTicketId)) return json({ error: 'معرّف تذكرة الدعم غير صالح.' }, 400);
     supportTicketStatus = String(body.status || '');
     if (!['triaged','in_progress','resolved','closed'].includes(supportTicketStatus)) return json({ error: 'حالة تذكرة الدعم غير صالحة.' }, 400);
-    supportTicketNote = String(body.note || '').replace(/[\\u0000-\\u001f\\u007f]/g,' ').trim().slice(0,1000);
+    supportTicketNote = String(body.note || '').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,1000);
   }
   let reportId = '';
   let reportReviewStatus = '';
