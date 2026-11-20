@@ -243,7 +243,9 @@ try{
  await screenshot('09-video-chooser.png');
  await click('[data-video-call-cancel]','video chooser close');
  await evaluate('activeCallManager={mediaType:"video"};setCallModal(true);updateCallUi("connected",{target:"CI preview",text:"واجهة مكالمة تجريبية",indicator:"فحص مرئي دون اتصال"})');
- await visible('#voice-call-modal','call modal');
+ // The real call modal has a 300 ms slide-up/fade-in animation.
+ await sleep(400);
+ await visible('#voice-call-modal','call modal after its entrance animation');
  await visible('#muteBtn','mute button in connected call');
  await visible('#cameraMuteBtn','camera mute in connected video call');
  await visible('#cameraSwitchBtn','camera switch in connected video call');
