@@ -82,6 +82,12 @@ check('offline friend list reads its own directory snapshot and never offers fri
 check('market transaction and delivery snapshots remain encrypted and read-only while offline',
   html.includes("getAccountViewCache?.(me.id,'market-transactions')")&&html.includes("saveAccountViewCache?.(me.id,'market-transactions',rows)")&&
   html.includes('سجل معاملات مشفّر للقراءة فقط دون اتصال')&&html.includes('!offlineView&&!buyer&&deliveryNext'));
+check('seller marketplace listings are cached in the account vault and displayed offline without mutation buttons',
+  html.includes("getAccountViewCache?.(me.id,'my-market-items')")&&
+  html.includes("saveAccountViewCache?.(me.id,'my-market-items',rows)")&&
+  html.includes('إعلاناتك المحفوظة محلياً')&&html.includes('لا يمكن إجراء تغييرات على الإعلان في الوضع المحلي')&&
+  vault.includes("'my-market-items'"));
+
 check('the own-profile encrypted cache retains private fields without storing credentials or service keys',
   vault.includes('birthdate:profile.birthdate')&&vault.includes('phone:profile.phone')&&vault.includes('is_admin:profile.is_admin===true')&&
   !/saveProfileCache[\\s\\S]{0,600}(?:password|access_token|refresh_token|service_role)/.test(vault));
