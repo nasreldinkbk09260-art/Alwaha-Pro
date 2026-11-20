@@ -2313,6 +2313,19 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                     if(String(currentChatUserId||'')===senderId)await loadDirectMessages();
                     return;
                 }
+                if(payload.type==='market-open'&&payload.conversation&&typeof payload.conversation==='object'){
+                    const c=payload.conversation,validId=String(c.id||'').startsWith('local-market:'),validParticipants=(String(c.buyer_id||'')===senderId&&String(c.seller_id||'')===me.id)||(String(c.seller_id||'')===senderId&&String(c.buyer_id||'')===me.id);
+                    if(!validId||!validParticipants||String(c.product_id||'').length>40)return;
+                    const index=await window.AlwahaLocalVault?.getMarketConversationIndex?.(me.id)||[];
+                    if(!index.some(row=>String(row.id)===String(c.id))){
+                        const row={id:String(c.id),product_id:String(c.product_id),buyer_id:String(c.buyer_id),seller_id:String(c.seller_id),peerId:senderId,peerName:String(c.buyerName||'مستخدم قريب').slice(0,60),productTitle:String(c.productTitle||'إعلان سوق').slice(0,120),preview:'دعوة محادثة سوق محلية',archived_at:null,local_only:true};
+                        await window.AlwahaLocalVault?.saveMarketConversationIndex?.(me.id,[...index,row]);
+                        playAlwahaInboundSound('notification');
+                        triggerToastNotification('وصلك طلب تواصل محلي بخصوص إعلان سوق. افتح محادثات السوق للرد.','info');
+                        if(document.getElementById('market-section')?.classList.contains('active-section'))void renderMarketConversationsList();
+                    }
+                    return;
+                }
                 if(payload.type==='market-text'&&payload.conversationId){
                     const conversationId=String(payload.conversationId),row={id,conversation_id:conversationId,sender_id:senderId,message:String(payload.text||''),created_at,read_at:null,local_mesh:true};
                     const rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||[];if(!rows.some(item=>item.id===id)){rows.push(row);await window.AlwahaLocalVault?.saveMarketChatCache?.(me.id,conversationId,rows);}
@@ -4423,6 +4436,25 @@ async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
             const me=await requireAuthenticatedUser('سجّل الدخول للتواصل مع البائع.');if(!me)return;
             if(!productId||!sellerId||sellerId===me.id)return triggerToastNotification('هذا إعلانك؛ افتح قسم «سلعي» لإدارته.','info');
             closeMarketProductDetails();
+            if(window.AlwahaLocalMesh?.isEnabled()){
+                const mesh=window.AlwahaLocalMesh,vault=window.AlwahaLocalVault;
+                const trusted=await mesh.getPeerByAccountId(sellerId);
+                if(!trusted)return triggerToastNotification('للتواصل المجاني مع البائع، اطلب منه توثيق جهازك أولاً في شاشة الشبكة الحرة.','info');
+                const index=await vault?.getMarketConversationIndex?.(me.id)||[];
+                let conversation=index.find(row=>String(row.product_id)===String(productId)&&String(row.peerId)===String(sellerId));
+                if(!conversation){
+                    const conversationId='local-market:'+String(productId)+':'+String(me.id)+':'+String(sellerId);
+                    const profile=await getCurrentProfile();
+                    conversation={id:conversationId,product_id:String(productId),buyer_id:me.id,seller_id:String(sellerId),peerId:String(sellerId),peerName:'البائع',productTitle:String(title||'إعلان').slice(0,120),preview:'محادثة محلية جديدة',archived_at:null,local_only:true};
+                    await vault?.saveMarketConversationIndex?.(me.id,[...index,conversation]);
+                    const invitation=await mesh.sendToAccount(sellerId,{type:'market-open',conversation:{id:conversationId,product_id:String(productId),buyer_id:me.id,seller_id:String(sellerId),productTitle:String(title||'إعلان').slice(0,120),buyerName:String(profile?.first_name||'مشتري').slice(0,60)}});
+                    if(!invitation?.sent&&!invitation?.queued)return triggerToastNotification('تعذر إرسال دعوة محادثة السوق عبر الجهاز المحلي.','error');
+                }
+                await openMarketConversationChat(conversation.id,'محادثة محلية · '+String(title||'إعلان').slice(0,120),sellerId);
+                const localInput=document.getElementById('market-chat-input');if(localInput&&!localInput.value.trim()){localInput.value='السلام عليكم، هل ما زال المنتج «'+String(title||'المنتج').slice(0,120)+'» متوفراً؟';localInput.focus({preventScroll:true});}
+                triggerToastNotification('تم فتح محادثة سوق محلية مشفّرة دون خادم؛ ستصل للطرف الآخر عند وجود اتصال مباشر موثوق.','success');
+                return String(conversation.id);
+            }
             let rows=await supabaseFetch(`market_conversations?product_id=eq.${encodeURIComponent(productId)}&buyer_id=eq.${encodeURIComponent(me.id)}&select=id,product_id,buyer_id,seller_id&limit=1`);
             let conversation=Array.isArray(rows)?rows[0]:null;
             if(!conversation){
@@ -5796,6 +5828,7 @@ async function submitNewProductToMarket() {
         async function renderProductsList(searchQuery = '') {
             const requestId=++marketProductsRenderRequestId;
             const container=document.getElementById('market-products-list-container');if(!container)return;
+            if(navigator.onLine&&!Number.isFinite(Number(window.__alwahaFreeMarketRadiusKm)))void getAlwahaIceServers();
             if(!container.querySelector('[data-market-card]'))container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#ffd700;font-size:12px;padding:15px;">جاري تحديث السوق في الخلفية...</div>';
             await detectMarketLifecycleSchema();
             if(requestId!==marketProductsRenderRequestId)return;
@@ -5817,7 +5850,8 @@ async function submitNewProductToMarket() {
             const radiusValue=document.getElementById('market-radius-select')?.value||'all';
             let filtered=products.filter(prod=>(!prod.status||prod.status==='active')&&(!q||`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`.toLowerCase().includes(q)));
             const localMeshEnabled=Boolean(window.AlwahaLocalMesh?.isEnabled());
-            const configuredLocalRadiusKm=15;
+            const savedMarketRadius=Number(window.__alwahaFreeMarketRadiusKm??(localStorage.getItem('alwaha_free_market_radius_km')||15));
+            const configuredLocalRadiusKm=Number.isFinite(savedMarketRadius)?Math.max(1,Math.min(100,savedMarketRadius)):15;
             if(!localMeshEnabled&&marketSearchLatitude!==null&&marketSearchLongitude!==null&&radiusValue!=='all') {
                 const radius=Number(radiusValue);
                 filtered=filtered.filter(prod=>Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))&&prod.latitude!==null&&prod.longitude!==null&&alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude))<=radius);
@@ -5828,6 +5862,7 @@ async function submitNewProductToMarket() {
             });
             else filtered.sort((a,b)=>(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0));
             if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:11px;padding:20px;line-height:1.8;">لا توجد نتائج في هذا النطاق. جرّب توسيع النطاق أو حذف البحث.</div>';return;}
+            window.__alwahaMarketProductsById=new Map(filtered.map(product=>[String(product.id),product]));
             container.innerHTML=filtered.map(prod=>{
               const hasBuyerLocation=marketSearchLatitude!==null&&marketSearchLongitude!==null;
               const hasProductLocation=prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude));
@@ -5855,15 +5890,19 @@ async function submitNewProductToMarket() {
             }).join('');
         }
         async function openMarketProductDetails(productId) {
-            const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
-            const product=Array.isArray(rows)?rows[0]:null;
+            let product=null;
+            if(window.AlwahaLocalMesh?.isEnabled())product=window.__alwahaMarketProductsById?.get(String(productId))||null;
+            else {
+                const rows=await supabaseFetch(`products?id=eq.${encodeURIComponent(productId)}&select=id,seller_id,title,price,category,description,image_url,image_urls,status,location_label,latitude,longitude,promoted_until&limit=1`);
+                product=Array.isArray(rows)?rows[0]:null;
+            }
             if(!product)return triggerToastNotification('تعذر تحميل تفاصيل المنتج؛ ربما حُذف الإعلان.','error');
             const urls=Array.isArray(product.image_urls)?product.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
             if(!urls.length&&typeof product.image_url==='string'&&/^https?:\/\//i.test(product.image_url))urls.push(product.image_url);
             const images=urls.length?`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0;">${urls.map(url=>`<img src="${escapeHtml(url)}" alt="" loading="lazy" style="width:100%;max-height:190px;object-fit:contain;background:#050914;border-radius:10px;">`).join('')}</div>`:'<img src="icon.png" alt="" style="width:100%;max-height:160px;object-fit:contain;margin:12px 0;">';
             const me=await getCurrentAuthUser();
             let sellerRatingSummary='';
-            if(await detectMarketLifecycleSchema()) {
+            if(!window.AlwahaLocalMesh?.isEnabled()&&await detectMarketLifecycleSchema()) {
                 const ratingRows=await supabaseFetch(`marketplace_reviews?seller_id=eq.${encodeURIComponent(product.seller_id)}&select=rating&limit=200`);
                 if(Array.isArray(ratingRows)&&ratingRows.length) {
                     const average=ratingRows.reduce((sum,row)=>sum+Number(row.rating||0),0)/ratingRows.length;
