@@ -101,6 +101,16 @@ const marketCallChecks=[
  ['the disabled market-call placeholder has been removed',!marketCallBody.includes('مكالمات السوق الصوتية قريبًا')&&!html.includes('اتصال صوتي بالبائع — قريبًا')]
 ];
 for(const [label,ok] of marketCallChecks)ok?pass(label):fail(label);
+const localMarketChecks=[
+ ['local market keeps remote posts visible instead of filtering them away while Mesh mode is active',html.includes('if(!localMeshEnabled&&marketSearchLatitude!==null')&&html.includes('configuredLocalRadiusKm')],
+ ['remote local-mode products are translucent, covered by a needs-internet label and have disabled actions',html.includes('data-local-internet-required=')&&html.includes('يحتاج إنترنت')&&html.includes('disabled aria-disabled="true"')],
+ ['local free market radius follows authenticated server configuration and cached preference',html.includes('window.__alwahaFreeMarketRadiusKm')&&html.includes('alwaha_free_market_radius_km')&&html.includes('result.data?.market?.freeRadiusKm')],
+ ['offline product details use the previously cached public listing without REST detail lookups',html.includes('window.__alwahaMarketProductsById')&&html.includes('if(window.AlwahaLocalMesh?.isEnabled())product=window.__alwahaMarketProductsById')],
+ ['new local marketplace conversations require the seller device to be paired and send an encrypted market-open invite',html.includes("getPeerByAccountId(sellerId)")&&html.includes("type:'market-open'")&&html.includes("type:'market-text'" )],
+ ['incoming local marketplace invites validate both participant IDs and persist a local conversation index',html.includes("payload.type==='market-open'")&&html.includes('validParticipants')&&html.includes('saveMarketConversationIndex')],
+ ['local market conversations are clearly tagged and do not claim server sync',html.includes('local_only:true')&&html.includes('محلية مشفّرة دون خادم')]
+];
+for(const [label,ok] of localMarketChecks)ok?pass(label):fail(label);
 
 for(const [label,ok] of checks)ok?pass(label):fail(label);
 for(const [label,ok] of visibilityChecks)ok?pass(label):fail(label);
