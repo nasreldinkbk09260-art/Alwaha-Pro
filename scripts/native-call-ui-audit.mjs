@@ -25,6 +25,9 @@ const checks=[
  ['local voice/video WebRTC disables public STUN/TURN and uses host ICE only',html.includes("this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 }")],
  ['local call offers, answers, candidates and results use encrypted mesh packets',html.includes("type:'call-signal'")&&html.includes("type:'call-result'")&&html.includes('handleLocalMeshSignal')&&html.includes('sendToAccount(this.peerId')],
  ['outgoing local calls require a paired peer and active local mode',html.includes("mode==='offline'||mode==='offline-market'")&&html.includes("mesh.getPeerByAccountId(targetId)")&&html.includes("mesh.isEnabled()")],
+ ['local WebRTC calls require a live direct connection to the paired peer, never a delayed relay queue',html.includes('mesh.getTransportPeer()!==pairedPeer.fingerprint')&&html.includes("mesh.getTransportType()!=='wifi-direct-tcp'")&&html.includes('لا يمكن بدء مكالمة من طابور تمرير مؤجل')],
+ ['Bluetooth local messaging/file transport is never represented as live call media',html.includes('Bluetooth ينقل الرسائل والملفات المشفّرة فقط حالياً')&&html.includes('مكالمات محلية تحتاج رابط Wi‑Fi Direct مباشر')],
+
  ['local calls never call the cloud call-config ICE service',html.includes("this.signaling?.localOnly ? { iceServers: [], iceCandidatePoolSize: 0 }")&&html.includes("this.rtcConfig =")],
  ['local market calls are bound to the active buyer-seller conversation',html.includes("mode==='offline-market'")&&html.includes('currentMarketPeerId')&&html.includes('conversationId')],
  ['call termination clears call feedback and timeout',html.includes('AlwahaCallFeedback?.stop()')&&html.includes('clearCallTimeout()')],
