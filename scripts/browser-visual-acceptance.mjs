@@ -145,6 +145,55 @@ try{
  assert.equal(directFile,true,'Direct chat file input must exist but remain hidden behind its visible picker button.');
  await screenshot('04-direct-chat-layout.png');
  await evaluate('document.getElementById("active-chat-box").style.display="none"');
+ // Isolated native bridge mock: exercise the actual discovery modal and its button handlers without touching Android radios.
+ const networkMockSetup=await evaluate(`window.__uiNetworkSaved={requireAuthenticatedUser:requireAuthenticatedUser,plugin:window.alwahaLocalNetwork,mesh:window.AlwahaLocalMesh};
+ requireAuthenticatedUser=async()=>({id:"ci-buyer"});
+ const listeners={};
+ window.alwahaLocalNetwork={
+   addListener:async(name,callback)=>{listeners[name]=callback;return {remove:async()=>delete listeners[name]};},
+   startDiscovery:async()=>({started:true,message:"بحث تجريبي جاهز"}),
+   stopDiscovery:async()=>({stopped:true}),
+   startBluetoothPacketServer:async()=>({listening:true}),
+   createWifiDirectGroup:async()=>({started:true,message:"مجموعة Wi-Fi Direct تجريبية"}),
+   openInternetSettings:async()=>({opened:true}),
+   openBluetoothSettings:async()=>({opened:true}),
+   getCapabilities:async()=>({wifiDirectSupported:true,wifiEnabled:true,bluetoothEnabled:true}),
+   connectBluetoothPeer:async()=>({connected:true}),
+   connectWifiDirectPeer:async()=>({started:true}),
+   startPacketTransport:async()=>({connected:true})
+ };
+ window.AlwahaLocalMesh={
+   getIdentityBundle:async()=>({fingerprintCode:"ABC123",fingerprint:"ci-fingerprint",publicKey:"ci-public-key"}),
+   pairPeer:async()=>({fingerprint:"ci-fingerprint"}),
+   flushRelayQueue:async()=>({sent:2})
+ };
+ true;`);
+ assert.equal(networkMockSetup,true,"isolated native bridge mock must be installed");
+ await evaluate('openAlwahaLocalDiscovery()');
+ await visible('#alwaha-local-discovery-modal','local network discovery dialog');
+ for(const [selector,label] of [
+   ['[data-start-local]','search nearby devices'],
+   ['[data-stop-local]','stop discovery'],
+   ['[data-create-group]','create Wi-Fi Direct group'],
+   ['[data-bluetooth-server]','start Bluetooth RFCOMM receiver'],
+   ['[data-open-internet-settings]','open Android Wi-Fi/mobile data settings'],
+   ['[data-open-bluetooth-settings]','open Android Bluetooth settings'],
+   ['[data-copy-identity]','copy public device identity'],
+   ['[data-pair-peer]','pair/verify another device'],
+   ['[data-flush-relay]','flush encrypted relay queue']
+ ]) await visible('#alwaha-local-discovery-modal '+selector,label);
+ const fingerprint=await evaluate('document.getElementById("alwaha-mesh-own-code").textContent');
+ assert.equal(fingerprint,"ABC123","network dialog must render the device fingerprint code");
+ await screenshot('06-local-network-controls.png');
+ await click('#alwaha-local-discovery-modal [data-bluetooth-server]','mock Bluetooth receiver action');
+ assert.ok((await evaluate('document.getElementById("alwaha-local-status").textContent')).includes('بدأ استقبال Bluetooth'),"Bluetooth receiver action must update the status");
+ await click('#alwaha-local-discovery-modal [data-open-internet-settings]','mock Internet settings action');
+ await click('#alwaha-local-discovery-modal [data-open-bluetooth-settings]','mock Bluetooth settings action');
+ await click('#alwaha-local-discovery-modal [data-create-group]','mock Wi-Fi Direct group action');
+ await click('#alwaha-local-discovery-modal [data-stop-local]','mock stop-discovery action');
+ await evaluate('document.querySelector("#alwaha-local-discovery-modal [data-close-local]").click()');
+ await evaluate('Object.assign(window,{requireAuthenticatedUser:window.__uiNetworkSaved.requireAuthenticatedUser,alwahaLocalNetwork:window.__uiNetworkSaved.plugin,AlwahaLocalMesh:window.__uiNetworkSaved.mesh});delete window.__uiNetworkSaved');
+
  await evaluate(`window.__uiSmokeSaved={requireAuthenticatedUser, getCurrentAuthUser, supabaseFetch, loadMarketMessages, subscribeToMarketConversation};
  requireAuthenticatedUser=async()=>({id:"ci-buyer"});
  getCurrentAuthUser=async()=>({id:"ci-buyer"});
@@ -200,7 +249,8 @@ try{
   'Backend: Supabase domains blocked; no login credentials and no production writes.',
   'Tested: home, market sell/buy navigation, chat lobby, direct/market chat composer layout, profile settings, theme registration, privacy dialog, video mode chooser, connected-call control layout.',
   'Context note: direct/market composer layouts and connected-call controls were rendered through their real UI state functions; no actual account messaging/call was initiated.',
-  'Not tested: Bluetooth/Wi-Fi Direct radios, real camera/microphone capture, authenticated buyer/seller transactions, actual WebRTC media, or two physical Android phones.'
+  'Tested UI only with an isolated native plugin mock: local-network discovery, Bluetooth receiver, Wi-Fi Direct group action, system settings controls and identity display.',
+  'Not tested: real Bluetooth/Wi-Fi Direct radios or packet transport, real camera/microphone capture, authenticated buyer/seller writes, actual WebRTC media, or two physical Android phones.'
  ].join('\n')+'\n');
  console.log('BROWSER_VISUAL_ACCEPTANCE=PASS');
 }catch(error){
