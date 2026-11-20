@@ -145,6 +145,7 @@ if (!workflow.includes('npm run audit:runtime') || !runtimeAuditCommand.includes
 if (!workflow.includes('npm run audit:release') || pkg.scripts?.['audit:offline-cache'] !== 'node scripts/offline-cache-audit.mjs' || !pkg.scripts?.['audit:release']?.includes('audit:offline-cache')) fail('Offline cache budget/reconnect audit is not wired into the single release gate.');
 
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
+if (!polish.includes("alwaha_call_ringtone_choice_version') !== '3'") || !polish.includes("safeSet('alwaha_ringtone_choice', 'saffron_tide')") || !polish.includes("return saved === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide'")) fail('Requested Saffron Tide default migration or persistent manual ringtone choice is missing.');
 if (!nativeBack.includes("App.addListener('backButton'")) fail('Native back listener registration missing.');
 if (!nativeBack.includes('window.alwahaExitNativeApp = () => App.exitApp()') || !html.includes('window.alwahaExitNativeApp')) fail('Android exit confirmation does not invoke the native exit action.');
 for (const permission of ['android.permission.CAMERA','android.permission.RECORD_AUDIO','android.permission.MODIFY_AUDIO_SETTINGS','android.permission.ACCESS_COARSE_LOCATION','android.permission.ACCESS_FINE_LOCATION']) if (!workflow.includes(permission)) fail(`Android feature permission missing from release workflow: ${permission}`);
