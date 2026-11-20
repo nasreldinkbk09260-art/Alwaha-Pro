@@ -5908,6 +5908,7 @@ async function submitNewProductToMarket() {
                     ?{id:currentMarketConversationId,peerId}
                     :cached.find(row=>String(row.product_id)===listingId&&String(row.peerId)===peerId);
                 if(!conversation)return triggerToastNotification('لا توجد محادثة سوق محفوظة محليًا مع هذا البائع. افتح محادثته أثناء الاتصال أولًا.','error');
+                if(conversation.archived_at)return triggerToastNotification('هذه محادثة سوق مؤرشفة ولا يمكن بدء مكالمة محلية جديدة منها.','info');
                 currentMarketConversationId=String(conversation.id);currentMarketPeerId=peerId;
                 return startAlwahaCall('offline-market','audio',String(conversation.id),peerId,String(title||'بائع السوق'));
             }
