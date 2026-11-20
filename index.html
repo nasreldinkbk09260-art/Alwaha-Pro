@@ -6858,7 +6858,7 @@ function triggerAnimeAiConverterFilter() {
             let users=null,requests=null;
             if(offlineDirectory){
                 [users,requests]=await Promise.all([
-                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-requester-directory'),
+                    window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-directory'),
                     window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'friend-relations')
                 ]);
             }else{
@@ -6899,6 +6899,7 @@ function triggerAnimeAiConverterFilter() {
                 }else if(request?.status==='accepted'){
                     friendControl='<span style="color:#a8ffd7;font-size:10px;" aria-label="أصدقاء">أصدقاء</span>';
                 }
+                if(offlineDirectory)friendControl='<span style="color:#ffd88b;font-size:9px;" aria-label="عرض محلي للقراءة فقط">عرض محلي فقط</span>';
                 const username=user.username?'<div style="font-size:10px;color:#92a8c0;">@'+escapeHtml(user.username)+'</div>':'';
                 return '<div class="profile-menu-btn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;background:#ffffff0b;padding:11px;border:1px solid #b8e7ff20;border-radius:14px;gap:8px;">'+
                     '<div style="display:flex;align-items:center;gap:10px;min-width:0;"><img src="'+escapeHtml(avatar)+'" alt="الصورة الشخصية" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid #8bf4ff55;"><div style="min-width:0;"><div style="font-weight:bold;color:#e8fbff;">'+escapeHtml(name)+' '+(user.is_verified?'<i class="fa-solid fa-circle-check" style="color:#8bf4ff;"></i>':'')+'</div>'+username+'<div style="font-size:10px;color:#92a8c0;">بيانات التواصل خاصة</div></div></div>'+
