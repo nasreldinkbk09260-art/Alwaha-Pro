@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.reel_views (
   reel_id bigint NOT NULL REFERENCES public.reels(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   viewed_at timestamptz NOT NULL DEFAULT now(),
-  view_day date GENERATED ALWAYS AS ((viewed_at AT TIME ZONE 'UTC')::date) STORED
+  view_day date NOT NULL DEFAULT ((now() AT TIME ZONE 'UTC')::date)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS reel_views_one_per_user_daily_uidx
