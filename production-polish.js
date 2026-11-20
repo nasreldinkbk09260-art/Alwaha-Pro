@@ -308,14 +308,15 @@
     try { stopLayeredRingtone(); } catch (_) {}
   }
   function ringtoneChoice() {
-    // One-time rollout: switch the old default to Marimba Bloom, then preserve a manual choice.
-    if (safeGet('alwaha_call_ringtone_choice_version') !== '2') {
-      safeSet('alwaha_call_ringtone_choice_version', '2');
-      safeSet('alwaha_ringtone_choice', 'marimba_bloom');
-      return 'marimba_bloom';
+    // One-time rollout: make Saffron Tide the requested default; preserve later manual choices.
+    // Keep migration version 3 stable in future releases so updates never reset a user's selection.
+    if (safeGet('alwaha_call_ringtone_choice_version') !== '3') {
+      safeSet('alwaha_call_ringtone_choice_version', '3');
+      safeSet('alwaha_ringtone_choice', 'saffron_tide');
+      return 'saffron_tide';
     }
     const saved = safeGet('alwaha_ringtone_choice');
-    return saved === 'saffron_tide' ? 'saffron_tide' : 'marimba_bloom';
+    return saved === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide';
   }
   function setRingtoneChoice(value, silent = false) {
     const chosen = value === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide';
