@@ -2879,6 +2879,7 @@ async function toggleInternalNotificationCenter() {
                 const center=document.getElementById('internal-notification-center');if(center?.classList.contains('alwaha-notifications-open'))renderInternalNotificationCenter();
             });
             channel.on('postgres_changes',{event:'INSERT',schema:'public',table:'friend_requests',filter:`target_id=eq.${me.id}`},()=>{
+                playAlwahaInboundSound('notification');
                 triggerToastNotification('وصلك طلب صداقة جديد. افتح التنبيهات للقبول أو الرفض.','info');
                 refreshAlwahaNotificationBadge();
                 const center=document.getElementById('internal-notification-center');if(center?.classList.contains('alwaha-notifications-open'))renderInternalNotificationCenter();
