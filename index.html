@@ -1008,6 +1008,13 @@ img,video,canvas{max-width:100%}
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-data-saver" type="checkbox"> توفير البيانات والتحميل الكسول للصور</label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
 <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-ui-sounds-enabled" type="checkbox" checked> أصوات تفاعلية خفيفة للأزرار والتنقل</label>
+          <div style="display:grid;gap:8px;padding:10px;border:1px solid #ffffff1f;border-radius:10px;background:#ffffff05;">
+            <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:11px;"><input id="alwaha-message-sounds-enabled" type="checkbox" checked onchange="setAlwahaInboundSoundEnabled('message',this.checked)"> صوت الرسائل الواردة</label>
+            <button type="button" class="btn-action" style="padding:7px 10px;border-radius:8px;background:#163b4c;color:#bfeeff;font-size:10px;" onclick="previewAlwahaInboundSound('message')">تجربة صوت الرسالة</button>
+            <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:11px;"><input id="alwaha-notification-sounds-enabled" type="checkbox" checked onchange="setAlwahaInboundSoundEnabled('notification',this.checked)"> صوت الإشعارات وطلبات الصداقة</label>
+            <button type="button" class="btn-action" style="padding:7px 10px;border-radius:8px;background:#26354a;color:#ffe6aa;font-size:10px;" onclick="previewAlwahaInboundSound('notification')">تجربة صوت الإشعار</button>
+            <span style="color:#91a4bb;font-size:9px;line-height:1.7;">نغمتان أصليتان قصيرتان؛ إعداد كل صوت مستقل عن نغمة المكالمات. تعملان عند وصول الحدث بينما التطبيق نشط، أما التنبيه بعد إغلاق التطبيق فيتطلب خدمة Push أصلية.</span>
+          </div>
           <p role="note" aria-disabled="true" style="margin:0;color:#91a4bb;font-size:9px;line-height:1.7;">Bluetooth ينقل الرسائل والملفات المشفّرة فقط؛ المكالمات الصوتية والمرئية المحلية تتطلب اتصال Wi‑Fi Direct مباشراً وجهازاً موثوقاً.</p>
           <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
         </div>
@@ -2664,9 +2671,23 @@ function handleRegisterAvatarPick() {
             setTimeout(() => { toast.style.display = "none"; }, 3500);
         }
 
+        function inboundSoundPreferenceKey(kind){return kind==='message'?'alwaha_message_sounds_enabled':'alwaha_notification_sounds_enabled';}
+        function setAlwahaInboundSoundEnabled(kind,enabled){
+            const key=inboundSoundPreferenceKey(kind);
+            try{localStorage.setItem(key,enabled?'true':'false');}catch(error){}
+            const checkbox=document.getElementById(kind==='message'?'alwaha-message-sounds-enabled':'alwaha-notification-sounds-enabled');
+            if(checkbox)checkbox.checked=!!enabled;
+            triggerToastNotification(enabled?'تم تفعيل الصوت.':'تم كتم هذا الصوت.','info');
+            if(enabled)previewAlwahaInboundSound(kind);
+        }
         function playAlwahaInboundSound(kind = 'notification') {
             if (audioMuted || localStorage.getItem('alwaha_audio_muted') === 'true') return false;
-            return window.AlwahaCallFeedback?.play(kind) || false;
+            try{if(localStorage.getItem(inboundSoundPreferenceKey(kind))==='false')return false;}catch(error){}
+            return window.AlwahaCallFeedback?.playAmbient?.(kind) || false;
+        }
+        function previewAlwahaInboundSound(kind='notification'){
+            if(kind!=='message'&&kind!=='notification')return false;
+            return playAlwahaInboundSound(kind);
         }
         function playLuxuriousNotificationSound(kind = 'notification') { playAlwahaInboundSound(kind); }
 
@@ -6455,6 +6476,10 @@ function triggerAnimeAiConverterFilter() {
             const ringtoneToggle = document.getElementById('alwaha-call-ringtone-enabled');
             if (ringtoneToggle) {
                 try { ringtoneToggle.checked = localStorage.getItem('alwaha_call_ringtone_enabled') !== 'false'; } catch (_) {}
+            }
+            for(const [id,key] of [['alwaha-message-sounds-enabled','alwaha_message_sounds_enabled'],['alwaha-notification-sounds-enabled','alwaha_notification_sounds_enabled']]){
+                const checkbox=document.getElementById(id);
+                if(checkbox){try{checkbox.checked=localStorage.getItem(key)!=='false';}catch(_){}}
             }
             safeStartup('country-picker', wireAlwahaSignupCountryPicker);
             safeStartup('self-test', runAlwahaSelfTest);
