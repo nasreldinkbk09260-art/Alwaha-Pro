@@ -3228,29 +3228,39 @@ async function alwahaUiDeadline(promise, milliseconds=1200, fallback=[]) {
 
         async function loadHomePostCommentCounts(container, requestId) {
             if (!container?.isConnected) return;
-            const counts = await alwahaUiDeadline(
-                supabaseFetch('post_comment_counts?select=post_id,comments_count'),
-                6000,
-                null
-            );
-            const countMap = new Map();
-            if (Array.isArray(counts)) {
-                for (const row of counts) {
-                    const postId = String(row.post_id || '');
-                    if (postId) countMap.set(postId, Math.max(0, Number(row.comments_count || 0)));
-                }
-            } else {
-                // Backward-compatible fallback until the aggregate view migration is applied.
-                const rows = await alwahaUiDeadline(
-                    supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000'),
-                    7000,
+            const me=await getCurrentAuthUser();
+            const offlineView=navigator.onLine===false||Boolean(window.AlwahaLocalMesh?.isEnabled());
+            let counts=null;
+            if(offlineView){
+                counts=me?await window.AlwahaLocalVault?.getAccountViewCache?.(me.id,'post-comment-counts'):null;
+            }else{
+                counts=await alwahaUiDeadline(
+                    supabaseFetch('post_comment_counts?select=post_id,comments_count'),
+                    6000,
                     null
                 );
-                if (!Array.isArray(rows)) return;
-                for (const row of rows) {
-                    const postId = String(row.target_id || '');
-                    if (postId) countMap.set(postId, (countMap.get(postId) || 0) + 1);
+                if(!Array.isArray(counts)){
+                    // Backward-compatible fallback until the aggregate view migration is applied.
+                    const rows=await alwahaUiDeadline(
+                        supabaseFetch('comments?select=target_id&target_type=eq.post&limit=20000'),
+                        7000,
+                        null
+                    );
+                    if(!Array.isArray(rows))return;
+                    const fallback=new Map();
+                    for(const row of rows){
+                        const postId=String(row.target_id||'');
+                        if(postId)fallback.set(postId,(fallback.get(postId)||0)+1);
+                    }
+                    counts=[...fallback].map(([post_id,comments_count])=>({post_id,comments_count}));
                 }
+                if(me&&Array.isArray(counts))void window.AlwahaLocalVault?.saveAccountViewCache?.(me.id,'post-comment-counts',counts).catch(error=>console.warn('[Alwaha Vault] home comment-count cache failed:',error));
+            }
+            if (!Array.isArray(counts)) return;
+            const countMap = new Map();
+            for (const row of counts) {
+                const postId = String(row.post_id || '');
+                if (postId) countMap.set(postId, Math.max(0, Number(row.comments_count || 0)));
             }
             if (requestId !== alwahaHomeFeedRequestId || !container.isConnected) return;
             for (const node of container.querySelectorAll('[id^="comment-count-"]')) {
