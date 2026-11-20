@@ -58,6 +58,13 @@ check('private account views are encrypted, bounded and use an explicit account-
 check('previous authenticated sessions remain available locally after transient network failures',
   html.includes('supabaseClient.auth.getSession()')&&html.includes('async function getCurrentAuthUser()')&&
   html.includes('Offline session lookup failed'));
+
+check('expired or unavailable offline Auth session can identify the previously signed-in local account for read-only views',
+  html.includes('async function cachedLocalIdentity()')&&html.includes("localStorage.getItem('alwaha_auth_user_id')")&&
+  html.includes("getProfileCache?.(id)")&&html.includes('alwaha_local_identity:true')&&
+  html.includes('A persisted Auth session may identify the account for local cached reads; it is not a write credential')&&
+  html.includes("return await cachedLocalIdentity()"));
+
 check('notifications and pending friend requests render from encrypted account snapshots offline',
   html.includes("getAccountViewCache?.(me.id,'notifications')")&&html.includes("getAccountViewCache?.(me.id,'friend-requests')")&&
   html.includes("getAccountViewCache?.(me.id,'friend-requester-directory')")&&html.includes('const offlineView=!navigator.onLine'));
