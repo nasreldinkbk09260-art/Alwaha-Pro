@@ -6397,6 +6397,8 @@ function triggerAnimeAiConverterFilter() {
 
         async function getAlwahaIceServers(){
             const fallback=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+            const savedRadius=Number(localStorage.getItem('alwaha_free_market_radius_km')||15);
+            if(!Number.isFinite(Number(window.__alwahaFreeMarketRadiusKm))&&Number.isFinite(savedRadius)&&savedRadius>=1&&savedRadius<=100)window.__alwahaFreeMarketRadiusKm=savedRadius;
             const cached=window.__alwahaIceServersCache;if(cached&&cached.expiresAt>Date.now())return cached.value;
             if(!supabaseClient?.functions?.invoke)return fallback;
             let timer;
@@ -6413,7 +6415,13 @@ function triggerAnimeAiConverterFilter() {
                     console.warn('[Alwaha Call] call-config failed; using STUN-only fallback:', result.error.message || result.error);
                     return fallback;
                 }
-                if(result&&!result.error&&Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};return result.data.iceServers;}
+                if(result&&!result.error){
+                    const radius=Number(result.data?.market?.freeRadiusKm);
+                    if(Number.isFinite(radius)&&radius>=1&&radius<=100){window.__alwahaFreeMarketRadiusKm=radius;try{localStorage.setItem('alwaha_free_market_radius_km',String(radius));}catch(_){}}
+                    const quotas=result.data?.messagingQuotas;
+                    if(quotas&&typeof quotas==='object')window.__alwahaPublicChatQuotas=quotas;
+                    if(Array.isArray(result.data?.iceServers)&&result.data.iceServers.length){window.__alwahaIceServersCache={value:result.data.iceServers,expiresAt:Date.now()+60000};return result.data.iceServers;}
+                }
             }catch(e){console.info('Using STUN fallback; TURN configuration unavailable.');}finally{clearTimeout(timer);}
             return fallback;
         }
@@ -6437,6 +6445,7 @@ function triggerAnimeAiConverterFilter() {
                     return null;
                 }
             };
+            safeStartup('public-app-config', () => getAlwahaIceServers());
             const notificationCenter = document.getElementById('internal-notification-center');
             if (notificationCenter && notificationCenter.parentElement !== document.body) document.body.appendChild(notificationCenter);
             let savedTheme = 'default';
