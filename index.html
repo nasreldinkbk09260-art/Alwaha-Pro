@@ -2422,7 +2422,7 @@ async function editActiveReelTitle(){if(!activeReelContext.id)return triggerToas
                 if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))return null;
                 const profile=await window.AlwahaLocalVault?.getProfileCache?.(id).catch(()=>null);
                 const storedName=String(localStorage.getItem('alwaha_profile_name')||'').trim();
-                const parts=storedName.split(/\\s+/).filter(Boolean);
+                const parts=storedName.split(/\s+/).filter(Boolean);
                 return {
                     id,
                     email:String(localStorage.getItem('alwaha_profile_email')||''),
