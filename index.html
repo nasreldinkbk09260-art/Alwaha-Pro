@@ -3992,7 +3992,8 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 if(!result){
                     const apiError=window.__alwahaLastApiError||{};console.warn('Message insert failed safely:',apiError);
                     let friendly='تعذر حفظ الرسالة. حاول مرة أخرى.';
-                    if(apiError.status===401)friendly='انتهت جلسة الدخول؛ سجّل الدخول مرة أخرى.';
+                    if(String(apiError.message||apiError.details||'').includes('ALWAHA_QUOTA_EXCEEDED'))friendly='وصلت إلى حد الرسائل المجانية اليومي أو الأسبوعي. يتجدد الحد في الفترة التالية.';
+                    else if(apiError.status===401)friendly='انتهت جلسة الدخول؛ سجّل الدخول مرة أخرى.';
                     else if(apiError.status===403)friendly='الخادم رفض الإرسال بسبب الصلاحيات (403). راجع تسجيل الدخول وأمان الرسائل.';
                     else if(apiError.status===400)friendly='تعذر حفظ الرسالة؛ تحقق من المستلم ثم أعد المحاولة.';
                     else if(apiError.status===0)friendly='تعذر الاتصال لحفظ الرسالة. تحقق من الإنترنت ثم أعد المحاولة.';
@@ -4082,7 +4083,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
                 }
                 const payload={conversation_id:currentMarketConversationId,sender_id:me.id,message};if(currentMarketReplyTarget)payload.reply_to_id=currentMarketReplyTarget.id;
                 const result=await supabaseFetch('market_messages',{method:'POST',body:JSON.stringify(payload),prefer:'return=representation'});
-                if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};triggerToastNotification(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':(e.status===0?'انقطع الاتصال؛ بقي النص في خانة الكتابة ويمكن إعادة إرساله.':'تعذر إرسال الرسالة ('+(e.status||'خطأ اتصال')+'). بقي النص في خانة الكتابة.'),'error');return;}
+                if(!Array.isArray(result)||!result.length){const e=window.__alwahaLastApiError||{};const detail=String(e.message||e.details||'');const friendly=detail.includes('ALWAHA_QUOTA_EXCEEDED')?'وصلت إلى حد رسائل السوق المجانية اليومي أو الأسبوعي. يتجدد الحد في الفترة التالية.':(e.status===403?'لا تملك صلاحية الإرسال في هذه المحادثة.':(e.status===0?'انقطع الاتصال؛ بقي النص في خانة الكتابة ويمكن إعادة إرساله.':'تعذر إرسال الرسالة ('+(e.status||'خطأ اتصال')+'). بقي النص في خانة الكتابة.'));triggerToastNotification(friendly,'error');return;}
                 if(input)input.value='';currentMarketReplyTarget=null;renderMarketReplyPreview();
                 triggerToastNotification('تم إرسال رسالتك إلى البائع.','success');
                 void loadMarketMessages();void renderMarketConversationsList();
@@ -4439,7 +4440,7 @@ async function approveMarketArchiveDeletion(recordType,recordId,approve=true) {
             if(window.AlwahaLocalMesh?.isEnabled()){
                 const mesh=window.AlwahaLocalMesh,vault=window.AlwahaLocalVault;
                 const trusted=await mesh.getPeerByAccountId(sellerId);
-                if(!trusted)return triggerToastNotification('للتواصل المجاني مع البائع، اطلب منه توثيق جهازك أولاً في شاشة الشبكة الحرة.','info');
+                if(!trusted)return triggerToastNotification('للتواصل المجاني، يجب أن يوثّق كل منكما جهاز الطرف الآخر في شاشة الشبكة الحرة أولاً.','info');
                 const index=await vault?.getMarketConversationIndex?.(me.id)||[];
                 let conversation=index.find(row=>String(row.product_id)===String(productId)&&String(row.peerId)===String(sellerId));
                 if(!conversation){
