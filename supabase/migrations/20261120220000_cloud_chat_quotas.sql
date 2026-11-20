@@ -32,7 +32,7 @@ DECLARE
   v_week date := date_trunc('week', now() AT TIME ZONE 'UTC')::date;
   v_used bigint;
 BEGIN
-  IF p_user_id IS NULL OR p_scope NOT IN ('direct','market') OR (SELECT auth.uid()) IS DISTINCT FROM p_user_id THEN
+  IF p_user_id IS NULL OR p_scope IS NULL OR p_scope NOT IN ('direct','market') OR (SELECT auth.uid()) IS DISTINCT FROM p_user_id THEN
     RAISE EXCEPTION 'Invalid quota identity or scope' USING ERRCODE = '42501';
   END IF;
   IF EXISTS (SELECT 1 FROM public.users u WHERE u.id = p_user_id AND u.is_admin IS TRUE) THEN
