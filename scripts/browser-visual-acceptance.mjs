@@ -109,8 +109,18 @@ async function section(id,label){
 try{
  await waitFor(async()=>{try{await getJson('http://127.0.0.1:'+debugPort+'/json/version');return true;}catch{return false;}},'Chrome remote debugging endpoint');
  await connect();
- on('Runtime.exceptionThrown',p=>unexpectedErrors.push(p.exceptionDetails?.text||'JavaScript exception'));
- on('Log.entryAdded',p=>{const e=p.entry;if(e?.level==='error'&&!/ERR_BLOCKED_BY_CLIENT|Failed to load resource|net::ERR/.test(e.text||''))unexpectedErrors.push(e.text);});
+ on('Runtime.exceptionThrown',p=>{
+  const d=p.exceptionDetails||{},x=d.exception||{},frames=d.stackTrace?.callFrames||[];
+  const stack=frames.map(f=>(f.url||'<inline>')+':'+(Number(f.lineNumber||0)+1)+':'+(Number(f.columnNumber||0)+1)+' '+(f.functionName||'<anonymous>')).join('\n');
+  unexpectedErrors.push(JSON.stringify({kind:'exception',text:d.text||'',exception:x.description||x.value||'',url:d.url||'',line:d.lineNumber,column:d.columnNumber,stack}));
+ });
+ on('Log.entryAdded',p=>{
+  const e=p.entry||{};
+  if(e.level==='error'&&!/ERR_BLOCKED_BY_CLIENT|Failed to load resource|net::ERR/.test(e.text||'')){
+   const frames=e.stackTrace?.callFrames||[];
+   unexpectedErrors.push(JSON.stringify({kind:'console',text:e.text||'',url:e.url||'',line:e.lineNumber,stack:frames.map(f=>(f.url||'<inline>')+':'+(Number(f.lineNumber||0)+1)+' '+(f.functionName||'<anonymous>')).join('\n')}));
+  }
+ });
  await send('Page.enable',{});
  await send('Runtime.enable',{});
  await send('Network.enable',{});
