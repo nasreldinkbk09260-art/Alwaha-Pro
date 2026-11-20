@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120-ringtone-v3';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -19,7 +19,7 @@ const PRECACHE_ASSETS = [
   './alwaha-kids-room.js',
   './alwaha-smart-assistant.js',
   './alwaha-theme-system.css',
-  './production-polish.js?v=3.0.4-dev',
+  './production-polish.js?v=3.0.4-ringtone-default-saffron-20261120',
   './alwaha-profile-editor.js?v=3.0.4-dev',
   './alwaha-call-feedback.js?v=3.0.4-dev',
   './compatibility.js?v=3.0.4-dev',
