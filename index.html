@@ -1008,7 +1008,7 @@ img,video,canvas{max-width:100%}
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-data-saver" type="checkbox"> توفير البيانات والتحميل الكسول للصور</label>
           <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-reduced-motion" type="checkbox"> تقليل الحركة والمؤثرات</label>
 <label style="display:flex;align-items:center;gap:9px;color:#d8e9f7;font-size:12px;"><input id="alwaha-ui-sounds-enabled" type="checkbox" checked> أصوات تفاعلية خفيفة للأزرار والتنقل</label>
-          <p role="note" aria-disabled="true" style="margin:0;color:#91a4bb;font-size:9px;line-height:1.7;">المكالمات عبر البلوتوث لم تُنفذ بعد؛ المكالمات المتاحة حالياً تستخدم اتصال الإنترنت.</p>
+          <p role="note" aria-disabled="true" style="margin:0;color:#91a4bb;font-size:9px;line-height:1.7;">Bluetooth ينقل الرسائل والملفات المشفّرة فقط؛ المكالمات الصوتية والمرئية المحلية تتطلب اتصال Wi‑Fi Direct مباشراً وجهازاً موثوقاً.</p>
           <div style="color:#829cb1;font-size:10px;line-height:1.7;">تُحفظ تفضيلاتك على هذا الجهاز. الصوتين لا يُحمّلان إلا عند التجربة أو ورود اتصال.</div>
         </div>
 <h4 style="color:#aaa; font-size:12px; margin-bottom:10px;">متقدم</h4>
@@ -1029,8 +1029,8 @@ img,video,canvas{max-width:100%}
           <div id="alwaha-experience-ui" style="margin-top:14px;"></div>
         </div>
         <section id="alwaha-test-coverage-board" aria-labelledby="alwaha-test-coverage-title" style="padding:13px;border:1px solid #8bf4ff35;border-radius:15px;background:linear-gradient(145deg,#101b2d,#111827);margin-bottom:20px;">
-          <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">فهرس طلبات الأيام السبعة وحالة التنفيذ</h4>
-          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة متابعة لنسخة الاختبار الخاصة بتاريخ 19 نوفمبر 2026: لا نخفي الميزات، ولا نحذف بيانات الاختبار، ولا ننشر للعامة. حالة «موجود بالكود» لا تعني نجاح التجربة على هاتفين؛ نحدّثها بعد الاختبار الفعلي.</p>
+          <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">لوحة جاهزية الميزات والاختبارات — بناء 972 (20 نوفمبر 2026)</h4>
+          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة حالة بناء 972: أزرار الميزات المطلوبة متاحة في سياقها داخل التطبيق. اجتياز CI يثبت فحوص المصدر والبناء، لكنه لا يثبت اتصال هاتفين؛ نعرض ذلك بوضوح حتى يتم الاختبار الميداني.</p>
           <div style="display:grid;gap:9px;">
             <div data-feature-id="market-chat-call" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">السوق: محادثة المشتري والبائع والاتصال الصوتي</strong>
@@ -1046,11 +1046,15 @@ img,video,canvas{max-width:100%}
             </div>
             <div data-feature-id="local-pairing-transfer" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">الشبكة المحلية: الاقتران المشفر ونقل الرسائل والملفات</strong>
-              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">غير مثبت اكتماله في هذه النسخة؛ ظاهر في سجل الاختبار ولا يُعرض كوظيفة ناجحة قبل إثبات النقل.</span>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">نقل الحزم عبر Wi‑Fi Direct TCP وBluetooth Classic RFCOMM موصول بالمكوّن الأصلي، مع تشفير وهوية موثقة وطابور تمرير. النقل الفعلي بين هاتفين ما زال يحتاج اختباراً ميدانياً.</span>
+            </div>
+            <div data-feature-id="group-calls" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">المكالمات الجماعية وإضافة مشارك</strong>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">غير منفذة بعد؛ لا يظهر زر إضافة مشارك قبل بناء وإختبار اتصالات متعددة وصلاحيات الأعضاء وإدارة الوسائط.</span>
             </div>
             <div data-feature-id="local-calls" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الصوت والفيديو عبر الشبكة المحلية</strong>
-              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">غير مثبتة كمسار اتصال محلي مكتمل؛ مكالمات الإنترنت مسار منفصل.</span>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">إشارات WebRTC والمكالمة المحلية المباشرة موصولة عبر Wi‑Fi Direct للجار الموثوق فقط. لا تعمل المكالمة الحية عبر Bluetooth أو طابور التمرير، واختبار هاتفين ما زال مطلوباً.</span>
             </div>
             <div data-feature-id="internet-video-quality" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الإنترنت وجودة الفيديو التكيفية</strong>
@@ -1062,7 +1066,7 @@ img,video,canvas{max-width:100%}
             </div>
             <div data-feature-id="kids-room-safety" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">غرفة الأطفال وسلامة الاستخدام</strong>
-              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">الوحدة موجودة في المصدر؛ يلزم اختبار تدفق الدخول والمحتوى والأذونات وسلوك المكالمة.</span>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">غرفة الأطفال موصولة بمكالمة الفيديو وتعيد عناصر بث الطرفين عند الفتح والإغلاق؛ يلزم اختبار عملي على جهازين مع أذونات الكاميرا والصوت.</span>
             </div>
             <div data-feature-id="notifications" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">التنبيهات وطلبات الصداقة وقراءة الإشعارات</strong>
@@ -1070,7 +1074,7 @@ img,video,canvas{max-width:100%}
             </div>
             <div data-feature-id="navigation-themes" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">شريط التنقل والثيمات والمظهر</strong>
-              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">السحب والترتيب والإخفاء والاستعادة وثلاثة ثيمات موجودة؛ الثيمات الموسمية الأربعة تحتاج مراجعة منفصلة.</span>
+              <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">الثيمات الأساسية الثلاثة محفوظة، وسجل الثيمات يقبل إضافات جديدة. يمكن إضافة المواسم الأربعة عند توفير أصولها؛ يجب اختبار ظهورها وتبديلها بعد إضافتها.</span>
             </div>
             <div data-feature-id="backup-low-data" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">النسخ الاحتياطي والتخزين المحلي وتوفير البيانات</strong>
