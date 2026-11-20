@@ -3,7 +3,7 @@
   const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12;
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
-  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', modeEnabled=false, receiving=false;
+  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false, receiving=false;
   const queued=new Map(), seen=new Map(), peers=new Map(), fileUrls=new Map();
 
   function vault(){return window.AlwahaLocalVault;}
@@ -227,8 +227,16 @@
     const native=window.alwahaLocalNetwork;if(!native?.addListener||transportHandles.length)return;
     transportHandles.push(await native.addListener('localPacketReceived',event=>{void receiveRawPacket(event?.packet||'');}));
     transportHandles.push(await native.addListener('transportState',event=>{
-      if(event?.state==='packet-transport-connected'){void sendHello();window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));}
-      if(event?.state==='packet-transport-disconnected'||event?.state==='packet-transport-closed')window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      if(event?.state==='packet-transport-connected'){
+        transportType=String(event.transport||'unknown');
+        void sendHello();
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      }
+      if(event?.state==='packet-transport-disconnected'||event?.state==='packet-transport-closed'){
+        transportType='';
+        transportPeerFingerprint='';
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      }
     }));
   }
   async function sendToAccount(accountUserId,payload){
@@ -342,8 +350,9 @@
   }
   function isEnabled(){try{return modeEnabled||localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';}catch{return modeEnabled;}}
   function getTransportPeer(){return transportPeerFingerprint;}
+  function getTransportType(){return transportType;}
   function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
   function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,getTransportPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,getTransportPeer,getTransportType,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
