@@ -256,6 +256,7 @@ jobs:
           node --check alwaha-modal-shell.js
           node --check alwaha-runtime-guard.js
           node --check alwaha-kids-room.js
+          node --check alwaha-profile-editor.js
           find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
           node <<'NODE'
