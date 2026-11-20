@@ -564,7 +564,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     private boolean isBluetoothTransportConnected() {
         BluetoothSocket socket = bluetoothTransportSocket;
-        return socket != null && socket.isConnected() && !socket.isClosed();
+        return socket != null && socket.isConnected();
     }
 
     private void closeTransportSocket(String reason) {
