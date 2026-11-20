@@ -4052,10 +4052,11 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
         }
 async function subscribeToMarketConversation() {
             if(!supabaseClient||!currentMarketConversationId)return;
+            const me=await getCurrentAuthUser();if(!me)return;
             if(marketConversationChannel){try{await supabaseClient.removeChannel(marketConversationChannel);}catch(e){}marketConversationChannel=null;}
             const id=currentMarketConversationId;
             marketConversationChannel=supabaseClient.channel(`market-conversation-${id}`)
-                .on('postgres_changes',{event:'INSERT',schema:'public',table:'market_messages',filter:`conversation_id=eq.${id}`},async()=>{if(currentMarketConversationId===id)await loadMarketMessages();await renderMarketConversationsList();})
+                .on('postgres_changes',{event:'INSERT',schema:'public',table:'market_messages',filter:`conversation_id=eq.${id}`},async payload=>{if(payload?.new?.sender_id&&payload.new.sender_id!==me.id)playAlwahaInboundSound('message');if(currentMarketConversationId===id)await loadMarketMessages();await renderMarketConversationsList();})
                 .subscribe();
         }
         function openMarketConversationsPage() {
