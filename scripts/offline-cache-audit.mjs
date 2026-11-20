@@ -62,6 +62,10 @@ check('offline notification reads are local-only, queued, and synchronized after
 check('friend directory and relationship state are available as encrypted read-only offline snapshots',
   html.includes("getAccountViewCache?.(me.id,'friend-relations')")&&html.includes("saveAccountViewCache?.(me.id,'friend-relations',requests)")&&
   html.includes('إجراءات الصداقة تحتاج اتصالاً للمزامنة'));
+check('offline friend list reads its own directory snapshot and never offers friend mutations',
+  html.includes("getAccountViewCache?.(me.id,'friend-directory')")&&
+  html.includes("saveAccountViewCache?.(me.id,'friend-directory',users)")&&
+  html.includes("if(offlineDirectory)friendControl="));
 check('market transaction and delivery snapshots remain encrypted and read-only while offline',
   html.includes("getAccountViewCache?.(me.id,'market-transactions')")&&html.includes("saveAccountViewCache?.(me.id,'market-transactions',rows)")&&
   html.includes('سجل معاملات مشفّر للقراءة فقط دون اتصال')&&html.includes('!offlineView&&!buyer&&deliveryNext'));
