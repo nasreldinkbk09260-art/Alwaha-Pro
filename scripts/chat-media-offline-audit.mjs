@@ -19,6 +19,8 @@ const checks=[
  ['direct and marketplace message caches are user-scoped',vault.includes("'cache:direct:'+String(userId)+':'+String(peerId)")&&vault.includes("'cache:market:'+String(userId)+':'+String(conversationId)")],
  ['offline direct chat list reads local encrypted cache',html.includes('getAllDirectChatCaches?.(me.id)')&&html.includes('نسخة محلية مشفّرة')],
  ['offline marketplace list and chat use locally cached conversation index',html.includes('getMarketConversationIndex?.(me.id)')&&vault.includes("cache:market-index:")],
+  ['cloud chat views retain local Mesh messages that are not yet in the server result',html.includes('const localPending=cached.filter(row=>row?.local_mesh&&!known.has(String(row.id)))')&&html.includes('getDirectChatCache?.(me.id,peerId)||[]')&&html.includes('getMarketChatCache?.(me.id,conversationId)||[]')],
+  ['local-only chat messages remain visibly labeled after reconnect',html.includes('محلي — غير مرفوع للسحابة')],
  ['offline UI distinguishes local encrypted relay queueing from unavailable cloud delivery',html.includes('الإرسال والمزامنة السحابية متوقفان دون اتصال')&&html.includes('إرسال الوسائط دون اتصال غير متاح ما لم تفعل الشبكة الحرة')&&html.includes('حُفظت كحزمة مشفّرة للتمرير المرحّل.')&&html.includes('result.sent?')],
   ['offline account identity fallback is local-only and never becomes a server write credential',html.includes('const cachedLocalIdentity=async()=>')&&html.includes('if(!localOnly())return null;')&&html.includes('alwaha_local_identity:true')&&html.includes('A persisted Auth session may identify the account for local cached reads; it is not a write credential')&&html.includes('supabaseClient.auth.getSession()')&&html.includes('return await cachedLocalIdentity()')],
 ];
