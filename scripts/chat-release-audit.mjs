@@ -17,7 +17,7 @@ const checks = [
   ['profile menu action', 'openCurrentChatProfile()'],
   ['message refresh action', 'loadDirectMessages()'],
   ['privacy information action', 'showChatPrivacyInfo()'],
-  ['live audio/video media over Bluetooth or multi-hop Mesh is not advertised as ready', 'المكالمات عبر البلوتوث لم تُنفذ بعد'],
+  ['live audio/video media is explicitly limited to a direct trusted Wi-Fi Direct peer; Bluetooth is packet transport and multi-hop media is not ready', html.includes('Bluetooth ينقل الرسائل والملفات المشفّرة فقط؛ المكالمات الصوتية والمرئية المحلية تتطلب اتصال Wi‑Fi Direct مباشراً وجهازاً موثوقاً') && html.includes('لم نعتمد بعد مكالمات الصوت والفيديو عبر Bluetooth أو عدة قفزات') && html.includes('لا يمكن بدء مكالمة من طابور تمرير مؤجل')],
   ['video camera acquisition', 'getUserMedia({ audio: true, video: videoConstraints })'],
   ['video peer capture preserves aggregated remote tracks', 'this.remoteVideo.srcObject = combined'],
   ['camera switch action', 'switchCallCamera()'],
