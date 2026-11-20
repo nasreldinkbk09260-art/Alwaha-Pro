@@ -45,6 +45,12 @@ check('encrypted backup vault remains separate from public display cache',vault.
 check('private direct chat and peer identity labels are encrypted in the separate local vault',vault.includes('async function saveDirectChatCache')&&vault.includes('async function getAllDirectChatCaches')&&vault.includes('async function savePeerProfileCache')&&vault.includes('async function getPeerProfileCache')&&vault.includes("putEncryptedCache('cache:peer-profile:'"));
 check('direct inbox renders prior local caches when offline or when the online request fails',html.includes('async function renderCachedDirectConversationList')&&html.includes('if(!navigator.onLine||window.AlwahaLocalMesh?.isEnabled())')&&html.includes('if(!Array.isArray(rows))'));
 check('home comment aggregate cache stores only post identifiers and totals',html.includes("post_comment_counts: ['post_id','comments_count']")&&html.includes("tableName === 'post_comment_counts'")&&html.includes("query.includes('select=post_id,comments_count')"));
+check('home comment totals are cached per account and restored offline without a network request',
+  html.includes("getAccountViewCache?.(me.id,'post-comment-counts')")&&
+  html.includes("saveAccountViewCache?.(me.id,'post-comment-counts',counts)")&&
+  html.includes("if(offlineView){\\n                counts=me?await")&&
+  vault.includes("'post-comment-counts'"));
+
 
 check('private account views are encrypted, bounded and use an explicit account-scoped cache contract',
   vault.includes('async function saveAccountViewCache')&&vault.includes('async function getAccountViewCache')&&
