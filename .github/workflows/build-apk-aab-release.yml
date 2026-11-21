@@ -798,6 +798,28 @@ jobs:
           grep -Eq '^[[:space:]]*targetSdkVersion[[:space:]]*=?[[:space:]]*36([[:space:]]|$)' android/app/build.gradle
           echo 'Verified targetSdkVersion 36 for Google Play.'
 
+      - name: Add Google Nearby Connections SDK for automatic local mesh
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('android/app/build.gradle')
+          if not path.is_file():
+              raise SystemExit('Expected generated Android app/build.gradle.')
+          source = path.read_text(encoding='utf-8')
+          dependency = "implementation 'com.google.android.gms:play-services-nearby:19.5.1'"
+          if dependency not in source:
+              match = re.search(r'(?m)^dependencies\\s*\\{', source)
+              if not match:
+                  raise SystemExit('Could not find dependencies block; refusing to modify Gradle.')
+              source = source[:match.end()] + '\\n    ' + dependency + source[match.end():]
+              path.write_text(source, encoding='utf-8')
+          print('Nearby Connections SDK dependency is present.')
+          PY
+
       - name: Build signed APK and AAB
         working-directory: android
         shell: bash
