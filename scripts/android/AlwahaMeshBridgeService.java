@@ -75,8 +75,8 @@ public final class AlwahaMeshBridgeService extends Service {
         }
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
-            .setContentTitle("Alwaha-Pro · جسر الشبكة الحرة")
-            .setContentText("يعمل هذا الهاتف على تمرير حزم رسائل مشفّرة للأجهزة القريبة")
+            .setContentTitle("هاتفك يعمل كجسر للواحة الحرة")
+            .setContentText("جهازك ممرّ فقط: يمرّر حزماً مشفّرة ولا يقرأ محتوى الرسائل")
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
