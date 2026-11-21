@@ -398,7 +398,7 @@
   }
   async function sendToAccount(accountUserId,payload){
     if(!isEnabled())throw new Error('وضع الشبكة الحرة غير مفعل في هذه المحادثة.');
-    const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('لم تقترن بهذا الحساب بجهاز موثوق بعد.');
+    const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('مفتاح تشفير هذا الحساب غير محفوظ. افتح المحادثة أثناء اتصال الإنترنت على الهاتفين أولاً لتثبيت مفاتيح التشفير.');
     const packet=await createEnvelope(peer,payload);
     const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
     if(window.alwahaLocalNetwork?.sendLocalPacket){
@@ -442,7 +442,7 @@
     if(!file||!Number.isFinite(file.size)||file.size<=0)throw new Error('الملف غير صالح.');
     if(file.size>25*1024*1024)throw new Error('حد الملف المحلي 25 ميجابايت في هذه المرحلة.');
     const peer=await getPeerByAccountId(accountUserId),fileId=crypto.randomUUID(),total=Math.ceil(file.size/FILE_CHUNK_BYTES);
-    if(!peer)throw new Error('الجهاز المقصود غير مقترن.');
+    if(!peer)throw new Error('مفتاح تشفير هذا الحساب غير محفوظ. افتح المحادثة أثناء اتصال الإنترنت على الهاتفين أولاً لتثبيت مفاتيح التشفير.');
     const meta={total,name:String(file.name||'offline-file'),mime:file.type||'application/octet-stream',size:file.size,kind,context};
     await storeLocalEncrypted('mesh:file:'+fileId+':meta',meta);
     for(let index=0;index<total;index++){
