@@ -330,10 +330,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void stopNearbyMeshInternal(String reason) {
         nearbyMeshActive = false;
         try {
-            Intent service = new Intent(getContext(), AlwahaMeshBridgeService.class);
-            service.setAction(AlwahaMeshBridgeService.ACTION_STOP);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) getContext().startForegroundService(service);
-            else getContext().startService(service);
+            getContext().stopService(new Intent(getContext(), AlwahaMeshBridgeService.class));
         } catch (Exception error) {
             emitNearbyState("nearby-foreground-service-stop-failed", error.getClass().getSimpleName());
         }
