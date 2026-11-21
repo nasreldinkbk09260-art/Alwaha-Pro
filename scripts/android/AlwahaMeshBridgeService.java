@@ -86,6 +86,13 @@ public final class AlwahaMeshBridgeService extends Service {
     }
 
     @Override
+    public void onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE);
+        else stopForeground(true);
+        super.onDestroy();
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
