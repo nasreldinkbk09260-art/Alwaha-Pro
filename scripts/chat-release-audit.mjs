@@ -17,7 +17,7 @@ const checks = [
   ['profile menu action', 'openCurrentChatProfile()'],
   ['message refresh action', 'loadDirectMessages()'],
   ['privacy information action', 'showChatPrivacyInfo()'],
-  ['audio/video calls over the anonymous local bridge are explicitly unavailable until a media transport is implemented', html.includes('مكالمات الصوت والفيديو عبر الجسر المحلي غير جاهزة بعد') && html.includes('المكالمات الحية عبر الجسر المجهول غير مفعّلة حالياً') && html.includes('لا يمكن بدء مكالمة من طابور تمرير مؤجل')],
+  ['audio/video calls over the anonymous local bridge are explicitly unavailable until a media transport is implemented', html.includes('مكالمات الصوت والفيديو عبر الجسر المحلي غير جاهزة بعد') && html.includes('المكالمات الحية عبر الجسر المجهول غير مفعّلة حالياً') && html.includes('الجسر المحلي الحالي مخصص للرسائل والملفات المشفّرة فقط')],
   ['video camera acquisition', 'getUserMedia({ audio: true, video: videoConstraints })'],
   ['video peer capture preserves aggregated remote tracks', 'this.remoteVideo.srcObject = combined'],
   ['camera switch action', 'switchCallCamera()'],
