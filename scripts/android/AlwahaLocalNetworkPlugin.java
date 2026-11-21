@@ -31,6 +31,19 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.connection.AdvertisingOptions;
+import com.google.android.gms.nearby.connection.ConnectionInfo;
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
+import com.google.android.gms.nearby.connection.ConnectionResolution;
+import com.google.android.gms.nearby.connection.ConnectionsClient;
+import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
+import com.google.android.gms.nearby.connection.DiscoveryOptions;
+import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
+import com.google.android.gms.nearby.connection.Payload;
+import com.google.android.gms.nearby.connection.PayloadCallback;
+import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
+import com.google.android.gms.nearby.connection.Strategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +55,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 
 @CapacitorPlugin(
@@ -62,6 +78,9 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private static final int MAX_LOCAL_PACKET_BYTES = 262144;
     private static final UUID BLUETOOTH_PACKET_UUID = UUID.fromString("3b5d8f2a-6b71-4d9a-9e10-7a6c2f4b8d31");
     private static final String BLUETOOTH_SERVICE_NAME = "Alwaha-Pro Local";
+    private static final String NEARBY_SERVICE_ID = "pro.alwaha.app.localmesh.v1";
+    private static final String NEARBY_ENDPOINT_NAME = "Alwaha-Pro";
+    private static final int MAX_NEARBY_ENDPOINTS = 6;
     private final ExecutorService transportExecutor = Executors.newCachedThreadPool();
     private volatile ServerSocket transportServer;
     private volatile Socket transportSocket;
@@ -70,6 +89,11 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private volatile boolean bluetoothServerClosed = false;
     private volatile boolean transportClosed = false;
     private final Object transportWriteLock = new Object();
+    private volatile ConnectionsClient nearbyClient;
+    private volatile boolean nearbyMeshActive = false;
+    private final Set<String> nearbyConnectedEndpoints = ConcurrentHashMap.newKeySet();
+    private final Set<String> nearbyConnectingEndpoints = ConcurrentHashMap.newKeySet();
+    private final Map<String, String> nearbyEndpointNames = new ConcurrentHashMap<>();
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiChannel;
     private BluetoothAdapter bluetoothAdapter;
@@ -79,6 +103,84 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private boolean bluetoothDiscoveryActive = false;
     private Handler handler;
     private final Runnable discoveryTimeout = () -> stopDiscoveryInternal("timeout");
+
+
+    private final PayloadCallback nearbyPayloadCallback = new PayloadCallback() {
+        @Override public void onPayloadReceived(String endpointId, Payload payload) {
+            if (payload == null || payload.getType() != Payload.Type.BYTES) return;
+            byte[] packet = payload.asBytes();
+            if (packet == null || packet.length == 0 || packet.length > MAX_LOCAL_PACKET_BYTES) {
+                emitNearbyState("nearby-payload-rejected", endpointId);
+                return;
+            }
+            JSObject event = new JSObject();
+            event.put("packet", Base64.encodeToString(packet, Base64.URL_SAFE | Base64.NO_WRAP));
+            event.put("bytes", packet.length);
+            event.put("transport", "nearby-connections");
+            event.put("endpointId", endpointId);
+            notifyListeners("localPacketReceived", event);
+        }
+        @Override public void onPayloadTransferUpdate(String endpointId, PayloadTransferUpdate update) {
+            // Byte payload completion is acknowledged by the sender's Task; do not expose media payloads here.
+        }
+    };
+
+    private final ConnectionLifecycleCallback nearbyConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
+        @Override public void onConnectionInitiated(String endpointId, ConnectionInfo info) {
+            // The user has explicitly enabled the bridge. Accept the transport link, then authenticate
+            // the Alwaha identity in the encrypted application-layer hello before relaying any packet.
+            ConnectionsClient client = nearbyClient;
+            if (!nearbyMeshActive || client == null) {
+                if (client != null) client.rejectConnection(endpointId);
+                return;
+            }
+            client.acceptConnection(endpointId, nearbyPayloadCallback)
+                .addOnFailureListener(error -> emitNearbyState("nearby-accept-failed", endpointId));
+        }
+        @Override public void onConnectionResult(String endpointId, ConnectionResolution result) {
+            nearbyConnectingEndpoints.remove(endpointId);
+            if (result.getStatus().isSuccess()) {
+                nearbyConnectedEndpoints.add(endpointId);
+                emitNearbyState("nearby-peer-connected", endpointId);
+            } else {
+                nearbyConnectedEndpoints.remove(endpointId);
+                emitNearbyState("nearby-peer-connection-failed", endpointId);
+            }
+        }
+        @Override public void onDisconnected(String endpointId) {
+            nearbyConnectedEndpoints.remove(endpointId);
+            nearbyConnectingEndpoints.remove(endpointId);
+            nearbyEndpointNames.remove(endpointId);
+            emitNearbyState("nearby-peer-disconnected", endpointId);
+        }
+    };
+
+    private final EndpointDiscoveryCallback nearbyEndpointDiscoveryCallback = new EndpointDiscoveryCallback() {
+        @Override public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
+            if (!nearbyMeshActive || endpointId == null || endpointId.isEmpty()) return;
+            if (nearbyConnectedEndpoints.contains(endpointId) || !nearbyConnectingEndpoints.add(endpointId)) return;
+            if (nearbyConnectedEndpoints.size() + nearbyConnectingEndpoints.size() > MAX_NEARBY_ENDPOINTS) {
+                nearbyConnectingEndpoints.remove(endpointId);
+                emitNearbyState("nearby-peer-limit", endpointId);
+                return;
+            }
+            nearbyEndpointNames.put(endpointId, info == null ? "Alwaha-Pro" : info.getEndpointName());
+            ConnectionsClient client = nearbyClient;
+            if (client == null) {
+                nearbyConnectingEndpoints.remove(endpointId);
+                return;
+            }
+            client.requestConnection(NEARBY_ENDPOINT_NAME, endpointId, nearbyConnectionLifecycleCallback)
+                .addOnFailureListener(error -> {
+                    nearbyConnectingEndpoints.remove(endpointId);
+                    emitNearbyState("nearby-request-failed", endpointId);
+                });
+        }
+        @Override public void onEndpointLost(String endpointId) {
+            if (!nearbyConnectedEndpoints.contains(endpointId)) nearbyConnectingEndpoints.remove(endpointId);
+            emitNearbyState("nearby-endpoint-lost", endpointId);
+        }
+    };
 
     @Override
     public void load() {
@@ -141,6 +243,9 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("wifiEnabled", wifiEnabled);
         result.put("bluetoothClassicSupported", bluetooth != null);
         result.put("bluetoothEnabled", bluetoothEnabled);
+        result.put("nearbyConnectionsSupported", true);
+        result.put("nearbyMeshActive", nearbyMeshActive);
+        result.put("nearbyConnectedPeers", nearbyConnectedEndpoints.size());
         result.put("androidApi", Build.VERSION.SDK_INT);
         result.put("targetSdk", targetSdk);
         result.put("locationModeEnabled", isLocationModeEnabled());
@@ -151,6 +256,151 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("callMediaReady", false);
         result.put("requiresAccessLocalNetworkPermission", Build.VERSION.SDK_INT >= 37 && targetSdk >= 37);
         call.resolve(result);
+    }
+
+
+    @PluginMethod
+    public void startNearbyMesh(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            requestPermissionsForCurrentApi(call, "nearbyMeshPermissionCallback");
+            return;
+        }
+        startNearbyMeshNow(call);
+    }
+
+    @PermissionCallback
+    private void nearbyMeshPermissionCallback(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby permissions were not granted; the mesh bridge was not started.");
+            return;
+        }
+        startNearbyMeshNow(call);
+    }
+
+    private void startNearbyMeshNow(PluginCall call) {
+        try {
+            ConnectionsClient client = Nearby.getConnectionsClient(getContext());
+            nearbyClient = client;
+            nearbyMeshActive = true;
+            AdvertisingOptions advertising = new AdvertisingOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER)
+                .build();
+            DiscoveryOptions discovery = new DiscoveryOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER)
+                .build();
+
+            client.startAdvertising(NEARBY_ENDPOINT_NAME, NEARBY_SERVICE_ID,
+                    nearbyConnectionLifecycleCallback, advertising)
+                .addOnSuccessListener(unused -> emitNearbyState("nearby-advertising-started", ""))
+                .addOnFailureListener(error -> emitNearbyState("nearby-advertising-failed", error.getClass().getSimpleName()));
+
+            client.startDiscovery(NEARBY_SERVICE_ID, nearbyEndpointDiscoveryCallback, discovery)
+                .addOnSuccessListener(unused -> emitNearbyState("nearby-discovery-started", ""))
+                .addOnFailureListener(error -> emitNearbyState("nearby-discovery-failed", error.getClass().getSimpleName()));
+
+            JSObject result = new JSObject();
+            result.put("started", true);
+            result.put("phase", "nearby-cluster-starting");
+            result.put("strategy", "P2P_CLUSTER");
+            result.put("maxConnectedPeers", MAX_NEARBY_ENDPOINTS);
+            result.put("message", "Nearby advertising and discovery requested. Actual readiness is reported by peer connection events.");
+            call.resolve(result);
+        } catch (Exception error) {
+            nearbyMeshActive = false;
+            call.reject("Google Nearby Connections is unavailable on this device. The legacy local transport remains available.", error);
+        }
+    }
+
+    @PluginMethod
+    public void stopNearbyMesh(PluginCall call) {
+        stopNearbyMeshInternal("user");
+        JSObject result = new JSObject();
+        result.put("stopped", true);
+        call.resolve(result);
+    }
+
+    private void stopNearbyMeshInternal(String reason) {
+        nearbyMeshActive = false;
+        ConnectionsClient client = nearbyClient;
+        nearbyClient = null;
+        if (client != null) {
+            try { client.stopAdvertising(); } catch (Exception ignored) {}
+            try { client.stopDiscovery(); } catch (Exception ignored) {}
+            try { client.stopAllEndpoints(); } catch (Exception ignored) {}
+        }
+        nearbyConnectedEndpoints.clear();
+        nearbyConnectingEndpoints.clear();
+        nearbyEndpointNames.clear();
+        emitNearbyState("nearby-mesh-stopped", reason);
+    }
+
+    @PluginMethod
+    public void requestBluetoothEnable(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 31 && getPermissionState("bluetooth") != PermissionState.GRANTED) {
+            requestPermissionForAlias("bluetooth", call, "bluetoothEnablePermissionCallback");
+            return;
+        }
+        requestBluetoothEnableNow(call);
+    }
+
+    @PermissionCallback
+    private void bluetoothEnablePermissionCallback(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 31 && getPermissionState("bluetooth") != PermissionState.GRANTED) {
+            call.reject("Bluetooth permission was not granted.");
+            return;
+        }
+        requestBluetoothEnableNow(call);
+    }
+
+    private void requestBluetoothEnableNow(PluginCall call) {
+        try {
+            BluetoothAdapter adapter = getBluetoothAdapter();
+            if (adapter == null) {
+                call.reject("This device does not support Bluetooth.");
+                return;
+            }
+            if (adapter.isEnabled()) {
+                JSObject result = new JSObject();
+                result.put("enabled", true);
+                call.resolve(result);
+                return;
+            }
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            getActivity().startActivityForResult(intent, 0xA17);
+            JSObject result = new JSObject();
+            result.put("requested", true);
+            result.put("requiresSystemApproval", true);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Android could not request Bluetooth activation.", error);
+        }
+    }
+
+    @PluginMethod
+    public void openWifiPanel(PluginCall call) {
+        try {
+            Intent intent = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+                ? new Intent(Settings.Panel.ACTION_WIFI)
+                : new Intent(Settings.ACTION_WIFI_SETTINGS);
+            getActivity().startActivity(intent);
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            result.put("requiresUserAction", true);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Android could not open the Wi-Fi panel.", error);
+        }
+    }
+
+    private void emitNearbyState(String state, String detail) {
+        JSObject payload = new JSObject();
+        payload.put("state", state);
+        payload.put("detail", detail == null ? "" : detail);
+        payload.put("transport", "nearby-connections");
+        payload.put("transportReady", !nearbyConnectedEndpoints.isEmpty());
+        if (state.startsWith("nearby-peer-")) payload.put("endpointId", detail == null ? "" : detail);
+        payload.put("connectedPeers", nearbyConnectedEndpoints.size());
+        notifyListeners("transportState", payload);
     }
 
     @PluginMethod
@@ -383,8 +633,33 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         BluetoothSocket bluetoothSocket = bluetoothTransportSocket;
         boolean wifiReady = socket != null && !socket.isClosed() && socket.isConnected();
         boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected();
+        ConnectionsClient nearby = nearbyClient;
+        String endpointId = call.getString("endpointId", "");
+        if (nearby != null && !nearbyConnectedEndpoints.isEmpty()) {
+            List<String> targets = new ArrayList<>();
+            if (endpointId != null && !endpointId.isEmpty()) {
+                if (!nearbyConnectedEndpoints.contains(endpointId)) {
+                    call.reject("The requested Nearby endpoint is not connected.");
+                    return;
+                }
+                targets.add(endpointId);
+            } else {
+                targets.addAll(nearbyConnectedEndpoints);
+            }
+            nearby.sendPayload(targets, Payload.fromBytes(packet))
+                .addOnSuccessListener(unused -> {
+                    JSObject result = new JSObject();
+                    result.put("sent", true);
+                    result.put("bytes", packet.length);
+                    result.put("transport", "nearby-connections");
+                    result.put("targets", targets.size());
+                    call.resolve(result);
+                })
+                .addOnFailureListener(error -> call.reject("Nearby Connections could not send the encrypted packet.", error));
+            return;
+        }
         if (!wifiReady && !bluetoothReady) {
-            call.reject("No Wi-Fi Direct or Bluetooth packet transport is connected.");
+            call.reject("No Nearby, Wi-Fi Direct or Bluetooth packet transport is connected.");
             return;
         }
         transportExecutor.execute(() -> {
@@ -879,6 +1154,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     @Override
     protected void handleOnDestroy() {
+        stopNearbyMeshInternal("plugin-destroyed");
         stopPacketTransportInternal("plugin-destroyed");
         stopDiscoveryInternal("plugin-destroyed");
         transportExecutor.shutdownNow();
