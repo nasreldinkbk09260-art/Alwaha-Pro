@@ -827,7 +827,7 @@ img,video,canvas{max-width:100%}
             <div class="alwaha-chat-actions" role="group" aria-label="خيارات الاتصال">
                 <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn video" onclick="openVideoCallModeChooser()" aria-label="اختيار نوع مكالمة الفيديو" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
-                <button type="button" class="alwaha-chat-icon-btn local" onclick="openAlwahaLocalDiscovery()" aria-label="البحث عن أجهزة قريبة عبر Wi-Fi وBluetooth" title="الأجهزة القريبة" style="color:#8bf4ff;"><i class="fa-solid fa-wifi"></i></button>
+                <button type="button" class="alwaha-chat-icon-btn local" onclick="openAlwahaLocalDiscovery()" aria-label="خيارات الشبكة الحرة المتقدمة" title="إعدادات الشبكة المتقدمة" style="display:none!important;" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-wifi"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn local" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" aria-label="تبديل الشبكة الحرة المحلية" title="الشبكة الحرة"><i class="fa-solid fa-route"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
@@ -5444,32 +5444,140 @@ async function renderConversationsList(){
                 if(name==='marketConversationChannel')marketConversationChannel=null;
             }
         }
-        async function toggleAlwahaLocalChatMode(){
-            const mesh=window.AlwahaLocalMesh;if(!mesh)return triggerToastNotification('بروتوكول الشبكة الحرة غير موجود في هذه النسخة.','error');
-            if(activeCallManager?.call)return triggerToastNotification('أنه المكالمة الحالية قبل تغيير مسار الشبكة.','info');
-            const enabled=!mesh.isEnabled();await mesh.setMode(enabled);
-            if(enabled)await closeAlwahaCloudRealtimeForLocalMode();
-            else{
-                try{
-                    await subscribeToNotifications();
-                    await subscribeToDirectMessages();
-                    await subscribeToMarketInbox();
-                    if(currentMarketConversationId)await subscribeToMarketConversation();
-                    await initializeRealtimeCallInbox();
-                }catch(error){console.warn('[Alwaha Mesh] realtime restore after local mode:',error);}
+        const ALWAHA_MESH_CONSENT_KEY='alwaha_mesh_bridge_consent_v1';
+        const ALWAHA_MESH_REMIND_KEY='alwaha_mesh_bridge_remind_at_v1';
+        function showAlwahaMeshConsentDialog(){
+            return new Promise(resolve=>{
+                const overlay=document.createElement('div');overlay.id='alwaha-mesh-bridge-consent';
+                overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+                overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;overflow:auto;padding:18px;background:rgba(2,8,18,.97);box-sizing:border-box;';
+                overlay.innerHTML='<section style="width:min(100%,440px);padding:20px;border:1px solid #8bf4ff66;border-radius:20px;background:linear-gradient(145deg,#10243a,#10131f);color:#eaf7ff;text-align:right;">'
+                  +'<h2 style="margin:0 0 10px;color:#8bf4ff;font:900 17px Cairo,sans-serif;">ساعد في توصيل رسائل الواحة الحرة</h2>'
+                  +'<p style="margin:0 0 12px;color:#c5d5e5;font:11px/2 Cairo,sans-serif;">بموافقتك، يمكن لهاتفك اكتشاف أجهزة الواحة القريبة وتمرير حزم رسائل مشفّرة بينها. الهاتف الوسيط لا يملك مفاتيح قراءة محتوى الرسائل. يعمل الجسر عند تفعيله، وقد يستهلك البطارية والبيانات اللاسلكية القريبة.</p>'
+                  +'<p style="margin:0 0 15px;color:#ffd88b;font:10px/1.8 Cairo,sans-serif;">لن نبدأ البحث أو الإعلان قبل موافقتك. أذونات Android وموافقات تشغيل Wi‑Fi أو Bluetooth تظل تحت تحكمك.</p>'
+                  +'<button type="button" data-mesh-consent="yes" style="width:100%;min-height:44px;margin:5px 0;border:0;border-radius:11px;background:#176747;color:#d8ffeb;font:800 12px Cairo,sans-serif;">أوافق، اسمح لهاتفي بالمساعدة</button>'
+                  +'<button type="button" data-mesh-consent="no" style="width:100%;min-height:42px;margin:5px 0;border:1px solid #ffffff35;border-radius:11px;background:#2a3544;color:#fff;font:700 11px Cairo,sans-serif;">لا أوافق</button>'
+                  +'<button type="button" data-mesh-consent="later" style="width:100%;min-height:42px;margin:5px 0;border:1px solid #8bf4ff35;border-radius:11px;background:transparent;color:#b8d7e8;font:700 11px Cairo,sans-serif;">إلغاء الآن، ذكّرني لاحقاً</button></section>';
+                const finish=value=>{overlay.remove();document.body.classList.remove('modal-active');window.AlwahaModalShell?.sync?.();resolve(value);};
+                overlay.querySelector('[data-mesh-consent="yes"]').addEventListener('click',()=>{localStorage.setItem(ALWAHA_MESH_CONSENT_KEY,'accepted');localStorage.removeItem(ALWAHA_MESH_REMIND_KEY);finish(true);});
+                overlay.querySelector('[data-mesh-consent="no"]').addEventListener('click',()=>{localStorage.setItem(ALWAHA_MESH_CONSENT_KEY,'declined');localStorage.removeItem(ALWAHA_MESH_REMIND_KEY);finish(false);});
+                overlay.querySelector('[data-mesh-consent="later"]').addEventListener('click',()=>{localStorage.setItem(ALWAHA_MESH_CONSENT_KEY,'snoozed');localStorage.setItem(ALWAHA_MESH_REMIND_KEY,String(Date.now()+30*24*60*60*1000));finish(false);});
+                overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();finish(false);}});
+                document.body.appendChild(overlay);document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();
+                overlay.querySelector('[data-mesh-consent="yes"]')?.focus();
+            });
+        }
+        async function ensureAlwahaMeshBridgeConsent(){
+            const choice=localStorage.getItem(ALWAHA_MESH_CONSENT_KEY);
+            if(choice==='accepted')return true;
+            if(choice==='declined')return false;
+            const remindAt=Number(localStorage.getItem(ALWAHA_MESH_REMIND_KEY)||0);
+            if(choice==='snoozed'&&Date.now()<remindAt)return false;
+            return showAlwahaMeshConsentDialog();
+        }
+        async function openAlwahaMeshBridgeConsentSettings(){
+            localStorage.removeItem(ALWAHA_MESH_CONSENT_KEY);localStorage.removeItem(ALWAHA_MESH_REMIND_KEY);
+            return showAlwahaMeshConsentDialog();
+        }
+        window.openAlwahaMeshBridgeConsentSettings=openAlwahaMeshBridgeConsentSettings;
+
+        async function showAlwahaMeshRadioSetup(plugin,caps){
+            const missingWifi=!caps?.wifiEnabled,missingBluetooth=!caps?.bluetoothEnabled;
+            if(!missingWifi&&!missingBluetooth)return true;
+            return new Promise(resolve=>{
+                const overlay=document.createElement('div');overlay.id='alwaha-mesh-radio-setup';
+                overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+                overlay.style.cssText='position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;overflow:auto;padding:18px;background:rgba(2,8,18,.97);box-sizing:border-box;';
+                overlay.innerHTML='<section style="width:min(100%,420px);padding:18px;border:1px solid #8bf4ff55;border-radius:18px;background:#101c2c;color:#eaf7ff;text-align:right;">'
+                  +'<h3 style="margin:0 0 8px;color:#8bf4ff;font:900 15px Cairo,sans-serif;">يلزم تشغيل وسيلة اتصال قريبة</h3>'
+                  +'<p data-radio-status style="font:11px/1.9 Cairo,sans-serif;color:#c5d5e5;">فعّل Wi‑Fi أو Bluetooth من الأزرار التالية. سيعرض Android موافقته النظامية عند الحاجة.</p>'
+                  +(missingBluetooth?'<button type="button" data-enable-bt style="width:100%;min-height:42px;margin:5px 0;border:0;border-radius:10px;background:#174b68;color:#e5f8ff;font:800 11px Cairo,sans-serif;">تشغيل Bluetooth بموافقة Android</button>':'')
+                  +(missingWifi?'<button type="button" data-enable-wifi style="width:100%;min-height:42px;margin:5px 0;border:0;border-radius:10px;background:#174b68;color:#e5f8ff;font:800 11px Cairo,sans-serif;">فتح لوحة تشغيل Wi‑Fi</button>':'')
+                  +'<button type="button" data-radio-retry style="width:100%;min-height:42px;margin:7px 0;border:1px solid #7ce8c0;border-radius:10px;background:#17442f;color:#caffdf;font:800 11px Cairo,sans-serif;">تم التفعيل، افحص وتابع</button>'
+                  +'<button type="button" data-radio-cancel style="width:100%;min-height:40px;border:1px solid #ffffff25;border-radius:10px;background:transparent;color:#c5d5e5;font:700 10px Cairo,sans-serif;">إلغاء</button></section>';
+                const status=overlay.querySelector('[data-radio-status]');
+                const finish=value=>{overlay.remove();document.body.classList.remove('modal-active');window.AlwahaModalShell?.sync?.();resolve(value);};
+                overlay.querySelector('[data-enable-bt]')?.addEventListener('click',async event=>{
+                    event.currentTarget.disabled=true;
+                    try{await plugin.requestBluetoothEnable();if(status)status.textContent='أكمل موافقة Android على تشغيل Bluetooth، ثم اضغط «تم التفعيل، افحص وتابع».';}
+                    catch(error){if(status)status.textContent=error?.message||'تعذر طلب تشغيل Bluetooth.';}
+                    finally{event.currentTarget.disabled=false;}
+                });
+                overlay.querySelector('[data-enable-wifi]')?.addEventListener('click',async event=>{
+                    event.currentTarget.disabled=true;
+                    try{await plugin.openWifiPanel();if(status)status.textContent='فعّل Wi‑Fi في لوحة Android ثم ارجع إلى الواحة واضغط «تم التفعيل، افحص وتابع».';}
+                    catch(error){if(status)status.textContent=error?.message||'تعذر فتح لوحة Wi‑Fi.';}
+                    finally{event.currentTarget.disabled=false;}
+                });
+                overlay.querySelector('[data-radio-retry]').addEventListener('click',async event=>{
+                    event.currentTarget.disabled=true;
+                    try{const next=await plugin.getCapabilities();if(next?.wifiEnabled||next?.bluetoothEnabled)finish(true);else if(status)status.textContent='لم نكتشف وسيلة اتصال مفعّلة بعد. فعّل Wi‑Fi أو Bluetooth ثم أعد الفحص.';}
+                    catch(error){if(status)status.textContent=error?.message||'تعذر فحص إعدادات الجهاز.';}
+                    finally{event.currentTarget.disabled=false;}
+                });
+                overlay.querySelector('[data-radio-cancel]').addEventListener('click',()=>finish(false));
+                document.body.appendChild(overlay);document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();
+            });
+        }
+
+        async function restoreAlwahaMeshRealtime(){
+            try{
+                await subscribeToNotifications();
+                await subscribeToDirectMessages();
+                await subscribeToMarketInbox();
+                if(currentMarketConversationId)await subscribeToMarketConversation();
+                await initializeRealtimeCallInbox();
+            }catch(error){console.warn('[Alwaha Mesh] realtime restore:',error);}
+        }
+        let alwahaMeshRealtimeSuspended=false;
+        async function syncAlwahaMeshRealtime(active){
+            if(active&&!alwahaMeshRealtimeSuspended){
+                alwahaMeshRealtimeSuspended=true;
+                await closeAlwahaCloudRealtimeForLocalMode();
+            }else if(!active&&alwahaMeshRealtimeSuspended){
+                alwahaMeshRealtimeSuspended=false;
+                if(navigator.onLine!==false)await restoreAlwahaMeshRealtime();
             }
-            const buttonText=enabled?'تم تفعيل الشبكة الحرة. طلبات REST ورفع الملفات وRealtime متوقفة في هذا الوضع؛ القوائم غير المحفوظة محليًا ستبقى غير متاحة.':'تم إيقاف الوضع المحلي واستعادة الاتصال السحابي.';
-            triggerToastNotification(buttonText,'info');
-            document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{button.setAttribute('aria-pressed',String(enabled));button.style.color=enabled?'#a8ffd7':'';});
-            if(enabled)void openAlwahaLocalDiscovery();
+        }
+        async function toggleAlwahaLocalChatMode(){
+            const mesh=window.AlwahaLocalMesh,plugin=window.alwahaLocalNetwork;
+            if(!mesh||!plugin)return triggerToastNotification('مكوّن الشبكة الحرة غير متاح في نسخة Android هذه.','error');
+            if(activeCallManager?.call)return triggerToastNotification('أنه المكالمة الحالية قبل تغيير مسار الشبكة.','info');
+            if(mesh.isRequested()){
+                try{await plugin.stopNearbyMesh?.();await plugin.stopDiscovery?.();await plugin.stopPacketTransport?.();}catch(error){console.warn('[Alwaha Mesh] stop failed:',error);}
+                await mesh.setMode(false);
+                await syncAlwahaMeshRealtime(false);
+                triggerToastNotification('تم إيقاف الجسر المحلي وإعادة مسار الاتصال المعتاد.','info');
+                return;
+            }
+            if(!await ensureAlwahaMeshBridgeConsent())return;
+            try{
+                const caps=await plugin.getCapabilities();
+                if(!caps?.wifiEnabled&&!caps?.bluetoothEnabled){
+                    const ready=await showAlwahaMeshRadioSetup(plugin,caps);
+                    if(!ready)return;
+                }
+                await mesh.setMode(true);
+                const started=await plugin.startNearbyMesh();
+                if(!started?.started)throw new Error('لم يبدأ اكتشاف الأجهزة القريبة.');
+                triggerToastNotification('بدأ البحث عن أجهزة الواحة المتطوعة. سيصبح الزر أخضر عند إنشاء اتصال محلي والتحقق من هوية الجار.','info');
+                document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{
+                    button.setAttribute('aria-pressed','true');button.style.color='#ffd88b';button.title='الشبكة الحرة تبحث عن جسور قريبة';
+                });
+            }catch(error){
+                try{await plugin.stopNearbyMesh?.();}catch(e){}
+                await mesh.setMode(false);
+                triggerToastNotification(error?.message||'تعذر تشغيل الشبكة الحرة. تحقق من أذونات Android وخدمات Google Play.','error');
+            }
         }
         window.addEventListener('alwaha:mesh-mode',event=>{
-            const enabled=Boolean(event?.detail?.enabled);
+            const active=Boolean(event?.detail?.enabled),requested=Boolean(event?.detail?.requested);
             document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{
-                button.setAttribute('aria-pressed',String(enabled));
-                button.style.color=enabled?'#a8ffd7':'';
-                button.title=enabled?'وضع محلي مفعّل — لا تُرسل محادثات هذا المسار إلى السحابة':'تفعيل الشبكة الحرة المحلية';
+                button.setAttribute('aria-pressed',String(requested));
+                button.style.color=active?'#a8ffd7':(requested?'#ffd88b':'');
+                button.title=active?'الشبكة الحرة متصلة بجسر محلي':(requested?'الشبكة الحرة تبحث عن أجهزة قريبة':'تفعيل الشبكة الحرة');
             });
+            void syncAlwahaMeshRealtime(active);
         });
 
         async function startAlwahaCall(mode = 'online', mediaType = 'audio', marketConversationId = null, marketPeerId = null, marketDisplayName = '') {
