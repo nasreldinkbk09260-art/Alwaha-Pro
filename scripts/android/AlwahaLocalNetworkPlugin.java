@@ -31,6 +31,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
@@ -243,7 +245,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("wifiEnabled", wifiEnabled);
         result.put("bluetoothClassicSupported", bluetooth != null);
         result.put("bluetoothEnabled", bluetoothEnabled);
-        result.put("nearbyConnectionsSupported", true);
+        result.put("nearbyConnectionsSupported", GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getContext()) == ConnectionResult.SUCCESS);
         result.put("nearbyMeshActive", nearbyMeshActive);
         result.put("nearbyConnectedPeers", nearbyConnectedEndpoints.size());
         result.put("androidApi", Build.VERSION.SDK_INT);
@@ -635,7 +637,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         boolean bluetoothReady = bluetoothSocket != null && bluetoothSocket.isConnected();
         ConnectionsClient nearby = nearbyClient;
         String endpointId = call.getString("endpointId", "");
-        if (nearby != null && !nearbyConnectedEndpoints.isEmpty()) {
+        if (nearby != null && !nearbyConnectedEndpoints.isEmpty() && !"legacy".equals(endpointId)) {
             List<String> targets = new ArrayList<>();
             if (endpointId != null && !endpointId.isEmpty()) {
                 if (!nearbyConnectedEndpoints.contains(endpointId)) {
