@@ -468,7 +468,7 @@ jobs:
           package_match = re.search(r'^package\s+([A-Za-z0-9_.]+);', source, re.M)
           if not package_match:
               raise SystemExit('Could not determine MainActivity package.')
-          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin'):
+          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin', 'AlwahaMeshBridgeService'):
               template_path = Path('scripts/android') / f'{plugin_name}.java'
               if not template_path.is_file():
                   raise SystemExit(f'Missing native plugin template: {template_path}')
@@ -524,7 +524,19 @@ jobs:
                   1
               )
               activity.write_text(source, encoding='utf-8')
-          print('Registered AlwahaAudioRoutePlugin and AlwahaLocalNetworkPlugin:', activity)
+          service_marker = 'android:name=".AlwahaMeshBridgeService"'
+          if service_marker not in manifest:
+              service = """
+                  <service
+                      android:name=".AlwahaMeshBridgeService"
+                      android:exported="false"
+                      android:foregroundServiceType="connectedDevice" />
+              """
+              manifest, count = re.subn(r'</application>', service + '\\n    </application>', manifest, count=1)
+              if count != 1:
+                  raise SystemExit('Could not register the non-exported bridge foreground service.')
+              manifest_path.write_text(manifest, encoding='utf-8')
+          print('Registered audio, local network plugins and private bridge foreground service:', activity)
           PY
 
 
@@ -538,6 +550,9 @@ jobs:
           path = Path('android/app/src/main/AndroidManifest.xml')
           source = path.read_text(encoding='utf-8')
           permissions = (
+              ('android.permission.FOREGROUND_SERVICE', ''),
+              ('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE', ''),
+              ('android.permission.POST_NOTIFICATIONS', ''),
               ('android.permission.CAMERA', ''),
               ('android.permission.RECORD_AUDIO', ''),
               ('android.permission.MODIFY_AUDIO_SETTINGS', ''),
