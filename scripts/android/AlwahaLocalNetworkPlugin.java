@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
@@ -81,7 +82,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private static final UUID BLUETOOTH_PACKET_UUID = UUID.fromString("3b5d8f2a-6b71-4d9a-9e10-7a6c2f4b8d31");
     private static final String BLUETOOTH_SERVICE_NAME = "Alwaha-Pro Local";
     private static final String NEARBY_SERVICE_ID = "pro.alwaha.app.localmesh.v1";
-    private static final String NEARBY_ENDPOINT_NAME = "Alwaha-Pro";
+    private static final String NEARBY_ENDPOINT_NAME = "Alwaha Bridge";
     private static final int MAX_NEARBY_ENDPOINTS = 6;
     private final ExecutorService transportExecutor = Executors.newCachedThreadPool();
     private volatile ServerSocket transportServer;
@@ -281,6 +282,11 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     private void startNearbyMeshNow(PluginCall call) {
         try {
+            Intent service = new Intent(getContext(), AlwahaMeshBridgeService.class);
+            ComponentName startedService = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? getContext().startForegroundService(service)
+                : getContext().startService(service);
+            if (startedService == null) throw new IllegalStateException("Android refused to start the visible bridge service.");
             ConnectionsClient client = Nearby.getConnectionsClient(getContext());
             nearbyClient = client;
             nearbyMeshActive = true;
@@ -323,6 +329,14 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     private void stopNearbyMeshInternal(String reason) {
         nearbyMeshActive = false;
+        try {
+            Intent service = new Intent(getContext(), AlwahaMeshBridgeService.class);
+            service.setAction(AlwahaMeshBridgeService.ACTION_STOP);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) getContext().startForegroundService(service);
+            else getContext().startService(service);
+        } catch (Exception error) {
+            emitNearbyState("nearby-foreground-service-stop-failed", error.getClass().getSimpleName());
+        }
         ConnectionsClient client = nearbyClient;
         nearbyClient = null;
         if (client != null) {
