@@ -131,6 +131,15 @@ try{
  await waitFor(()=>evaluate('document.readyState==="complete"&&!!document.querySelector(".bottom-nav-bar .nav-item")'),'Alwaha-Pro DOM and navigation',30000);
  await sleep(1800);
  await evaluate('if(typeof deferAlwahaPrivacyNotice==="function")deferAlwahaPrivacyNotice()');
+ const bridgeConsent=await evaluate('({present:!!document.querySelector("#alwaha-mesh-bridge-consent"),yes:!!document.querySelector("#alwaha-mesh-bridge-consent [data-mesh-consent=yes]"),no:!!document.querySelector("#alwaha-mesh-bridge-consent [data-mesh-consent=no]"),later:!!document.querySelector("#alwaha-mesh-bridge-consent [data-mesh-consent=later]")})');
+ if(bridgeConsent.present){
+  assert.deepEqual(bridgeConsent,{present:true,yes:true,no:true,later:true},'first-run bridge consent must offer accept, decline and defer choices');
+  await visible('#alwaha-mesh-bridge-consent [data-mesh-consent=later]','defer bridge participation choice');
+  await click('#alwaha-mesh-bridge-consent [data-mesh-consent=later]','defer optional bridge participation during general UI acceptance');
+  await waitFor(()=>evaluate('!document.querySelector("#alwaha-mesh-bridge-consent")&&!document.body.classList.contains("modal-active")'),'consent dismissal releases the underlying app UI');
+  const deferred=await evaluate('localStorage.getItem("alwaha_mesh_bridge_consent_v1")==="snoozed"&&Number(localStorage.getItem("alwaha_mesh_bridge_remind_at_v1")||0)>Date.now()');
+  assert.equal(deferred,true,'defer choice is persisted and reminder is postponed');
+ }
  await screenshot('00-startup-after-privacy.png');
  assert.equal(await evaluate('document.querySelectorAll(".bottom-nav-bar .nav-item").length'),7,'Seven primary navigation actions must be present.');
  await visible('.bottom-nav-bar','primary navigation');
