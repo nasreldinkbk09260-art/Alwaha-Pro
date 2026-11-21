@@ -67,6 +67,7 @@ const checks=[
  ['bridge scan does not suspend cloud realtime until a verified local neighbor is active',html.includes('syncAlwahaMeshRealtime(active)')&&!html.includes('await closeAlwahaCloudRealtimeForLocalMode();\\n            const buttonText')],
  ['switch turns green only when a verified active transport peer is available',mesh.includes('const active=modeEnabled&&(transportEndpoints.size>0||Boolean(transportPeerFingerprint))')&&html.includes("button.style.color=active?'#a8ffd7':(requested?'#ffd88b':'')")],
  ['relay queues enforce per-neighbor packet and byte rate limits',mesh.includes('traffic.packets>300')&&mesh.includes('traffic.bytes>30*1024*1024')],
+ ['encrypted relay storage has both a 300-packet limit and a strict 12 MiB total byte budget',mesh.includes('MAX_RELAY_QUEUE_BYTES=12*1024*1024')&&mesh.includes('relayBytes+incomingBytes>MAX_RELAY_QUEUE_BYTES')],
 
  ['Nearby endpoint advertising and outgoing connection labels use a non-rendering value, never a hardware/device name',plugin.includes('NEARBY_ENDPOINT_NAME = "'+'\\u200B'+'"')&&plugin.includes('startAdvertising(NEARBY_ENDPOINT_NAME')&&plugin.includes('requestConnection(NEARBY_ENDPOINT_NAME')],
  ['Nearby endpoint discovery never reads, stores or emits the other device name',!plugin.includes('getEndpointName()')&&!plugin.includes('nearbyEndpointNames')&&!plugin.includes('endpointNames')],
