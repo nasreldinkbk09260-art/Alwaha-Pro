@@ -1,3 +1,4 @@
+// CI verification mirror: same application source as alwaha-pro-3.0.4-one-tap-nearby-mesh-20261121; no functional change.
 import fs from 'node:fs';
 const read=path=>fs.readFileSync(path,'utf8');
 const plugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
