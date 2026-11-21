@@ -5,6 +5,7 @@
   const enc=new TextEncoder(), dec=new TextDecoder();
   let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
   let transportGeneration=0, receiveQueue=Promise.resolve(), pendingReceiveCount=0;
+  const transportEndpoints=new Map();
   const MAX_PENDING_RECEIVE=256;
   const queued=new Map(), seen=new Map(), peers=new Map(), fileUrls=new Map();
 
@@ -198,21 +199,27 @@
     const relayed=await enqueueRelay(packet,sourceFingerprint);
     return {relayed};
   }
-  async function sendRawPacket(packet){
+  async function sendRawPacket(packet,endpointId=''){
     const native=window.alwahaLocalNetwork;
-    if(!native?.sendLocalPacket)throw new Error('لا يوجد اتصال Wi-Fi Direct محلي لنقل الحزمة.');
-    await native.sendLocalPacket({packet:encodeNativePacket(packet)});
+    if(!native?.sendLocalPacket)throw new Error('لا يوجد اتصال محلي لنقل الحزمة.');
+    const args={packet:encodeNativePacket(packet)};
+    if(endpointId&&endpointId!=='legacy')args.endpointId=endpointId;
+    await native.sendLocalPacket(args);
   }
-  async function sendHello(){
+  async function sendHello(endpointId=''){
     const native=window.alwahaLocalNetwork;if(!native?.sendLocalPacket)return false;
     const bundle=await getIdentityBundle();
     const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle};
-    try{const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;await native.sendLocalPacket({packet:bytesToB64(bytes)});return true;}catch{return false;}
+    try{
+      const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;
+      const args={packet:bytesToB64(bytes)};if(endpointId&&endpointId!=='legacy')args.endpointId=endpointId;
+      await native.sendLocalPacket(args);return true;
+    }catch{return false;}
   }
   function emitPacketState(result){
     window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
   }
-  async function processRawPacket(encoded,generation){
+  async function processRawPacket(encoded,generation,endpointId=''){
     try{
       if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
       const bytes=b64ToBytes(encoded);if(bytes.length>MAX_PACKET_BYTES)throw new Error('Oversized mesh frame');
@@ -220,15 +227,21 @@
       if(message?.type==='hello'&&message.protocol===PREFIX){
         const fingerprint=await validateBundle(message.bundle);
         if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
+        const endpointKey=String(endpointId||'legacy');
+        transportEndpoints.set(endpointKey,{fingerprint,transport:endpointId?'nearby-connections':(transportType||'legacy'),relayAllowed:true,verifiedAt:Date.now()});
         transportPeerFingerprint=fingerprint;
         const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===fingerprint);
-        const result={fingerprint,code:fingerprint.slice(-6).toUpperCase(),trusted};
+        const result={fingerprint,code:fingerprint.slice(-6).toUpperCase(),trusted,relayAllowed:true,endpointId:endpointId||''};
         window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:result}));
-        // Relay resumes only when the presented identity is already in the local trusted-peer list.
-        if(trusted&&isEnabled())await flushRelayQueue();
-        return {hello:true,trusted};
+        // A consenting Alwaha bridge may forward opaque ciphertext without being trusted
+        // as a direct chat contact. Decryption is still restricted to an explicitly paired sender.
+        if(modeEnabled)await flushRelayQueue(endpointKey);
+        emitModeState();
+        return {hello:true,trusted,relayAllowed:true};
       }
-      const sourceFingerprint=transportPeerFingerprint;
+      const endpointKey=String(endpointId||'legacy');
+      const neighbor=transportEndpoints.get(endpointKey);
+      const sourceFingerprint=neighbor?.fingerprint||(endpointId?'' : transportPeerFingerprint);
       if(!sourceFingerprint){
         const result={ignored:true,reason:'neighbor-not-identified'};
         emitPacketState(result);
@@ -236,7 +249,7 @@
       }
       const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===sourceFingerprint);
       if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
-      if(!trusted){
+      if(!trusted&&!neighbor?.relayAllowed){
         const result={ignored:true,reason:'untrusted-neighbor'};
         emitPacketState(result);
         return result;
@@ -250,7 +263,7 @@
       return {error:true,message:String(error?.message||'Invalid local packet')};
     }
   }
-  function receiveRawPacket(encoded){
+  function receiveRawPacket(encoded,endpointId=''){
     if(pendingReceiveCount>=MAX_PENDING_RECEIVE){
       const result={ignored:true,reason:'receive-queue-full',limit:MAX_PENDING_RECEIVE};
       emitPacketState(result);
@@ -260,8 +273,8 @@
     pendingReceiveCount++;
     const generation=transportGeneration;
     const task=receiveQueue.then(
-      ()=>processRawPacket(encoded,generation),
-      ()=>processRawPacket(encoded,generation)
+      ()=>processRawPacket(encoded,generation,endpointId),
+      ()=>processRawPacket(encoded,generation,endpointId)
     );
     receiveQueue=task.catch(error=>{
       console.warn('[Alwaha Mesh] receive queue recovered after an unexpected error:',error);
@@ -270,19 +283,40 @@
   }
   async function installTransportListeners(){
     const native=window.alwahaLocalNetwork;if(!native?.addListener||transportHandles.length)return;
-    transportHandles.push(await native.addListener('localPacketReceived',event=>{void receiveRawPacket(event?.packet||'');}));
+    transportHandles.push(await native.addListener('localPacketReceived',event=>{void receiveRawPacket(event?.packet||'',String(event?.endpointId||''));}));
     transportHandles.push(await native.addListener('transportState',event=>{
-      if(event?.state==='packet-transport-connected'){
+      const state=String(event?.state||'');
+      const endpointId=String(event?.endpointId||'');
+      if(state==='nearby-peer-connected'&&endpointId){
+        transportGeneration++;
+        transportType='nearby-connections';
+        void sendHello(endpointId);
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      }else if(state==='nearby-peer-disconnected'&&endpointId){
+        transportGeneration++;
+        transportEndpoints.delete(endpointId);
+        if(transportPeerFingerprint===transportEndpoints.get(endpointId)?.fingerprint)transportPeerFingerprint='';
+        if(!transportEndpoints.size&&!transportPeerFingerprint)transportType='';
+        emitModeState();
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      }else if(state==='nearby-mesh-stopped'){
+        transportGeneration++;
+        transportEndpoints.clear();
+        transportPeerFingerprint='';
+        transportType='';
+        emitModeState();
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+      }else if(state==='packet-transport-connected'){
         transportGeneration++;
         transportPeerFingerprint='';
         transportType=String(event.transport||'unknown');
-        void sendHello();
+        void sendHello('');
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
-      }
-      if(event?.state==='packet-transport-disconnected'||event?.state==='packet-transport-closed'){
+      }else if(state==='packet-transport-disconnected'||state==='packet-transport-closed'){
         transportGeneration++;
-        transportType='';
-        transportPeerFingerprint='';
+        transportEndpoints.delete('legacy');
+        if(transportEndpoints.size===0){transportType='';transportPeerFingerprint='';}
+        emitModeState();
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
       }
     }));
@@ -292,13 +326,13 @@
     const peer=await getPeerByAccountId(accountUserId);if(!peer)throw new Error('لم تقترن بهذا الحساب بجهاز موثوق بعد.');
     const packet=await createEnvelope(peer,payload);
     const key='mesh:outbox:'+packet.id;await vault().put(key,{packet,recipientFingerprint:peer.fingerprint,createdAt:packet.createdAt});
-    if(transportPeerFingerprint&&window.alwahaLocalNetwork?.sendLocalPacket){
-      const neighbors=await getTrustedPeers();
-      if(neighbors.some(item=>item.fingerprint===transportPeerFingerprint)){
-        if(transportPeerFingerprint===peer.fingerprint){await sendRawPacket(packet);return {sent:true,id:packet.id,route:'direct'};}
+    if(window.alwahaLocalNetwork?.sendLocalPacket){
+      const direct=[...transportEndpoints.entries()].find(([,neighbor])=>neighbor?.fingerprint===peer.fingerprint);
+      if(direct){await sendRawPacket(packet,direct[0]);return {sent:true,id:packet.id,route:'direct'};}
+      if(transportEndpoints.size||transportPeerFingerprint){
         await enqueueRelay(packet,'');
-        await sendRawPacket(packet);
-        return {sent:true,queued:true,id:packet.id,route:'relay-hop'};
+        const forwarded=await flushRelayQueue();
+        return {sent:forwarded.sent>0,queued:true,id:packet.id,route:'relay-hop'};
       }
     }
     await enqueueRelay(packet,'');
@@ -362,53 +396,76 @@
     }
     return removed;
   }
-  async function flushRelayQueue(){
-    if(!window.alwahaLocalNetwork?.sendLocalPacket||!transportPeerFingerprint)return {sent:0};
-    const trusted=await getTrustedPeers();
-    if(!trusted.some(peer=>peer.fingerprint===transportPeerFingerprint))return {sent:0,blocked:true,reason:'untrusted-neighbor'};
+  async function flushRelayQueue(preferredEndpointId=''){
+    if(!window.alwahaLocalNetwork?.sendLocalPacket)return {sent:0};
+    const neighbors=[...transportEndpoints.entries()].filter(([id,peer])=>peer?.relayAllowed&&(!preferredEndpointId||id===preferredEndpointId));
+    if(!neighbors.length&&transportPeerFingerprint)neighbors.push(['legacy',{fingerprint:transportPeerFingerprint,relayAllowed:true}]);
+    if(!neighbors.length)return {sent:0,waiting:true};
     await pruneExpiredState();
     const rows=await vault().getAll(),out=[];
     for(const row of rows||[]){
       if(typeof row.key!=='string'||!row.key.startsWith('mesh:relay:')||!row.value?.packet)continue;
       const packet=row.value.packet,expires=Date.parse(packet.expiresAt||'');
       if(!Number.isFinite(expires)||expires<Date.now()){await vault().removeRecord?.('mesh:relay:'+packet.id);await vault().put('mesh:expired:'+packet.id,{expiredAt:new Date().toISOString()});continue;}
-      if(row.value.lastHopFingerprint===transportPeerFingerprint)continue;
-      try{await sendRawPacket(packet);out.push(packet.id);}catch(error){console.warn('[Alwaha Mesh] relay send failed:',error);break;}
+      for(const [endpointId,peer] of neighbors){
+        if(row.value.lastHopFingerprint===peer.fingerprint)continue;
+        try{await sendRawPacket(packet,endpointId);out.push({id:packet.id,endpointId});}
+        catch(error){console.warn('[Alwaha Mesh] relay send failed:',error);break;}
+      }
     }
     window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-flushed',{detail:{count:out.length}}));
-    return {sent:out.length,ids:out};
+    return {sent:out.length,ids:out.map(item=>item.id)};
   }
   async function setMode(enabled){
     modeEnabled=Boolean(enabled);
-    try{localStorage.setItem('alwaha_mesh_mode_enabled_v1',String(modeEnabled));}catch(error){}
     try{await vault().put('mesh:mode-enabled-v1',{enabled:modeEnabled,updatedAt:new Date().toISOString()});}catch(error){console.warn('[Alwaha Mesh] mode preference could not be saved:',error);}
     await installTransportListeners();
-    window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled}}));
-    return modeEnabled;
+    if(!modeEnabled){transportEndpoints.clear();transportPeerFingerprint='';transportType='';}
+    emitModeState();
+    return isEnabled();
   }
   async function restoreMode(){
-    try{
-      const fastFlag=localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';
-      const row=await vault()?.getRecord?.('mesh:mode-enabled-v1');
-      modeEnabled=row?.value?.enabled===true||fastFlag;
-      if(row?.value?.enabled===false&&fastFlag!==true)modeEnabled=false;
-    }catch(error){modeEnabled=false;console.warn('[Alwaha Mesh] mode preference restore failed:',error);}
-    window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:modeEnabled,restored:true}}));
-    return modeEnabled;
+    // Radio use is session-scoped. The user's bridge consent persists, but discovery
+    // never silently restarts after an app restart without a fresh tap.
+    modeEnabled=false;
+    try{localStorage.removeItem('alwaha_mesh_mode_enabled_v1');await vault()?.put?.('mesh:mode-enabled-v1',{enabled:false,updatedAt:new Date().toISOString()});}
+    catch(error){console.warn('[Alwaha Mesh] mode preference reset failed:',error);}
+    emitModeState();
+    return false;
   }
-  function isEnabled(){try{return modeEnabled||localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';}catch{return modeEnabled;}}
+  function isEnabled(){
+    if(!modeEnabled)return false;
+    return transportEndpoints.size>0||Boolean(transportPeerFingerprint);
+  }
   function getTransportPeer(){return transportPeerFingerprint;}
   function getTransportType(){return transportType;}
+  function getTransportPeerForAccount(accountUserId){
+    const peer=peers.get(String(accountUserId||''));if(!peer)return '';
+    for(const neighbor of transportEndpoints.values())if(neighbor.fingerprint===peer.fingerprint)return peer.fingerprint;
+    return '';
+  }
+  function hasDirectTransportTo(fingerprint){return [...transportEndpoints.values()].some(peer=>peer?.fingerprint===String(fingerprint||''));}
+  function getTransportTypeForPeer(fingerprint){
+    const found=[...transportEndpoints.values()].find(peer=>peer?.fingerprint===String(fingerprint||''));return found?.transport||'';
+  }
+  function emitModeState(){
+    const active=modeEnabled&&(transportEndpoints.size>0||Boolean(transportPeerFingerprint));
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:active,requested:modeEnabled,connectedPeers:transportEndpoints.size}}));
+  }
+  function isRequested(){return modeEnabled;}
   function setTransportPeer(fingerprint){
     const next=String(fingerprint||'');
     if(next!==transportPeerFingerprint)transportGeneration++;
     transportPeerFingerprint=next;
+    if(next)transportEndpoints.set('legacy',{fingerprint:next,transport:transportType||'legacy',relayAllowed:true,verifiedAt:Date.now()});
+    else transportEndpoints.delete('legacy');
+    emitModeState();
   }
   function destroy(){
-    transportGeneration++;transportPeerFingerprint='';transportType='';
+    transportGeneration++;transportPeerFingerprint='';transportType='';transportEndpoints.clear();modeEnabled=false;
     transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
     transportHandles=[];modeEnabled=false;
   }
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,getTransportPeer,getTransportType,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
