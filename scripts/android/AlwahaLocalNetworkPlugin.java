@@ -31,6 +31,25 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
+import com.google.android.gms.nearby.Nearby;
+import com.google.android.gms.nearby.connection.AdvertisingOptions;
+import com.google.android.gms.nearby.connection.ConnectionInfo;
+import com.google.android.gms.nearby.connection.ConnectionLifecycleCallback;
+import com.google.android.gms.nearby.connection.ConnectionResolution;
+import com.google.android.gms.nearby.connection.ConnectionsClient;
+import com.google.android.gms.nearby.connection.DiscoveredEndpointInfo;
+import com.google.android.gms.nearby.connection.DiscoveryOptions;
+import com.google.android.gms.nearby.connection.EndpointDiscoveryCallback;
+import com.google.android.gms.nearby.connection.Payload;
+import com.google.android.gms.nearby.connection.PayloadCallback;
+import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
+import com.google.android.gms.nearby.connection.Strategy;
+import org.json.JSONObject;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +89,161 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private volatile boolean bluetoothServerClosed = false;
     private volatile boolean transportClosed = false;
     private final Object transportWriteLock = new Object();
+
+    // Nearby Connections cluster transport. The advertised endpoint name is intentionally empty:
+    // no account name, profile, device name, stable fingerprint, or relay label is disclosed.
+    private static final String NEARBY_SERVICE_ID = "pro.alwaha.app.mesh";
+    private static final int NEARBY_CHUNK_BYTES = 18000;
+    private static final int MAX_NEARBY_CHUNKS = 16;
+    private static final int MAX_NEARBY_ASSEMBLIES = 64;
+    private static final long NEARBY_ASSEMBLY_TTL_MS = 30000L;
+    private volatile ConnectionsClient nearbyClient;
+    private volatile boolean nearbyMeshRunning = false;
+    private final Set<String> nearbyConnectedEndpoints = ConcurrentHashMap.newKeySet();
+    private final Set<String> nearbyConnectingEndpoints = ConcurrentHashMap.newKeySet();
+    private final Map<String, NearbyFrameAssembly> nearbyAssemblies = new ConcurrentHashMap<>();
+
+    private static final class NearbyFrameAssembly {
+        final String[] chunks;
+        final long createdAt = System.currentTimeMillis();
+        int received;
+        int totalBytes;
+        NearbyFrameAssembly(int total) { chunks = new String[total]; }
+    }
+
+    private void emitNearbyState(String state) {
+        JSObject payload = new JSObject();
+        payload.put("state", state);
+        payload.put("connectedCount", nearbyConnectedEndpoints.size());
+        payload.put("anonymous", true);
+        notifyListeners("nearbyTransportState", payload, true);
+    }
+
+    private final PayloadCallback nearbyPayloadCallback = new PayloadCallback() {
+        @Override public void onPayloadReceived(String endpointId, Payload payload) {
+            if (payload == null || payload.getType() != Payload.Type.BYTES) return;
+            byte[] bytes = payload.asBytes();
+            if (bytes == null || bytes.length == 0 || bytes.length > 28000) return;
+            acceptNearbyFrame(endpointId, bytes);
+        }
+        @Override public void onPayloadTransferUpdate(String endpointId, PayloadTransferUpdate update) {
+            if (update != null && update.getStatus() == PayloadTransferUpdate.Status.FAILURE) {
+                JSObject state = new JSObject();
+                state.put("state", "payload-failed");
+                state.put("connectedCount", nearbyConnectedEndpoints.size());
+                notifyListeners("nearbyTransportState", state, true);
+            }
+        }
+    };
+
+    private final ConnectionLifecycleCallback nearbyConnectionLifecycleCallback = new ConnectionLifecycleCallback() {
+        @Override public void onConnectionInitiated(String endpointId, ConnectionInfo info) {
+            ConnectionsClient client = nearbyClient;
+            if (!nearbyMeshRunning || client == null) {
+                if (client != null) client.rejectConnection(endpointId);
+                return;
+            }
+            // Consent is enforced in the encrypted mesh layer before any packet is relayed.
+            // Accepting the transport does not reveal or register the device as a contact.
+            client.acceptConnection(endpointId, nearbyPayloadCallback)
+                .addOnFailureListener(error -> {
+                    nearbyConnectingEndpoints.remove(endpointId);
+                    emitNearbyState("accept-failed");
+                });
+        }
+
+        @Override public void onConnectionResult(String endpointId, ConnectionResolution resolution) {
+            nearbyConnectingEndpoints.remove(endpointId);
+            if (resolution != null && resolution.getStatus() != null && resolution.getStatus().isSuccess()) {
+                nearbyConnectedEndpoints.add(endpointId);
+                emitNearbyState("connected");
+            } else {
+                nearbyConnectedEndpoints.remove(endpointId);
+                emitNearbyState("connection-failed");
+            }
+        }
+
+        @Override public void onDisconnected(String endpointId) {
+            nearbyConnectingEndpoints.remove(endpointId);
+            nearbyConnectedEndpoints.remove(endpointId);
+            nearbyAssemblies.keySet().removeIf(key -> key.startsWith(endpointId + "|"));
+            emitNearbyState("disconnected");
+        }
+    };
+
+    private final EndpointDiscoveryCallback nearbyEndpointDiscoveryCallback = new EndpointDiscoveryCallback() {
+        @Override public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
+            if (!nearbyMeshRunning || endpointId == null || endpointId.isEmpty()) return;
+            if (nearbyConnectedEndpoints.contains(endpointId) || !nearbyConnectingEndpoints.add(endpointId)) return;
+            ConnectionsClient client = nearbyClient;
+            if (client == null) {
+                nearbyConnectingEndpoints.remove(endpointId);
+                return;
+            }
+            // Endpoint names supplied by remote apps are deliberately ignored.
+            client.requestConnection("", endpointId, nearbyConnectionLifecycleCallback)
+                .addOnFailureListener(error -> {
+                    nearbyConnectingEndpoints.remove(endpointId);
+                    emitNearbyState("request-failed");
+                });
+        }
+        @Override public void onEndpointLost(String endpointId) {
+            // Do not expose endpoint IDs to UI. Existing active links may remain valid.
+            nearbyConnectingEndpoints.remove(endpointId);
+        }
+    };
+
+    private void acceptNearbyFrame(String endpointId, byte[] raw) {
+        try {
+            JSONObject frame = new JSONObject(new String(raw, StandardCharsets.UTF_8));
+            if (!"AWN1".equals(frame.optString("t"))) return;
+            String id = frame.optString("id", "");
+            int index = frame.optInt("i", -1);
+            int total = frame.optInt("n", -1);
+            String data = frame.optString("d", "");
+            if (!id.matches("^[A-Fa-f0-9-]{20,40}$") || total < 1 || total > MAX_NEARBY_CHUNKS
+                || index < 0 || index >= total || data.isEmpty()) return;
+
+            long now = System.currentTimeMillis();
+            nearbyAssemblies.entrySet().removeIf(entry -> now - entry.getValue().createdAt > NEARBY_ASSEMBLY_TTL_MS);
+            String key = endpointId + "|" + id;
+            NearbyFrameAssembly assembly = nearbyAssemblies.get(key);
+            if (assembly == null) {
+                if (nearbyAssemblies.size() >= MAX_NEARBY_ASSEMBLIES) return;
+                NearbyFrameAssembly fresh = new NearbyFrameAssembly(total);
+                NearbyFrameAssembly previous = nearbyAssemblies.putIfAbsent(key, fresh);
+                assembly = previous == null ? fresh : previous;
+            }
+            synchronized (assembly) {
+                if (assembly.chunks.length != total || assembly.chunks[index] != null) return;
+                byte[] decoded = Base64.decode(data, Base64.URL_SAFE | Base64.NO_WRAP);
+                if (decoded.length == 0 || assembly.totalBytes + decoded.length > MAX_LOCAL_PACKET_BYTES) {
+                    nearbyAssemblies.remove(key);
+                    return;
+                }
+                assembly.chunks[index] = data;
+                assembly.totalBytes += decoded.length;
+                assembly.received++;
+                if (assembly.received != total) return;
+                ByteArrayOutputStream output = new ByteArrayOutputStream(assembly.totalBytes);
+                for (String chunk : assembly.chunks) {
+                    if (chunk == null) return;
+                    output.write(Base64.decode(chunk, Base64.URL_SAFE | Base64.NO_WRAP));
+                }
+                byte[] packet = output.toByteArray();
+                nearbyAssemblies.remove(key);
+                JSObject payload = new JSObject();
+                payload.put("packet", Base64.encodeToString(packet, Base64.URL_SAFE | Base64.NO_WRAP));
+                payload.put("endpointId", endpointId); // Internal routing token only; never rendered in UI.
+                payload.put("bytes", packet.length);
+                notifyListeners("localNearbyPacketReceived", payload, true);
+            }
+        } catch (Exception ignored) {
+            // Malformed and over-budget frames are dropped without exposing peer metadata.
+        }
+    }
+
+
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiChannel;
     private BluetoothAdapter bluetoothAdapter;
@@ -405,6 +579,162 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
                 call.reject("Could not send the local encrypted packet.", error);
             }
         });
+    }
+
+
+    @PluginMethod
+    public void startNearbyMesh(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            requestPermissionsForCurrentApi(call, "nearbyMeshPermissionCallback");
+            return;
+        }
+        startNearbyMeshNow(call);
+    }
+
+    @PermissionCallback
+    private void nearbyMeshPermissionCallback(PluginCall call) {
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Nearby Wi-Fi/Bluetooth permissions were not granted.");
+            return;
+        }
+        startNearbyMeshNow(call);
+    }
+
+    private void startNearbyMeshNow(PluginCall call) {
+        if (nearbyMeshRunning && nearbyClient != null) {
+            JSObject result = new JSObject();
+            result.put("started", true);
+            result.put("connectedCount", nearbyConnectedEndpoints.size());
+            result.put("anonymous", true);
+            call.resolve(result);
+            return;
+        }
+        try {
+            ConnectionsClient client = Nearby.getConnectionsClient(getContext());
+            nearbyClient = client;
+            nearbyMeshRunning = true;
+            AdvertisingOptions advertising = new AdvertisingOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER).build();
+            DiscoveryOptions discovery = new DiscoveryOptions.Builder()
+                .setStrategy(Strategy.P2P_CLUSTER).build();
+
+            // Empty endpoint name is intentional. The API still has an internal ephemeral
+            // endpoint token for transport, but Alwaha never publishes a human-facing identity.
+            client.startAdvertising("", NEARBY_SERVICE_ID, nearbyConnectionLifecycleCallback, advertising)
+                .addOnSuccessListener(unused ->
+                    client.startDiscovery(NEARBY_SERVICE_ID, nearbyEndpointDiscoveryCallback, discovery)
+                        .addOnSuccessListener(ignored -> {
+                            JSObject result = new JSObject();
+                            result.put("started", true);
+                            result.put("connectedCount", nearbyConnectedEndpoints.size());
+                            result.put("anonymous", true);
+                            call.resolve(result);
+                            emitNearbyState("discovering");
+                        })
+                        .addOnFailureListener(error -> {
+                            nearbyMeshRunning = false;
+                            client.stopAdvertising();
+                            call.reject("Nearby discovery could not start. Check radio settings and Google Play services.", error);
+                            emitNearbyState("start-failed");
+                        })
+                )
+                .addOnFailureListener(error -> {
+                    nearbyMeshRunning = false;
+                    client.stopDiscovery();
+                    call.reject("Nearby advertising could not start. Check radio settings and Google Play services.", error);
+                    emitNearbyState("start-failed");
+                });
+        } catch (Exception error) {
+            nearbyMeshRunning = false;
+            call.reject("Nearby Connections is unavailable on this device.", error);
+            emitNearbyState("unavailable");
+        }
+    }
+
+    @PluginMethod
+    public void stopNearbyMesh(PluginCall call) {
+        nearbyMeshRunning = false;
+        ConnectionsClient client = nearbyClient;
+        if (client != null) {
+            try { client.stopAdvertising(); } catch (Exception ignored) {}
+            try { client.stopDiscovery(); } catch (Exception ignored) {}
+            try { client.stopAllEndpoints(); } catch (Exception ignored) {}
+        }
+        nearbyConnectedEndpoints.clear();
+        nearbyConnectingEndpoints.clear();
+        nearbyAssemblies.clear();
+        emitNearbyState("stopped");
+        JSObject result = new JSObject();
+        result.put("stopped", true);
+        result.put("connectedCount", 0);
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void sendNearbyPacket(PluginCall call) {
+        String encoded = call.getString("packet", "");
+        String excludeEndpointId = call.getString("excludeEndpointId", "");
+        if (encoded == null || encoded.isEmpty()) {
+            call.reject("An encrypted mesh packet is required.");
+            return;
+        }
+        byte[] packet;
+        try { packet = Base64.decode(encoded, Base64.URL_SAFE | Base64.NO_WRAP); }
+        catch (IllegalArgumentException error) { call.reject("Nearby packet encoding is invalid."); return; }
+        if (packet.length == 0 || packet.length > MAX_LOCAL_PACKET_BYTES) {
+            call.reject("Nearby packet exceeds the allowed 256 KiB limit.");
+            return;
+        }
+        ConnectionsClient client = nearbyClient;
+        if (!nearbyMeshRunning || client == null) {
+            call.resolve(new JSObject().put("sent", 0).put("connectedCount", 0));
+            return;
+        }
+        List<String> endpoints = new ArrayList<>();
+        for (String endpoint : nearbyConnectedEndpoints) {
+            if (endpoint != null && !endpoint.equals(excludeEndpointId)) endpoints.add(endpoint);
+        }
+        if (endpoints.isEmpty()) {
+            call.resolve(new JSObject().put("sent", 0).put("connectedCount", nearbyConnectedEndpoints.size()));
+            return;
+        }
+        String transferId = UUID.randomUUID().toString();
+        int total = (int) Math.ceil((double) packet.length / NEARBY_CHUNK_BYTES);
+        if (total < 1 || total > MAX_NEARBY_CHUNKS) {
+            call.reject("Nearby packet chunk count exceeds the safe limit.");
+            return;
+        }
+        int sent = 0;
+        for (String endpoint : endpoints) {
+            boolean queuedAll = true;
+            for (int index = 0; index < total; index++) {
+                int start = index * NEARBY_CHUNK_BYTES;
+                int end = Math.min(packet.length, start + NEARBY_CHUNK_BYTES);
+                byte[] piece = new byte[end - start];
+                System.arraycopy(packet, start, piece, 0, piece.length);
+                try {
+                    JSONObject frame = new JSONObject();
+                    frame.put("t", "AWN1");
+                    frame.put("id", transferId);
+                    frame.put("i", index);
+                    frame.put("n", total);
+                    frame.put("d", Base64.encodeToString(piece, Base64.URL_SAFE | Base64.NO_WRAP));
+                    byte[] bytes = frame.toString().getBytes(StandardCharsets.UTF_8);
+                    if (bytes.length > 30000) { queuedAll = false; break; }
+                    client.sendPayload(endpoint, Payload.fromBytes(bytes))
+                        .addOnFailureListener(error -> emitNearbyState("send-failed"));
+                } catch (Exception error) {
+                    queuedAll = false;
+                    break;
+                }
+            }
+            if (queuedAll) sent++;
+        }
+        JSObject result = new JSObject();
+        result.put("sent", sent);
+        result.put("connectedCount", nearbyConnectedEndpoints.size());
+        result.put("anonymous", true);
+        call.resolve(result);
     }
 
     @PluginMethod
@@ -880,6 +1210,9 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         stopPacketTransportInternal("plugin-destroyed");
+        nearbyMeshRunning = false;
+        try { if (nearbyClient != null) { nearbyClient.stopAdvertising(); nearbyClient.stopDiscovery(); nearbyClient.stopAllEndpoints(); } } catch (Exception ignored) {}
+        nearbyConnectedEndpoints.clear(); nearbyConnectingEndpoints.clear(); nearbyAssemblies.clear();
         stopDiscoveryInternal("plugin-destroyed");
         transportExecutor.shutdownNow();
         super.handleOnDestroy();
