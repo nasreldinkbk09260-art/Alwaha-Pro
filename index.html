@@ -5478,22 +5478,25 @@ async function renderConversationsList(){
                 const status=overlay.querySelector('[data-radio-status]');
                 const finish=value=>{overlay.remove();document.body.classList.remove('modal-active');window.AlwahaModalShell?.sync?.();resolve(value);};
                 overlay.querySelector('[data-enable-bt]')?.addEventListener('click',async event=>{
-                    event.currentTarget.disabled=true;
+                    const button=event.currentTarget;
+                    button.disabled=true;
                     try{await plugin.requestBluetoothEnable();if(status)status.textContent='أكمل موافقة Android على تشغيل Bluetooth، ثم اضغط «تم التفعيل، افحص وتابع».';}
                     catch(error){if(status)status.textContent=error?.message||'تعذر طلب تشغيل Bluetooth.';}
-                    finally{event.currentTarget.disabled=false;}
+                    finally{button.disabled=false;}
                 });
                 overlay.querySelector('[data-enable-wifi]')?.addEventListener('click',async event=>{
-                    event.currentTarget.disabled=true;
+                    const button=event.currentTarget;
+                    button.disabled=true;
                     try{await plugin.openWifiPanel();if(status)status.textContent='فعّل Wi‑Fi في لوحة Android ثم ارجع إلى الواحة واضغط «تم التفعيل، افحص وتابع».';}
                     catch(error){if(status)status.textContent=error?.message||'تعذر فتح لوحة Wi‑Fi.';}
-                    finally{event.currentTarget.disabled=false;}
+                    finally{button.disabled=false;}
                 });
                 overlay.querySelector('[data-radio-retry]').addEventListener('click',async event=>{
-                    event.currentTarget.disabled=true;
+                    const button=event.currentTarget;
+                    button.disabled=true;
                     try{const next=await plugin.getCapabilities();if(next?.wifiEnabled||next?.bluetoothEnabled)finish(true);else if(status)status.textContent='لم نكتشف وسيلة اتصال مفعّلة بعد. فعّل Wi‑Fi أو Bluetooth ثم أعد الفحص.';}
                     catch(error){if(status)status.textContent=error?.message||'تعذر فحص إعدادات الجهاز.';}
-                    finally{event.currentTarget.disabled=false;}
+                    finally{button.disabled=false;}
                 });
                 overlay.querySelector('[data-radio-cancel]').addEventListener('click',()=>finish(false));
                 document.body.appendChild(overlay);document.body.classList.add('modal-active');window.AlwahaModalShell?.sync?.();
