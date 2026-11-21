@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12;
+  const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12, MAX_RELAY_QUEUE_BYTES=12*1024*1024;
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
   let identityPromise=null, bridgeIdentityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
@@ -162,8 +162,16 @@
   async function enqueueRelay(packet,lastHopFingerprint=''){
     if(Number(packet.hops||0)>=Math.min(Number(packet.hopLimit||MAX_HOPS),MAX_HOPS))return false;
     const key='mesh:relay:'+packet.id,row=await vault().getRecord(key);if(row)return false;
-    const all=await vault().getAll(),relayCount=all.filter(item=>typeof item.key==='string'&&item.key.startsWith('mesh:relay:')).length;
-    if(relayCount>=300)throw new Error('طابور التمرير المحلي ممتلئ مؤقتًا؛ أفرغ الحزم إلى جار موثوق قبل إضافة المزيد.');
+    const all=await vault().getAll();
+    let relayCount=0,relayBytes=0;
+    for(const item of all||[]){
+      if(typeof item.key!=='string'||!item.key.startsWith('mesh:relay:')||!item.value?.packet)continue;
+      relayCount++;
+      relayBytes+=packetBytes(item.value.packet).byteLength;
+    }
+    const incomingBytes=packetBytes(packet).byteLength;
+    if(relayCount>=300||relayBytes+incomingBytes>MAX_RELAY_QUEUE_BYTES)
+      throw new Error('طابور التمرير المحلي وصل إلى حد التخزين الآمن مؤقتًا؛ تبقى حزمك محفوظة حتى تتوفر مساحة.');
     const relay={...packet,hops:Math.min(MAX_HOPS,Number(packet.hops||0)+1)};
     await vault().put(key,{packet:relay,lastHopFingerprint,queuedAt:new Date().toISOString()});
     queued.set(packet.id,relay);window.dispatchEvent(new CustomEvent('alwaha:mesh-relay-queued',{detail:{id:packet.id,hops:relay.hops}}));
