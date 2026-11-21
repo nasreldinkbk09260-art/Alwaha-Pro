@@ -131,6 +131,10 @@ echo 'APPLY SECURITY CANDIDATE: initial-admin-email-confirmation'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation-migration.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation.sql"
 
+echo 'APPLY SECURITY CANDIDATE: initial-admin-email-confirmation'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation-migration.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation.sql"
+
 
 echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117180000_support_tickets_private_intake.sql"
