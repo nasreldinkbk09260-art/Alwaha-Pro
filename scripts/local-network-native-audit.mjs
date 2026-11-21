@@ -1,3 +1,4 @@
+// CI-only mirror of the final invisible Nearby bridge source; no runtime behavior changed.
 import fs from 'node:fs';
 const read=path=>fs.readFileSync(path,'utf8');
 const plugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
