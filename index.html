@@ -5530,15 +5530,10 @@ async function renderConversationsList(){
                 await initializeRealtimeCallInbox();
             }catch(error){console.warn('[Alwaha Mesh] realtime restore:',error);}
         }
-        let alwahaMeshRealtimeSuspended=false;
-        async function syncAlwahaMeshRealtime(active){
-            if(active&&!alwahaMeshRealtimeSuspended){
-                alwahaMeshRealtimeSuspended=true;
-                await closeAlwahaCloudRealtimeForLocalMode();
-            }else if(!active&&alwahaMeshRealtimeSuspended){
-                alwahaMeshRealtimeSuspended=false;
-                if(navigator.onLine!==false)await restoreAlwahaMeshRealtime();
-            }
+        async function syncAlwahaMeshRealtime(){
+            // A local bridge is a transport capability, not a global offline switch.
+            // Keep Supabase Realtime and cloud features connected while Internet exists.
+            return false;
         }
         async function toggleAlwahaLocalChatMode(){
             const mesh=window.AlwahaLocalMesh,plugin=window.alwahaLocalNetwork;
@@ -5581,6 +5576,18 @@ async function renderConversationsList(){
         window.addEventListener('alwaha:mesh-transport-error',event=>{
             const detail=String(event?.detail?.detail||event?.detail?.message||'تعذر تشغيل اكتشاف الأجهزة القريبة.');
             triggerToastNotification('الشبكة الحرة: '+detail+' — تحقق من أذونات الأجهزة القريبة وتشغيل Wi‑Fi أو Bluetooth وخدمات Google Play.','error');
+        });
+        window.addEventListener('offline',()=>{
+            if(!window.AlwahaLocalMesh?.isRequested())return;
+            if(currentChatUserId)void loadDirectMessages();
+            if(currentMarketConversationId)void loadMarketMessages();
+        });
+        window.addEventListener('online',()=>{
+            void (async()=>{
+                await restoreAlwahaMeshRealtime();
+                if(currentChatUserId)await loadDirectMessages();
+                if(currentMarketConversationId)await loadMarketMessages();
+            })().catch(error=>console.warn('[Alwaha Mesh] online recovery failed:',error));
         });
         window.addEventListener('alwaha:mesh-mode',event=>{
             const active=Boolean(event?.detail?.enabled),requested=Boolean(event?.detail?.requested);
