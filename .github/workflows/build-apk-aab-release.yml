@@ -840,17 +840,21 @@ jobs:
             printf 'certificate_sha256_colon=%s\n' "$CERT_SHA256_COLON"
             printf 'signature_verified=true\n'
           } > release/APK-SIGNING-CERTIFICATE.txt
-          git archive --format=zip --prefix=Alwaha-Pro-3.0.4/ HEAD > release/Alwaha-Pro-3.0.4-Final-Source.zip
           printf 'version=3.0.4\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON" > release/BUILD-INFO.txt
           (
             cd release
-            sha256sum Alwaha-Pro-3.0.4.apk Alwaha-Pro-3.0.4.aab Alwaha-Pro-3.0.4-Final-Source.zip BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
+            sha256sum Alwaha-Pro-3.0.4.apk Alwaha-Pro-3.0.4.aab BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
             sha256sum --check SHA256SUMS.txt
           )
-          test -s release/Alwaha-Pro-3.0.4-Final-Source.zip
-          echo 'Signed APK, AAB and tracked source archive verified successfully.'
+          test -s release/Alwaha-Pro-3.0.4.apk
+          test -s release/Alwaha-Pro-3.0.4.aab
+          if find release -maxdepth 1 -type f -iname '*source*.zip' | grep -q .; then
+            echo 'Source archives must never be uploaded as build artifacts.'
+            exit 1
+          fi
+          echo 'Signed APK, AAB and release verification files checked; no source archive is included.'
 
-      - name: Upload final source and Android artifacts
+      - name: Upload verified Android artifacts (no source archive)
         uses: actions/upload-artifact@v7.0.2
         with:
           name: Alwaha-Pro-3.0.4-build-${{ github.run_number }}
