@@ -5510,6 +5510,10 @@ async function renderConversationsList(){
             if(!await ensureAlwahaMeshBridgeConsent())return;
             localStorage.removeItem(ALWAHA_MESH_USER_DISABLED_KEY);
             try{
+                if(navigator.onLine!==false){
+                    if(currentChatUserId)await ensureAlwahaMeshPeerPinned(currentChatUserId,currentChatUser||'جهة اتصال').catch(error=>console.warn('[Alwaha Mesh] direct contact key preparation:',error?.message||error));
+                    if(currentMarketPeerId)await ensureAlwahaMeshPeerPinned(currentMarketPeerId,'جهة اتصال السوق').catch(error=>console.warn('[Alwaha Mesh] market contact key preparation:',error?.message||error));
+                }
                 await plugin.requestLocalPermissions();
                 const caps=await plugin.getCapabilities();
                 if(caps?.nearbyConnectionsSupported===false){
