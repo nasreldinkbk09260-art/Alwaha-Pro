@@ -246,7 +246,7 @@
   async function sendHello(endpointId=''){
     const native=window.alwahaLocalNetwork;if(!native?.sendLocalPacket)return false;
     const bundle=await getBridgeIdentityBundle();
-    const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle,role:'bridge'};
+    const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle};
     try{
       const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;
       const args={packet:bytesToB64(bytes)};if(endpointId&&endpointId!=='legacy')args.endpointId=endpointId;
@@ -277,13 +277,12 @@
         transportEndpoints.set(endpointKey,{fingerprint,transport:endpointId?'nearby-connections':(transportType||'legacy'),relayAllowed:true,verifiedAt:Date.now()});
         transportPeerFingerprint=fingerprint;
         const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===fingerprint);
-        const result={fingerprint,code:fingerprint.slice(-6).toUpperCase(),trusted,relayAllowed:true,endpointId:endpointId||''};
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:result}));
-        // A consenting Alwaha bridge may forward opaque ciphertext without being trusted
-        // as a direct chat contact. Decryption is still restricted to an explicitly paired sender.
+        // The validated peer fingerprint remains inside the transport routing table.
+        // No bridge identity, alias, endpoint identifier or role is emitted to the UI.
+        // A consenting bridge may forward ciphertext without being a trusted chat contact.
         if(modeEnabled)await flushRelayQueue(endpointKey);
         emitModeState();
-        return {hello:true,trusted,relayAllowed:true};
+        return {hello:true,relayAllowed:true};
       }
       const endpointKey=String(endpointId||'legacy');
       const neighbor=transportEndpoints.get(endpointKey);
