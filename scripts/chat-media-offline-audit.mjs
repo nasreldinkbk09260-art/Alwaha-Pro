@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 const html=fs.readFileSync('index.html','utf8');
 const vault=fs.readFileSync('alwaha-local-vault.js','utf8');
-const migration=fs.readFileSync('supabase/migrations/20261119215000_chat_private_media_and_permissions.sql','utf8');
+const migration=fs.readFileSync('supabase/migrations/20261121013606_chat_private_media_and_permissions.sql','utf8');
 const checks=[
  ['direct chat has image/video file picker',html.includes('id="direct-chat-media-input"')&&html.includes('handleDirectChatFileInput(this)')],
  ['direct chat has a voice-note recorder button',html.includes('id="direct-chat-voice-button"')&&html.includes("toggleChatVoiceRecording('direct')")],
