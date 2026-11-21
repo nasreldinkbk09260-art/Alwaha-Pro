@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12, MAX_RELAY_QUEUE_BYTES=12*1024*1024;
+  const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12, MAX_RELAY_QUEUE_BYTES=40*1024*1024;
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
   let identityPromise=null, bridgeIdentityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
