@@ -195,8 +195,12 @@
       return {delivered:true};
     }
     if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
-    if(!await saveSeen(packet,sourceFingerprint))return {duplicate:true};
+    const alreadySeen=await vault().getRecord('mesh:seen:'+packet.id);
+    if(alreadySeen)return {duplicate:true};
+    // Persist the relay payload before the dedup marker so a temporarily full queue
+    // cannot permanently mark an undelivered packet as processed.
     const relayed=await enqueueRelay(packet,sourceFingerprint);
+    await saveSeen(packet,sourceFingerprint);
     return {relayed};
   }
   async function sendRawPacket(packet,endpointId=''){
