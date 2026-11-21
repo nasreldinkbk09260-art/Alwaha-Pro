@@ -5,7 +5,7 @@
   const enc=new TextEncoder(), dec=new TextDecoder();
   let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
   let transportGeneration=0, receiveQueue=Promise.resolve(), pendingReceiveCount=0;
-  const transportEndpoints=new Map();
+  const transportEndpoints=new Map(), inboundTraffic=new Map();
   const MAX_PENDING_RECEIVE=256;
   const queued=new Map(), seen=new Map(), peers=new Map(), fileUrls=new Map();
 
@@ -203,7 +203,7 @@
     const native=window.alwahaLocalNetwork;
     if(!native?.sendLocalPacket)throw new Error('لا يوجد اتصال محلي لنقل الحزمة.');
     const args={packet:encodeNativePacket(packet)};
-    if(endpointId&&endpointId!=='legacy')args.endpointId=endpointId;
+    if(endpointId)args.endpointId=endpointId;
     await native.sendLocalPacket(args);
   }
   async function sendHello(endpointId=''){
@@ -223,6 +223,15 @@
     try{
       if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
       const bytes=b64ToBytes(encoded);if(bytes.length>MAX_PACKET_BYTES)throw new Error('Oversized mesh frame');
+      const trafficKey=String(endpointId||'legacy'),now=Date.now();
+      let traffic=inboundTraffic.get(trafficKey);
+      if(!traffic||now-traffic.startedAt>=60000){traffic={startedAt:now,packets:0,bytes:0};inboundTraffic.set(trafficKey,traffic);}
+      traffic.packets++;traffic.bytes+=bytes.length;
+      if(traffic.packets>300||traffic.bytes>30*1024*1024){
+        const limited={ignored:true,reason:'neighbor-rate-limit'};
+        emitPacketState(limited);
+        return limited;
+      }
       const message=JSON.parse(dec.decode(bytes));
       if(message?.type==='hello'&&message.protocol===PREFIX){
         const fingerprint=await validateBundle(message.bundle);
@@ -256,6 +265,7 @@
       }
       const result=await handlePacket(message,sourceFingerprint,generation);
       emitPacketState(result);
+      if(result?.relayed&&modeEnabled)await flushRelayQueue();
       return result;
     }catch(error){
       console.warn('[Alwaha Mesh] rejected local frame:',error);
@@ -288,14 +298,13 @@
       const state=String(event?.state||'');
       const endpointId=String(event?.endpointId||'');
       if(state==='nearby-peer-connected'&&endpointId){
-        transportGeneration++;
         transportType='nearby-connections';
         void sendHello(endpointId);
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
       }else if(state==='nearby-peer-disconnected'&&endpointId){
-        transportGeneration++;
+        const disconnectedFingerprint=transportEndpoints.get(endpointId)?.fingerprint||'';
         transportEndpoints.delete(endpointId);
-        if(transportPeerFingerprint===transportEndpoints.get(endpointId)?.fingerprint)transportPeerFingerprint='';
+        if(transportPeerFingerprint===disconnectedFingerprint)transportPeerFingerprint=[...transportEndpoints.values()].map(peer=>peer.fingerprint).filter(Boolean).pop()||'';
         if(!transportEndpoints.size&&!transportPeerFingerprint)transportType='';
         emitModeState();
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
