@@ -4032,16 +4032,15 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const mesh=window.AlwahaLocalMesh,target=String(accountUserId||'');
             if(!mesh?.getPeerByAccountId||!target)return null;
             const existing=await mesh.getPeerByAccountId(target);
-            if(existing)return existing;
-            if(navigator.onLine===false||!supabaseClient?.from)return null;
-            const me=await getCurrentAuthUser();if(!me?.id||me.id===target)return null;
+            if(navigator.onLine===false||!supabaseClient?.from)return existing;
+            const me=await getCurrentAuthUser();if(!me?.id||me.id===target)return existing;
             await publishAlwahaMeshAccountPublicKey();
             const {data,error}=await supabaseClient.from('alwaha_mesh_public_keys')
                 .select('user_id,protocol_version,ecdh_public_key,signing_public_key')
                 .eq('user_id',target)
                 .maybeSingle();
             if(error)throw error;
-            if(!data||String(data.user_id)!==target)return null;
+            if(!data||String(data.user_id)!==target)return existing;
             if(Number(data.protocol_version)!==1)throw new Error('إصدار مفتاح جهة الاتصال غير مدعوم على هذا الجهاز.');
             const trusted=await mesh.trustPeerFromAuthenticatedDirectory({
                 protocol:'ALWAHA_MESH_V1',
