@@ -28,7 +28,7 @@ BEGIN
      OR NOT has_table_privilege('authenticated','public.alwaha_mesh_public_keys','INSERT')
      OR NOT has_column_privilege('authenticated','public.alwaha_mesh_public_keys','ecdh_public_key','UPDATE')
      OR NOT has_column_privilege('authenticated','public.alwaha_mesh_public_keys','signing_public_key','UPDATE')
-     OR has_column_privilege('authenticated','public.alwaha_mesh_public_keys','user_id','UPDATE') THEN
+     OR NOT has_column_privilege('authenticated','public.alwaha_mesh_public_keys','user_id','UPDATE') THEN
     RAISE EXCEPTION 'Mesh public key directory grants are not least-privilege';
   END IF;
   IF NOT EXISTS (
