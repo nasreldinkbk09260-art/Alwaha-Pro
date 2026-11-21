@@ -29,6 +29,23 @@ const delivered=[],neighbor=[];
 b.window.addEventListener('alwaha:mesh-message',event=>delivered.push(event.detail));
 a.window.addEventListener('alwaha:mesh-neighbor',event=>neighbor.push(event.detail));
 const [bundleA,bundleB,bundleRelay]=await Promise.all([a.mesh.getIdentityBundle(),b.mesh.getIdentityBundle(),relay.mesh.getIdentityBundle()]);
+const directoryPeer=createHarness('directory-peer');
+const directoryBundle=await directoryPeer.mesh.getIdentityBundle();
+const accountId='c4100000-0000-4000-8000-000000000099';
+const directoryPinned=await a.mesh.trustPeerFromAuthenticatedDirectory({
+  protocol:directoryBundle.protocol,version:directoryBundle.version,
+  ecdhPublicKey:directoryBundle.ecdhPublicKey,signingPublicKey:directoryBundle.signingPublicKey
+},{accountUserId:accountId,label:'جهة اتصال'});
+assert.ok(directoryPinned.fingerprint,'authenticated account directory should pin a peer key without visible code or device selection');
+assert.equal((await a.mesh.getPeerByAccountId(accountId))?.fingerprint,directoryPinned.fingerprint,'account identifier should resolve to the locally pinned public key');
+const rotatedPeer=createHarness('directory-peer-rotated');
+const rotatedBundle=await rotatedPeer.mesh.getIdentityBundle();
+const rotatedPin=await a.mesh.trustPeerFromAuthenticatedDirectory({
+  protocol:rotatedBundle.protocol,version:rotatedBundle.version,
+  ecdhPublicKey:rotatedBundle.ecdhPublicKey,signingPublicKey:rotatedBundle.signingPublicKey
+},{accountUserId:accountId,label:'جهة اتصال'});
+assert.equal(rotatedPin.rotated,true,'authenticated owner key rotation should replace the stale local public key');
+assert.equal((await a.mesh.getPeerByAccountId(accountId))?.fingerprint,rotatedPin.fingerprint,'account should resolve only to its latest authenticated key');
 const bridgeIdentityOne=await a.mesh.getBridgeIdentityBundle();
 assert.notEqual(bridgeIdentityOne.ecdhPublicKey,bundleA.ecdhPublicKey,'relay bridge uses fresh keys separate from the persistent account identity');
 assert.equal(Object.keys(bridgeIdentityOne).some(key=>/account|email|phone|name|device|fingerprint|role|code|label/i.test(key)),false,'bridge handshake bundle exposes no name, alias, account or fingerprint field');
