@@ -128,12 +128,12 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117140000_profile_gen
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117140000_profile_gender_optional.sql"
 
 echo 'APPLY SECURITY CANDIDATE: initial-admin-email-confirmation'
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation-migration.sql"
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121015302_admin_initial_email_requires_verification.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121015302_admin_initial_email_requires_verification.sql"
 
 echo 'APPLY SECURITY CANDIDATE: initial-admin-email-confirmation'
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation-migration.sql"
-psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/admin-initial-email-confirmation.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121015302_admin_initial_email_requires_verification.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121015302_admin_initial_email_requires_verification.sql"
 
 
 echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
