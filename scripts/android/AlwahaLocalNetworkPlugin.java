@@ -73,6 +73,7 @@ import java.util.UUID;
             Manifest.permission.BLUETOOTH_ADVERTISE
         }),
         @Permission(alias = "legacyLocation", strings = { Manifest.permission.ACCESS_FINE_LOCATION })
+        @Permission(alias = "notifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
     }
 )
 public class AlwahaLocalNetworkPlugin extends Plugin {
@@ -264,7 +265,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     @PluginMethod
     public void startNearbyMesh(PluginCall call) {
-        if (!hasDiscoveryPermissions()) {
+        if (!hasDiscoveryPermissions() || !hasBridgeNotificationPermission()) {
             requestPermissionsForCurrentApi(call, "nearbyMeshPermissionCallback");
             return;
         }
@@ -275,6 +276,10 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void nearbyMeshPermissionCallback(PluginCall call) {
         if (!hasDiscoveryPermissions()) {
             call.reject("Nearby permissions were not granted; the mesh bridge was not started.");
+            return;
+        }
+        if (!hasBridgeNotificationPermission()) {
+            call.reject("Allow notifications so Android can show that this phone is acting only as an encrypted bridge.");
             return;
         }
         startNearbyMeshNow(call);
@@ -506,9 +511,17 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void permissionOnlyCallback(PluginCall call) {
         JSObject result = new JSObject();
         result.put("granted", hasDiscoveryPermissions());
-        result.put("phase", "discovery-only");
-        if (hasDiscoveryPermissions()) call.resolve(result);
-        else call.reject("Alwaha-Pro needs Nearby Wi-Fi/Bluetooth permission before looking for nearby devices.");
+        result.put("notificationsGranted", hasBridgeNotificationPermission());
+        result.put("phase", "bridge-ready");
+        if (!hasDiscoveryPermissions()) {
+            call.reject("Alwaha-Pro needs Nearby Wi-Fi/Bluetooth permission before looking for nearby devices.");
+            return;
+        }
+        if (!hasBridgeNotificationPermission()) {
+            call.reject("Allow notifications so the phone's bridge-only activity remains visible to its owner.");
+            return;
+        }
+        call.resolve(result);
     }
 
     @PluginMethod
@@ -920,12 +933,17 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
 
     private void requestPermissionsForCurrentApi(PluginCall call, String callbackName) {
         if (Build.VERSION.SDK_INT >= 33) {
-            requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth" }, call, callbackName);
+            requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth", "notifications" }, call, callbackName);
         } else if (Build.VERSION.SDK_INT >= 31) {
             requestPermissionForAliases(new String[] { "legacyLocation", "bluetooth" }, call, callbackName);
         } else {
             requestPermissionForAlias("legacyLocation", call, callbackName);
         }
+    }
+
+    private boolean hasBridgeNotificationPermission() {
+        return Build.VERSION.SDK_INT < 33
+            || getPermissionState("notifications") == PermissionState.GRANTED;
     }
 
     private boolean hasDiscoveryPermissions() {
