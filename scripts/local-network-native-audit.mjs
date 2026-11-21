@@ -40,7 +40,7 @@ const checks=[
  ['standard CI runs native audit plus cryptographic runtime tests',pkg.scripts['audit:local-network-native']==='node scripts/local-network-native-audit.mjs && node scripts/mesh-protocol-runtime-test.mjs'],
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
  ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
- ['mesh relay forwarding is limited to validated Nearby identity peers and a bounded queue',mesh.includes('validateBundle(message.bundle)')&&mesh.includes('relayAllowed:true')&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
+ ['mesh relay forwarding is limited to validated Nearby identity peers and a bounded queue',mesh.includes('validateBridgeBundle(message.bundle)')&&mesh.includes('relayAllowed:true')&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
  ['encrypted relay queue resumes when a consenting peer completes the identity hello',mesh.includes('if(modeEnabled)await flushRelayQueue(endpointKey)')&&mesh.includes('if(result?.relayed&&modeEnabled)await flushRelayQueue()')&&mesh.includes('relayAllowed:true')],
  ['Mesh exposes the authenticated active link type and clears it when the native transport disconnects',mesh.includes('function getTransportType(){return transportType;}')&&mesh.includes("transportType=String(event.transport||'unknown')")&&mesh.includes("transportType=''")&&mesh.includes('getTransportType,')],
  ['native transport status distinguishes Bluetooth RFCOMM from Wi-Fi Direct TCP',plugin.includes('isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp"')&&plugin.includes('payload.put("transport", isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp")')],
@@ -67,6 +67,12 @@ const checks=[
  ['bridge scan does not suspend cloud realtime until a verified local neighbor is active',html.includes('syncAlwahaMeshRealtime(active)')&&!html.includes('await closeAlwahaCloudRealtimeForLocalMode();\\n            const buttonText')],
  ['switch turns green only when a verified active transport peer is available',mesh.includes('return transportEndpoints.size>0||Boolean(transportPeerFingerprint)')&&html.includes("button.style.color=active?'#a8ffd7':(requested?'#ffd88b':'')")],
  ['relay queues enforce per-neighbor packet and byte rate limits',mesh.includes('traffic.packets>300')&&mesh.includes('traffic.bytes>30*1024*1024')],
+
+ ['Nearby endpoint advertising and outgoing connection labels use a non-rendering value, never a hardware/device name',plugin.includes('NEARBY_ENDPOINT_NAME = "'+'\\u200B'+'"')&&plugin.includes('startAdvertising(NEARBY_ENDPOINT_NAME')&&plugin.includes('requestConnection(NEARBY_ENDPOINT_NAME')],
+ ['Nearby endpoint discovery never reads, stores or emits the other device name',!plugin.includes('getEndpointName()')&&!plugin.includes('nearbyEndpointNames')&&!plugin.includes('endpointNames')],
+ ['Bridge handshake carries no name, alias, fingerprint, role, account, phone or email field',mesh.includes('return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey};')&&!mesh.includes("role:'bridge'")&&!mesh.includes("new CustomEvent('alwaha:mesh-neighbor'")],
+ ['Bridge foreground service is copied into Android source and registered privately in manifest',workflow.includes("'AlwahaMeshBridgeService'")&&workflow.includes('android:name=".AlwahaMeshBridgeService"')&&workflow.includes('android:exported="false"')&&workflow.includes('foregroundServiceType="connectedDevice"')],
+ ['Bridge foreground service has Android 14 connected-device and notification permissions',workflow.includes('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE')&&workflow.includes('android.permission.FOREGROUND_SERVICE')&&workflow.includes('android.permission.POST_NOTIFICATIONS')&&workflow.includes('hasBridgeNotificationPermission')],
 ];
 let failures=0;
 for(const [label,ok] of checks){console.log((ok?'PASS: ':'FAIL: ')+label);if(!ok)failures++;}
