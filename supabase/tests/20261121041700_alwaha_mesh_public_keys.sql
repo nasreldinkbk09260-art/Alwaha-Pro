@@ -2,8 +2,8 @@ BEGIN;
 
 INSERT INTO auth.users(id,email,email_confirmed_at,raw_user_meta_data)
 VALUES
- ('c4100000-0000-4000-8000-000000000001','mesh-a@example.invalid',now(),'{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
- ('c4100000-0000-4000-8000-000000000002','mesh-b@example.invalid',now(),'{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb);
+ ('c4100000-0000-4000-8000-000000000001','mesh-a@example.invalid',now(),'{"username":"mesh_a_test01","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb),
+ ('c4100000-0000-4000-8000-000000000002','mesh-b@example.invalid',now(),'{"username":"mesh_b_test02","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb);
 
 DO $schema$
 BEGIN
