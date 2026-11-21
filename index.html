@@ -5552,7 +5552,14 @@ async function renderConversationsList(){
             }
             if(!await ensureAlwahaMeshBridgeConsent())return;
             try{
+                await plugin.requestLocalPermissions();
                 const caps=await plugin.getCapabilities();
+                if(caps?.nearbyConnectionsSupported===false){
+                    await mesh.setMode(true);
+                    triggerToastNotification('خدمات Google Play Nearby غير متاحة على هذا الهاتف. سنفتح وسيلة الاتصال المحلية البديلة التي تحتاج إعداداً يدوياً.','info');
+                    void openAlwahaLocalDiscovery();
+                    return;
+                }
                 if(!caps?.wifiEnabled&&!caps?.bluetoothEnabled){
                     const ready=await showAlwahaMeshRadioSetup(plugin,caps);
                     if(!ready)return;
@@ -5591,8 +5598,8 @@ async function renderConversationsList(){
                 if(!targetId||targetId===user.id)return triggerToastNotification('افتح محادثة موثوقة أولًا لتحديد الطرف الآخر.','error');
                 const pairedPeer=await mesh.getPeerByAccountId(targetId);
                 if(!pairedPeer)return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
-                if(mesh.getTransportPeer()!==pairedPeer.fingerprint)return triggerToastNotification('المكالمة المحلية تحتاج اتصالاً مباشراً حالياً بالجهاز الموثّق؛ لا يمكن بدء مكالمة من طابور تمرير مؤجل.','error');
-                if(mesh.getTransportType()!=='wifi-direct-tcp')return triggerToastNotification('Bluetooth ينقل الرسائل والملفات المشفّرة فقط حالياً؛ المكالمات الحية المحلية تحتاج رابط Wi‑Fi Direct مباشر.','error');
+                if(!mesh.hasDirectTransportTo?.(pairedPeer.fingerprint))return triggerToastNotification('المكالمة المحلية تحتاج اتصالاً مباشراً حالياً بالجهاز الموثّق؛ لا يمكن بدء مكالمة من طابور تمرير مؤجل.','error');
+                if(mesh.getTransportTypeForPeer?.(pairedPeer.fingerprint)!=='wifi-direct-tcp')return triggerToastNotification('المسار المحلي الحالي ينقل الرسائل والملفات فقط؛ المكالمات الحية تحتاج رابط Wi‑Fi Direct مباشر أو مسار وسائط معتمداً.','error');
                 if(localMarket&&(!marketConversationId||String(currentMarketPeerId||'')!==String(targetId)))return triggerToastNotification('افتح محادثة السوق الموثقة مع البائع قبل المكالمة المحلية.','error');
                 if(video&&(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection))return triggerToastNotification('مكالمات الفيديو غير مدعومة في WebView الحالي.','error');
                 setCallModal(true);if(!activeCallManager)activeCallManager=new CallSignalingManager();
