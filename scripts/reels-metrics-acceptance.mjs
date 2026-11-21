@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 const read=p=>fs.readFileSync(p,'utf8');
 const html=read('index.html');
 const pkg=JSON.parse(read('package.json'));
-const migration=read('supabase/migrations/20261120213000_reel_view_metrics.sql');
+const migration=read('supabase/migrations/20261121013913_reel_view_metrics.sql');
 const ci=read('scripts/ci-validate-supabase-sql.sh');
 assert.ok(html.includes("reel_view_counts?select=reel_id,views_count"),'reels load aggregate view counts');
 assert.ok(html.includes("reel_comment_counts?select=reel_id,comments_count"),'reels load aggregate comment counts');
@@ -11,6 +11,6 @@ assert.ok(html.includes('async function recordReelView(')&&html.includes('record
 assert.ok(html.includes('reel-view-count-')&&html.includes('reel-comment-count-'),'cards render both metric totals');
 assert.ok(migration.includes('security_invoker = true')&&migration.includes('reel_views_one_per_user_daily_uidx'),'migration uses RLS-safe aggregate views and daily deduplication');
 assert.ok(migration.includes('GRANT SELECT (reel_id)')&&!migration.includes('GRANT SELECT ON TABLE public.reel_views TO anon'),'viewer identity remains hidden');
-assert.ok(ci.includes('20261120213000_reel_view_metrics.sql')&&ci.includes('REEL_METRICS_RLS_REGRESSION'),'SQL regression is wired into CI');
+assert.ok(ci.includes('20261121013913_reel_view_metrics.sql')&&ci.includes('REEL_METRICS_RLS_REGRESSION'),'SQL regression is wired into CI');
 assert.ok(pkg.scripts['audit:reels']==='node scripts/reels-metrics-acceptance.mjs','reel audit is wired into npm scripts');
 console.log('REELS_METRICS_ACCEPTANCE=PASS');
