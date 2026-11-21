@@ -5589,8 +5589,8 @@ async function renderConversationsList(){
                 const targetId=localMarket?(marketPeerId||currentMarketPeerId):(currentChatUserId||'');
                 if(!targetId||targetId===user.id)return triggerToastNotification('افتح محادثة موثوقة أولًا لتحديد الطرف الآخر.','error');
                 const pairedPeer=await mesh.getPeerByAccountId(targetId);
-                if(!pairedPeer)return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
-                if(!mesh.hasDirectTransportTo?.(pairedPeer.fingerprint))return triggerToastNotification('المكالمة المحلية تحتاج اتصالاً مباشراً حالياً بالجهاز الموثّق؛ لا يمكن بدء مكالمة من طابور تمرير مؤجل.','error');
+                if(!pairedPeer)return triggerToastNotification('مفتاح تشفير جهة الاتصال غير محفوظ بعد. افتح المحادثة على الهاتفين أثناء توفر الإنترنت أولاً.','error');
+                if(!mesh.hasDirectTransportTo?.(pairedPeer.fingerprint))return triggerToastNotification('الجسر المحلي الحالي مخصص للرسائل والملفات المشفّرة فقط؛ المكالمات الصوتية والمرئية عبره غير جاهزة بعد.','info');
                 if(mesh.getTransportTypeForPeer?.(pairedPeer.fingerprint)!=='wifi-direct-tcp')return triggerToastNotification('مكالمات الصوت والفيديو عبر الجسر المحلي غير جاهزة بعد. يمكنك إجراء المكالمة عبر الإنترنت عند توفره.','error');
                 if(localMarket&&(!marketConversationId||String(currentMarketPeerId||'')!==String(targetId)))return triggerToastNotification('افتح محادثة السوق الموثقة مع البائع قبل المكالمة المحلية.','error');
                 if(video&&(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection))return triggerToastNotification('مكالمات الفيديو غير مدعومة في WebView الحالي.','error');
@@ -5645,11 +5645,10 @@ async function renderConversationsList(){
         async function resolveAlwahaCallMode(targetId,fallbackMode='online'){
             const mesh=window.AlwahaLocalMesh;
             if(!mesh?.isEnabled()||!targetId)return fallbackMode;
-            try{
-                const paired=await mesh.getPeerByAccountId(targetId);
-                if(paired&&mesh.hasDirectTransportTo?.(paired.fingerprint)&&mesh.getTransportTypeForPeer?.(paired.fingerprint)==='wifi-direct-tcp')return fallbackMode==='market'?'offline-market':'offline';
-            }catch(error){console.warn('[Alwaha Call] local route check failed:',error);}
-            return fallbackMode;
+            // Internet is offline and the anonymous relay path carries messages/files only.
+            // Route to the local-call guard so the user receives an explicit capability message,
+            // rather than attempting an Internet call that cannot succeed.
+            return fallbackMode==='market'?'offline-market':'offline';
         }
         async function initiateVoiceCall(type = 'online') {
             const target=type==='market'?currentMarketPeerId:currentChatUserId;
