@@ -115,11 +115,16 @@ if(!html.includes('data-friend-request-id=\"${escapeJs(friendRequestId)}\"') || 
 const marketContactStart=html.indexOf('async function startMarketSellerChatInternal(');
 const marketContactEnd=html.indexOf('async function renderCachedDirectConversationList(',marketContactStart);
 const marketContact=marketContactStart>=0&&marketContactEnd>marketContactStart?html.slice(marketContactStart,marketContactEnd):'';
-const onlineGreeting=marketContact.indexOf('input.value=`السلام عليكم');
-const onlineChatOpen=marketContact.indexOf('await openMarketConversationChat(');
+const firstChatOpen=marketContact.indexOf('await openMarketConversationChat(');
 const localGreeting=marketContact.indexOf("localInput.value='السلام عليكم");
-if(onlineChatOpen<0 || onlineGreeting<onlineChatOpen || marketContact.indexOf('return String(conversation.id)')<onlineGreeting
-   || localGreeting<0 || localGreeting<marketContact.indexOf('await openMarketConversationChat(')){
+const localReturn=marketContact.indexOf('return String(conversation.id)',localGreeting);
+const onlineChatOpen=marketContact.indexOf('await openMarketConversationChat(',localReturn);
+const onlineGreeting=marketContact.indexOf('input.value=`السلام عليكم',onlineChatOpen);
+const onlineReturn=marketContact.indexOf('return String(conversation.id)',onlineGreeting);
+if(firstChatOpen<0 || localGreeting<firstChatOpen || localReturn<localGreeting
+   || onlineChatOpen<0 || onlineGreeting<onlineChatOpen || onlineReturn<onlineGreeting
+   || !marketContact.includes('if(localInput&&!localInput.value.trim())')
+   || !marketContact.includes('if(input&&!input.value.trim())')){
   console.error('FAIL: seller welcome text must be set after opening online and local chats');failures++;
 }
 if(failures)process.exit(1);
