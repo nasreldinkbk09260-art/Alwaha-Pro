@@ -40,6 +40,8 @@ const checks=[
     const cleanup=body.indexOf('await activeCallManager?.end(true);');
     return closing>=0&&hide>closing&&cleanup>hide&&body.includes("modal.setAttribute('aria-hidden', 'true');");
 })()],
+ ['call screen close control has a stable accessible target',html.includes('id="callCloseBtn"')&&html.includes('aria-label="إغلاق شاشة المكالمة"')&&html.includes('onclick="terminateVoiceCall()"')],
+ ['call modal closure delegates background lock to the shared modal stack',html.includes('window.AlwahaModalShell?.sync')&&html.includes('if (window.AlwahaModalShell?.sync) window.AlwahaModalShell.sync();')],
  ['Termux deploy copy preserves native audio plugin',/rel\.parts\[0\].*android/.test(fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8'))&&fs.readFileSync('TERMUX-PUSH-3.0.2-R7.5-20261103.sh','utf8').includes("scripts/android/AlwahaAudioRoutePlugin.java")]
 ];
 let failures=0;for(const [label,ok] of checks){if(ok)console.log('PASS:',label);else{console.error('FAIL:',label);failures++;}}
