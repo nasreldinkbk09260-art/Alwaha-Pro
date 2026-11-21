@@ -106,6 +106,7 @@ await nextHop.mesh.pairPeer(bundleRelay,{confirmationCode:bundleRelay.fingerprin
 relay.window.__peer=nextHop.mesh;
 nextHop.window.__peer=relay.mesh;
 await relay.mesh.setMode(true);
+await relay.mesh.sendHello();
 await nextHop.mesh.sendHello();
 assert.ok([...nextHop.records.keys()].some(key=>key.startsWith('mesh:relay:')),'trusted neighbor hello should trigger automatic forwarding into the next hop relay queue');
 const forwarded=[...nextHop.records.values()].find(row=>row.key.startsWith('mesh:relay:'));
