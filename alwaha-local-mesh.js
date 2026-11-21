@@ -450,8 +450,14 @@
     return false;
   }
   function isEnabled(){
-    if(!modeEnabled)return false;
-    return transportEndpoints.size>0||Boolean(transportPeerFingerprint);
+    // The global app remains online while the bridge is merely available.
+    // Local-only application behavior is selected only after the Internet is actually offline.
+    return modeEnabled && (typeof navigator==='undefined' || navigator.onLine===false);
+  }
+  function isBridgeActive(){return modeEnabled&&(transportEndpoints.size>0||Boolean(transportPeerFingerprint));}
+  async function canRouteToAccount(accountUserId){
+    if(!modeEnabled||!(transportEndpoints.size>0||transportPeerFingerprint))return false;
+    return Boolean(await getPeerByAccountId(accountUserId));
   }
   function getTransportPeer(){return transportPeerFingerprint;}
   function getTransportType(){return transportType;}
@@ -482,6 +488,6 @@
     transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
     transportHandles=[];modeEnabled=false;
   }
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
