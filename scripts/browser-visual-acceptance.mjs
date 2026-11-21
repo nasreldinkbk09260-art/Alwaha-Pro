@@ -256,56 +256,63 @@ try{
  const directFile=await evaluate('!!document.querySelector("#direct-chat-media-input")&&document.querySelector("#direct-chat-media-input").type==="file"&&document.querySelector("#direct-chat-media-input").hidden');
  assert.equal(directFile,true,'Direct chat file input must exist but remain hidden behind its visible picker button.');
  await screenshot('05-direct-chat-layout.png');
- await evaluate('closeActiveChatWindow();Object.assign(window,{getCurrentAuthUser:window.__directSmoke.getCurrentAuthUser,subscribeToDirectMessages:window.__directSmoke.subscribeToDirectMessages});delete window.__directSmoke');
- // Isolated native bridge mock: exercise the actual discovery modal and its button handlers without touching Android radios.
- const networkMockSetup=await evaluate(`window.__uiNetworkSaved={requireAuthenticatedUser:requireAuthenticatedUser,plugin:window.alwahaLocalNetwork,mesh:window.AlwahaLocalMesh};
- requireAuthenticatedUser=async()=>({id:"ci-buyer"});
- const listeners={};
- window.alwahaLocalNetwork={
-   addListener:async(name,callback)=>{listeners[name]=callback;return {remove:async()=>delete listeners[name]};},
-   startDiscovery:async()=>({started:true,message:"بحث تجريبي جاهز"}),
-   stopDiscovery:async()=>({stopped:true}),
-   startBluetoothPacketServer:async()=>({listening:true}),
-   createWifiDirectGroup:async()=>({started:true,message:"مجموعة Wi-Fi Direct تجريبية"}),
-   openInternetSettings:async()=>({opened:true}),
-   openBluetoothSettings:async()=>({opened:true}),
-   getCapabilities:async()=>({wifiDirectSupported:true,wifiEnabled:true,bluetoothEnabled:true}),
-   connectBluetoothPeer:async()=>({connected:true}),
-   connectWifiDirectPeer:async()=>({started:true}),
-   startPacketTransport:async()=>({connected:true})
+
+ // Exercise the one-tap local bridge toggle with a fully isolated native mock.
+ // The mock never opens Android settings, starts real radios, or displays a peer/device identity.
+ const meshToggleSetup=await evaluate(`window.__meshToggleSaved={
+   plugin:window.alwahaLocalNetwork,
+   mesh:window.AlwahaLocalMesh,
+   pin:window.ensureAlwahaMeshPeerPinned
  };
+ localStorage.setItem('alwaha_mesh_bridge_consent_v1','accepted');
+ window.__meshMockCalls={permissions:0,capabilities:0,start:0,stop:0};
+ let meshRequested=false;
+ window.ensureAlwahaMeshPeerPinned=async()=>true;
  window.AlwahaLocalMesh={
-   getIdentityBundle:async()=>({fingerprintCode:"ABC123",fingerprint:"ci-fingerprint",publicKey:"ci-public-key"}),
-   pairPeer:async()=>({fingerprint:"ci-fingerprint"}),
-   flushRelayQueue:async()=>({sent:2})
+   isRequested:()=>meshRequested,
+   setMode:async enabled=>{
+     meshRequested=!!enabled;
+     window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:false,requested:meshRequested,connectedPeers:0}}));
+     return true;
+   }
+ };
+ window.alwahaLocalNetwork={
+   requestLocalPermissions:async()=>{window.__meshMockCalls.permissions++;return {granted:true};},
+   getCapabilities:async()=>{window.__meshMockCalls.capabilities++;return {nearbyConnectionsSupported:true,permissionsGranted:true,notificationsGranted:true,wifiEnabled:true,bluetoothEnabled:true};},
+   startNearbyMesh:async()=>{
+     window.__meshMockCalls.start++;
+     setTimeout(()=>window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:true,requested:true,connectedPeers:1}})),80);
+     return {started:true};
+   },
+   stopNearbyMesh:async()=>{window.__meshMockCalls.stop++;return {stopped:true};},
+   stopDiscovery:async()=>({stopped:true}),
+   stopPacketTransport:async()=>({stopped:true})
  };
  true;`);
- assert.equal(networkMockSetup,true,"isolated native bridge mock must be installed");
- await evaluate('openAlwahaLocalDiscovery()');
- await visible('#alwaha-local-discovery-modal','local network discovery dialog');
- for(const [selector,label] of [
-   ['[data-start-local]','search nearby devices'],
-   ['[data-stop-local]','stop discovery'],
-   ['[data-create-group]','create Wi-Fi Direct group'],
-   ['[data-bluetooth-server]','start Bluetooth RFCOMM receiver'],
-   ['[data-open-internet-settings]','open Android Wi-Fi/mobile data settings'],
-   ['[data-open-bluetooth-settings]','open Android Bluetooth settings'],
-   ['[data-copy-identity]','copy public device identity'],
-   ['[data-pair-peer]','pair/verify another device'],
-   ['[data-flush-relay]','flush encrypted relay queue']
- ]) await visible('#alwaha-local-discovery-modal '+selector,label);
- const fingerprint=await evaluate('document.getElementById("alwaha-mesh-own-code").textContent');
- assert.equal(fingerprint,"ABC123","network dialog must render the device fingerprint code");
- await screenshot('06-local-network-controls.png');
- await click('#alwaha-local-discovery-modal [data-bluetooth-server]','mock Bluetooth receiver action');
- assert.ok((await evaluate('document.getElementById("alwaha-local-status").textContent')).includes('بدأ استقبال Bluetooth'),"Bluetooth receiver action must update the status");
- await click('#alwaha-local-discovery-modal [data-open-internet-settings]','mock Internet settings action');
- await click('#alwaha-local-discovery-modal [data-open-bluetooth-settings]','mock Bluetooth settings action');
- await click('#alwaha-local-discovery-modal [data-create-group]','mock Wi-Fi Direct group action');
- await click('#alwaha-local-discovery-modal [data-stop-local]','mock stop-discovery action');
- await evaluate('document.querySelector("#alwaha-local-discovery-modal [data-close-local]").click()');
- await evaluate('Object.assign(window,{requireAuthenticatedUser:window.__uiNetworkSaved.requireAuthenticatedUser,alwahaLocalNetwork:window.__uiNetworkSaved.plugin,AlwahaLocalMesh:window.__uiNetworkSaved.mesh});delete window.__uiNetworkSaved');
+ assert.equal(meshToggleSetup,true,'one-tap bridge mock must install');
+ await visible('#active-chat-box [data-alwaha-mesh-toggle]','one-tap free-network toggle in direct chat');
+ await click('#active-chat-box [data-alwaha-mesh-toggle]','enable free local network with one tap');
+ await waitFor(()=>evaluate('document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.getAttribute("aria-pressed")==="true"&&document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.style.color==="rgb(168, 255, 215)"'),'green state only after a mocked verified local peer connects');
+ await screenshot('06-one-tap-network-active.png');
+ const meshStarted=await evaluate('window.__meshMockCalls');
+ assert.deepEqual(meshStarted,{permissions:1,capabilities:1,start:1,stop:0},'one tap requests permissions and starts Nearby exactly once');
+ const hiddenBridgeUi=await evaluate('({legacyDialog:!!document.querySelector("#alwaha-local-discovery-modal"),ownFingerprint:!!document.querySelector("#alwaha-mesh-own-code"),pairControls:document.querySelectorAll("[data-pair-peer],[data-copy-identity]").length,peerLists:document.querySelectorAll("#alwaha-local-peers,[data-local-peer-row]").length})');
+ assert.deepEqual(hiddenBridgeUi,{legacyDialog:false,ownFingerprint:false,pairControls:0,peerLists:0},'no bridge device identity, alias, fingerprint or peer list is rendered');
+ await click('#active-chat-box [data-alwaha-mesh-toggle]','disable free local network with one tap');
+ await waitFor(()=>evaluate('document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.getAttribute("aria-pressed")==="false"&&document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.style.color===""'),'second tap stops the bridge');
+ const meshStopped=await evaluate('window.__meshMockCalls');
+ assert.deepEqual(meshStopped,{permissions:1,capabilities:1,start:1,stop:1},'second tap stops Nearby without opening radio settings');
+ await evaluate(`localStorage.removeItem('alwaha_mesh_bridge_consent_v1');
+ const saved=window.__meshToggleSaved;
+ window.alwahaLocalNetwork=saved.plugin;
+ window.AlwahaLocalMesh=saved.mesh;
+ if(saved.pin)window.ensureAlwahaMeshPeerPinned=saved.pin;else delete window.ensureAlwahaMeshPeerPinned;
+ delete window.__meshToggleSaved;delete window.__meshMockCalls;`);
 
+ await evaluate('closeActiveChatWindow();Object.assign(window,{getCurrentAuthUser:window.__directSmoke.getCurrentAuthUser,subscribeToDirectMessages:window.__directSmoke.subscribeToDirectMessages});delete window.__directSmoke');
+  // The old discovery/pairing UI must not be rendered anywhere in the user-facing app.
+ const noLegacyBridgeUi=await evaluate('!document.querySelector("#alwaha-local-discovery-modal")&&!document.querySelector("#alwaha-mesh-own-code")&&!document.querySelector("[data-pair-peer]")&&!document.querySelector("[data-copy-identity]")');
+ assert.equal(noLegacyBridgeUi,true,'legacy peer list, bridge ID and manual pairing UI must remain absent');
  await evaluate(`window.__uiSmokeSaved={requireAuthenticatedUser, getCurrentAuthUser, supabaseFetch, loadMarketMessages, subscribeToMarketConversation};
  requireAuthenticatedUser=async()=>({id:"ci-buyer"});
  getCurrentAuthUser=async()=>({id:"ci-buyer"});
@@ -315,6 +322,7 @@ try{
  true;`);
  await evaluate('openMarketConversationChat("ci-conversation","عنصر تجريبي","ci-seller")');
  await visible('#market-chat-modal','market chat full-screen conversation');
+ await visible('#market-chat-modal [data-alwaha-mesh-toggle]','one-tap free-network toggle in marketplace chat');
  await visible('#market-chat-voice-button','market voice-note button in active chat layout');
  await visible('#market-chat-modal button[aria-label="إرسال صورة أو فيديو للبائع"]','market photo/video action button in active chat layout');
  const marketFile=await evaluate('!!document.querySelector("#market-chat-media-input")&&document.querySelector("#market-chat-media-input").type==="file"&&document.querySelector("#market-chat-media-input").hidden');
