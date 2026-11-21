@@ -113,8 +113,14 @@ const friendSendEnd=html.indexOf('async function renderConversationsList()',frie
 if(friendSendStart<0||friendSendEnd<0||!html.slice(friendSendStart,friendSendEnd).includes('hasAcceptedAlwahaFriendship(peerId)')){console.error('FAIL: friend chat accepted-friendship guard missing');failures++;}
 if(!html.includes('data-friend-request-id=\"${escapeJs(friendRequestId)}\"') || !html.includes('status=eq.pending')){console.error('FAIL: friend request response must bind to the pending request and its own notification');failures++;}
 const marketContactStart=html.indexOf('async function startMarketSellerChatInternal(');
-const marketContactEnd=html.indexOf('async function renderConversationsList()',marketContactStart);
-const marketContact=html.slice(marketContactStart,marketContactEnd);
-if(marketContact.indexOf('input.value=`السلام عليكم')<0 || marketContact.indexOf('return String(conversation.id)')<marketContact.indexOf('input.value=`السلام عليكم')){console.error('FAIL: seller welcome text must be set after opening chat');failures++;}
+const marketContactEnd=html.indexOf('async function renderCachedDirectConversationList(',marketContactStart);
+const marketContact=marketContactStart>=0&&marketContactEnd>marketContactStart?html.slice(marketContactStart,marketContactEnd):'';
+const onlineGreeting=marketContact.indexOf('input.value=`السلام عليكم');
+const onlineChatOpen=marketContact.indexOf('await openMarketConversationChat(');
+const localGreeting=marketContact.indexOf("localInput.value='السلام عليكم");
+if(onlineChatOpen<0 || onlineGreeting<onlineChatOpen || marketContact.indexOf('return String(conversation.id)')<onlineGreeting
+   || localGreeting<0 || localGreeting<marketContact.indexOf('await openMarketConversationChat(')){
+  console.error('FAIL: seller welcome text must be set after opening online and local chats');failures++;
+}
 if(failures)process.exit(1);
 console.log(`Alwaha chat/feed candidate audit passed (${checks.length+1} checks).`);
