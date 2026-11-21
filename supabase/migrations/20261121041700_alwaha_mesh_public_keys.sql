@@ -24,7 +24,7 @@ ALTER TABLE public.alwaha_mesh_public_keys ENABLE ROW LEVEL SECURITY;
 -- Supabase defaults. Explicit grants are required in addition to RLS.
 REVOKE ALL ON TABLE public.alwaha_mesh_public_keys FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT ON TABLE public.alwaha_mesh_public_keys TO authenticated;
-GRANT UPDATE (protocol_version, ecdh_public_key, signing_public_key, updated_at)
+GRANT UPDATE (user_id, protocol_version, ecdh_public_key, signing_public_key, updated_at)
   ON TABLE public.alwaha_mesh_public_keys TO authenticated;
 
 CREATE POLICY alwaha_mesh_public_keys_select_authenticated
