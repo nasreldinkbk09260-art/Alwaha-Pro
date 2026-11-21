@@ -43,7 +43,16 @@ const checks = [
   ['market has dedicated chat modal', "modal.id='market-chat-modal'"],
   ['market has separate sender', 'async function sendMarketMessage()'],
   ['market conversation is tied to a listing', 'market_conversations?product_id=eq.'],
-  ['market seller welcome message is shown after opening chat', 'input.value=`السلام عليكم، هل ما زال المنتج'],
+  ['market seller welcome message is set after opening online or local conversation', (() => {
+    const start=html.indexOf('async function startMarketSellerChatInternal(');
+    const end=html.indexOf('async function renderCachedDirectConversationList(',start);
+    const body=start>=0&&end>start?html.slice(start,end):'';
+    return body.includes('await openMarketConversationChat(')
+      &&body.includes("localInput.value='السلام عليكم، هل ما زال المنتج")
+      &&body.includes("input.value=`السلام عليكم، هل ما زال المنتج")
+      &&body.includes('if(localInput&&!localInput.value.trim())')
+      &&body.includes('if(input&&!input.value.trim())');
+  })()],
   ['friend message gate remains', 'hasAcceptedAlwahaFriendship(peerId)'],
   ['notification opens do not auto-clear all unread items', 'markSingleNotificationRead'],
   ['friend request notification actions do not bubble to the parent card', 'event.stopPropagation();respondFriendRequest'],
