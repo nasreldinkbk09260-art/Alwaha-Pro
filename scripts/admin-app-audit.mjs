@@ -23,6 +23,8 @@ check('admin API records pending/success/denied/error audit outcomes',api.includ
 check('admin Edge Function requires JWT verification in Supabase config',/\[functions\.admin-api\]\s*\nverify_jwt\s*=\s*true/.test(cfg));
 check('recovered admin log migration is RLS-locked and service-role-only',migration.includes('ENABLE ROW LEVEL SECURITY')&&migration.includes('REVOKE ALL ON TABLE public.admin_action_logs FROM PUBLIC, anon, authenticated')&&migration.includes('GRANT ALL ON TABLE public.admin_action_logs TO service_role'));
 check('admin app build and separate Android workflow exist',fs.existsSync('admin-app/build.mjs')&&fs.existsSync('.github/workflows/build-admin-apk.yml'));
+const adminWorkflow=read('.github/workflows/build-admin-apk.yml');
+check('admin APK workflow builds on main, release and work only, with manual dispatch',adminWorkflow.includes('      - main')&&adminWorkflow.includes('      - release')&&adminWorkflow.includes('      - work')&&adminWorkflow.includes('  workflow_dispatch:')&&!adminWorkflow.includes('alwaha-pro-3.0.3-dev'));
 check('admin Android configurator enforces separate package and target API 36',fs.existsSync('admin-app/scripts/configure-android-release.py')&&read('admin-app/scripts/configure-android-release.py').includes('targetSdkVersion')&&read('admin-app/scripts/configure-android-release.py').includes('pro.alwaha.admin'));
 check('admin audit-log source migration is included in PostgreSQL CI with privilege regression test',read('scripts/ci-validate-supabase-sql.sh').includes('admin_action_logs_source_recovery.sql')&&fs.existsSync('supabase/tests/20261102130000_admin_action_logs_source_recovery.sql'));
 
