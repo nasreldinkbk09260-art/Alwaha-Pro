@@ -347,7 +347,9 @@ try{
  await evaluate('closeMarketConversationChat();Object.assign(window,{requireAuthenticatedUser:window.__uiSmokeSaved.requireAuthenticatedUser,getCurrentAuthUser:window.__uiSmokeSaved.getCurrentAuthUser,supabaseFetch:window.__uiSmokeSaved.supabaseFetch,loadMarketMessages:window.__uiSmokeSaved.loadMarketMessages,subscribeToMarketConversation:window.__uiSmokeSaved.subscribeToMarketConversation});delete window.__uiSmokeSaved;');
  await click('.nav-item.profile-me','profile navigation');
  await section('profile-section','profile');
- await visible('#alwaha-device-suite-menu-button','feature/test dashboard entry');
+ await evaluate('document.querySelector("#alwaha-device-suite-menu-button")?.scrollIntoView({block:"center",behavior:"instant"})');
+ await sleep(160);
+ await visible('#alwaha-device-suite-menu-button','feature/test dashboard entry after scrolling it into the visible profile viewport');
  await click('[onclick*="sub-prof-settings"]','profile settings');
  await visible('.alwaha-theme-grid','theme picker');
  await screenshot('06-themes.png');
