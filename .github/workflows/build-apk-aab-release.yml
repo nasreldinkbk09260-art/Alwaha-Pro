@@ -812,10 +812,10 @@ jobs:
           source = path.read_text(encoding='utf-8')
           dependency = "implementation 'com.google.android.gms:play-services-nearby:19.5.1'"
           if dependency not in source:
-              match = re.search(r'(?m)^dependencies\\s*\\{', source)
+              match = re.search(r'(?m)^dependencies\s*\{', source)
               if not match:
                   raise SystemExit('Could not find dependencies block; refusing to modify Gradle.')
-              source = source[:match.end()] + '\\n    ' + dependency + source[match.end():]
+              source = source[:match.end()] + '\n    ' + dependency + source[match.end():]
               path.write_text(source, encoding='utf-8')
           print('Nearby Connections SDK dependency is present.')
           PY
