@@ -5536,14 +5536,14 @@ async function renderConversationsList(){
                     triggerToastNotification('ميزة الجسر المخفي التلقائي غير مدعومة على هذا الهاتف لعدم توفر خدمات Google Play المطلوبة. لم نعرض أجهزة قريبة أو أسماء، ولم نشغّل مساراً بديلاً يكشف هوية الأجهزة.','error');
                     return;
                 }
-                if(!caps?.wifiEnabled&&!caps?.bluetoothEnabled){
+                if(!caps?.wifiEnabled||!caps?.bluetoothEnabled){
                     const ready=await showAlwahaMeshRadioSetup(plugin,caps);
                     if(!ready)return;
                 }
                 await mesh.setMode(true);
                 const started=await plugin.startNearbyMesh();
                 if(!started?.started)throw new Error('لم يبدأ اكتشاف الأجهزة القريبة.');
-                triggerToastNotification('بدأ البحث عن أجهزة الواحة المتطوعة. سيصبح الزر أخضر عند إنشاء اتصال محلي والتحقق من هوية الجار.','info');
+                triggerToastNotification('بدأ البحث عن أجهزة الواحة المتطوعة. سيصبح الزر أخضر عند إنشاء اتصال محلي فعلي.','info');
                 document.querySelectorAll('[data-alwaha-mesh-toggle]').forEach(button=>{
                     button.setAttribute('aria-pressed','true');button.style.color='#ffd88b';button.title='الشبكة الحرة تبحث عن جسور قريبة';
                 });
