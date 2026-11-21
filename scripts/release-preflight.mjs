@@ -271,7 +271,7 @@ if(!localNetworkPlugin.includes('requestBluetoothEnable')||!localNetworkPlugin.i
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 if(!workflow.includes("      - '**'")||!workflow.includes("if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'"))fail('Development CI must watch all branches while public publishing requires main plus explicit approval.');
 
-if(!read('scripts/ci-validate-supabase-sql.sh').includes('20261121041700_alwaha_mesh_public_keys.sql')||!read('scripts/ci-validate-supabase-sql.sh').includes('20261121041700_alwaha_mesh_public_keys.sql'))fail('Alwaha Mesh public-key directory migration and regression are not included in disposable PostgreSQL CI.');
+if(!read('scripts/ci-validate-supabase-sql.sh').includes('20261121041700_alwaha_mesh_public_keys.sql')||!read('scripts/ci-validate-supabase-sql.sh').includes('supabase/tests/20261121041700_alwaha_mesh_public_keys.sql'))fail('Alwaha Mesh public-key directory migration and regression are not included in disposable PostgreSQL CI.');
 const supportTicketIndexMigration=read('supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql');
 const supportTicketIndexTest=read('supabase/tests/20261118050000_support_tickets_assigned_to_index.sql');
 if(!supportTicketIndexMigration.includes('ON public.support_tickets (assigned_to)')||!supportTicketIndexTest.includes('support_tickets_assigned_to_idx')||!sqlCi.includes('20261118050000_support_tickets_assigned_to_index.sql'))fail('Support-ticket assignment index or its SQL regression test is missing from release CI.');
