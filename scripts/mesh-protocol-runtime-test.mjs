@@ -10,7 +10,8 @@ function createHarness(name){
   const vault={
     async put(key,value){records.set(key,{key,value,updatedAt:new Date().toISOString()});},
     async getRecord(key){return records.get(key)||null;},
-    async getAll(){return [...records.values()];}
+    async getAll(){return [...records.values()];},
+    async removeRecord(key){records.delete(key);}
   };
   const window={
     AlwahaLocalVault:vault,
