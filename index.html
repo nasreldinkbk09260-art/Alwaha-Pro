@@ -874,7 +874,7 @@ img,video,canvas{max-width:100%}
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
         <audio id="remoteAudio" autoplay playsinline></audio>
-        <button class="btn-action" style="margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        <button id="callCloseBtn" type="button" class="btn-action" style="margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()" aria-label="إغلاق شاشة المكالمة"><i class="fa-solid fa-xmark"></i> إغلاق</button>
     </div>
 
     <!-- 4. قسم الملف الشخصي -->
@@ -3174,7 +3174,10 @@ async function toggleInternalNotificationCenter() {
             if (!modal) return;
             modal.style.display = open ? 'flex' : 'none';
             modal.setAttribute('aria-hidden', open ? 'false' : 'true');
-            document.body.classList.toggle('modal-active', !!open);
+            if (open) document.body.classList.add('modal-active');
+            // Let the shared modal stack decide whether another dialog still owns the lock.
+            if (window.AlwahaModalShell?.sync) window.AlwahaModalShell.sync();
+            else document.body.classList.toggle('modal-active', !!open);
         }
         let alwahaCallSpeakerOn=false;
         function isAlwahaNativeAndroid(){const cap=window.Capacitor;return !!(cap&&(cap.getPlatform?.()==='android'||(cap.isNativePlatform?.()&&/Android/i.test(navigator.userAgent||''))));}
@@ -5657,7 +5660,10 @@ async function renderConversationsList(){
                 modal.style.display = 'none';
                 modal.setAttribute('aria-hidden', 'true');
             }
-            document.body.classList.remove('modal-active');
+            // Recompute the shared modal stack now: ending a call must not unlock
+            // navigation while a chat, notification, post, or game dialog remains open.
+            if (window.AlwahaModalShell?.sync) window.AlwahaModalShell.sync();
+            else document.body.classList.remove('modal-active');
             try { await activeCallManager?.end(true); }
             catch (e) { console.warn('[Alwaha Call] close cleanup failed:', e); }
             finally {
