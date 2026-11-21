@@ -301,6 +301,9 @@
     transportHandles.push(await native.addListener('transportState',event=>{
       const state=String(event?.state||'');
       const endpointId=String(event?.endpointId||'');
+      if(state==='nearby-advertising-failed'||state==='nearby-discovery-failed'||state==='nearby-accept-failed'||state==='nearby-request-failed'){
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport-error',{detail:event}));
+      }
       if(state==='nearby-peer-connected'&&endpointId){
         transportType='nearby-connections';
         void sendHello(endpointId);
