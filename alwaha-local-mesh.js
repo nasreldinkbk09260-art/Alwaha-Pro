@@ -87,14 +87,18 @@
       })().catch(error=>{bridgeIdentityPromise=null;throw error;});
     }
     const id=await bridgeIdentityPromise;
-    return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey,fingerprint:id.fingerprint,fingerprintCode:id.fingerprint.slice(-6).toUpperCase(),role:'bridge'};
+    return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey};
   }
-  async function validateBundle(bundle){
-    if(!bundle||bundle.protocol!==PREFIX||bundle.version!==VERSION||typeof bundle.ecdhPublicKey!=='string'||typeof bundle.signingPublicKey!=='string')throw new Error('صيغة هوية الجهاز غير صحيحة.');
+  async function validateBridgeBundle(bundle){
+    if(!bundle||bundle.protocol!==PREFIX||bundle.version!==VERSION||typeof bundle.ecdhPublicKey!=='string'||typeof bundle.signingPublicKey!=='string')throw new Error('صيغة اتصال الترحيل غير صحيحة.');
     const fingerprint=await fingerprintFor(bundle.ecdhPublicKey,bundle.signingPublicKey);
-    if(fingerprint!==bundle.fingerprint)throw new Error('بصمة هوية الجهاز لا تطابق مفاتيحه؛ رفضنا الاقتران.');
     await crypto.subtle.importKey('raw',b64ToBytes(bundle.ecdhPublicKey),{name:'ECDH',namedCurve:'P-256'},false,[]);
     await crypto.subtle.importKey('raw',b64ToBytes(bundle.signingPublicKey),{name:'ECDSA',namedCurve:'P-256'},false,[]);
+    return fingerprint;
+  }
+  async function validateBundle(bundle){
+    const fingerprint=await validateBridgeBundle(bundle);
+    if(fingerprint!==bundle.fingerprint)throw new Error('بصمة هوية الجهاز لا تطابق مفاتيحه؛ رفضنا الاقتران.');
     return fingerprint;
   }
   async function pairPeer(bundle,{confirmationCode,accountUserId='',label='جهاز موثوق'}={}){
@@ -259,7 +263,7 @@
       }
       const message=JSON.parse(dec.decode(bytes));
       if(message?.type==='hello'&&message.protocol===PREFIX){
-        const fingerprint=await validateBundle(message.bundle);
+        const fingerprint=await validateBridgeBundle(message.bundle);
         if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
         const endpointKey=String(endpointId||'legacy');
         transportEndpoints.set(endpointKey,{fingerprint,transport:endpointId?'nearby-connections':(transportType||'legacy'),relayAllowed:true,verifiedAt:Date.now()});
