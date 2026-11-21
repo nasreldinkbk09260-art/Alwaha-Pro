@@ -169,5 +169,10 @@ psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121013915_cloud_chat_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121013915_cloud_chat_quotas.sql"
 echo 'CHAT_QUOTA_SQL_REGRESSION=PASS'
 
+echo 'APPLY TEST MIGRATION: 20261121041700_alwaha_mesh_public_keys.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121041700_alwaha_mesh_public_keys.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121041700_alwaha_mesh_public_keys.sql"
+echo 'ALWAHA_MESH_PUBLIC_KEYS_RLS=PASS'
+
 
 
