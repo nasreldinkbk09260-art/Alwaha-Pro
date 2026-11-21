@@ -5384,8 +5384,23 @@ async function renderConversationsList(){
             return showAlwahaMeshConsentDialog();
         }
         async function openAlwahaMeshBridgeConsentSettings(){
-            localStorage.removeItem(ALWAHA_MESH_CONSENT_KEY);localStorage.removeItem(ALWAHA_MESH_REMIND_KEY);localStorage.removeItem(ALWAHA_MESH_USER_DISABLED_KEY);
-            return showAlwahaMeshConsentDialog();
+            const previousChoice=localStorage.getItem(ALWAHA_MESH_CONSENT_KEY);
+            const accepted=await showAlwahaMeshConsentDialog();
+            const nextChoice=localStorage.getItem(ALWAHA_MESH_CONSENT_KEY);
+            if(nextChoice==='declined'){
+                localStorage.setItem(ALWAHA_MESH_USER_DISABLED_KEY,'true');
+                try{await window.alwahaLocalNetwork?.stopNearbyMesh?.();await window.alwahaLocalNetwork?.stopDiscovery?.();await window.alwahaLocalNetwork?.stopPacketTransport?.();}catch(error){console.warn('[Alwaha Mesh] consent revocation stop failed:',error);}
+                await window.AlwahaLocalMesh?.setMode?.(false);
+                triggerToastNotification('تم سحب موافقتك وإيقاف جسر هذا الهاتف.','success');
+                return false;
+            }
+            if(!accepted&&previousChoice==='accepted'&&nextChoice==='snoozed'){
+                // "Later" in the settings screen dismisses the review without silently
+                // revoking a consent that was already active.
+                localStorage.setItem(ALWAHA_MESH_CONSENT_KEY,'accepted');
+                localStorage.removeItem(ALWAHA_MESH_REMIND_KEY);
+            }
+            return accepted;
         }
         window.openAlwahaMeshBridgeConsentSettings=openAlwahaMeshBridgeConsentSettings;
 
