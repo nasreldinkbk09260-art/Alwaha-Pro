@@ -54,7 +54,7 @@ const checks=[
 
  ['Android radio activation uses only user-approved Bluetooth prompts and Wi-Fi panels',plugin.includes('requestBluetoothEnable')&&plugin.includes('BluetoothAdapter.ACTION_REQUEST_ENABLE')&&plugin.includes('openWifiPanel')&&plugin.includes('Settings.Panel.ACTION_WIFI')&&html.includes('data-enable-bt')&&html.includes('data-enable-wifi')],
  ['one-tap asks for each missing radio individually, without requiring both to be off',html.includes('if(!caps?.wifiEnabled||!caps?.bluetoothEnabled)')&&html.includes('showAlwahaMeshRadioSetup(plugin,caps)')],
- ['browser visual acceptance tests the one-tap toggle and never invokes the removed manual device dialog',browser.includes('data-alwaha-mesh-toggle')&&browser.includes('startNearbyMesh')&&!browser.includes('openAlwahaLocalDiscovery()')&&!browser.includes('data-copy-identity')],
+ ['browser visual acceptance tests the one-tap toggle and asserts legacy identity UI is absent at runtime',browser.includes('data-alwaha-mesh-toggle')&&browser.includes('startNearbyMesh')&&!browser.includes('openAlwahaLocalDiscovery()')&&browser.includes('pairControls:document.querySelectorAll')&&browser.includes('noLegacyBridgeUi')],
  ['Android does not claim or attempt app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&!plugin.includes('setMobileDataEnabled')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف أو تشغيلها نيابة عنك')],
 
 
