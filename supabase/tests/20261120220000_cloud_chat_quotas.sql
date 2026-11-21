@@ -1,6 +1,7 @@
 -- Daily/weekly limits are applied atomically and scope-separated.
-INSERT INTO auth.users(id,email) VALUES
- ('30000000-0000-4000-8000-000000000001','quota-ci@example.invalid')
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+ ('30000000-0000-4000-8000-000000000001','quota-ci@example.invalid',
+  '{"username":"quota_ci","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb)
 ON CONFLICT DO NOTHING;
 INSERT INTO public.app_settings(key,value) VALUES
  ('management_config_v1', '{"version":1,"currency":"EGP","free":{"daily_direct_messages":1,"weekly_direct_messages":2,"daily_market_messages":1,"weekly_market_messages":2},"plans":[],"payment_methods":[]}')
