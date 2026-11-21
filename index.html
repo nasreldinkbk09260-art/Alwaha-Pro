@@ -3927,6 +3927,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const requestId=++directMessagesRequestId,peerId=String(currentChatUserId||'');
             const container=document.getElementById('chat-messages-container'),me=await getCurrentAuthUser();
             if(!container||!me||!peerId||requestId!==directMessagesRequestId||peerId!==String(currentChatUserId||''))return;
+            if(navigator.onLine!==false)void ensureAlwahaMeshPeerPinned(peerId,currentChatUser||'جهة اتصال').catch(error=>console.warn('[Alwaha Mesh] direct peer key sync:',error?.message||error));
             container.innerHTML='<div style="text-align:center;color:#777;font-size:11px;padding:20px;">جاري تحميل الرسائل...</div>';
             let rows=null,fromLocal=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
             if(fromLocal){
@@ -3993,6 +3994,65 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             return Array.isArray(rows)&&rows.length>0;
         }
 
+        let alwahaMeshDirectorySyncUserId='',alwahaMeshDirectorySyncAt=0,alwahaMeshDirectorySyncPromise=null;
+        async function publishAlwahaMeshAccountPublicKey(){
+            const mesh=window.AlwahaLocalMesh;
+            if(!mesh?.getIdentityBundle||!supabaseClient?.from||navigator.onLine===false)return false;
+            const me=await getCurrentAuthUser();if(!me?.id)return false;
+            if(alwahaMeshDirectorySyncUserId===me.id&&Date.now()-alwahaMeshDirectorySyncAt<15*60*1000)return true;
+            if(alwahaMeshDirectorySyncPromise)return alwahaMeshDirectorySyncPromise;
+            alwahaMeshDirectorySyncPromise=(async()=>{
+                const bundle=await mesh.getIdentityBundle();
+                const publicRow={
+                    user_id:me.id,
+                    protocol_version:1,
+                    ecdh_public_key:String(bundle.ecdhPublicKey||''),
+                    signing_public_key:String(bundle.signingPublicKey||''),
+                    updated_at:new Date().toISOString()
+                };
+                if(!/^[A-Za-z0-9_-]{87}$/.test(publicRow.ecdh_public_key)||!/^[A-Za-z0-9_-]{87}$/.test(publicRow.signing_public_key))
+                    throw new Error('تعذر تجهيز مفاتيح المحادثة العامة بصيغة آمنة.');
+                const {data,error}=await supabaseClient.from('alwaha_mesh_public_keys')
+                    .upsert(publicRow,{onConflict:'user_id'})
+                    .select('user_id')
+                    .single();
+                if(error)throw error;
+                if(String(data?.user_id||'')!==String(me.id))throw new Error('لم يؤكد دليل المفاتيح ملكية الحساب.');
+                alwahaMeshDirectorySyncUserId=me.id;
+                alwahaMeshDirectorySyncAt=Date.now();
+                return true;
+            })().catch(error=>{
+                alwahaMeshDirectorySyncAt=0;
+                console.warn('[Alwaha Mesh] account public key directory sync failed:',error?.message||error);
+                throw error;
+            }).finally(()=>{alwahaMeshDirectorySyncPromise=null;});
+            return alwahaMeshDirectorySyncPromise;
+        }
+        async function ensureAlwahaMeshPeerPinned(accountUserId,label='جهة اتصال'){
+            const mesh=window.AlwahaLocalMesh,target=String(accountUserId||'');
+            if(!mesh?.getPeerByAccountId||!target)return null;
+            const existing=await mesh.getPeerByAccountId(target);
+            if(existing)return existing;
+            if(navigator.onLine===false||!supabaseClient?.from)return null;
+            const me=await getCurrentAuthUser();if(!me?.id||me.id===target)return null;
+            await publishAlwahaMeshAccountPublicKey();
+            const {data,error}=await supabaseClient.from('alwaha_mesh_public_keys')
+                .select('user_id,protocol_version,ecdh_public_key,signing_public_key')
+                .eq('user_id',target)
+                .maybeSingle();
+            if(error)throw error;
+            if(!data||String(data.user_id)!==target)return null;
+            if(Number(data.protocol_version)!==1)throw new Error('إصدار مفتاح جهة الاتصال غير مدعوم على هذا الجهاز.');
+            const trusted=await mesh.trustPeerFromAuthenticatedDirectory({
+                protocol:'ALWAHA_MESH_V1',
+                version:1,
+                ecdhPublicKey:String(data.ecdh_public_key||''),
+                signingPublicKey:String(data.signing_public_key||'')
+            },{accountUserId:target,label});
+            if(trusted.rotated)triggerToastNotification('تم تحديث مفتاح التشفير العام لجهة الاتصال من دليل الحساب الموثق.','info');
+            return await mesh.getPeerByAccountId(target);
+        }
+
         async function sendLiveChatMessageFromUI() {
             if(directMessageSendInFlight)return;
             const input=document.getElementById('chat-message-input'),peerId=String(currentChatUserId||''),content=input?.value?.trim()||'',replyTarget=currentDirectReplyTarget;
@@ -4036,6 +4096,7 @@ async function loadCommentsForTarget(targetId, targetType=window.currentActiveCo
             const requestId=++marketMessagesRequestId,conversationId=String(currentMarketConversationId||'');
             const holder=document.getElementById('market-chat-messages'),me=await getCurrentAuthUser();
             if(!holder||!me||!conversationId||requestId!==marketMessagesRequestId||conversationId!==String(currentMarketConversationId||''))return;
+            if(navigator.onLine!==false&&currentMarketPeerId)void ensureAlwahaMeshPeerPinned(currentMarketPeerId,'جهة اتصال السوق').catch(error=>console.warn('[Alwaha Mesh] market peer key sync:',error?.message||error));
             holder.innerHTML='<div style="text-align:center;color:#8bf4ff;padding:16px;font-size:11px;">جاري تحميل رسائل الإعلان...</div>';
             let rows=null,fromLocal=!navigator.onLine||Boolean(window.AlwahaLocalMesh?.isEnabled());
             if(fromLocal)rows=await window.AlwahaLocalVault?.getMarketChatCache?.(me.id,conversationId)||null;
