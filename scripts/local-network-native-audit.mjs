@@ -48,8 +48,8 @@ const checks=[
  ['queued native frames are invalidated when the transport session changes',mesh.includes('transportGeneration++')&&mesh.includes("reason:'stale-transport'")&&mesh.includes('processRawPacket(encoded,generation,endpointId)')],
  ['incoming packets require a validated neighbor hello; only direct decryption requires contact trust',mesh.includes("reason:'neighbor-not-identified'")&&mesh.includes('!trusted&&!neighbor?.relayAllowed')&&mesh.includes('relayAllowed:true')],
 
- ['Android opens only user-approved Internet and Bluetooth system panels',plugin.includes('openInternetSettings')&&plugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')&&plugin.includes('openBluetoothSettings')&&plugin.includes('Settings.ACTION_BLUETOOTH_SETTINGS')&&html.includes('data-open-internet-settings')&&html.includes('data-open-bluetooth-settings')],
- ['Android does not claim app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف تلقائيًا')],
+ ['Android radio activation uses only user-approved Bluetooth prompts and Wi-Fi panels',plugin.includes('requestBluetoothEnable')&&plugin.includes('BluetoothAdapter.ACTION_REQUEST_ENABLE')&&plugin.includes('openWifiPanel')&&plugin.includes('Settings.Panel.ACTION_WIFI')&&html.includes('data-enable-bt')&&html.includes('data-enable-wifi')],
+ ['Android does not claim or attempt app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&!plugin.includes('setMobileDataEnabled')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف أو تشغيلها نيابة عنك')],
 
 
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
@@ -71,9 +71,9 @@ const checks=[
 
  ['Nearby endpoint advertising and outgoing connection labels use a non-rendering value, never a hardware/device name',plugin.includes('NEARBY_ENDPOINT_NAME = "'+'\\u200B'+'"')&&plugin.includes('startAdvertising(NEARBY_ENDPOINT_NAME')&&plugin.includes('requestConnection(NEARBY_ENDPOINT_NAME')],
  ['Nearby endpoint discovery never reads, stores or emits the other device name',!plugin.includes('getEndpointName()')&&!plugin.includes('nearbyEndpointNames')&&!plugin.includes('endpointNames')],
- ['Bridge handshake carries no name, alias, fingerprint, role, account, phone or email field',mesh.includes('return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey};')&&!mesh.includes("role:'bridge'")&&!mesh.includes("new CustomEvent('alwaha:mesh-neighbor'")],
+ ['Bridge handshake carries no name, alias, fingerprint, role, account, phone or email field and emits no UI identity event',mesh.includes('return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey};')&&!mesh.includes("role:'bridge'")&&!mesh.includes("new CustomEvent('alwaha:mesh-neighbor'")&&!mesh.includes('fingerprintCode:id.fingerprint')],
  ['Bridge foreground service is copied into Android source and registered privately in manifest',workflow.includes("'AlwahaMeshBridgeService'")&&workflow.includes('android:name=".AlwahaMeshBridgeService"')&&workflow.includes('android:exported="false"')&&workflow.includes('foregroundServiceType="connectedDevice"')],
- ['Bridge foreground service has Android 14 connected-device and notification permissions',workflow.includes('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE')&&workflow.includes('android.permission.FOREGROUND_SERVICE')&&workflow.includes('android.permission.POST_NOTIFICATIONS')&&workflow.includes('hasBridgeNotificationPermission')],
+ ['Bridge foreground service has Android 14 connected-device and notification permissions',workflow.includes('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE')&&workflow.includes('android.permission.FOREGROUND_SERVICE')&&workflow.includes('android.permission.POST_NOTIFICATIONS')&&plugin.includes('hasBridgeNotificationPermission')],
 
  ['legacy local discovery modal and every manual device list have been removed',!html.includes('async function openAlwahaLocalDiscovery')&&!html.includes('data-alwaha-local-discovery-modal')&&!html.includes('data-bluetooth-server')],
  ['a missing Nearby service never falls back to a user-visible device list',html.includes('ميزة الجسر المخفي التلقائي غير مدعومة')&&!html.includes('void openAlwahaLocalDiscovery()')],
