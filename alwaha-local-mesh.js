@@ -280,6 +280,15 @@
       await native.sendLocalPacket(args);return true;
     }catch{return false;}
   }
+  function emitTransportNotice(event){
+    // Expose transport state only. Endpoint IDs and bridge key fingerprints never escape
+    // the internal routing map and are not propagated to application UI listeners.
+    const state=String(event?.state||'');
+    const transport=String(event?.transport||transportType||'');
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{
+      detail:{state,transport,connectedPeers:transportEndpoints.size}
+    }));
+  }
   function emitPacketState(result){
     window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
   }
@@ -365,33 +374,33 @@
       if(state==='nearby-peer-connected'&&endpointId){
         transportType='nearby-connections';
         void sendHello(endpointId);
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+        emitTransportNotice(event);
       }else if(state==='nearby-peer-disconnected'&&endpointId){
         const disconnectedFingerprint=transportEndpoints.get(endpointId)?.fingerprint||'';
         transportEndpoints.delete(endpointId);
         if(transportPeerFingerprint===disconnectedFingerprint)transportPeerFingerprint=[...transportEndpoints.values()].map(peer=>peer.fingerprint).filter(Boolean).pop()||'';
         if(!transportEndpoints.size&&!transportPeerFingerprint)transportType='';
         emitModeState();
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+        emitTransportNotice(event);
       }else if(state==='nearby-mesh-stopped'){
         transportGeneration++;
         transportEndpoints.clear();
         transportPeerFingerprint='';
         transportType='';
         emitModeState();
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+        emitTransportNotice(event);
       }else if(state==='packet-transport-connected'){
         transportGeneration++;
         transportPeerFingerprint='';
         transportType=String(event.transport||'unknown');
         void sendHello('');
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+        emitTransportNotice(event);
       }else if(state==='packet-transport-disconnected'||state==='packet-transport-closed'){
         transportGeneration++;
         transportEndpoints.delete('legacy');
         if(transportEndpoints.size===0){transportType='';transportPeerFingerprint='';}
         emitModeState();
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
+        emitTransportNotice(event);
       }
     }));
   }
