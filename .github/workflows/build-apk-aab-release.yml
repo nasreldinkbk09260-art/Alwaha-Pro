@@ -376,7 +376,11 @@ jobs:
           npm run audit:notification-tones
           npm run audit:reels
 
-      - name: Audit dependency vulnerabilities
+      - name: Audit production dependency vulnerabilities
+        shell: bash
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Audit dependency vulnerabilities including build tooling
         shell: bash
         run: npm audit --audit-level=high
 
