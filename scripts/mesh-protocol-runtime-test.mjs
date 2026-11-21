@@ -66,6 +66,9 @@ const burstResults=await Promise.all(burstPackets.map(encoded=>b.mesh.receiveRaw
 assert.ok(burstResults.every(result=>result?.delivered===true),'serialized receive queue should complete every packet in the burst');
 assert.equal(delivered.length,beforeBurst+burstCount,'receiver must not drop packets that arrive while an earlier frame is decrypting');
 assert.equal(new Set(delivered.slice(beforeBurst).map(item=>item.payload.text)).size,burstCount,'each burst packet should be delivered exactly once');
+const overloadResults=await Promise.all(Array.from({length:257},()=>b.mesh.receiveRawPacket(burstPackets[0])));
+assert.equal(overloadResults.filter(result=>result?.reason==='receive-queue-full').length,1,'receive queue must reject overflow at its configured hard limit');
+assert.ok(overloadResults.filter(result=>result?.duplicate===true).length>0,'frames inside the accepted queue should still be processed and deduplicated');
 a.window.__peer=originalPeer;
 
 const untrusted=createHarness('untrusted');
@@ -114,8 +117,9 @@ console.log('PASS: authenticated AES-GCM direct delivery with recipient-only dec
 console.log('PASS: relay envelope hides plaintext and both endpoint fingerprints');
 console.log('PASS: encrypted call signaling delivery');
 console.log('PASS: concurrent packet bursts are serialized without dropping frames');
+console.log('PASS: receive queue has a strict memory-protecting capacity');
 console.log('PASS: packets from untrusted immediate neighbors are rejected before relay');
 console.log('PASS: chunked file transfer, encrypted local storage and reconstruction');
 console.log('PASS: opaque store-and-forward queue and duplicate/replay rejection');
 console.log('PASS: trusted-neighbor handshake automatically forwards ciphertext to next hop');
-console.log('MESH_PROTOCOL_RUNTIME=PASS (10 checks)');
+console.log('MESH_PROTOCOL_RUNTIME=PASS (11 checks)');
