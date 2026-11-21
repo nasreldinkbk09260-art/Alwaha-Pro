@@ -65,7 +65,7 @@ const checks=[
  ['missing Bluetooth and Wi-Fi activation controls use Android system approval or panels',plugin.includes('BluetoothAdapter.ACTION_REQUEST_ENABLE')&&plugin.includes('Settings.Panel.ACTION_WIFI')&&html.includes('requestBluetoothEnable()')&&html.includes('openWifiPanel()')],
  ['bridge consent provides persistent accept, decline and 30-day reminder choices',html.includes('ALWAHA_MESH_CONSENT_KEY')&&html.includes("setItem(ALWAHA_MESH_CONSENT_KEY,'accepted')")&&html.includes("setItem(ALWAHA_MESH_CONSENT_KEY,'declined')")&&html.includes('30*24*60*60*1000')],
  ['bridge scan does not suspend cloud realtime until a verified local neighbor is active',html.includes('syncAlwahaMeshRealtime(active)')&&!html.includes('await closeAlwahaCloudRealtimeForLocalMode();\\n            const buttonText')],
- ['switch turns green only when a verified active transport peer is available',mesh.includes('return transportEndpoints.size>0||Boolean(transportPeerFingerprint)')&&html.includes("button.style.color=active?'#a8ffd7':(requested?'#ffd88b':'')")],
+ ['switch turns green only when a verified active transport peer is available',mesh.includes('const active=modeEnabled&&(transportEndpoints.size>0||Boolean(transportPeerFingerprint))')&&html.includes("button.style.color=active?'#a8ffd7':(requested?'#ffd88b':'')")],
  ['relay queues enforce per-neighbor packet and byte rate limits',mesh.includes('traffic.packets>300')&&mesh.includes('traffic.bytes>30*1024*1024')],
 
  ['Nearby endpoint advertising and outgoing connection labels use a non-rendering value, never a hardware/device name',plugin.includes('NEARBY_ENDPOINT_NAME = "'+'\\u200B'+'"')&&plugin.includes('startAdvertising(NEARBY_ENDPOINT_NAME')&&plugin.includes('requestConnection(NEARBY_ENDPOINT_NAME')],
