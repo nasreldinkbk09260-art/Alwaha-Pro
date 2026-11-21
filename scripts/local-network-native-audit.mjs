@@ -6,6 +6,8 @@ const workflow=read('.github/workflows/build-apk-aab-release.yml');
 const pkg=JSON.parse(read('package.json'));
 const html=read('index.html');
 const mesh=read('alwaha-local-mesh.js');
+const meshKeyMigration=read('supabase/migrations/20261121041700_alwaha_mesh_public_keys.sql');
+const meshKeyTest=read('supabase/tests/20261121041700_alwaha_mesh_public_keys.sql');
 const build=read('scripts/build-web.mjs');
 const sw=read('sw.js');
 const checks=[
@@ -74,6 +76,9 @@ const checks=[
  ['Bridge handshake carries no name, alias, fingerprint, role, account, phone or email field and emits no UI identity event',mesh.includes('return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey};')&&!mesh.includes("role:'bridge'")&&!mesh.includes("new CustomEvent('alwaha:mesh-neighbor'")&&!mesh.includes('fingerprintCode:id.fingerprint')],
  ['Bridge foreground service is copied into Android source and registered privately in manifest',workflow.includes("'AlwahaMeshBridgeService'")&&workflow.includes('android:name=".AlwahaMeshBridgeService"')&&workflow.includes('android:exported="false"')&&workflow.includes('foregroundServiceType="connectedDevice"')],
  ['Bridge foreground service has Android 14 connected-device and notification permissions',workflow.includes('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE')&&workflow.includes('android.permission.FOREGROUND_SERVICE')&&workflow.includes('android.permission.POST_NOTIFICATIONS')&&plugin.includes('hasBridgeNotificationPermission')],
+ ['account public-key directory is RLS protected and only exposes authenticated public E2E keys',meshKeyMigration.includes('ENABLE ROW LEVEL SECURITY')&&meshKeyMigration.includes('GRANT SELECT, INSERT ON TABLE public.alwaha_mesh_public_keys TO authenticated')&&meshKeyMigration.includes('GRANT UPDATE (user_id, protocol_version, ecdh_public_key, signing_public_key, updated_at)')&&meshKeyMigration.includes('user_id = (SELECT auth.uid())')],
+ ['public key directory stores no bridge identifiers or private keys and has a disposable PostgreSQL regression',!meshKeyMigration.includes('private_key')&&!meshKeyMigration.includes('bridge_name')&&!meshKeyMigration.includes('device_name')&&meshKeyTest.includes('ALWAHA_MESH_PUBLIC_KEYS_RLS=PASS')],
+ ['chat contact public keys are pinned from authenticated directory without exposing intermediate relay endpoints',html.includes('ensureAlwahaMeshPeerPinned')&&html.includes('trustPeerFromAuthenticatedDirectory')&&mesh.includes('trustPeerFromAuthenticatedDirectory')&&html.includes("from('alwaha_mesh_public_keys')")],
 
  ['legacy local discovery modal and every manual device list have been removed',!html.includes('async function openAlwahaLocalDiscovery')&&!html.includes('data-alwaha-local-discovery-modal')&&!html.includes('data-bluetooth-server')],
  ['a missing Nearby service never falls back to a user-visible device list',html.includes('ميزة الجسر المخفي التلقائي غير مدعومة')&&!html.includes('void openAlwahaLocalDiscovery()')],
