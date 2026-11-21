@@ -3,7 +3,7 @@
   const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12;
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
-  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
+  let identityPromise=null, bridgeIdentityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
   let transportGeneration=0, receiveQueue=Promise.resolve(), pendingReceiveCount=0;
   const transportEndpoints=new Map(), inboundTraffic=new Map();
   const MAX_PENDING_RECEIVE=256;
@@ -67,6 +67,27 @@
   async function getIdentityBundle(){
     const id=await getIdentity();
     return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey,fingerprint:id.fingerprint,fingerprintCode:id.fingerprint.slice(-6).toUpperCase()};
+  }
+  async function getBridgeIdentityBundle(){
+    if(!bridgeIdentityPromise){
+      bridgeIdentityPromise=(async()=>{
+        // Ephemeral relay-only identity: never persisted and never tied to a user/account/device label.
+        const [ecdh,signing]=await Promise.all([
+          generatePair({name:'ECDH',namedCurve:'P-256'},['deriveBits']),
+          generatePair({name:'ECDSA',namedCurve:'P-256'},['sign'])
+        ]);
+        const [ecdhRaw,signingRaw]=await Promise.all([
+          crypto.subtle.exportKey('raw',ecdh.publicKey),
+          crypto.subtle.exportKey('raw',signing.publicKey)
+        ]);
+        const ecdhPublicKey=bytesToB64(new Uint8Array(ecdhRaw));
+        const signingPublicKey=bytesToB64(new Uint8Array(signingRaw));
+        const fingerprint=await fingerprintFor(ecdhPublicKey,signingPublicKey);
+        return {ecdh,signing,ecdhPublicKey,signingPublicKey,fingerprint};
+      })().catch(error=>{bridgeIdentityPromise=null;throw error;});
+    }
+    const id=await bridgeIdentityPromise;
+    return {protocol:PREFIX,version:VERSION,ecdhPublicKey:id.ecdhPublicKey,signingPublicKey:id.signingPublicKey,fingerprint:id.fingerprint,fingerprintCode:id.fingerprint.slice(-6).toUpperCase(),role:'bridge'};
   }
   async function validateBundle(bundle){
     if(!bundle||bundle.protocol!==PREFIX||bundle.version!==VERSION||typeof bundle.ecdhPublicKey!=='string'||typeof bundle.signingPublicKey!=='string')throw new Error('صيغة هوية الجهاز غير صحيحة.');
@@ -212,8 +233,8 @@
   }
   async function sendHello(endpointId=''){
     const native=window.alwahaLocalNetwork;if(!native?.sendLocalPacket)return false;
-    const bundle=await getIdentityBundle();
-    const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle};
+    const bundle=await getBridgeIdentityBundle();
+    const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle,role:'bridge'};
     try{
       const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;
       const args={packet:bytesToB64(bytes)};if(endpointId&&endpointId!=='legacy')args.endpointId=endpointId;
@@ -434,9 +455,10 @@
   }
   async function setMode(enabled){
     modeEnabled=Boolean(enabled);
+    if(modeEnabled){bridgeIdentityPromise=null;await getBridgeIdentityBundle();}
     try{await vault().put('mesh:mode-enabled-v1',{enabled:modeEnabled,updatedAt:new Date().toISOString()});}catch(error){console.warn('[Alwaha Mesh] mode preference could not be saved:',error);}
     await installTransportListeners();
-    if(!modeEnabled){transportEndpoints.clear();transportPeerFingerprint='';transportType='';}
+    if(!modeEnabled){transportEndpoints.clear();transportPeerFingerprint='';transportType='';bridgeIdentityPromise=null;}
     emitModeState();
     return isEnabled();
   }
@@ -484,10 +506,10 @@
     emitModeState();
   }
   function destroy(){
-    transportGeneration++;transportPeerFingerprint='';transportType='';transportEndpoints.clear();modeEnabled=false;
+    transportGeneration++;transportPeerFingerprint='';transportType='';transportEndpoints.clear();bridgeIdentityPromise=null;modeEnabled=false;
     transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
     transportHandles=[];modeEnabled=false;
   }
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,getBridgeIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
