@@ -72,12 +72,25 @@ assert.ok(overloadResults.filter(result=>result?.duplicate===true).length>0,'fra
 a.window.__peer=originalPeer;
 
 const untrusted=createHarness('untrusted');
-untrusted.mesh.setTransportPeer('f'.repeat(64));
 const untrustedStates=[];
 untrusted.window.addEventListener('alwaha:mesh-packet-state',event=>untrustedStates.push(event.detail));
 await untrusted.mesh.receiveRawPacket(burstPackets[0]);
-assert.equal(untrustedStates.at(-1)?.reason,'untrusted-neighbor','unpaired local neighbor must not inject or relay packets');
-assert.equal([...untrusted.records.keys()].some(key=>key.startsWith('mesh:relay:')),false,'untrusted neighbor packets must never enter the relay queue');
+assert.equal(untrustedStates.at(-1)?.reason,'neighbor-not-identified','a transport without a validated Alwaha hello must not inject or relay packets');
+assert.equal([...untrusted.records.keys()].some(key=>key.startsWith('mesh:relay:')),false,'frames without a validated immediate-neighbor identity must never enter the relay queue');
+
+// A consenting relay bridge may forward opaque ciphertext without pairing with the sender account.
+const anonymousBridge=createHarness('anonymous-bridge');
+const adjacentBridge=createHarness('adjacent-bridge');
+anonymousBridge.window.__peer=adjacentBridge.mesh;
+adjacentBridge.window.__peer=anonymousBridge.mesh;
+await anonymousBridge.mesh.setMode(true);
+await adjacentBridge.mesh.setMode(true);
+await anonymousBridge.mesh.sendHello();
+await adjacentBridge.mesh.sendHello();
+const anonymousRelayResult=await anonymousBridge.mesh.receiveRawPacket(burstPackets[0]);
+assert.equal(anonymousRelayResult?.relayed,true,'a validated consenting bridge may relay ciphertext without friend/device pairing to the sender');
+assert.ok([...anonymousBridge.records.keys()].some(key=>key.startsWith('mesh:relay:')),'unpaired bridge must persist only the opaque ciphertext envelope');
+assert.equal(JSON.stringify([...anonymousBridge.records.values()]).includes(secret),false,'unpaired bridge must not learn plaintext while forwarding');
 
 const fileDelivered=[];
 b.window.addEventListener('alwaha:mesh-message',event=>{if(event.detail.payload?.type==='file-ready')fileDelivered.push(event.detail.payload);});
@@ -119,7 +132,8 @@ console.log('PASS: relay envelope hides plaintext and both endpoint fingerprints
 console.log('PASS: encrypted call signaling delivery');
 console.log('PASS: concurrent packet bursts are serialized without dropping frames');
 console.log('PASS: receive queue has a strict memory-protecting capacity');
-console.log('PASS: packets from untrusted immediate neighbors are rejected before relay');
+console.log('PASS: frames without a validated identity handshake are rejected');
+console.log('PASS: consenting identity-verified bridge forwards ciphertext without friend pairing');
 console.log('PASS: chunked file transfer, encrypted local storage and reconstruction');
 console.log('PASS: opaque store-and-forward queue and duplicate/replay rejection');
 console.log('PASS: trusted-neighbor handshake automatically forwards ciphertext to next hop');
