@@ -45,7 +45,7 @@ const checks=[
  ['Mesh exposes the authenticated active link type and clears it when the native transport disconnects',mesh.includes('function getTransportType(){return transportType;}')&&mesh.includes("transportType=String(event.transport||'unknown')")&&mesh.includes("transportType=''")&&mesh.includes('getTransportType,')],
  ['native transport status distinguishes Bluetooth RFCOMM from Wi-Fi Direct TCP',plugin.includes('isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp"')&&plugin.includes('payload.put("transport", isBluetoothTransportConnected() ? "bluetooth-rfcomm" : "wifi-direct-tcp")')],
  ['native incoming frames use a bounded FIFO rather than a drop-on-busy lock',mesh.includes('receiveQueue=Promise.resolve()')&&mesh.includes('MAX_PENDING_RECEIVE=256')&&mesh.includes('pendingReceiveCount>=MAX_PENDING_RECEIVE')&&mesh.includes('receiveQueue.then(')],
- ['queued native frames are invalidated when the transport session changes',mesh.includes('transportGeneration++')&&mesh.includes("reason:'stale-transport'")&&mesh.includes('processRawPacket(encoded,generation)')],
+ ['queued native frames are invalidated when the transport session changes',mesh.includes('transportGeneration++')&&mesh.includes("reason:'stale-transport'")&&mesh.includes('processRawPacket(encoded,generation,endpointId)')],
  ['incoming packets require a validated neighbor hello; only direct decryption requires contact trust',mesh.includes("reason:'neighbor-not-identified'")&&mesh.includes('!trusted&&!neighbor?.relayAllowed')&&mesh.includes('relayAllowed:true')],
 
  ['Android opens only user-approved Internet and Bluetooth system panels',plugin.includes('openInternetSettings')&&plugin.includes('Settings.Panel.ACTION_INTERNET_CONNECTIVITY')&&plugin.includes('openBluetoothSettings')&&plugin.includes('Settings.ACTION_BLUETOOTH_SETTINGS')&&html.includes('data-open-internet-settings')&&html.includes('data-open-bluetooth-settings')],
@@ -54,7 +54,7 @@ const checks=[
 
  ['route tokens are HMACs derived from pairwise ECDH secrets, not public fingerprints',mesh.includes('deriveRouteHmacKey')&&mesh.includes('routeTokensForPair')&&mesh.includes("name:'HMAC'")&&!mesh.includes("'AlwahaMeshRouteV1|'+fingerprint")],
  ['incoming and outgoing local file chunks are encrypted at rest',mesh.includes('storeLocalEncrypted(key,{chunk:chunk.chunk')&&mesh.includes("storeLocalEncrypted('mesh:file:'+fileId+':'+index")&&mesh.includes('readLocalEncrypted(base+\':\'+i)')],
- ['mesh relay forwarding is restricted to an explicitly paired neighbor and bounded queue',mesh.includes("reason:'untrusted-neighbor'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
+ ['mesh relay forwarding uses validated identity neighbors and a bounded queue',mesh.includes("reason:'neighbor-not-identified'")&&mesh.includes('relayCount>=300')&&mesh.includes('pruneExpiredState')],
 
  ['Nearby Connections SDK 19.5.1 is included in the generated Android app build',workflow.includes('com.google.android.gms:play-services-nearby:19.5.1')],
  ['Nearby mesh uses the many-to-many P2P_CLUSTER strategy for advertising and discovery',plugin.includes('Strategy.P2P_CLUSTER')&&plugin.includes('startAdvertising')&&plugin.includes('startDiscovery')&&plugin.includes('NEARBY_SERVICE_ID')],
