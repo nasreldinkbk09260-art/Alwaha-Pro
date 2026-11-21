@@ -827,7 +827,7 @@ img,video,canvas{max-width:100%}
             <div class="alwaha-chat-actions" role="group" aria-label="خيارات الاتصال">
                 <button type="button" class="alwaha-chat-icon-btn audio" onclick="initiateVoiceCall('online')" aria-label="مكالمة صوتية عبر الإنترنت" title="مكالمة صوتية"><i class="fa-solid fa-phone"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn video" onclick="openVideoCallModeChooser()" aria-label="اختيار نوع مكالمة الفيديو" title="مكالمة فيديو"><i class="fa-solid fa-video"></i></button>
-                <button type="button" class="alwaha-chat-icon-btn local" onclick="openAlwahaLocalDiscovery()" aria-label="خيارات الشبكة الحرة المتقدمة" title="إعدادات الشبكة المتقدمة" style="display:none!important;" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-wifi"></i></button>
+                
                 <button type="button" class="alwaha-chat-icon-btn local" data-alwaha-mesh-toggle aria-pressed="false" onclick="toggleAlwahaLocalChatMode()" aria-label="تبديل الشبكة الحرة المحلية" title="الشبكة الحرة"><i class="fa-solid fa-route"></i></button>
                 <button type="button" class="alwaha-chat-icon-btn more" id="chat-more-toggle" onclick="toggleChatMoreMenu()" aria-expanded="false" aria-controls="chat-more-menu" aria-label="المزيد من خيارات المحادثة" title="المزيد"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             </div>
@@ -5551,9 +5551,8 @@ async function renderConversationsList(){
                 await plugin.requestLocalPermissions();
                 const caps=await plugin.getCapabilities();
                 if(caps?.nearbyConnectionsSupported===false){
-                    await mesh.setMode(true);
-                    triggerToastNotification('خدمات Google Play Nearby غير متاحة على هذا الهاتف. سنفتح وسيلة الاتصال المحلية البديلة التي تحتاج إعداداً يدوياً.','info');
-                    void openAlwahaLocalDiscovery();
+                    await mesh.setMode(false);
+                    triggerToastNotification('ميزة الجسر المخفي التلقائي غير مدعومة على هذا الهاتف لعدم توفر خدمات Google Play المطلوبة. لم نعرض أجهزة قريبة أو أسماء، ولم نشغّل مساراً بديلاً يكشف هوية الأجهزة.','error');
                     return;
                 }
                 if(!caps?.wifiEnabled&&!caps?.bluetoothEnabled){
