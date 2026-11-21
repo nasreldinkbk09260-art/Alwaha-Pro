@@ -111,6 +111,33 @@
     await sendHello();await flushRelayQueue();
     return {fingerprint,code:expected};
   }
+  async function trustPeerFromAuthenticatedDirectory(bundle,{accountUserId,label='جهة اتصال'}={}){
+    const accountId=String(accountUserId||'');
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(accountId))
+      throw new Error('معرّف الحساب غير صالح لاقتران مفتاح المحادثة.');
+    const fingerprint=await fingerprintFor(bundle?.ecdhPublicKey||'',bundle?.signingPublicKey||'');
+    const normalized={protocol:PREFIX,version:VERSION,ecdhPublicKey:bundle?.ecdhPublicKey,signingPublicKey:bundle?.signingPublicKey,fingerprint};
+    await validateBundle(normalized);
+    const own=await getIdentity();
+    if(fingerprint===own.fingerprint)throw new Error('مفتاح الحساب المقابل يطابق مفتاح هذا الجهاز.');
+    const existing=await getTrustedPeers();
+    const old=existing.find(peer=>peer.accountUserId===accountId);
+    if(old&&old.fingerprint!==fingerprint){
+      await vault().removeRecord('mesh:peer:'+old.fingerprint);
+      peers.delete(old.fingerprint);
+    }
+    const record={
+      ...normalized,
+      accountUserId:accountId,
+      label:String(label||'جهة اتصال').slice(0,80),
+      pairedAt:new Date().toISOString(),
+      trusted:true,
+      trustMethod:'authenticated-account-key-directory'
+    };
+    await vault().put('mesh:peer:'+fingerprint,record);
+    peers.set(fingerprint,record);
+    return {fingerprint,rotated:Boolean(old&&old.fingerprint!==fingerprint)};
+  }
   async function getTrustedPeers(){
     const rows=await vault().getAll(),out=[];
     for(const row of rows||[])if(typeof row.key==='string'&&row.key.startsWith('mesh:peer:')&&row.value?.trusted){peers.set(row.value.fingerprint,row.value);out.push(row.value);}
@@ -521,6 +548,6 @@
     transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
     transportHandles=[];modeEnabled=false;
   }
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,getBridgeIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,getBridgeIdentityBundle,pairPeer,trustPeerFromAuthenticatedDirectory,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
