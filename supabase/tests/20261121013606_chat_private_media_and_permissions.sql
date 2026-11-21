@@ -115,3 +115,77 @@ $outsider$;
 
 RESET ROLE;
 ROLLBACK;
+
+-- Behavioral RLS test: exact direct-chat and marketplace paths are readable
+-- by the recipient, while mismatched chat paths and non-participants are denied.
+BEGIN;
+INSERT INTO auth.users(id,email) VALUES
+ ('f1000000-0000-4000-8000-000000000001','chat-media-a@example.invalid'),
+ ('f1000000-0000-4000-8000-000000000002','chat-media-b@example.invalid'),
+ ('f1000000-0000-4000-8000-000000000003','chat-media-c@example.invalid')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.products(id,seller_id,title,price,category,description,status)
+VALUES (999999901,'f1000000-0000-4000-8000-000000000001','CI media policy fixture','1','test','CI only','active')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.market_conversations(id,product_id,buyer_id,seller_id)
+VALUES (
+ 'f2000000-0000-4000-8000-000000000001',999999901,
+ 'f1000000-0000-4000-8000-000000000002',
+ 'f1000000-0000-4000-8000-000000000001'
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.messages(sender_id,receiver_id,message) VALUES
+ ('f1000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000002',
+  'ALWAHA_MEDIA_V1:{"v":1,"type":"image","path":"f1000000-0000-4000-8000-000000000001/dm-f1000000-0000-4000-8000-000000000001-f1000000-0000-4000-8000-000000000002/direct-ok.jpg"}'),
+ ('f1000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000002',
+  'ALWAHA_MEDIA_V1:{"v":1,"type":"image","path":"f1000000-0000-4000-8000-000000000001/dm-f1000000-0000-4000-8000-000000000001-f1000000-0000-4000-8000-000000000003/direct-wrong-peer.jpg"}');
+
+INSERT INTO public.market_messages(conversation_id,sender_id,message) VALUES
+ ('f2000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001',
+  'ALWAHA_MEDIA_V1:{"v":1,"type":"image","path":"f1000000-0000-4000-8000-000000000001/f2000000-0000-4000-8000-000000000001/market-ok.jpg"}'),
+ ('f2000000-0000-4000-8000-000000000001','f1000000-0000-4000-8000-000000000001',
+  'ALWAHA_MEDIA_V1:{"v":1,"type":"image","path":"f1000000-0000-4000-8000-000000000001/f2000000-0000-4000-8000-000000000099/market-wrong-thread.jpg"}');
+
+INSERT INTO storage.objects(bucket_id,name,owner) VALUES
+ ('chat-media','f1000000-0000-4000-8000-000000000001/dm-f1000000-0000-4000-8000-000000000001-f1000000-0000-4000-8000-000000000002/direct-ok.jpg','f1000000-0000-4000-8000-000000000001'),
+ ('chat-media','f1000000-0000-4000-8000-000000000001/dm-f1000000-0000-4000-8000-000000000001-f1000000-0000-4000-8000-000000000003/direct-wrong-peer.jpg','f1000000-0000-4000-8000-000000000001'),
+ ('chat-media','f1000000-0000-4000-8000-000000000001/f2000000-0000-4000-8000-000000000001/market-ok.jpg','f1000000-0000-4000-8000-000000000001'),
+ ('chat-media','f1000000-0000-4000-8000-000000000001/f2000000-0000-4000-8000-000000000099/market-wrong-thread.jpg','f1000000-0000-4000-8000-000000000001');
+
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub','f1000000-0000-4000-8000-000000000002',true);
+DO $recipient$
+DECLARE v_count integer;
+BEGIN
+  SELECT count(*) INTO v_count FROM storage.objects
+   WHERE bucket_id='chat-media'
+     AND name LIKE 'f1000000-0000-4000-8000-000000000001/%';
+  IF v_count<>2 THEN
+    RAISE EXCEPTION 'Recipient must read exactly two authorized files; found %',v_count;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM storage.objects
+     WHERE bucket_id='chat-media'
+       AND name IN (
+        'f1000000-0000-4000-8000-000000000001/dm-f1000000-0000-4000-8000-000000000001-f1000000-0000-4000-8000-000000000003/direct-wrong-peer.jpg',
+        'f1000000-0000-4000-8000-000000000001/f2000000-0000-4000-8000-000000000099/market-wrong-thread.jpg'
+       )
+  ) THEN RAISE EXCEPTION 'Participant read a file from a different chat path'; END IF;
+END
+$recipient$;
+
+SELECT set_config('request.jwt.claim.sub','f1000000-0000-4000-8000-000000000003',true);
+DO $outsider$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM storage.objects
+     WHERE bucket_id='chat-media'
+       AND name LIKE 'f1000000-0000-4000-8000-000000000001/%'
+  ) THEN RAISE EXCEPTION 'Non-participant can read private chat media'; END IF;
+END
+$outsider$;
+RESET ROLE;
+ROLLBACK;
