@@ -39,6 +39,11 @@ USING (
       SELECT 1
       FROM public.messages AS m
       WHERE (m.sender_id = (SELECT auth.uid()) OR m.receiver_id = (SELECT auth.uid()))
+        -- The file path must belong to the sender and to this exact direct conversation.
+        AND (storage.foldername(storage.objects.name))[1] = m.sender_id::text
+        AND (storage.foldername(storage.objects.name))[2] =
+          'dm-' || LEAST(m.sender_id::text,m.receiver_id::text) || '-' ||
+          GREATEST(m.sender_id::text,m.receiver_id::text)
         AND position(storage.objects.name IN m.message) > 0
     )
     OR EXISTS (
@@ -46,6 +51,10 @@ USING (
       FROM public.market_messages AS mm
       JOIN public.market_conversations AS mc ON mc.id = mm.conversation_id
       WHERE (mc.buyer_id = (SELECT auth.uid()) OR mc.seller_id = (SELECT auth.uid()))
+        -- The file path must belong to this message sender and this exact marketplace conversation.
+        AND mm.sender_id IN (mc.buyer_id,mc.seller_id)
+        AND (storage.foldername(storage.objects.name))[1] = mm.sender_id::text
+        AND (storage.foldername(storage.objects.name))[2] = mc.id::text
         AND position(storage.objects.name IN mm.message) > 0
     )
   )
