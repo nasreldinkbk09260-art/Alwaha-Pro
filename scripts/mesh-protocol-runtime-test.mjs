@@ -75,7 +75,7 @@ const untrusted=createHarness('untrusted');
 untrusted.mesh.setTransportPeer('f'.repeat(64));
 const untrustedStates=[];
 untrusted.window.addEventListener('alwaha:mesh-packet-state',event=>untrustedStates.push(event.detail));
-await untrusted.mesh.receiveRawPacket(Buffer.from(JSON.stringify(packet)).toString('base64url'));
+await untrusted.mesh.receiveRawPacket(burstPackets[0]);
 assert.equal(untrustedStates.at(-1)?.reason,'untrusted-neighbor','unpaired local neighbor must not inject or relay packets');
 assert.equal([...untrusted.records.keys()].some(key=>key.startsWith('mesh:relay:')),false,'untrusted neighbor packets must never enter the relay queue');
 
