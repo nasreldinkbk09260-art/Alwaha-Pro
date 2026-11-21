@@ -317,7 +317,8 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             call.resolve(result);
         } catch (Exception error) {
             nearbyMeshActive = false;
-            call.reject("Google Nearby Connections is unavailable on this device. The legacy local transport remains available.", error);
+            try { getContext().stopService(new Intent(getContext(), AlwahaMeshBridgeService.class)); } catch (Exception ignored) {}
+            call.reject("Google Nearby Connections is unavailable on this device. No bridge was left running.", error);
         }
     }
 
