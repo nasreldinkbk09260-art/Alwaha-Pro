@@ -4,6 +4,7 @@ DECLARE
   v_public boolean;
   v_limit bigint;
   v_types text[];
+  v_select_policy text;
 BEGIN
   SELECT public,file_size_limit,allowed_mime_types
     INTO v_public,v_limit,v_types
@@ -20,20 +21,16 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='alwaha_chat_media_select_participant' AND cmd='SELECT') THEN
     RAISE EXCEPTION 'chat media participant-read policy missing';
   END IF;
-  DECLARE
-    v_select_policy text;
-  BEGIN
-    SELECT qual INTO v_select_policy
-      FROM pg_policies
-      WHERE schemaname='storage' AND tablename='objects'
-        AND policyname='alwaha_chat_media_select_participant';
-    IF position('dm-' in v_select_policy)=0
-       OR position('m.sender_id' in v_select_policy)=0
-       OR position('mm.sender_id' in v_select_policy)=0
-       OR position('mc.id' in v_select_policy)=0 THEN
-      RAISE EXCEPTION 'chat media read policy must bind both uploader and exact conversation path';
-    END IF;
-  END;
+  SELECT qual INTO v_select_policy
+    FROM pg_policies
+    WHERE schemaname='storage' AND tablename='objects'
+      AND policyname='alwaha_chat_media_select_participant';
+  IF position('dm-' in v_select_policy)=0
+     OR position('m.sender_id' in v_select_policy)=0
+     OR position('mm.sender_id' in v_select_policy)=0
+     OR position('mc.id' in v_select_policy)=0 THEN
+    RAISE EXCEPTION 'chat media read policy must bind both uploader and exact conversation path';
+  END IF;
   IF NOT EXISTS(SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='alwaha_chat_media_delete_own' AND cmd='DELETE') THEN
     RAISE EXCEPTION 'chat media own-delete policy missing';
   END IF;
