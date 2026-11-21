@@ -12,6 +12,12 @@ const usernamePattern = /^[a-z0-9_]{3,32}$/;
 function normalizeUsername(value: unknown): string {
   return String(value ?? '').trim().toLowerCase();
 }
+function trustedRateLimitIp(req: Request): string {
+  // Cloudflare overwrites this edge header; ignore client-supplied forwarded-IP chains.
+  const candidate = String(req.headers.get('cf-connecting-ip') || '').trim();
+  return /^[A-Fa-f0-9:.]{3,64}$/.test(candidate) ? candidate : 'unknown-client';
+}
+
 async function sha256(value: string): Promise<string> {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -62,8 +68,7 @@ Deno.serve(async (req: Request) => {
       return json({ error: 'يجب الموافقة على أحدث شروط الاستخدام وسياسة الخصوصية.' }, 400);
     }
 
-    const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown-client';
-    const ip = forwarded.split(',')[0].trim().slice(0, 120);
+    const ip = trustedRateLimitIp(req);
     const ipHash = await sha256(ip + ':register');
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count, error: countError } = await admin.from('username_signup_attempts')
@@ -128,8 +133,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === 'login') {
-    const forwarded = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown-client';
-    const ip = forwarded.split(',')[0].trim().slice(0, 120);
+    const ip = trustedRateLimitIp(req);
     const ipHash = await sha256(`${ip}:login`);
     const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const { count, error: countError } = await admin.from('username_signup_attempts')
