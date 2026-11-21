@@ -6,7 +6,7 @@ import { webcrypto } from 'node:crypto';
 const source=fs.readFileSync('alwaha-local-mesh.js','utf8');
 class CustomEventMock{constructor(type,options={}){this.type=type;this.detail=options.detail;}}
 function createHarness(name){
-  const records=new Map(),listeners=new Map();
+  const records=new Map(),listeners=new Map(),sentPackets=[];
   const vault={
     async put(key,value){records.set(key,{key,value,updatedAt:new Date().toISOString()});},
     async getRecord(key){return records.get(key)||null;},
@@ -14,14 +14,14 @@ function createHarness(name){
   };
   const window={
     AlwahaLocalVault:vault,
-    alwahaLocalNetwork:{async sendLocalPacket({packet}){if(window.__peer)await window.__peer.receiveRawPacket(packet);return {sent:true};},async addListener(){return {remove(){}};}},
+    alwahaLocalNetwork:{async sendLocalPacket({packet}){sentPackets.push(packet);if(window.__peer)await window.__peer.receiveRawPacket(packet);return {sent:true};},async addListener(){return {remove(){}};}},
     addEventListener(type,fn){if(!listeners.has(type))listeners.set(type,[]);listeners.get(type).push(fn);},
     dispatchEvent(event){for(const fn of listeners.get(event.type)||[])fn(event);return true;},
     __name:name
   };
   const context={window,crypto:webcrypto,TextEncoder,TextDecoder,Uint8Array,ArrayBuffer,DataView,Date,Promise,Map,Set,JSON,Math,Number,String,Object,RegExp,Error,Blob,URL,CustomEvent:CustomEventMock,atob,btoa,console,setTimeout,clearTimeout};
   vm.runInNewContext(source,context,{filename:'alwaha-local-mesh.js'});
-  return {window,mesh:window.AlwahaLocalMesh,records,listeners};
+  return {window,mesh:window.AlwahaLocalMesh,records,listeners,sentPackets};
 }
 const a=createHarness('A'),b=createHarness('B'),relay=createHarness('relay');
 a.window.__peer=b.mesh;b.window.__peer=a.mesh;relay.window.__peer=null;
@@ -30,22 +30,23 @@ b.window.addEventListener('alwaha:mesh-message',event=>delivered.push(event.deta
 a.window.addEventListener('alwaha:mesh-neighbor',event=>neighbor.push(event.detail));
 const [bundleA,bundleB,bundleRelay]=await Promise.all([a.mesh.getIdentityBundle(),b.mesh.getIdentityBundle(),relay.mesh.getIdentityBundle()]);
 const bridgeIdentityOne=await a.mesh.getBridgeIdentityBundle();
-assert.notEqual(bridgeIdentityOne.fingerprint,bundleA.fingerprint,'relay bridge identity must not reuse the persistent account/device identity');
-assert.equal(bridgeIdentityOne.role,'bridge','Nearby hello exposes only the generic bridge role');
-assert.equal(Object.keys(bridgeIdentityOne).some(key=>/account|email|phone|name|device/i.test(key)),false,'bridge hello must not expose account, phone, person or device labels');
+assert.notEqual(bridgeIdentityOne.ecdhPublicKey,bundleA.ecdhPublicKey,'relay bridge uses fresh keys separate from the persistent account identity');
+assert.equal(Object.keys(bridgeIdentityOne).some(key=>/account|email|phone|name|device|fingerprint|role|code|label/i.test(key)),false,'bridge handshake bundle exposes no name, alias, account or fingerprint field');
 await a.mesh.setMode(true);
 const activeBridgeIdentityOne=await a.mesh.getBridgeIdentityBundle();
 await a.mesh.setMode(false);
 await a.mesh.setMode(true);
 const bridgeIdentityTwo=await a.mesh.getBridgeIdentityBundle();
-assert.notEqual(activeBridgeIdentityOne.fingerprint,bridgeIdentityTwo.fingerprint,'relay identity must rotate when the user disables and re-enables bridge mode');
+assert.notEqual(activeBridgeIdentityOne.ecdhPublicKey,bridgeIdentityTwo.ecdhPublicKey,'relay keys must rotate when the user disables and re-enables bridge mode');
 const observedBridgeIdentities=[];
 b.window.addEventListener('alwaha:mesh-neighbor',event=>observedBridgeIdentities.push(event.detail));
 a.window.__peer=b.mesh;
 await a.mesh.sendHello();
-assert.ok(observedBridgeIdentities.length>0,'adjacent device should receive a bridge-only hello');
-assert.equal(observedBridgeIdentities.at(-1).fingerprint,bridgeIdentityTwo.fingerprint,'adjacent device sees the ephemeral bridge fingerprint, not the persistent owner identity');
-assert.notEqual(observedBridgeIdentities.at(-1).fingerprint,bundleA.fingerprint,'adjacent device must not learn the persistent owner identity');
+assert.equal(observedBridgeIdentities.length,0,'the app must never emit a bridge identity or neighbor discovery event to the UI');
+const bridgeHello=JSON.parse(Buffer.from(a.sentPackets.at(-1),'base64url').toString('utf8'));
+assert.equal(bridgeHello.type,'hello','adjacent device receives only a private transport handshake');
+assert.equal(Object.keys(bridgeHello.bundle).some(key=>/account|email|phone|name|device|fingerprint|role|code|label/i.test(key)),false,'transmitted bridge handshake includes no visible or stable owner identifier');
+assert.notEqual(bridgeHello.bundle.ecdhPublicKey,bundleA.ecdhPublicKey,'transport handshake does not reveal the persistent owner public key');
 await a.mesh.pairPeer(bundleB,{confirmationCode:bundleB.fingerprintCode,accountUserId:'user-b',label:'B'});
 await b.mesh.pairPeer(bundleA,{confirmationCode:bundleA.fingerprintCode,accountUserId:'user-a',label:'A'});
 await relay.mesh.pairPeer(bundleA,{confirmationCode:bundleA.fingerprintCode,accountUserId:'user-a',label:'A'});
