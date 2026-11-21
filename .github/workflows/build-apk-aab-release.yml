@@ -532,7 +532,7 @@ jobs:
                       android:exported="false"
                       android:foregroundServiceType="connectedDevice" />
               """
-              manifest, count = re.subn(r'</application>', service + '\\n    </application>', manifest, count=1)
+              manifest, count = re.subn(r'</application>', service + '\n    </application>', manifest, count=1)
               if count != 1:
                   raise SystemExit('Could not register the non-exported bridge foreground service.')
               manifest_path.write_text(manifest, encoding='utf-8')
