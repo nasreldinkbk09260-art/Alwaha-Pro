@@ -1037,8 +1037,8 @@ img,video,canvas{max-width:100%}
           <div id="alwaha-experience-ui" style="margin-top:14px;"></div>
         </div>
         <section id="alwaha-test-coverage-board" aria-labelledby="alwaha-test-coverage-title" style="padding:13px;border:1px solid #8bf4ff35;border-radius:15px;background:linear-gradient(145deg,#101b2d,#111827);margin-bottom:20px;">
-          <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">لوحة جاهزية الميزات والاختبارات — بناء 972 (20 نوفمبر 2026)</h4>
-          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة حالة بناء 972: أزرار الميزات المطلوبة متاحة في سياقها داخل التطبيق. اجتياز CI يثبت فحوص المصدر والبناء، لكنه لا يثبت اتصال هاتفين؛ نعرض ذلك بوضوح حتى يتم الاختبار الميداني.</p>
+          <h4 id="alwaha-test-coverage-title" style="color:#8bf4ff;font-size:14px;margin:0 0 6px;">لوحة حالة الميزات والفحوص — مراجعة 21 نوفمبر 2026</h4>
+          <p style="color:#b8c9d9;font-size:10px;line-height:1.8;margin:0 0 12px;">هذه لوحة مراجعة المصدر والاختبارات بتاريخ 21 نوفمبر 2026. ظهور الزر أو اجتياز فحص المصدر لا يعني اكتمال الخدمة؛ ونفصل هنا بين ما هو موجود في الكود، وما اجتاز الاختبار الآلي، وما لم يُثبت بعد على أجهزة حقيقية. لا تعتمد هذه اللوحة كإقرار بأن جميع الميزات مكتملة.</p>
           <div style="display:grid;gap:9px;">
             <div data-feature-id="market-chat-call" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">السوق: محادثة المشتري والبائع والاتصال الصوتي</strong>
@@ -1078,7 +1078,7 @@ img,video,canvas{max-width:100%}
             </div>
             <div data-feature-id="notifications" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">التنبيهات وطلبات الصداقة وقراءة الإشعارات</strong>
-              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">يحتاج سيناريو حسابين: قراءة تنبيه واحد، إبقاء البقية، واستخدام «تحديد الكل كمقروء» يدوياً.</span>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">مركز الإشعارات داخل التطبيق ومسار قراءة تنبيه واحد موجودان في المصدر؛ يلزم اختبار حسابين. إشعارات النظام أثناء إغلاق التطبيق والمكالمات الواردة بالخلفية غير مكتملة: لا يوجد حالياً تكامل Push/FCM أو مستمع push في Service Worker.</span>
             </div>
             <div data-feature-id="navigation-themes" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">شريط التنقل والثيمات والمظهر</strong>
@@ -1088,9 +1088,13 @@ img,video,canvas{max-width:100%}
               <strong style="display:block;color:#f2fbff;font-size:11px;">النسخ الاحتياطي والتخزين المحلي وتوفير البيانات</strong>
               <span style="display:block;color:#a8ffd7;font-size:10px;margin-top:4px;">النسخة المشفرة واستعادة المسودات والإعدادات موجودة؛ يلزم اختبار ملف حقيقي واسترجاعه دون كتابة تلقائية للسحابة.</span>
             </div>
+            <div data-feature-id="offline-app-coverage" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
+              <strong style="display:block;color:#f2fbff;font-size:11px;">التشغيل المحلي الكامل دون إنترنت</strong>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">هناك لقطات مشفّرة للقراءة فقط لبعض الحسابات والإشعارات والأصدقاء ومعاملات السوق؛ الرسائل والملفات المحلية تتطلب مفتاح الطرف الموثوق واتصال Mesh. ليست كل أقسام التطبيق وعملياتها متاحة دون إنترنت.</span>
+            </div>
             <div data-feature-id="admin-support" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">الإدارة وطلبات الدعم وتوثيق الحساب</strong>
-              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">المسارات موجودة في المصدر؛ يلزم اختبارها بحساب الإدارة والصلاحيات الصحيحة.</span>
+              <span style="display:block;color:#ffe7a3;font-size:10px;margin-top:4px;">واجهة الإدارة وطلبات الدعم والتوثيق موجودة؛ APK مستقل واختبار بحساب مدير مطلوبان. إعداد الخطط والحصص ووسائل الدفع يحفظ تعليمات يدوية فقط؛ لا توجد بوابة دفع أو تأكيد اشتراك آلي منشور.</span>
             </div>
             <div data-feature-id="ui-full-audit" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">مراجعة كل صفحة وزر والأداء مع الاتصال الضعيف</strong>
