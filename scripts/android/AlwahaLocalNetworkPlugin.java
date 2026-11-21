@@ -83,7 +83,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private static final UUID BLUETOOTH_PACKET_UUID = UUID.fromString("3b5d8f2a-6b71-4d9a-9e10-7a6c2f4b8d31");
     private static final String BLUETOOTH_SERVICE_NAME = "Alwaha-Pro Local";
     private static final String NEARBY_SERVICE_ID = "pro.alwaha.app.localmesh.v1";
-    private static final String NEARBY_ENDPOINT_NAME = "Alwaha Bridge";
+    private static final String NEARBY_ENDPOINT_NAME = "\u200B"; // non-rendering transport label; never expose hardware model or owner identity
     private static final int MAX_NEARBY_ENDPOINTS = 6;
     private final ExecutorService transportExecutor = Executors.newCachedThreadPool();
     private volatile ServerSocket transportServer;
@@ -97,7 +97,6 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private volatile boolean nearbyMeshActive = false;
     private final Set<String> nearbyConnectedEndpoints = ConcurrentHashMap.newKeySet();
     private final Set<String> nearbyConnectingEndpoints = ConcurrentHashMap.newKeySet();
-    private final Map<String, String> nearbyEndpointNames = new ConcurrentHashMap<>();
     private WifiP2pManager wifiP2pManager;
     private WifiP2pManager.Channel wifiChannel;
     private BluetoothAdapter bluetoothAdapter;
@@ -139,7 +138,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
                 return;
             }
             client.acceptConnection(endpointId, nearbyPayloadCallback)
-                .addOnFailureListener(error -> emitNearbyState("nearby-accept-failed", endpointId));
+                .addOnFailureListener(error -> emitNearbyState("nearby-accept-failed", error.getClass().getSimpleName()));
         }
         @Override public void onConnectionResult(String endpointId, ConnectionResolution result) {
             nearbyConnectingEndpoints.remove(endpointId);
@@ -148,13 +147,12 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
                 emitNearbyState("nearby-peer-connected", endpointId);
             } else {
                 nearbyConnectedEndpoints.remove(endpointId);
-                emitNearbyState("nearby-peer-connection-failed", endpointId);
+                emitNearbyState("nearby-peer-connection-failed", "connection-failed");
             }
         }
         @Override public void onDisconnected(String endpointId) {
             nearbyConnectedEndpoints.remove(endpointId);
             nearbyConnectingEndpoints.remove(endpointId);
-            nearbyEndpointNames.remove(endpointId);
             emitNearbyState("nearby-peer-disconnected", endpointId);
         }
     };
@@ -165,10 +163,9 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             if (nearbyConnectedEndpoints.contains(endpointId) || !nearbyConnectingEndpoints.add(endpointId)) return;
             if (nearbyConnectedEndpoints.size() + nearbyConnectingEndpoints.size() > MAX_NEARBY_ENDPOINTS) {
                 nearbyConnectingEndpoints.remove(endpointId);
-                emitNearbyState("nearby-peer-limit", endpointId);
+                emitNearbyState("nearby-peer-limit", "connection-limit");
                 return;
             }
-            nearbyEndpointNames.put(endpointId, info == null ? "Alwaha-Pro" : info.getEndpointName());
             ConnectionsClient client = nearbyClient;
             if (client == null) {
                 nearbyConnectingEndpoints.remove(endpointId);
@@ -177,12 +174,12 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
             client.requestConnection(NEARBY_ENDPOINT_NAME, endpointId, nearbyConnectionLifecycleCallback)
                 .addOnFailureListener(error -> {
                     nearbyConnectingEndpoints.remove(endpointId);
-                    emitNearbyState("nearby-request-failed", endpointId);
+                    emitNearbyState("nearby-request-failed", error.getClass().getSimpleName());
                 });
         }
         @Override public void onEndpointLost(String endpointId) {
             if (!nearbyConnectedEndpoints.contains(endpointId)) nearbyConnectingEndpoints.remove(endpointId);
-            emitNearbyState("nearby-endpoint-lost", endpointId);
+            emitNearbyState("nearby-endpoint-lost", "");
         }
     };
 
@@ -348,7 +345,6 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         }
         nearbyConnectedEndpoints.clear();
         nearbyConnectingEndpoints.clear();
-        nearbyEndpointNames.clear();
         emitNearbyState("nearby-mesh-stopped", reason);
     }
 
@@ -934,6 +930,8 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void requestPermissionsForCurrentApi(PluginCall call, String callbackName) {
         if (Build.VERSION.SDK_INT >= 33) {
             requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth", "notifications" }, call, callbackName);
+        } else if (Build.VERSION.SDK_INT >= 32) {
+            requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth" }, call, callbackName);
         } else if (Build.VERSION.SDK_INT >= 31) {
             requestPermissionForAliases(new String[] { "legacyLocation", "bluetooth" }, call, callbackName);
         } else {
@@ -947,7 +945,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     private boolean hasDiscoveryPermissions() {
-        boolean wifiPermission = Build.VERSION.SDK_INT >= 33
+        boolean wifiPermission = Build.VERSION.SDK_INT >= 32
             ? getPermissionState("nearbyWifi") == PermissionState.GRANTED
             : getPermissionState("legacyLocation") == PermissionState.GRANTED;
         boolean bluetoothPermission = Build.VERSION.SDK_INT < 31
