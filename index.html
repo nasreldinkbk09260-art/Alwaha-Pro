@@ -1062,7 +1062,7 @@ img,video,canvas{max-width:100%}
             </div>
             <div data-feature-id="local-calls" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الصوت والفيديو عبر الشبكة المحلية</strong>
-              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">إشارات WebRTC والمكالمة المحلية المباشرة موصولة عبر Wi‑Fi Direct للجار الموثوق فقط. لا تعمل المكالمة الحية عبر Bluetooth أو طابور التمرير، واختبار هاتفين ما زال مطلوباً.</span>
+              <span style="display:block;color:#ffb9cc;font-size:10px;margin-top:4px;">المكالمات الحية عبر الجسر المجهول غير مفعّلة حالياً. مسار Nearby الحالي مخصص لترحيل الرسائل والملفات المشفّرة فقط؛ لن نعرض مكالمة محلية كميزة جاهزة قبل إضافة قناة وسائط مباشرة واختبارها على هاتفين.</span>
             </div>
             <div data-feature-id="internet-video-quality" style="padding:10px;border-radius:10px;background:#ffffff08;border:1px solid #ffffff12;">
               <strong style="display:block;color:#f2fbff;font-size:11px;">مكالمات الإنترنت وجودة الفيديو التكيفية</strong>
@@ -5591,7 +5591,7 @@ async function renderConversationsList(){
                 const pairedPeer=await mesh.getPeerByAccountId(targetId);
                 if(!pairedPeer)return triggerToastNotification('وثّق جهاز الطرف الآخر من شاشة الشبكة الحرة قبل الاتصال.','error');
                 if(!mesh.hasDirectTransportTo?.(pairedPeer.fingerprint))return triggerToastNotification('المكالمة المحلية تحتاج اتصالاً مباشراً حالياً بالجهاز الموثّق؛ لا يمكن بدء مكالمة من طابور تمرير مؤجل.','error');
-                if(mesh.getTransportTypeForPeer?.(pairedPeer.fingerprint)!=='wifi-direct-tcp')return triggerToastNotification('المسار المحلي الحالي ينقل الرسائل والملفات فقط؛ المكالمات الحية تحتاج رابط Wi‑Fi Direct مباشر أو مسار وسائط معتمداً.','error');
+                if(mesh.getTransportTypeForPeer?.(pairedPeer.fingerprint)!=='wifi-direct-tcp')return triggerToastNotification('مكالمات الصوت والفيديو عبر الجسر المحلي غير جاهزة بعد. يمكنك إجراء المكالمة عبر الإنترنت عند توفره.','error');
                 if(localMarket&&(!marketConversationId||String(currentMarketPeerId||'')!==String(targetId)))return triggerToastNotification('افتح محادثة السوق الموثقة مع البائع قبل المكالمة المحلية.','error');
                 if(video&&(!navigator.mediaDevices?.getUserMedia||!window.RTCPeerConnection))return triggerToastNotification('مكالمات الفيديو غير مدعومة في WebView الحالي.','error');
                 setCallModal(true);if(!activeCallManager)activeCallManager=new CallSignalingManager();
