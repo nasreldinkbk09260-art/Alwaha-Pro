@@ -3,7 +3,9 @@
   const VERSION=1, PREFIX='ALWAHA_MESH_V1', MAX_PACKET_BYTES=262144, MAX_HOPS=12;
   const MAX_AGE_MS=72*60*60*1000, ROUTE_DAYS=3, FILE_CHUNK_BYTES=120*1024;
   const enc=new TextEncoder(), dec=new TextDecoder();
-  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false, receiving=false;
+  let identityPromise=null, transportHandles=[], transportPeerFingerprint='', transportType='', modeEnabled=false;
+  let transportGeneration=0, receiveQueue=Promise.resolve(), pendingReceiveCount=0;
+  const MAX_PENDING_RECEIVE=256;
   const queued=new Map(), seen=new Map(), peers=new Map(), fileUrls=new Map();
 
   function vault(){return window.AlwahaLocalVault;}
@@ -162,16 +164,18 @@
     }
     throw new Error('تعذر فك الحزمة: لم نعثر على جهاز موثوق يطابق هوية المرسل.');
   }
-  async function handlePacket(packet){
+  async function handlePacket(packet,sourceFingerprint=transportPeerFingerprint,generation=transportGeneration){
     if(!packet||packet.v!==VERSION||packet.protocol===PREFIX||typeof packet.id!=='string'||!Array.isArray(packet.toRoutes))return {ignored:true};
     const now=Date.now(),expiry=Date.parse(packet.expiresAt||'');
     if(!Number.isFinite(expiry)||expiry<now||expiry>now+MAX_AGE_MS+60000)return {expired:true};
     if(Number(packet.hops||0)>MAX_HOPS||Number(packet.hopLimit||MAX_HOPS)>MAX_HOPS)return {invalid:true};
     const existing=await vault().getRecord('mesh:seen:'+packet.id);if(existing)return {duplicate:true};
     const identity=await getIdentity();
+    if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
     if(await isForThisDevice(packet,identity)){
       const opened=await decryptEnvelope(packet,identity);
-      if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
+      if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
+      if(!await saveSeen(packet,sourceFingerprint))return {duplicate:true};
       const detail={id:packet.id,senderFingerprint:opened.peer.fingerprint,senderAccountId:opened.peer.accountUserId||'',payload:opened.payload,receivedAt:new Date().toISOString(),local:true};
       if(opened.payload?.type==='file-chunk'){
         const chunk=opened.payload,base='mesh:file:'+String(chunk.fileId||''),key=base+':'+String(chunk.index);
@@ -189,8 +193,9 @@
       window.dispatchEvent(new CustomEvent('alwaha:mesh-message',{detail}));
       return {delivered:true};
     }
-    if(!await saveSeen(packet,transportPeerFingerprint))return {duplicate:true};
-    const relayed=await enqueueRelay(packet,transportPeerFingerprint);
+    if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
+    if(!await saveSeen(packet,sourceFingerprint))return {duplicate:true};
+    const relayed=await enqueueRelay(packet,sourceFingerprint);
     return {relayed};
   }
   async function sendRawPacket(packet){
@@ -204,35 +209,78 @@
     const hello={type:'hello',protocol:PREFIX,version:VERSION,bundle};
     try{const bytes=enc.encode(JSON.stringify(hello));if(bytes.length>MAX_PACKET_BYTES)return false;await native.sendLocalPacket({packet:bytesToB64(bytes)});return true;}catch{return false;}
   }
-  async function receiveRawPacket(encoded){
-    if(receiving)return;
-    receiving=true;
+  function emitPacketState(result){
+    window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
+  }
+  async function processRawPacket(encoded,generation){
     try{
+      if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
       const bytes=b64ToBytes(encoded);if(bytes.length>MAX_PACKET_BYTES)throw new Error('Oversized mesh frame');
       const message=JSON.parse(dec.decode(bytes));
       if(message?.type==='hello'&&message.protocol===PREFIX){
-        const fp=await validateBundle(message.bundle);transportPeerFingerprint=fp;
-        const trusted=(await getTrustedPeers()).some(p=>p.fingerprint===fp);
-        window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:{fingerprint:fp,code:fp.slice(-6).toUpperCase(),trusted}}));
-        // Store-carry-forward resumes automatically only after a trusted neighbor is authenticated.
+        const fingerprint=await validateBundle(message.bundle);
+        if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
+        transportPeerFingerprint=fingerprint;
+        const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===fingerprint);
+        const result={fingerprint,code:fingerprint.slice(-6).toUpperCase(),trusted};
+        window.dispatchEvent(new CustomEvent('alwaha:mesh-neighbor',{detail:result}));
+        // Relay resumes only when the presented identity is already in the local trusted-peer list.
         if(trusted&&isEnabled())await flushRelayQueue();
-        return;
+        return {hello:true,trusted};
       }
-      const result=await handlePacket(message);
-      window.dispatchEvent(new CustomEvent('alwaha:mesh-packet-state',{detail:result}));
-    }catch(error){console.warn('[Alwaha Mesh] rejected local frame:',error);window.dispatchEvent(new CustomEvent('alwaha:mesh-error',{detail:{message:error.message}}));}
-    finally{receiving=false;}
+      const sourceFingerprint=transportPeerFingerprint;
+      if(!sourceFingerprint){
+        const result={ignored:true,reason:'neighbor-not-identified'};
+        emitPacketState(result);
+        return result;
+      }
+      const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===sourceFingerprint);
+      if(generation!==transportGeneration)return {ignored:true,reason:'stale-transport'};
+      if(!trusted){
+        const result={ignored:true,reason:'untrusted-neighbor'};
+        emitPacketState(result);
+        return result;
+      }
+      const result=await handlePacket(message,sourceFingerprint,generation);
+      emitPacketState(result);
+      return result;
+    }catch(error){
+      console.warn('[Alwaha Mesh] rejected local frame:',error);
+      window.dispatchEvent(new CustomEvent('alwaha:mesh-error',{detail:{message:error.message}}));
+      return {error:true,message:String(error?.message||'Invalid local packet')};
+    }
+  }
+  function receiveRawPacket(encoded){
+    if(pendingReceiveCount>=MAX_PENDING_RECEIVE){
+      const result={ignored:true,reason:'receive-queue-full',limit:MAX_PENDING_RECEIVE};
+      emitPacketState(result);
+      window.dispatchEvent(new CustomEvent('alwaha:mesh-error',{detail:{message:'وصلت حزم الشبكة المحلية أسرع من قدرة المعالجة؛ تم رفض الحزمة الزائدة لحماية الذاكرة.'}}));
+      return Promise.resolve(result);
+    }
+    pendingReceiveCount++;
+    const generation=transportGeneration;
+    const task=receiveQueue.then(
+      ()=>processRawPacket(encoded,generation),
+      ()=>processRawPacket(encoded,generation)
+    );
+    receiveQueue=task.catch(error=>{
+      console.warn('[Alwaha Mesh] receive queue recovered after an unexpected error:',error);
+    });
+    return task.finally(()=>{pendingReceiveCount=Math.max(0,pendingReceiveCount-1);});
   }
   async function installTransportListeners(){
     const native=window.alwahaLocalNetwork;if(!native?.addListener||transportHandles.length)return;
     transportHandles.push(await native.addListener('localPacketReceived',event=>{void receiveRawPacket(event?.packet||'');}));
     transportHandles.push(await native.addListener('transportState',event=>{
       if(event?.state==='packet-transport-connected'){
+        transportGeneration++;
+        transportPeerFingerprint='';
         transportType=String(event.transport||'unknown');
         void sendHello();
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
       }
       if(event?.state==='packet-transport-disconnected'||event?.state==='packet-transport-closed'){
+        transportGeneration++;
         transportType='';
         transportPeerFingerprint='';
         window.dispatchEvent(new CustomEvent('alwaha:mesh-transport',{detail:event}));
@@ -351,8 +399,16 @@
   function isEnabled(){try{return modeEnabled||localStorage.getItem('alwaha_mesh_mode_enabled_v1')==='true';}catch{return modeEnabled;}}
   function getTransportPeer(){return transportPeerFingerprint;}
   function getTransportType(){return transportType;}
-  function setTransportPeer(fingerprint){transportPeerFingerprint=String(fingerprint||'');}
-  function destroy(){transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));transportHandles=[];modeEnabled=false;}
+  function setTransportPeer(fingerprint){
+    const next=String(fingerprint||'');
+    if(next!==transportPeerFingerprint)transportGeneration++;
+    transportPeerFingerprint=next;
+  }
+  function destroy(){
+    transportGeneration++;transportPeerFingerprint='';transportType='';
+    transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
+    transportHandles=[];modeEnabled=false;
+  }
   window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,pairPeer,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,getTransportPeer,getTransportType,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
