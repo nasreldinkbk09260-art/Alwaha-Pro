@@ -265,8 +265,9 @@ try{
    pin:window.ensureAlwahaMeshPeerPinned
  };
  localStorage.setItem('alwaha_mesh_bridge_consent_v1','accepted');
- window.__meshMockCalls={permissions:0,capabilities:0,start:0,stop:0};
+ window.__meshMockCalls={permissions:0,capabilities:0,start:0,stop:0,wifiPanel:0};
  let meshRequested=false;
+ const meshRadios={wifiEnabled:false,bluetoothEnabled:true};
  window.ensureAlwahaMeshPeerPinned=async()=>true;
  window.AlwahaLocalMesh={
    isRequested:()=>meshRequested,
@@ -278,7 +279,8 @@ try{
  };
  window.alwahaLocalNetwork={
    requestLocalPermissions:async()=>{window.__meshMockCalls.permissions++;return {granted:true};},
-   getCapabilities:async()=>{window.__meshMockCalls.capabilities++;return {nearbyConnectionsSupported:true,permissionsGranted:true,notificationsGranted:true,wifiEnabled:true,bluetoothEnabled:true};},
+   getCapabilities:async()=>{window.__meshMockCalls.capabilities++;return {nearbyConnectionsSupported:true,permissionsGranted:true,notificationsGranted:true,wifiEnabled:meshRadios.wifiEnabled,bluetoothEnabled:meshRadios.bluetoothEnabled};},
+   openWifiPanel:async()=>{window.__meshMockCalls.wifiPanel++;meshRadios.wifiEnabled=true;return {opened:true};},
    startNearbyMesh:async()=>{
      window.__meshMockCalls.start++;
      setTimeout(()=>window.dispatchEvent(new CustomEvent('alwaha:mesh-mode',{detail:{enabled:true,requested:true,connectedPeers:1}})),80);
@@ -292,16 +294,20 @@ try{
  assert.equal(meshToggleSetup,true,'one-tap bridge mock must install');
  await visible('#active-chat-box [data-alwaha-mesh-toggle]','one-tap free-network toggle in direct chat');
  await click('#active-chat-box [data-alwaha-mesh-toggle]','enable free local network with one tap');
+ await visible('#alwaha-mesh-radio-setup [data-enable-wifi]','Wi-Fi activation button appears when Wi-Fi is the only missing radio');
+ assert.equal(await evaluate('!document.querySelector("#alwaha-mesh-radio-setup [data-enable-bt]")'),true,'Bluetooth control must not appear when Bluetooth is already active');
+ await click('#alwaha-mesh-radio-setup [data-enable-wifi]','open Android Wi-Fi settings panel for missing radio');
+ await click('#alwaha-mesh-radio-setup [data-radio-retry]','continue after enabling the missing radio');
  await waitFor(()=>evaluate('document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.getAttribute("aria-pressed")==="true"&&document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.style.color==="rgb(168, 255, 215)"'),'green state only after a mocked verified local peer connects');
  await screenshot('06-one-tap-network-active.png');
  const meshStarted=await evaluate('window.__meshMockCalls');
- assert.deepEqual(meshStarted,{permissions:1,capabilities:1,start:1,stop:0},'one tap requests permissions and starts Nearby exactly once');
+ assert.deepEqual(meshStarted,{permissions:1,capabilities:2,start:1,stop:0,wifiPanel:1},'one tap requests permissions, offers only the missing radio and starts Nearby exactly once');
  const hiddenBridgeUi=await evaluate('({legacyDialog:!!document.querySelector("#alwaha-local-discovery-modal"),ownFingerprint:!!document.querySelector("#alwaha-mesh-own-code"),pairControls:document.querySelectorAll("[data-pair-peer],[data-copy-identity]").length,peerLists:document.querySelectorAll("#alwaha-local-peers,[data-local-peer-row]").length})');
  assert.deepEqual(hiddenBridgeUi,{legacyDialog:false,ownFingerprint:false,pairControls:0,peerLists:0},'no bridge device identity, alias, fingerprint or peer list is rendered');
  await click('#active-chat-box [data-alwaha-mesh-toggle]','disable free local network with one tap');
  await waitFor(()=>evaluate('document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.getAttribute("aria-pressed")==="false"&&document.querySelector("#active-chat-box [data-alwaha-mesh-toggle]")?.style.color===""'),'second tap stops the bridge');
  const meshStopped=await evaluate('window.__meshMockCalls');
- assert.deepEqual(meshStopped,{permissions:1,capabilities:1,start:1,stop:1},'second tap stops Nearby without opening radio settings');
+ assert.deepEqual(meshStopped,{permissions:1,capabilities:2,start:1,stop:1,wifiPanel:1},'second tap stops Nearby without additional radio actions');
  await evaluate(`localStorage.removeItem('alwaha_mesh_bridge_consent_v1');
  const saved=window.__meshToggleSaved;
  window.alwahaLocalNetwork=saved.plugin;
