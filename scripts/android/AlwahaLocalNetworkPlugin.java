@@ -251,6 +251,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
         result.put("targetSdk", targetSdk);
         result.put("locationModeEnabled", isLocationModeEnabled());
         result.put("permissionsGranted", hasDiscoveryPermissions());
+        result.put("notificationsGranted", hasBridgeNotificationPermission());
         result.put("transportReady", isTransportConnected());
         result.put("chatReady", isTransportConnected());
         result.put("fileTransferReady", isTransportConnected());
@@ -283,6 +284,15 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     private void startNearbyMeshNow(PluginCall call) {
+        if (nearbyMeshActive && nearbyClient != null) {
+            JSObject existing = new JSObject();
+            existing.put("started", true);
+            existing.put("alreadyActive", true);
+            existing.put("strategy", "P2P_CLUSTER");
+            existing.put("message", "The private bridge is already active.");
+            call.resolve(existing);
+            return;
+        }
         try {
             Intent service = new Intent(getContext(), AlwahaMeshBridgeService.class);
             ComponentName startedService = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
