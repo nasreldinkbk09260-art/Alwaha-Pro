@@ -303,7 +303,6 @@
         const endpointKey=String(endpointId||'legacy');
         transportEndpoints.set(endpointKey,{fingerprint,transport:endpointId?'nearby-connections':(transportType||'legacy'),relayAllowed:true,verifiedAt:Date.now()});
         transportPeerFingerprint=fingerprint;
-        const trusted=(await getTrustedPeers()).some(peer=>peer.fingerprint===fingerprint);
         // The validated peer fingerprint remains inside the transport routing table.
         // No bridge identity, alias, endpoint identifier or role is emitted to the UI.
         // A consenting bridge may forward ciphertext without being a trusted chat contact.
