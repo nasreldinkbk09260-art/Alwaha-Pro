@@ -44,15 +44,27 @@ check('native call speaker routing is bundled and defaults to earpiece',
   has(html,'speakerRouteBtn') && has(html,'setAlwahaCallSpeaker(false,true)') && native.includes('setRoute'));
 check('native audio-route and APK FileProvider plugin is retained',
   native.includes('FileProvider.getUriForFile') && native.includes('setRoute'));
-check('legacy unverified local-share panel stays retired while encrypted Mesh is present',
-  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section/.test(html+games) &&
-  html.includes('openAlwahaLocalDiscovery') && read('alwaha-local-mesh.js').includes('deriveRouteHmacKey'));
-check('Bluetooth Classic carries app-encrypted packet frames while BLE and live call media remain separately unclaimed',
-  html.includes('Bluetooth Classic RFCOMM') &&
-  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('startBluetoothPacketServer') &&
-  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('createInsecureRfcommSocketToServiceRecord') &&
-  read('scripts/android/AlwahaLocalNetworkPlugin.java').includes('result.put("callMediaReady", false)') &&
-  !html.includes('BLE data transport ready'));
+check('legacy unverified local-share panel and manual bridge discovery stay retired while encrypted Mesh is present',
+  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section|openAlwahaLocalDiscovery|alwaha-local-discovery-modal/.test(html+games) &&
+  read('alwaha-local-mesh.js').includes('deriveRouteHmacKey') &&
+  html.includes('data-alwaha-mesh-toggle'));
+check('Nearby Connections P2P cluster carries Alwaha-encrypted packet frames while live call media remains separately unclaimed',
+  (() => {
+    const plugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
+    const mesh=read('alwaha-local-mesh.js');
+    return plugin.includes('ConnectionsClient') &&
+      plugin.includes('Strategy.P2P_CLUSTER') &&
+      plugin.includes('startAdvertising') &&
+      plugin.includes('startDiscovery') &&
+      plugin.includes('sendPayload') &&
+      plugin.includes('onPayloadReceived') &&
+      plugin.includes('result.put("callMediaReady", false)') &&
+      html.includes('nearbyConnectionsSupported') &&
+      mesh.includes('ALWAHA_MESH_V1') &&
+      mesh.includes('sendLocalPacket') &&
+      mesh.includes('deriveRouteHmacKey') &&
+      !html.includes('BLE data transport ready');
+  })());
 
 // 3.0.1 R2 post-branch repairs: notifications, non-friend market messaging, feed coalescing and archive.
 check('home feed has a single-flight guard and bounded secondary requests',
