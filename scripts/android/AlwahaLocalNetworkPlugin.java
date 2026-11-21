@@ -941,8 +941,6 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     private void requestPermissionsForCurrentApi(PluginCall call, String callbackName) {
         if (Build.VERSION.SDK_INT >= 33) {
             requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth", "notifications" }, call, callbackName);
-        } else if (Build.VERSION.SDK_INT >= 32) {
-            requestPermissionForAliases(new String[] { "nearbyWifi", "bluetooth" }, call, callbackName);
         } else if (Build.VERSION.SDK_INT >= 31) {
             requestPermissionForAliases(new String[] { "legacyLocation", "bluetooth" }, call, callbackName);
         } else {
@@ -956,7 +954,7 @@ public class AlwahaLocalNetworkPlugin extends Plugin {
     }
 
     private boolean hasDiscoveryPermissions() {
-        boolean wifiPermission = Build.VERSION.SDK_INT >= 32
+        boolean wifiPermission = Build.VERSION.SDK_INT >= 33
             ? getPermissionState("nearbyWifi") == PermissionState.GRANTED
             : getPermissionState("legacyLocation") == PermissionState.GRANTED;
         boolean bluetoothPermission = Build.VERSION.SDK_INT < 31
