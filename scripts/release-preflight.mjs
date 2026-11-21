@@ -146,6 +146,9 @@ if (!workflow.includes('npm run audit:release') || pkg.scripts?.['audit:offline-
 
 if (!sw.includes("'./assets/sounds/saffron_tide.mp3'") || !sw.includes("'./assets/sounds/marimba_bloom.mp3'")) fail('Both full local call ringtones must be precached for offline use.');
 if(!fs.existsSync('supabase/functions/call-config/index.ts')||!workflow.includes('deno check --node-modules-dir=auto supabase/functions/call-config/index.ts'))fail('Authenticated call-config and managed public free-radius/quotas function must be present and type-checked.');
+if(!fs.existsSync('supabase/migrations/20261121015302_admin_initial_email_requires_verification.sql')||!fs.existsSync('supabase/tests/20261121015302_admin_initial_email_requires_verification.sql'))fail('Initial administrator email verification migration and regression test are required.');
+const adminEmailGate=read('supabase/migrations/20261121015302_admin_initial_email_requires_verification.sql');
+if(!adminEmailGate.includes('NEW.email_confirmed_at IS NOT NULL')||!adminEmailGate.includes('AFTER UPDATE OF email, phone, email_confirmed_at'))fail('Initial administrator role must only be granted after verified email confirmation.');
 const quotaMigration=read('supabase/migrations/20261121013915_cloud_chat_quotas.sql');
 const reelMetricsMigration=read('supabase/migrations/20261121013913_reel_view_metrics.sql');
 if(!reelMetricsMigration.includes('reel_views_one_per_user_daily_uidx')||!reelMetricsMigration.includes('security_invoker = true'))fail('Daily deduplicated reel view counters must preserve caller RLS.');
