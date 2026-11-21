@@ -6,6 +6,7 @@ const bridge=read('scripts/native-back-handler.mjs');
 const workflow=read('.github/workflows/build-apk-aab-release.yml');
 const pkg=JSON.parse(read('package.json'));
 const html=read('index.html');
+const browser=read('scripts/browser-visual-acceptance.mjs');
 const mesh=read('alwaha-local-mesh.js');
 const meshKeyMigration=read('supabase/migrations/20261121042759_alwaha_mesh_public_keys.sql');
 const meshKeyTest=read('supabase/tests/20261121042759_alwaha_mesh_public_keys.sql');
@@ -52,6 +53,8 @@ const checks=[
  ['incoming packets require a validated neighbor hello; only direct decryption requires contact trust',mesh.includes("reason:'neighbor-not-identified'")&&mesh.includes('!trusted&&!neighbor?.relayAllowed')&&mesh.includes('relayAllowed:true')],
 
  ['Android radio activation uses only user-approved Bluetooth prompts and Wi-Fi panels',plugin.includes('requestBluetoothEnable')&&plugin.includes('BluetoothAdapter.ACTION_REQUEST_ENABLE')&&plugin.includes('openWifiPanel')&&plugin.includes('Settings.Panel.ACTION_WIFI')&&html.includes('data-enable-bt')&&html.includes('data-enable-wifi')],
+ ['one-tap asks for each missing radio individually, without requiring both to be off',html.includes('if(!caps?.wifiEnabled||!caps?.bluetoothEnabled)')&&html.includes('showAlwahaMeshRadioSetup(plugin,caps)')],
+ ['browser visual acceptance tests the one-tap toggle and never invokes the removed manual device dialog',browser.includes('data-alwaha-mesh-toggle')&&browser.includes('startNearbyMesh')&&!browser.includes('openAlwahaLocalDiscovery()')&&!browser.includes('data-copy-identity')],
  ['Android does not claim or attempt app-level cellular-data toggling',plugin.includes('automaticMobileDataToggle')&&plugin.includes('false')&&!plugin.includes('setMobileDataEnabled')&&html.includes('لا يستطيع التطبيق إطفاء بيانات الهاتف أو تشغيلها نيابة عنك')],
 
 
