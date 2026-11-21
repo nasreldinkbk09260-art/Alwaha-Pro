@@ -33,9 +33,13 @@ BEGIN
 END
 $test$;
 
-INSERT INTO auth.users(id,email) VALUES
- ('20000000-0000-4000-8000-000000000001','reel-viewer-ci@example.invalid')
+-- The production Auth trigger rejects signups unless both current policy versions
+-- are present. Supply the same required consent metadata on this disposable CI user.
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+ ('20000000-0000-4000-8000-000000000001','reel-viewer-ci@example.invalid',
+  '{"username":"reel_viewer_ci","alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15"}'::jsonb)
 ON CONFLICT DO NOTHING;
+
 INSERT INTO public.reels(id,title) VALUES (900001,'CI reel') ON CONFLICT DO NOTHING;
 INSERT INTO public.comments(target_id,target_type,user_id,content) VALUES
  ('900001','reel','20000000-0000-4000-8000-000000000001','CI comment');
