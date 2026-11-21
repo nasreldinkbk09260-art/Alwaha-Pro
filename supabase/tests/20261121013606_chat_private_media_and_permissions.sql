@@ -44,10 +44,10 @@ $$;
 -- their direct/market conversation; a same-message reference to another path
 -- and a non-participant must not grant access.
 BEGIN;
-INSERT INTO auth.users(id,email) VALUES
- ('f1000000-0000-4000-8000-000000000001','chat-media-a@example.invalid'),
- ('f1000000-0000-4000-8000-000000000002','chat-media-b@example.invalid'),
- ('f1000000-0000-4000-8000-000000000003','chat-media-c@example.invalid')
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+ ('f1000000-0000-4000-8000-000000000001','chat-media-a@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_a"}'::jsonb),
+ ('f1000000-0000-4000-8000-000000000002','chat-media-b@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_b"}'::jsonb),
+ ('f1000000-0000-4000-8000-000000000003','chat-media-c@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_c"}'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.products(id,seller_id,title,price,category,description,status)
@@ -119,10 +119,10 @@ ROLLBACK;
 -- Behavioral RLS test: exact direct-chat and marketplace paths are readable
 -- by the recipient, while mismatched chat paths and non-participants are denied.
 BEGIN;
-INSERT INTO auth.users(id,email) VALUES
- ('f1000000-0000-4000-8000-000000000001','chat-media-a@example.invalid'),
- ('f1000000-0000-4000-8000-000000000002','chat-media-b@example.invalid'),
- ('f1000000-0000-4000-8000-000000000003','chat-media-c@example.invalid')
+INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+ ('f1000000-0000-4000-8000-000000000001','chat-media-a@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_a"}'::jsonb),
+ ('f1000000-0000-4000-8000-000000000002','chat-media-b@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_b"}'::jsonb),
+ ('f1000000-0000-4000-8000-000000000003','chat-media-c@example.invalid','{"alwaha_terms_version":"2026-11-15","alwaha_privacy_version":"2026-11-15","username":"chat_media_c"}'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.products(id,seller_id,title,price,category,description,status)
