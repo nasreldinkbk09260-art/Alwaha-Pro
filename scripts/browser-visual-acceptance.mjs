@@ -460,7 +460,7 @@ try{
  await visible('#callCloseBtn','close call view while idle');
  await evaluate('setCallModal(false);activeCallManager=null');
 
- await evaluate(§window.__alwahaAuditProbeCore=function(value){return value;};
+ await evaluate(`window.__alwahaAuditProbeCore=function(value){return value;};
  window.__alwahaAuditProbeAliasOne=function(value){return window.__alwahaAuditProbeCore(value);};
  window.__alwahaAuditProbeAliasTwo=function(value){return window.__alwahaAuditProbeCore(value);};
  const host=document.createElement('div');host.id='__alwaha-audit-probe-host';host.style.cssText='position:fixed;left:1px;top:1px;z-index:2147483647;display:block;';
@@ -469,10 +469,10 @@ try{
  const card=document.createElement('article');card.id='__alwaha-audit-probe-card';card.setAttribute('role','article');card.style.cssText='display:block;position:fixed;left:10px;top:10px;width:20px;height:20px;';
  const cardOne=document.createElement('button');cardOne.type='button';cardOne.setAttribute('aria-label','audit probe card action one');cardOne.textContent='card one';cardOne.addEventListener('click',function(){return window.__alwahaAuditProbeAliasOne('card');});
  const cardTwo=document.createElement('button');cardTwo.type='button';cardTwo.setAttribute('aria-label','audit probe card action two');cardTwo.textContent='card two';cardTwo.addEventListener('click',event=>window.__alwahaAuditProbeAliasTwo('card'));
- card.append(cardOne,cardTwo);host.append(globalOne,globalTwo,card);document.body.append(host);§.replaceAll('§',String.fromCharCode(96));
+ card.append(cardOne,cardTwo);host.append(globalOne,globalTwo,card);document.body.append(host);`);
  await auditActiveControls('direct-listener-and-card-dedupe-self-test',[{scope:'card',count:2},{scope:'global',count:2}]);
- await evaluate(§document.getElementById('__alwaha-audit-probe-host')?.remove();
- delete window.__alwahaAuditProbeCore;delete window.__alwahaAuditProbeAliasOne;delete window.__alwahaAuditProbeAliasTwo;§.replaceAll('§',String.fromCharCode(96));
+ await evaluate(`document.getElementById('__alwaha-audit-probe-host')?.remove();
+ delete window.__alwahaAuditProbeCore;delete window.__alwahaAuditProbeAliasOne;delete window.__alwahaAuditProbeAliasTwo;`);
  if(unexpectedErrors.length)throw new Error('Unexpected browser JavaScript errors:\n'+unexpectedErrors.join('\n'));
  fs.writeFileSync(path.join(outputDir,'CONTROL-AUDIT.json'),JSON.stringify(controlAuditResults,null,2)+'\n');
  fs.writeFileSync(path.join(outputDir,'RESULT.txt'),[
