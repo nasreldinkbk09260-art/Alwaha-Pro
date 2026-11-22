@@ -18,6 +18,7 @@ const cases=[
   ['offline Mesh listing exactly on free-radius edge with a verified route remains available', {isOnline:false,localMeshEnabled:true,distanceKm:15,localRadiusKm:15,hasLocalRoute:true}, false],
   ['offline Mesh listing outside free radius is blocked even if a route exists', {isOnline:false,localMeshEnabled:true,distanceKm:15.01,localRadiusKm:15,hasLocalRoute:true}, true],
   ['unknown coordinates never grant local access even when a route exists', {isOnline:false,localMeshEnabled:true,distanceKm:null,localRadiusKm:15,hasLocalRoute:true}, true],
+  ['missing coordinates never grant local access even when a route exists', {isOnline:false,localMeshEnabled:true,distanceKm:undefined,localRadiusKm:15,hasLocalRoute:true}, true],
   ['invalid radius fails closed for an unknown distance', {isOnline:false,localMeshEnabled:true,distanceKm:2,localRadiusKm:0}, true],
   ['a negative distance cannot be trusted', {isOnline:false,localMeshEnabled:true,distanceKm:-1,localRadiusKm:15}, true],
 ];
