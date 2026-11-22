@@ -73,7 +73,7 @@ check('failed unread-count refresh preserves the last known badge value',html.in
 check('install action is only exposed when beforeinstallprompt is available',html.includes("window.addEventListener('beforeinstallprompt'")&&html.includes("(!installed && deferredPrompt)?'inline-flex':'none'"));
 check('install action is independent from removed app-share feature',!html.includes('shareAlwahaApp')&&!html.includes('share-app-btn-main')&&html.includes('promptEvent.prompt()'));
 check('install action consumes the prompt once and blocks repeat taps',html.includes('installPromptInFlight')&&html.includes('deferredPrompt=null;')&&html.includes('if(installPromptInFlight)return;'));
-check('install banner refreshes after accepted, dismissed or failed prompt',html.includes('finally{')&&html.includes('refreshAlwahaInstallShareActions();')&&html.includes('install.disabled=!!installPromptInFlight'));
+check('install banner refreshes after accepted, dismissed or failed prompt',html.includes('finally{')&&html.includes('refreshAlwahaInstallActions();')&&html.includes('install.disabled=!!installPromptInFlight'));
 check('app-share UI and native APK share method remain removed',!html.includes('shareApk')&&!html.includes('shareAlwahaApp')&&!html.includes('share-app-btn-main'));
 
 if(failures){console.error(`HOME_SECTION_ACCEPTANCE=FAIL (${failures})`);process.exit(1);}
