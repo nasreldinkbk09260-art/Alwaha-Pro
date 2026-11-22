@@ -140,8 +140,8 @@ function collectManagementConfigEditor(){
  const inputs=$('managementVisualEditor')?.querySelectorAll('[data-config-path]')||[];
  for(const input of inputs){
   const parts=input.dataset.configPath.split('.');let cursor=config;
-  for(let i=0;i<parts.length-1;i++){const key=/^\\d+$/.test(parts[i])?Number(parts[i]):parts[i];if(cursor[key]===undefined||cursor[key]===null)cursor[key]=/^\\d+$/.test(parts[i+1])?[]:{};cursor=cursor[key];}
-  const last=parts[parts.length-1],key=/^\\d+$/.test(last)?Number(last):last;
+  for(let i=0;i<parts.length-1;i++){const key=/^\d+$/.test(parts[i])?Number(parts[i]):parts[i];if(cursor[key]===undefined||cursor[key]===null)cursor[key]=/^\d+$/.test(parts[i+1])?[]:{};cursor=cursor[key];}
+  const last=parts[parts.length-1],key=/^\d+$/.test(last)?Number(last):last;
   cursor[key]=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value;
  }
  return config;
