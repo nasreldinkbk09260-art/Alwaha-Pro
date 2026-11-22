@@ -11,7 +11,7 @@ function section(id,nextId){
 }
 const home=section('home-section','market-section');
 const requiredHandlers=[
- 'shareAlwahaApp','toggleInternalNotificationCenter','promptAppInstallation',
+ 'toggleInternalNotificationCenter','promptAppInstallation',
  'previewHomePostImage','publishNewHomePost','clearHomePostImageDraft',
  'renderHomePostsFeed','togglePostLike','openCommentsModal','shareTextContent',
  'editOwnHomePost','deleteOwnHomePost','handleHomePostCardActivation',
@@ -71,10 +71,12 @@ check('late notification results cannot reopen a closed panel',html.includes('re
 check('failed unread-count refresh preserves the last known badge value',html.includes('retaining the last known count')&&html.includes('if(!Array.isArray(rows)){'));
 
 check('install action is only exposed when beforeinstallprompt is available',html.includes("window.addEventListener('beforeinstallprompt'")&&html.includes("(!installed && deferredPrompt)?'inline-flex':'none'"));
-check('share/install controls have native Android and web fallbacks',html.includes('window.alwahaAudioRoute?.shareApk')&&html.includes('navigator.share')&&html.includes('promptEvent.prompt()'));
+check('application APK-share button and handler remain removed',!html.includes('share-app-btn-main')&&!html.includes('shareAlwahaApp'));
+check('installation remains independent from application sharing',html.includes("window.addEventListener('beforeinstallprompt'")&&html.includes('promptEvent.prompt()')&&!html.includes('share-app-btn-main'));
+check('post content sharing remains available independently',html.includes('async function shareTextContent')&&html.includes('navigator.share'));
 check('install action consumes the prompt once and blocks repeat taps',html.includes('installPromptInFlight')&&html.includes('deferredPrompt=null;')&&html.includes('if(installPromptInFlight)return;'));
 check('install banner refreshes after accepted, dismissed or failed prompt',html.includes('finally{')&&html.includes('refreshAlwahaInstallShareActions();')&&html.includes('install.disabled=!!installPromptInFlight'));
-check('native APK share falls back to sharing the app link',html.includes("APK share failed; falling back to app link")&&html.includes("window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url)"));
+check('removed APK-share fallback does not return',!html.includes('APK share failed; falling back to app link')&&!html.includes('shareAlwahaApp'));
 
 if(failures){console.error(`HOME_SECTION_ACCEPTANCE=FAIL (${failures})`);process.exit(1);}
 console.log('HOME_SECTION_ACCEPTANCE=PASS');

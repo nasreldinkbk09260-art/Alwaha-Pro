@@ -643,10 +643,7 @@ img,video,canvas{max-width:100%}
     <section id="home-section" class="app-section active-section">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
-            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
-              <button type="button" id="share-app-btn-main" class="btn-action" style="background:#24364b;color:#fff;padding:7px 10px;border-radius:20px;font-size:11px;" onclick="shareAlwahaApp()"><i class="fa-solid fa-share-nodes"></i> مشاركة التطبيق</button>
-              <button class="btn-action" style="background:rgba(255,255,255,0.05);color:#00ffff;padding:6px 12px;border-radius:20px;font-size:12px;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> التنبيهات <span id="notification-badge-home" class="alwaha-notification-badge" style="display:none;position:static;vertical-align:middle;margin-inline-start:4px;"></span></button>
-            </div>
+
         </div>
 
         <!-- زر تثبيت التطبيق المباشر المُنقول إلى الصفحة الرئيسية -->
@@ -874,7 +871,7 @@ img,video,canvas{max-width:100%}
         </div>
         <audio id="localAudio" autoplay muted playsinline></audio>
         <audio id="remoteAudio" autoplay playsinline></audio>
-        <button id="callCloseBtn" type="button" class="btn-action" style="margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()" aria-label="إغلاق شاشة المكالمة"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        <button id="callCloseBtn" type="button" class="btn-action" style="display:none;margin-top:24px; background:transparent; color:#aaa; padding:8px 14px;" onclick="terminateVoiceCall()" aria-label="إغلاق شاشة المكالمة"><i class="fa-solid fa-xmark"></i> إغلاق</button>
     </div>
 
     <!-- 4. قسم الملف الشخصي -->
@@ -1335,14 +1332,12 @@ img,video,canvas{max-width:100%}
         function refreshAlwahaInstallShareActions() {
             const banner=document.getElementById('main-install-banner');
             const install=document.getElementById('install-app-btn-main');
-            const share=document.getElementById('share-app-btn-main');
             const installed=isAlwahaInstalledContext();
             if(install){
                 install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
                 install.disabled=!!installPromptInFlight;
                 if(installPromptInFlight)install.setAttribute('aria-busy','true');else install.removeAttribute('aria-busy');
             }
-            if(share) share.style.display='inline-flex';
             if(banner) banner.style.display=(!installed && deferredPrompt)?'flex':'none';
         }
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -1352,24 +1347,6 @@ img,video,canvas{max-width:100%}
         });
         window.addEventListener('appinstalled', () => { deferredPrompt=null; refreshAlwahaInstallShareActions(); });
         window.addEventListener('DOMContentLoaded', refreshAlwahaInstallShareActions, {once:true});
-        async function shareAlwahaApp() {
-            const shareData={title:'Alwaha-Pro',text:'جرّب تطبيق Alwaha-Pro',url:window.location.href};
-            if(typeof isAlwahaNativeAndroid==='function'&&isAlwahaNativeAndroid()&&window.alwahaAudioRoute?.shareApk){
-                try{await window.alwahaAudioRoute.shareApk();return;}
-                catch(error){console.warn('[Alwaha Share] APK share failed; falling back to app link:',error);}
-            }
-            try{
-                if(typeof navigator.share==='function'){await navigator.share(shareData);return;}
-                if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(shareData.url);triggerToastNotification('تم نسخ رابط التطبيق. أرسله عبر أي تطبيق مراسلة.','success');return;}
-                window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);
-            }catch(error){
-                if(error?.name==='AbortError')return;
-                console.warn('[Alwaha Share] App sharing failed:',error);
-                try{window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);}
-                catch{triggerToastNotification('تعذرت مشاركة التطبيق من هذا الجهاز.','error');}
-            }
-        }
-
         async function promptAppInstallation() {
             if(installPromptInFlight)return;
             const promptEvent=deferredPrompt;
@@ -3200,6 +3177,7 @@ async function toggleInternalNotificationCenter() {
             const muteBtn = document.getElementById('muteBtn');
             const speakerBtn = document.getElementById('speakerRouteBtn');
             const endBtn = document.getElementById('endCallBtn');
+            const callCloseBtn = document.getElementById('callCloseBtn');
             const cameraMuteBtn = document.getElementById('cameraMuteBtn');
             const cameraSwitchBtn = document.getElementById('cameraSwitchBtn');
             const videoStage = document.getElementById('call-video-stage');
@@ -3216,6 +3194,7 @@ async function toggleInternalNotificationCenter() {
             if (muteBtn) muteBtn.style.display = state === 'connected' ? 'inline-block' : 'none';
             if (speakerBtn) speakerBtn.style.display = state === 'connected' && isAlwahaNativeAndroid() ? 'inline-block' : 'none';
             if (endBtn) endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none';
+            if (callCloseBtn) callCloseBtn.style.display = state === 'idle' ? 'inline-block' : 'none';
             const isVideo = activeCallManager?.mediaType === 'video' && ['outgoing','connecting','connected'].includes(state);
             if (videoStage) videoStage.style.display = isVideo ? 'block' : 'none';
             if (cameraMuteBtn) cameraMuteBtn.style.display = isVideo && state === 'connected' ? 'inline-block' : 'none';

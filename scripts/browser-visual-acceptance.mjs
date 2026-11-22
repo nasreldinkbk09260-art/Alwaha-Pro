@@ -42,7 +42,7 @@ const chrome=spawn(chromePath,[
 let chromeError='';
 chrome.stderr.on('data',chunk=>{chromeError+=chunk.toString();if(chromeError.length>12000)chromeError=chromeError.slice(-12000);});
 let ws=null,id=0;
-const pending=new Map(),handlers=new Map(),unexpectedErrors=[];
+const pending=new Map(),handlers=new Map(),unexpectedErrors=[],controlAuditResults=[];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function getJson(url){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status+' '+url);return r.json();}
 async function waitFor(fn,label,timeout=25000){
@@ -106,6 +106,15 @@ async function section(id,label){
  assert.equal(actual,id,label+' should navigate to '+id+' (got '+actual+').');
  console.log('PASS navigation: '+label);
 }
+async function auditActiveControls(label){
+ const result=await evaluate("(()=>{\n const isVisible=e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!==\"none\"&&s.visibility!==\"hidden\"&&Number(s.opacity)>0&&r.width>0&&r.height>0&&r.bottom>0&&r.right>0&&r.top<innerHeight&&r.left<innerWidth;};\n const idMap=new Map();for(const e of document.querySelectorAll(\"[id]\")){const id=e.id;if(!id)continue;const nodes=idMap.get(id)||[];nodes.push(e);idMap.set(id,nodes);}\n const duplicateIds=[...idMap].filter(([,nodes])=>nodes.length>1).map(([id,nodes])=>({id,count:nodes.length,visible:nodes.filter(isVisible).length,parents:nodes.map(e=>e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||\"unknown\")}));\n const controls=[...document.querySelectorAll(\"button,[role=button],input[type=button],input[type=submit]\")].filter(isVisible);\n const labelOf=e=>String(e.getAttribute(\"aria-label\")||e.getAttribute(\"title\")||e.innerText||e.textContent||e.value||[...e.querySelectorAll(\"img[alt]\")].map(x=>x.alt).join(\" \")||\"\").replace(/\\s+/g,\" \").trim();\n const unnamed=controls.filter(e=>!labelOf(e)).map(e=>({id:e.id||\"\",tag:e.tagName,html:e.outerHTML.slice(0,220)}));\n const implicitSubmit=[...document.querySelectorAll(\"form button:not([type])\")].filter(isVisible).map(e=>({id:e.id||\"\",label:labelOf(e),form:e.form?.id||e.form?.getAttribute(\"name\")||\"unnamed-form\"}));\n const cardSelector='[role=\"article\"],[data-notification-id],[data-post-id],[data-reel-id],[data-product-id],.market-product-card,.alwaha-notification-item';\n const semanticById={endCallBtn:\"call.end\",callCloseBtn:\"call.end\"},groups=new Map();\n for(const e of controls){if(e.closest(cardSelector))continue;let key=semanticById[e.id]||\"\";if(!key){const source=e.getAttribute(\"onclick\")||(typeof e.onclick===\"function\"?String(e.onclick):\"\");const m=source.match(/([A-Za-z_$][\\w$]*)\\s*\\(([^()]*)\\)/);if(m&&!String(m[2]||\"\").trim())key=\"handler:\"+m[1];}if(key){const nodes=groups.get(key)||[];nodes.push(e);groups.set(key,nodes);}}\n const duplicateActions=[...groups].filter(([,nodes])=>nodes.length>1).map(([action,nodes])=>({action,count:nodes.length,buttons:nodes.map(e=>({id:e.id||\"\",label:labelOf(e),parent:e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||\"unknown\"}))}));\n return {controls:controls.length,duplicateIds,unnamed,implicitSubmit,duplicateActions};\n})()");
+ controlAuditResults.push({label,...result});
+ assert.equal(result.duplicateIds.length,0,label+': duplicate live DOM IDs '+JSON.stringify(result.duplicateIds));
+ assert.equal(result.unnamed.length,0,label+': visible controls without accessible names '+JSON.stringify(result.unnamed));
+ assert.equal(result.implicitSubmit.length,0,label+': visible form buttons must declare type=button or type=submit '+JSON.stringify(result.implicitSubmit));
+ assert.equal(result.duplicateActions.length,0,label+': duplicate visible semantic actions '+JSON.stringify(result.duplicateActions));
+ console.log('PASS control audit: '+label+' ('+result.controls+' visible controls)');
+}
 try{
  await waitFor(async()=>{try{await getJson('http://127.0.0.1:'+debugPort+'/json/version');return true;}catch{return false;}},'Chrome remote debugging endpoint');
  await connect();
@@ -146,16 +155,21 @@ try{
  await visible('.nav-item.main-home','home navigation button');
  await visible('#home-post-textarea','home post composer');
  await visible('#home-post-publish-btn','publish post button');
+ await visible('.nav-item.notification-nav-item','single persistent notification navigation action');
+ assert.equal(await evaluate('document.querySelectorAll("#home-section button[onclick*=toggleInternalNotificationCenter]").length'),0,'Home header must not duplicate the persistent notification navigation button.');
+ await auditActiveControls('home');
  await screenshot('01-home.png');
  await click('.nav-item.reels','reels navigation');
  await section('reels-section','reels');
  await visible('#reels-section h2','reels section heading');
  await visible('#reels-section button[onclick*="toggleFloatingAddMenu"]','add reels content button');
+ await auditActiveControls('reels');
  await screenshot('02-reels.png');
  await click('.nav-item.games-nav','games navigation');
  await section('games-section','games');
  await visible('#games-section h2','games section heading');
  await exists('#games-list-container','game list host (may be empty without authenticated rooms)');
+ await auditActiveControls('games');
  await screenshot('03-games.png');
 
  // Notifications use a disposable authenticated identity and a read-only empty response.
@@ -167,6 +181,7 @@ try{
  await waitFor(()=>evaluate('!!document.querySelector("#internal-notification-center.alwaha-notifications-open .alwaha-notification-panel")'),'notification center panel');
  await visible('#internal-notification-center','notification center');
  await visible('#internal-notification-center .alwaha-notification-panel','notification panel');
+ await auditActiveControls('notifications');
  await screenshot('04-notifications.png');
  await click('.nav-item.notification-nav-item','close notifications');
  await evaluate('Object.assign(window,{requireAuthenticatedUser:window.__notifySmoke.requireAuthenticatedUser,supabaseFetch:window.__notifySmoke.supabaseFetch});delete window.__notifySmoke');
@@ -178,6 +193,7 @@ try{
  await evaluate('switchMarketSubView("sell")');
  await visible('#market-sell-view','market sell form');
  await visible('#market-submit-product-btn','market publish action');
+ await auditActiveControls('market sell');
  await screenshot('06-market-sell.png');
  await evaluate('switchMarketSubView("buy")');
 
@@ -213,6 +229,7 @@ try{
  assert.equal(deliverySetup,true,"disposable delivery mock must be installed");
  await click('#market-conversations-open','market transactions entry');
  await visible('#market-conversations-page','market conversations page');
+ await auditActiveControls('market conversations');
  await waitFor(()=>evaluate('!!document.querySelector("#market-transactions-container button[onclick*=requestMarketDelivery]")'),'buyer delivery request action');
  await visible('#market-transactions-container button[onclick*=requestMarketDelivery]','buyer request-delivery action');
  await click('#market-transactions-container button[onclick*=requestMarketDelivery]','buyer request delivery');
@@ -246,6 +263,7 @@ try{
  await visible('#chat-main-lobby-wrapper button[onclick*="recent"]','recent conversations entry');
  await visible('#chat-main-lobby-wrapper button[onclick*="all-users"]','user directory entry');
  await exists('#conversations-list','empty recent-conversations list host (height may be zero when no user is signed in)');
+ await auditActiveControls('chat lobby');
  await screenshot('03-chat-lobby.png');
  await click('#chat-main-lobby-wrapper button[onclick*="all-users"]','user directory entry');
  await visible('#all-users-tab','user directory view');
@@ -262,6 +280,7 @@ try{
  await visible('#active-chat-box','active direct chat overlay');
  await visible('#direct-chat-voice-button','direct voice-note button in active chat layout');
  await visible('.alwaha-chat-composer button[aria-label="إرسال صورة أو فيديو"]','direct photo/video action button in active chat layout');
+ await auditActiveControls('direct chat');
  const directFile=await evaluate('!!document.querySelector("#direct-chat-media-input")&&document.querySelector("#direct-chat-media-input").type==="file"&&document.querySelector("#direct-chat-media-input").hidden');
  assert.equal(directFile,true,'Direct chat file input must exist but remain hidden behind its visible picker button.');
  await screenshot('05-direct-chat-layout.png');
@@ -343,6 +362,7 @@ try{
  const marketFile=await evaluate('!!document.querySelector("#market-chat-media-input")&&document.querySelector("#market-chat-media-input").type==="file"&&document.querySelector("#market-chat-media-input").hidden');
  assert.equal(marketFile,true,'Market chat file input must exist behind its visible picker button.');
  await visible('#market-chat-modal button[aria-label="اتصال صوتي بطرف محادثة السوق"]','market seller call action button');
+ await auditActiveControls('market chat');
  await screenshot('05-market-chat-layout.png');
  await evaluate('closeMarketConversationChat();Object.assign(window,{requireAuthenticatedUser:window.__uiSmokeSaved.requireAuthenticatedUser,getCurrentAuthUser:window.__uiSmokeSaved.getCurrentAuthUser,supabaseFetch:window.__uiSmokeSaved.supabaseFetch,loadMarketMessages:window.__uiSmokeSaved.loadMarketMessages,subscribeToMarketConversation:window.__uiSmokeSaved.subscribeToMarketConversation});delete window.__uiSmokeSaved;');
  await click('.nav-item.profile-me','profile navigation');
@@ -352,6 +372,7 @@ try{
  await visible('#alwaha-device-suite-menu-button','feature/test dashboard entry after scrolling it into the visible profile viewport');
  await click('[onclick*="sub-prof-settings"]','profile settings');
  await visible('.alwaha-theme-grid','theme picker');
+ await auditActiveControls('profile settings');
  await screenshot('06-themes.png');
  const baseThemes=await evaluate('document.querySelectorAll(".alwaha-theme-choice").length');
  assert.ok(baseThemes>=3,'The three baseline theme choices must be present.');
@@ -362,12 +383,14 @@ try{
  await screenshot('07-new-theme.png');
  await evaluate('document.querySelectorAll(".sub-profile-view-box").forEach(e=>e.style.display="none");document.body.classList.remove("modal-active");showAlwahaPrivacyNotice()');
  await visible('#alwaha-privacy-notice','privacy notice');
+ await auditActiveControls('privacy notice');
  await screenshot('08-privacy.png');
  await click('#alwaha-privacy-notice button[onclick="deferAlwahaPrivacyNotice()"]','privacy notice close');
  await evaluate('openVideoCallModeChooser()');
  await visible('#alwaha-video-call-choice','video mode chooser');
  await visible('[data-video-call-mode="normal"]','normal video mode');
  await visible('[data-video-call-mode="kids"]','Kids video mode');
+ await auditActiveControls('video mode chooser');
  await screenshot('09-video-chooser.png');
  await click('[data-video-call-cancel]','video chooser close');
  await evaluate('activeCallManager={mediaType:"video"};setCallModal(true);updateCallUi("connected",{target:"CI preview",text:"واجهة مكالمة تجريبية",indicator:"فحص مرئي دون اتصال"})');
@@ -379,14 +402,22 @@ try{
  await visible('#cameraSwitchBtn','camera switch in connected video call');
  await visible('#kidsModeBtn','Kids Room in connected video call');
  await visible('#endCallBtn','end call in connected call');
+ assert.equal(await evaluate('document.getElementById("callCloseBtn")?.style.display'),'none','Call end and close controls must not appear together while connected.');
+ await auditActiveControls('connected video call');
  await screenshot('10-call-controls.png');
- await evaluate('updateCallUi("idle");setCallModal(false);activeCallManager=null');
+ await evaluate('updateCallUi("idle")');
+ await visible('#callCloseBtn','close call view while idle');
+ await evaluate('setCallModal(false);activeCallManager=null');
  if(unexpectedErrors.length)throw new Error('Unexpected browser JavaScript errors:\n'+unexpectedErrors.join('\n'));
+ fs.writeFileSync(path.join(outputDir,'CONTROL-AUDIT.json'),JSON.stringify(controlAuditResults,null,2)+'\n');
  fs.writeFileSync(path.join(outputDir,'RESULT.txt'),[
   'ALWAHA_BROWSER_VISUAL_ACCEPTANCE=PASS',
   'Viewport: 412x915 CSS pixels, touch emulation enabled.',
   'Backend: Supabase domains blocked; no login credentials and no production writes.',
   'Tested with topmost-pixel visibility and actual hit-test: all seven primary sections, notification center, home, market sell, chat lobby, direct/market chat views, profile settings, dynamic theme registry, privacy notice, video chooser and connected-call controls.',
+  'Dynamic control audit checks duplicate live IDs, duplicate global actions, accessible names and implicit form submits for each reached screen; see CONTROL-AUDIT.json.',
+  'Home notifications use one persistent navigation action; call-end and call-close actions are mutually exclusive.',
+  'Application APK-sharing UI and native export method are removed; post and reel sharing remain.',
   'Tested with isolated in-memory mock backend: buyer delivery request, seller accept/prepare/ship/out-for-delivery transitions, buyer receipt confirmation, and private delivery address exclusion from public listing.',
   'Tested UI only with isolated native plugin mock: local discovery, Bluetooth receiver, Wi-Fi Direct group action, Android settings shortcuts and identity display.',
   'Direct and marketplace messaging, call media, delivery and notifications used mock accounts/responses only; no real authenticated production writes were sent.',
