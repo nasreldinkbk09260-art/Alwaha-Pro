@@ -5981,7 +5981,7 @@ async function submitNewProductToMarket() {
         function marketCardRequiresInternet({isOnline,localMeshEnabled,distanceKm,localRadiusKm,hasLocalRoute}) {
             const radius=Number(localRadiusKm);
             const distance=Number(distanceKm);
-            const hasLocation=Number.isFinite(distance)&&distance>=0;
+            const hasLocation=distanceKm!==null&&distanceKm!==undefined&&distanceKm!==''&&Number.isFinite(distance)&&distance>=0;
             const withinLocalRadius=hasLocation&&Number.isFinite(radius)&&radius>=1&&distance<=radius;
             if(!isOnline&&!localMeshEnabled)return true;
             if(!localMeshEnabled)return false;
