@@ -527,6 +527,13 @@
     if(!modeEnabled||!(transportEndpoints.size>0||transportPeerFingerprint))return false;
     return Boolean(await getPeerByAccountId(accountUserId));
   }
+  async function canRouteToAccounts(accountUserIds){
+    if(!Array.isArray(accountUserIds)||!modeEnabled||!(transportEndpoints.size>0||transportPeerFingerprint))return [];
+    const wanted=new Set(accountUserIds.map(value=>String(value||'')).filter(Boolean));
+    if(!wanted.size)return [];
+    const trusted=await getTrustedPeers();
+    return [...new Set(trusted.filter(peer=>peer?.accountUserId&&wanted.has(String(peer.accountUserId))).map(peer=>String(peer.accountUserId)))];
+  }
   function getTransportPeer(){return transportPeerFingerprint;}
   function getTransportType(){return transportType;}
   function getTransportPeerForAccount(accountUserId){
@@ -556,6 +563,6 @@
     transportHandles.forEach(handle=>Promise.resolve(handle.remove()).catch(()=>{}));
     transportHandles=[];modeEnabled=false;
   }
-  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,getBridgeIdentityBundle,pairPeer,trustPeerFromAuthenticatedDirectory,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
+  window.AlwahaLocalMesh={version:VERSION,getIdentityBundle,getBridgeIdentityBundle,pairPeer,trustPeerFromAuthenticatedDirectory,getTrustedPeers,getPeerByAccountId,sendToAccount,sendFileToAccount,receiveRawPacket,sendHello,flushRelayQueue,pruneExpiredState,setMode,isEnabled,isBridgeActive,canRouteToAccount,isRequested,canRouteToAccounts,getTransportPeer,getTransportType,getTransportPeerForAccount,hasDirectTransportTo,getTransportTypeForPeer,setTransportPeer,restoreFile,getFileUrl:fileId=>fileUrls.get(fileId)||null,destroy};
   window.addEventListener('DOMContentLoaded',()=>{void Promise.all([restoreMode(),installTransportListeners()]).catch(error=>console.warn('[Alwaha Mesh] startup restore failed:',error));});
 })();
