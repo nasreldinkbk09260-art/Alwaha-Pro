@@ -392,6 +392,7 @@ try{
  ];
  for(const profileViewId of profileSubViews){
    await evaluate(`openSubProfileView(${JSON.stringify(profileViewId)})`);
+   await sleep(400); // Allow the shared 300 ms subview entrance animation to finish before hit-testing.
    await visible('#'+profileViewId,'profile subview '+profileViewId);
    await auditActiveControls('profile subview '+profileViewId);
    const closeCount=await evaluate(`document.querySelectorAll('#'+${JSON.stringify(profileViewId)}+' button[onclick*="closeSubProfileView"]').length`);
