@@ -118,7 +118,14 @@ async function auditActiveControls(label,expectedDuplicateScopes=null){
   console.log('PASS control-audit self-test: direct listeners and same-card semantic duplicates detected.');
   return result;
  }
- controlAuditResults.push({label,...result});\n assert.equal(result.duplicateIds.length,0,label+': duplicate live DOM IDs '+JSON.stringify(result.duplicateIds));\n assert.equal(result.unnamed.length,0,label+': visible controls without accessible names '+JSON.stringify(result.unnamed));\n assert.equal(result.implicitSubmit.length,0,label+': visible form buttons must declare type=button or type=submit '+JSON.stringify(result.implicitSubmit));\n assert.equal(result.duplicateActions.length,0,label+': duplicate visible semantic actions '+JSON.stringify(result.duplicateActions));\n console.log('PASS control audit: '+label+' ('+result.controls+' visible controls; '+result.directClickListenerCount+' direct click listeners inspected)');\n return result;\n}
+ controlAuditResults.push({label,...result});
+ assert.equal(result.duplicateIds.length,0,label+': duplicate live DOM IDs '+JSON.stringify(result.duplicateIds));
+ assert.equal(result.unnamed.length,0,label+': visible controls without accessible names '+JSON.stringify(result.unnamed));
+ assert.equal(result.implicitSubmit.length,0,label+': visible form buttons must declare type=button or type=submit '+JSON.stringify(result.implicitSubmit));
+ assert.equal(result.duplicateActions.length,0,label+': duplicate visible semantic actions '+JSON.stringify(result.duplicateActions));
+ console.log('PASS control audit: '+label+' ('+result.controls+' visible controls; '+result.directClickListenerCount+' direct click listeners inspected)');
+ return result;
+}
 try{
  await waitFor(async()=>{try{await getJson('http://127.0.0.1:'+debugPort+'/json/version');return true;}catch{return false;}},'Chrome remote debugging endpoint');
  await connect();
