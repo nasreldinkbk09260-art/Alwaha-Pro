@@ -9,7 +9,7 @@ const checks=[
  ['native audio plugin source exists',fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java')],
  ['Android CI registers native plugin',fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8').includes('Register Alwaha native call audio routing plugin')],
  ['native bridge registers plugin',fs.readFileSync('scripts/native-back-handler.mjs','utf8').includes("registerPlugin('AlwahaAudioRoute')")],
- ['native plugin shares the installed APK securely',fs.readFileSync('scripts/android/AlwahaAudioRoutePlugin.java','utf8').includes('FileProvider.getUriForFile')&&fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8').includes('alwaha_file_paths.xml')],
+ ['native audio plugin keeps call routing without APK export',(()=>{const source=fs.readFileSync('scripts/android/AlwahaAudioRoutePlugin.java','utf8');const workflow=fs.readFileSync('.github/workflows/build-apk-aab-release.yml','utf8');return source.includes('setRoute')&&source.includes('resetRoute')&&!source.includes('FileProvider')&&!source.includes('shareApk')&&!workflow.includes('alwaha_file_paths.xml')&&!workflow.includes('androidx.core.content.FileProvider');})()],
  ['call UI exposes speaker toggle',html.includes('onclick="toggleCallSpeaker()"')],
  ['call feedback module is loaded and precached',fs.existsSync('alwaha-call-feedback.js')&&hasVersionedScript('alwaha-call-feedback.js')],
  ['outgoing call starts a local ringback tone',html.includes("AlwahaCallFeedback?.start('ringback')")],

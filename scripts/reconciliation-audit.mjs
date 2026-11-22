@@ -42,8 +42,8 @@ check('3.0.1 field repairs remain: safe multiplayer viewport and notification ov
   games.includes('ALWAHA FIELD REPAIR: viewport-safe room dialog') && html.includes('alwaha-notifications-open'));
 check('native call speaker routing is bundled and defaults to earpiece',
   has(html,'speakerRouteBtn') && has(html,'setAlwahaCallSpeaker(false,true)') && native.includes('setRoute'));
-check('native audio-route and APK FileProvider plugin is retained',
-  native.includes('FileProvider.getUriForFile') && native.includes('setRoute'));
+check('native audio-route plugin remains while APK export is removed',
+  native.includes('setRoute') && native.includes('resetRoute') && !native.includes('FileProvider') && !native.includes('shareApk'));
 check('legacy unverified local-share panel and manual bridge discovery stay retired while encrypted Mesh is present',
   !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section|openAlwahaLocalDiscovery|alwaha-local-discovery-modal/.test(html+games) &&
   read('alwaha-local-mesh.js').includes('deriveRouteHmacKey') &&
