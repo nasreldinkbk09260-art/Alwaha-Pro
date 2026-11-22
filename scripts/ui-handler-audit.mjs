@@ -30,6 +30,8 @@ if(!homeSection.includes('toggleInternalNotificationCenter')&&html.includes('not
 const callStart=html.indexOf('function updateCallUi(state, meta = {})'),callEnd=html.indexOf('function startCallTimer()',callStart);const callUi=callStart>=0?html.slice(callStart,callEnd):'';
 if(callUi.includes("callCloseBtn.style.display = state === 'idle' ? 'inline-block' : 'none'")&&callUi.includes("endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none'"))console.log('PASS: call close and hang-up are mutually exclusive.');else throw new Error('Call control de-duplication missing.');
 if(browserVisual.includes('auditActiveControls')&&browserVisual.includes('CONTROL-AUDIT.json')&&browserVisual.includes('duplicate visible semantic actions')&&browserVisual.includes('function fingerprintFunction')&&browserVisual.includes('function actionFingerprint'))console.log('PASS: Chromium performs wrapper-aware live semantic control inspection.');else throw new Error('Wrapper-aware live semantic audit missing from browser runner.');
+const profileViews=['sub-prof-register','sub-prof-login','sub-prof-settings','sub-prof-device-suite','sub-prof-recovery','sub-prof-password-change','sub-prof-password-reset','sub-prof-privacy','sub-prof-verify'];
+if(profileViews.every(id=>browserVisual.includes(id))&&browserVisual.includes('profile subview '))console.log('PASS: Chromium traverses every profile subview.');else throw new Error('Profile subview coverage missing from browser runner.');
 
 const chessEngine=fs.readFileSync('assets/chess.min.js','utf8');
 if(/\bexport\s*\{/.test(chessEngine)||!chessEngine.includes("window.Chess=Chess"))throw new Error('Chess engine must expose window.Chess for the classic games runtime.');

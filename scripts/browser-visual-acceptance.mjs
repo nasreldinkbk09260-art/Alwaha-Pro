@@ -383,6 +383,22 @@ try{
  await click('[data-theme-choice="ci-visual-smoke"]','new theme selection');
  assert.equal(await evaluate('document.body.dataset.alwahaTheme==="ci-visual-smoke"'),true,'A registered theme must apply.');
  await screenshot('07-new-theme.png');
+
+ // Exercise every profile subpage in isolation, including the authentication and recovery forms.
+ const profileSubViews=[
+   'sub-prof-register','sub-prof-login','sub-prof-settings','sub-prof-device-suite',
+   'sub-prof-recovery','sub-prof-password-change','sub-prof-password-reset',
+   'sub-prof-privacy','sub-prof-verify'
+ ];
+ for(const profileViewId of profileSubViews){
+   await evaluate(`openSubProfileView(${JSON.stringify(profileViewId)})`);
+   await visible('#'+profileViewId,'profile subview '+profileViewId);
+   await auditActiveControls('profile subview '+profileViewId);
+   const closeCount=await evaluate(`document.querySelectorAll('#'+${JSON.stringify(profileViewId)}+' button[onclick*="closeSubProfileView"]').length`);
+   assert.equal(closeCount,1,profileViewId+' must expose exactly one close action.');
+   await click('#'+profileViewId+' button[onclick*="closeSubProfileView"]','close profile subview '+profileViewId);
+   await waitFor(()=>evaluate(`getComputedStyle(document.getElementById(${JSON.stringify(profileViewId)})).display==="none"`),'close profile subview '+profileViewId);
+ }
  await evaluate('document.querySelectorAll(".sub-profile-view-box").forEach(e=>e.style.display="none");document.body.classList.remove("modal-active");showAlwahaPrivacyNotice()');
  await visible('#alwaha-privacy-notice','privacy notice');
  await auditActiveControls('privacy notice');
