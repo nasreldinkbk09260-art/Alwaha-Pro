@@ -929,7 +929,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-register" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#00ff88; font-size:16px; margin:0;">إنشاء حساب جديد</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-register')"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-register')" aria-label="إغلاق إنشاء الحساب" title="إغلاق إنشاء الحساب"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div style="text-align:center; margin-bottom:15px;">
             <img id="reg-avatar-preview" src="icon.png" style="width:70px; height:70px; border-radius:50%; object-fit:cover; border:2px dashed #00ff88; margin-bottom:8px;">
@@ -968,7 +968,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-login" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#00ffff; font-size:16px; margin:0;">تسجيل الدخول</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')" aria-label="إغلاق تسجيل الدخول" title="إغلاق تسجيل الدخول"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <input type="password" id="login-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
@@ -1133,7 +1133,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-recovery" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#ffd700; font-size:16px; margin:0;">استرداد وتأمين الحساب</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-recovery')"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-recovery')" aria-label="إغلاق استعادة كلمة المرور" title="إغلاق استعادة كلمة المرور"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <input type="email" id="recovery-email-input" autocomplete="email" inputmode="email" placeholder="البريد الإلكتروني المرتبط بالحساب" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <p id="recovery-native-notice" style="display:none;color:#ffd98a;font-size:11px;line-height:1.8;margin:0 0 12px;">سنرسل رابطًا آمنًا إلى بريدك. افتحه في المتصفح لتعيين كلمة مرور جديدة، ثم عُد إلى التطبيق وسجّل الدخول.</p>
@@ -1144,7 +1144,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-password-change" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#8bf4ff; font-size:16px; margin:0;">تغيير كلمة المرور</h3>
-            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-change')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-change')" aria-label="إغلاق تغيير كلمة المرور" title="إغلاق تغيير كلمة المرور"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <p style="color:#a8bacd;font-size:11px;line-height:1.8;margin:0 0 12px;">أثبت ملكية الحساب بكلمة المرور الحالية، ثم أدخل كلمة جديدة وأكدها. يعمل هذا الخيار لحسابات اسم المستخدم حتى عندما لا يوجد بريد إلكتروني.</p>
         <label for="account-current-password" style="display:block;color:#c8d7e6;font-size:11px;margin-bottom:5px;">كلمة المرور الحالية</label>
@@ -1169,7 +1169,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-password-reset" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#ffd700; font-size:16px; margin:0;">تعيين كلمة مرور جديدة</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-reset')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-password-reset')" aria-label="إغلاق نموذج تعيين كلمة المرور" title="إغلاق نموذج تعيين كلمة المرور"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <p style="color:#a8bacd;font-size:11px;line-height:1.8;margin:0 0 12px;">أدخل كلمة مرور جديدة من 8 إلى 128 حرفًا، ثم أكدها لإكمال استعادة الحساب.</p>
         <input type="password" id="password-reset-new" autocomplete="new-password" placeholder="كلمة المرور الجديدة" class="keyboard-target" style="width:100%;background:rgba(0,0,0,.3);border:1px solid #444;padding:11px;border-radius:8px;color:#fff;font-size:13px;margin-bottom:10px;">
@@ -1180,7 +1180,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-privacy" class="sub-profile-view-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h3 style="color:#ff00ff; font-size:16px; margin:0;">إعدادات الخصوصية والاسم</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-privacy')"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-privacy')" aria-label="إغلاق إعدادات الخصوصية" title="إغلاق إعدادات الخصوصية"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <input type="text" id="privacy-new-name" placeholder="تعديل الاسم الكامل" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
         <div style="margin-bottom:10px; display:flex; align-items:center; gap:10px;">
@@ -1197,7 +1197,7 @@ img,video,canvas{max-width:100%}
     <div id="sub-prof-verify" class="sub-profile-view-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
             <h3 style="color:#8bf4ff;font-size:16px;margin:0;">طلب توثيق الحساب</h3>
-            <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent;color:#fff;font-size:16px;" onclick="closeSubProfileView('sub-prof-verify')" aria-label="إغلاق طلب توثيق الحساب" title="إغلاق طلب توثيق الحساب"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <p id="verification-request-status" role="status" aria-live="polite" style="padding:12px;border:1px solid #8bf4ff30;border-radius:12px;background:#8bf4ff08;color:#c9dceb;font-size:11px;line-height:1.9;">يمكنك إرسال طلب واحد قيد المراجعة. لن تظهر بيانات الاتصال في ملفك العام.</p>
         <form id="verification-request-form" onsubmit="submitAccountVerificationRequest(event)" novalidate>
