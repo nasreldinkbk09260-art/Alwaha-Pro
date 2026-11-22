@@ -308,19 +308,26 @@
     try { stopLayeredRingtone(); } catch (_) {}
   }
   function ringtoneChoice() {
-    // One-time rollout: make Saffron Tide the requested default; preserve later manual choices.
-    // Keep migration version 3 stable in future releases so updates never reset a user's selection.
-    if (safeGet('alwaha_call_ringtone_choice_version') !== '3') {
-      safeSet('alwaha_call_ringtone_choice_version', '3');
-      safeSet('alwaha_ringtone_choice', 'saffron_tide');
-      return 'saffron_tide';
+    // Version 4 corrects the default to Marimba Bloom. It replaces the former
+    // automatic Saffron Tide default once, but preserves an explicitly saved choice
+    // from this version onward and never re-applies defaults on later updates.
+    let saved = safeGet('alwaha_ringtone_choice');
+    const explicitlySelected = safeGet('alwaha_ringtone_user_selected') === 'true';
+    if (safeGet('alwaha_call_ringtone_choice_version') !== '4') {
+      if (!explicitlySelected && (!saved || saved === 'saffron_tide')) {
+        saved = 'marimba_bloom';
+        safeSet('alwaha_ringtone_choice', saved);
+      }
+      safeSet('alwaha_call_ringtone_choice_version', '4');
     }
-    const saved = safeGet('alwaha_ringtone_choice');
-    return saved === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide';
+    if (saved === 'saffron_tide' || saved === 'marimba_bloom') return saved;
+    safeSet('alwaha_ringtone_choice', 'marimba_bloom');
+    return 'marimba_bloom';
   }
-  function setRingtoneChoice(value, silent = false) {
-    const chosen = value === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide';
+  function setRingtoneChoice(value, silent = false, userInitiated = !silent) {
+    const chosen = value === 'saffron_tide' ? 'saffron_tide' : 'marimba_bloom';
     safeSet('alwaha_ringtone_choice', chosen);
+    if (userInitiated) safeSet('alwaha_ringtone_user_selected', 'true');
     const select = $('alwaha-ringtone-choice');
     if (select) select.value = chosen;
     stopRingtoneMedia();
