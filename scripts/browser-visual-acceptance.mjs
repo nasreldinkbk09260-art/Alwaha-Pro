@@ -107,9 +107,80 @@ async function section(id,label){
  console.log('PASS navigation: '+label);
 }
 async function auditActiveControls(label,expectedDuplicateScopes=null){
- const result=await evaluate("(()=>{\n const isVisible=e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!==\"none\"&&s.visibility!==\"hidden\"&&Number(s.opacity)>0&&r.width>0&&r.height>0&&r.bottom>0&&r.right>0&&r.top<innerHeight&&r.left<innerWidth;};\n const idMap=new Map();\n for(const e of document.querySelectorAll(\"[id]\")){const id=e.id;if(!id)continue;const nodes=idMap.get(id)||[];nodes.push(e);idMap.set(id,nodes);}\n const duplicateIds=[...idMap].filter(([,nodes])=>nodes.length>1).map(([id,nodes])=>({id,count:nodes.length,visible:nodes.filter(isVisible).length,parents:nodes.map(e=>e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||\"unknown\")}));\n const controls=[...document.querySelectorAll(\"button,[role=button],input[type=button],input[type=submit]\")].filter(isVisible);\n const labelOf=e=>String(e.getAttribute(\"aria-label\")||e.getAttribute(\"title\")||e.innerText||e.textContent||e.value||[...e.querySelectorAll(\"img[alt]\")].map(x=>x.alt).join(\" \")||\"\").replace(/\\s+/g,\" \").trim();\n const unnamed=controls.filter(e=>!labelOf(e)).map(e=>({id:e.id||\"\",tag:e.tagName,html:e.outerHTML.slice(0,220)}));\n const implicitSubmit=[...document.querySelectorAll(\"form button:not([type])\")].filter(isVisible).map(e=>({id:e.id||\"\",label:labelOf(e),form:e.form?.id||e.form?.getAttribute(\"name\")||\"unnamed-form\"}));\n const cardSelector='[role=\"article\"],[data-notification-id],[data-post-id],[data-reel-id],[data-product-id],.market-product-card,.alwaha-notification-item';\n const semanticById={endCallBtn:\"call.end\",callCloseBtn:\"call.end\"};\n const normalizeArgs=value=>String(value||\"\").replace(/\\s+/g,\" \").trim();\n const functionMemo=new Map();\n function fingerprintFunction(name,depth=0,seen=new Set()){\n   if(depth>6||seen.has(name))return \"function:\"+name;\n   if(functionMemo.has(name))return functionMemo.get(name);\n   const fn=window[name];\n   if(typeof fn!==\"function\")return \"function:\"+name;\n   const source=Function.prototype.toString.call(fn);\n   const open=source.indexOf(\"{\"),close=source.lastIndexOf(\"}\");\n   const body=open>=0&&close>open?source.slice(open+1,close).trim():\"\";\n   const simpleCall=body.match(/^(?:return\\s+)?(?:window\\.)?([A-Za-z_$][\\w$]*)\\s*\\(([\\s\\S]*)\\)\\s*;?$/);\n   let fingerprint;\n   if(simpleCall&&simpleCall[1]!==name){\n     const next=new Set(seen);next.add(name);\n     fingerprint=\"effect:\"+fingerprintFunction(simpleCall[1],depth+1,next)+\"(\"+normalizeArgs(simpleCall[2])+\")\";\n   }else{\n     const normalized=body.replace(/\\/\\*[\\s\\S]*?\\*\\//g,\" \").replace(/\\/\\/[^\\n]*/g,\" \").replace(/\\s+/g,\" \").trim();\n     fingerprint=\"body:\"+normalized;\n   }\n   functionMemo.set(name,fingerprint);\n   return fingerprint;\n }\n function fingerprintHandlerSource(source){\n   const value=String(source||\"\").trim();\n   let bodyMatch=value.match(/^(?:async\\s+)?function(?:\\s+[A-Za-z_$][\\w$]*)?\\s*\\([^)]*\\)\\s*\\{([\\s\\S]*)\\}\\s*$/);\n   if(!bodyMatch)bodyMatch=value.match(/^(?:async\\s*)?(?:\\([^)]*\\)|[A-Za-z_$][\\w$]*)\\s*=>\\s*\\{([\\s\\S]*)\\}\\s*$/);\n   let body=bodyMatch?bodyMatch[1].trim():\"\";\n   if(!bodyMatch){\n     const expression=value.match(/^(?:async\\s*)?(?:\\([^)]*\\)|[A-Za-z_$][\\w$]*)\\s*=>\\s*([\\s\\S]+?)\\s*;?\\s*$/);\n     body=expression?expression[1].trim():value;\n   }\n   const simpleCall=body.match(/^(?:return\\s+)?(?:window\\.)?([A-Za-z_$][\\w$]*)\\s*\\(([\\s\\S]*)\\)\\s*;?$/);\n   if(simpleCall)return \"effect:\"+fingerprintFunction(simpleCall[1])+\"(\"+normalizeArgs(simpleCall[2])+\")\";\n   const normalized=body.replace(/\\/\\*[\\s\\S]*?\\*\\//g,\" \").replace(/\\/\\/[^\\n]*/g,\" \").replace(/\\s+/g,\" \").trim();\n   return \"listener-body:\"+normalized;\n }\n function actionFingerprints(e){\n   const keys=[];\n   const inlineHandler=e.getAttribute(\"onclick\");\n   const propertyHandler=!inlineHandler&&typeof e.onclick===\"function\";\n   const expression=inlineHandler||(propertyHandler?String(e.onclick):\"\");\n   const call=expression.match(/^\\s*(?:return\\s+)?(?:window\\.)?([A-Za-z_$][\\w$]*)\\s*\\(([\\s\\S]*)\\)\\s*;?\\s*$/);\n   if(call)keys.push(\"effect:\"+fingerprintFunction(call[1])+\"(\"+normalizeArgs(call[2])+\")\");\n   else if(expression)keys.push(propertyHandler?fingerprintHandlerSource(expression):\"inline:\"+expression.replace(/\\s+/g,\" \").trim());\n   const listeners=e.__alwahaAuditListeners||[];\n   for(const listener of listeners){if(listener.type===\"click\"&&listener.source)keys.push(fingerprintHandlerSource(listener.source));}\n   const controlledTargets=String(e.getAttribute(\"aria-controls\")||\"\").split(/\\s+/).filter(Boolean).sort();
-   const targetContext=controlledTargets.length?\"::targets:\"+controlledTargets.join(\",\"):\"\";
-   return [...new Set(keys.map(key=>key+targetContext))];\n }\n const globalGroups=new Map(),cardGroups=new Map();\n for(const e of controls){\n   const card=e.closest(cardSelector);\n   const targetGroups=card?(()=>{if(!cardGroups.has(card))cardGroups.set(card,new Map());return cardGroups.get(card);})():globalGroups;\n   const semantic=semanticById[e.id];\n   const keys=semantic?[semantic]:actionFingerprints(e);\n   for(const key of keys){const nodes=targetGroups.get(key)||[];if(!nodes.includes(e))nodes.push(e);targetGroups.set(key,nodes);}\n }\n const describe=(groups,scope)=>[...groups].filter(([,nodes])=>nodes.length>1).map(([action,nodes])=>({scope,action,count:nodes.length,card:scope===\"card\"?(nodes[0].closest(cardSelector)?.id||nodes[0].closest(cardSelector)?.getAttribute(\"data-product-id\")||nodes[0].closest(cardSelector)?.getAttribute(\"data-post-id\")||nodes[0].closest(cardSelector)?.getAttribute(\"data-reel-id\")||nodes[0].closest(cardSelector)?.className||\"anonymous-card\"):null,buttons:nodes.map(e=>({id:e.id||\"\",label:labelOf(e),parent:e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||\"unknown\",handler:e.getAttribute(\"onclick\")||e.id||((e.__alwahaAuditListeners||[]).length?\"addEventListener\":\"listener\")}))}));\n const duplicateActions=[...describe(globalGroups,\"global\"),...[...cardGroups.values()].flatMap(groups=>describe(groups,\"card\"))];\n const directClickListenerCount=controls.reduce((sum,e)=>sum+(e.__alwahaAuditListeners||[]).filter(x=>x.type===\"click\").length,0);\n return {controls:controls.length,directClickListenerCount,duplicateIds,unnamed,implicitSubmit,duplicateActions};\n})()");
+ const result=await evaluate(String.raw`(()=>{
+ const isVisible=e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity)>0&&r.width>0&&r.height>0&&r.bottom>0&&r.right>0&&r.top<innerHeight&&r.left<innerWidth;};
+ const idMap=new Map();
+ for(const e of document.querySelectorAll("[id]")){const id=e.id;if(!id)continue;const nodes=idMap.get(id)||[];nodes.push(e);idMap.set(id,nodes);}
+ const duplicateIds=[...idMap].filter(([,nodes])=>nodes.length>1).map(([id,nodes])=>({id,count:nodes.length,visible:nodes.filter(isVisible).length,parents:nodes.map(e=>e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||"unknown")}));
+ const controls=[...document.querySelectorAll("button,[role=button],input[type=button],input[type=submit]")].filter(isVisible);
+ const labelOf=e=>String(e.getAttribute("aria-label")||e.getAttribute("title")||e.innerText||e.textContent||e.value||[...e.querySelectorAll("img[alt]")].map(x=>x.alt).join(" ")||"").replace(/\s+/g," ").trim();
+ const unnamed=controls.filter(e=>!labelOf(e)).map(e=>({id:e.id||"",tag:e.tagName,html:e.outerHTML.slice(0,220)}));
+ const implicitSubmit=[...document.querySelectorAll("form button:not([type])")].filter(isVisible).map(e=>({id:e.id||"",label:labelOf(e),form:e.form?.id||e.form?.getAttribute("name")||"unnamed-form"}));
+ const cardSelector='[role="article"],[data-notification-id],[data-post-id],[data-reel-id],[data-product-id],.market-product-card,.alwaha-notification-item';
+ const semanticById={endCallBtn:"call.end",callCloseBtn:"call.end"};
+ const normalizeArgs=value=>String(value||"").replace(/\s+/g," ").trim();
+ const functionMemo=new Map();
+ function fingerprintFunction(name,depth=0,seen=new Set()){
+   if(depth>6||seen.has(name))return "function:"+name;
+   if(functionMemo.has(name))return functionMemo.get(name);
+   const fn=window[name];
+   if(typeof fn!=="function")return "function:"+name;
+   const source=Function.prototype.toString.call(fn);
+   const open=source.indexOf("{"),close=source.lastIndexOf("}");
+   const body=open>=0&&close>open?source.slice(open+1,close).trim():"";
+   const simpleCall=body.match(/^(?:return\s+)?(?:window\.)?([A-Za-z_$][\w$]*)\s*\(([\s\S]*)\)\s*;?$/);
+   let fingerprint;
+   if(simpleCall&&simpleCall[1]!==name){
+     const next=new Set(seen);next.add(name);
+     fingerprint="effect:"+fingerprintFunction(simpleCall[1],depth+1,next)+"("+normalizeArgs(simpleCall[2])+")";
+   }else{
+     const normalized=body.replace(/\/\*[\s\S]*?\*\//g," ").replace(/\/\/[^\n]*/g," ").replace(/\s+/g," ").trim();
+     fingerprint="body:"+normalized;
+   }
+   functionMemo.set(name,fingerprint);
+   return fingerprint;
+ }
+ function fingerprintHandlerSource(source){
+   const value=String(source||"").trim();
+   let bodyMatch=value.match(/^(?:async\s+)?function(?:\s+[A-Za-z_$][\w$]*)?\s*\([^)]*\)\s*\{([\s\S]*)\}\s*$/);
+   if(!bodyMatch)bodyMatch=value.match(/^(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*\{([\s\S]*)\}\s*$/);
+   let body=bodyMatch?bodyMatch[1].trim():"";
+   if(!bodyMatch){
+     const expression=value.match(/^(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>\s*([\s\S]+?)\s*;?\s*$/);
+     body=expression?expression[1].trim():value;
+   }
+   const simpleCall=body.match(/^(?:return\s+)?(?:window\.)?([A-Za-z_$][\w$]*)\s*\(([\s\S]*)\)\s*;?$/);
+   if(simpleCall)return "effect:"+fingerprintFunction(simpleCall[1])+"("+normalizeArgs(simpleCall[2])+")";
+   const normalized=body.replace(/\/\*[\s\S]*?\*\//g," ").replace(/\/\/[^\n]*/g," ").replace(/\s+/g," ").trim();
+   return "listener-body:"+normalized;
+ }
+ function actionFingerprints(e){
+   const keys=[];
+   const inlineHandler=e.getAttribute("onclick");
+   const propertyHandler=!inlineHandler&&typeof e.onclick==="function";
+   const expression=inlineHandler||(propertyHandler?String(e.onclick):"");
+   const call=expression.match(/^\s*(?:return\s+)?(?:window\.)?([A-Za-z_$][\w$]*)\s*\(([\s\S]*)\)\s*;?\s*$/);
+   if(call)keys.push("effect:"+fingerprintFunction(call[1])+"("+normalizeArgs(call[2])+")");
+   else if(expression)keys.push(propertyHandler?fingerprintHandlerSource(expression):"inline:"+expression.replace(/\s+/g," ").trim());
+   const listeners=e.__alwahaAuditListeners||[];
+   for(const listener of listeners){if(listener.type==="click"&&listener.source)keys.push(fingerprintHandlerSource(listener.source));}
+   const controlledTargets=String(e.getAttribute("aria-controls")||"").split(/\s+/).filter(Boolean).sort();
+   const targetContext=controlledTargets.length?"::targets:"+controlledTargets.join(","):"";
+   return [...new Set(keys.map(key=>key+targetContext))];
+ }
+ const globalGroups=new Map(),cardGroups=new Map();
+ for(const e of controls){
+   const card=e.closest(cardSelector);
+   const targetGroups=card?(()=>{if(!cardGroups.has(card))cardGroups.set(card,new Map());return cardGroups.get(card);})():globalGroups;
+   const semantic=semanticById[e.id];
+   const keys=semantic?[semantic]:actionFingerprints(e);
+   for(const key of keys){const nodes=targetGroups.get(key)||[];if(!nodes.includes(e))nodes.push(e);targetGroups.set(key,nodes);}
+ }
+ const describe=(groups,scope)=>[...groups].filter(([,nodes])=>nodes.length>1).map(([action,nodes])=>({scope,action,count:nodes.length,card:scope==="card"?(nodes[0].closest(cardSelector)?.id||nodes[0].closest(cardSelector)?.getAttribute("data-product-id")||nodes[0].closest(cardSelector)?.getAttribute("data-post-id")||nodes[0].closest(cardSelector)?.getAttribute("data-reel-id")||nodes[0].closest(cardSelector)?.className||"anonymous-card"):null,buttons:nodes.map(e=>({id:e.id||"",label:labelOf(e),parent:e.parentElement?.id||e.parentElement?.className||e.parentElement?.tagName||"unknown",handler:e.getAttribute("onclick")||e.id||((e.__alwahaAuditListeners||[]).length?"addEventListener":"listener")}))}));
+ const duplicateActions=[...describe(globalGroups,"global"),...[...cardGroups.values()].flatMap(groups=>describe(groups,"card"))];
+ const directClickListenerCount=controls.reduce((sum,e)=>sum+(e.__alwahaAuditListeners||[]).filter(x=>x.type==="click").length,0);
+ return {controls:controls.length,directClickListenerCount,duplicateIds,unnamed,implicitSubmit,duplicateActions};
+`);
  if(expectedDuplicateScopes){
   assert.equal(result.duplicateIds.length,0,label+': probe introduced duplicate DOM IDs');
   assert.equal(result.unnamed.length,0,label+': probe introduced unnamed controls');
