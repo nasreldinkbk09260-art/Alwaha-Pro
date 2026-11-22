@@ -6015,7 +6015,7 @@ async function submitNewProductToMarket() {
                 }
             }
             if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). لا توجد قائمة محفوظة سابقاً لهذا الحساب؛ افتح السوق عند توفر الإنترنت لتحميلها محلياً. ${escapeHtml(e.message||'')}</div>`;return;}
-            marketLifecycleSchemaReady=!usedLegacyMarketQuery&&!usedOfflineMarketCache;
+            if(!usedOfflineMarketCache)marketLifecycleSchemaReady=!usedLegacyMarketQuery;
             if(!usedOfflineMarketCache){
                 try{
                     const viewer=await getCurrentAuthUser();
