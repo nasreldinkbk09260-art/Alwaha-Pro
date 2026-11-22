@@ -182,6 +182,8 @@ try{
  await visible('#internal-notification-center','notification center');
  await visible('#internal-notification-center .alwaha-notification-panel','notification panel');
  await auditActiveControls('notifications');
+ assert.equal(await evaluate('document.querySelectorAll(".alwaha-notification-panel button[onclick*=toggleInternalNotificationCenter]").length'),0,'Notification panel close must not reuse the navigation toggle action.');
+ assert.equal(await evaluate('document.querySelectorAll(".alwaha-notification-panel button[onclick*=closeInternalNotificationCenter]").length'),1,'Notification panel must expose exactly one explicit close action.');
  await screenshot('04-notifications.png');
  await click('.nav-item.notification-nav-item','close notifications');
  await evaluate('Object.assign(window,{requireAuthenticatedUser:window.__notifySmoke.requireAuthenticatedUser,supabaseFetch:window.__notifySmoke.supabaseFetch});delete window.__notifySmoke');

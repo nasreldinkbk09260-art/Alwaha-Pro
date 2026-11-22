@@ -2673,13 +2673,20 @@ function handleRegisterAvatarPick() {
         }
         function playLuxuriousNotificationSound(kind = 'notification') { playAlwahaInboundSound(kind); }
 
-async function toggleInternalNotificationCenter() {
+function closeInternalNotificationCenter() {
+            const center=document.getElementById('internal-notification-center');
+            if(!center || !center.classList.contains('alwaha-notifications-open'))return false;
+            notificationRenderRequestId++;
+            center.classList.remove('alwaha-notifications-open');
+            center.style.display='none';
+            window.AlwahaModalShell?.sync?.();
+            return true;
+        }
+
+        async function toggleInternalNotificationCenter() {
             const center=document.getElementById('internal-notification-center');if(!center)return;
             if(center.classList.contains('alwaha-notifications-open')){
-                notificationRenderRequestId++;
-                center.classList.remove('alwaha-notifications-open');
-                center.style.display='none';
-                window.AlwahaModalShell?.sync?.();
+                closeInternalNotificationCenter();
                 return;
             }
             const me=await requireAuthenticatedUser('سجّل الدخول أولاً لعرض التنبيهات.');
@@ -2878,7 +2885,7 @@ async function toggleInternalNotificationCenter() {
                 </section>`;
             }
             if(requestId!==notificationRenderRequestId || !center.classList.contains('alwaha-notifications-open'))return;
-            center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="toggleInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">${offlineView?'نسخة محلية مشفّرة لآخر التنبيهات والطلبات التي حُمّلت على هذا الجهاز. القراءة هنا محلية فقط حتى عودة الاتصال.':'طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.'}</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
+            center.innerHTML = `<div class="alwaha-notification-panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #333;color:#00ffff;font-size:12px;"><strong>🔔 مركز التنبيهات</strong><div style="display:flex;gap:6px;"><button class="btn-action" style="background:rgba(255,255,255,.05);color:#00ff88;padding:6px 9px;border-radius:8px;font-size:9px;" onclick="markAllNotificationsRead()">تعليم الكل كمقروء</button><button class="btn-action" style="background:transparent;color:#fff;padding:4px 8px;font-size:18px;" onclick="closeInternalNotificationCenter()" aria-label="إغلاق">×</button></div></div><div style="padding:8px 10px;color:#9fb4c8;font-size:10px;line-height:1.7;">${offlineView?'نسخة محلية مشفّرة لآخر التنبيهات والطلبات التي حُمّلت على هذا الجهاز. القراءة هنا محلية فقط حتى عودة الاتصال.':'طلبات الصداقة والرسائل والمتابعات والتفاعلات والتحديثات الخاصة بحسابك تظهر هنا.'}</div>${directFriendRequestHtml}${parts}${adminHtml}</div>`;
 
         }
 

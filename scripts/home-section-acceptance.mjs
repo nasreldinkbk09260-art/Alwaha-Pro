@@ -11,7 +11,7 @@ function section(id,nextId){
 }
 const home=section('home-section','market-section');
 const requiredHandlers=[
- 'toggleInternalNotificationCenter','promptAppInstallation',
+ 'toggleInternalNotificationCenter','closeInternalNotificationCenter','promptAppInstallation',
  'previewHomePostImage','publishNewHomePost','clearHomePostImageDraft',
  'renderHomePostsFeed','togglePostLike','openCommentsModal','shareTextContent',
  'editOwnHomePost','deleteOwnHomePost','handleHomePostCardActivation',
