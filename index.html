@@ -644,8 +644,6 @@ img,video,canvas{max-width:100%}
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <h2 style="font-size:18px; color:#00ffff; margin:0;"><i class="fa-solid fa-house-chimney"></i> الرئيسية</h2>
             <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end;">
-              <button type="button" id="share-app-btn-main" class="btn-action" style="background:#24364b;color:#fff;padding:7px 10px;border-radius:20px;font-size:11px;" onclick="shareAlwahaApp()"><i class="fa-solid fa-share-nodes"></i> مشاركة التطبيق</button>
-              <button class="btn-action" style="background:rgba(255,255,255,0.05);color:#00ffff;padding:6px 12px;border-radius:20px;font-size:12px;" onclick="toggleInternalNotificationCenter()"><i class="fa-solid fa-bell"></i> التنبيهات <span id="notification-badge-home" class="alwaha-notification-badge" style="display:none;position:static;vertical-align:middle;margin-inline-start:4px;"></span></button>
             </div>
         </div>
 
@@ -1332,44 +1330,24 @@ img,video,canvas{max-width:100%}
             const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
             return nativeCapacitor || nativeScheme || androidWebView || standalone;
         }
-        function refreshAlwahaInstallShareActions() {
+        function refreshAlwahaInstallActions() {
             const banner=document.getElementById('main-install-banner');
             const install=document.getElementById('install-app-btn-main');
-            const share=document.getElementById('share-app-btn-main');
             const installed=isAlwahaInstalledContext();
             if(install){
                 install.style.display=(!installed && deferredPrompt)?'inline-flex':'none';
                 install.disabled=!!installPromptInFlight;
                 if(installPromptInFlight)install.setAttribute('aria-busy','true');else install.removeAttribute('aria-busy');
             }
-            if(share) share.style.display='inline-flex';
             if(banner) banner.style.display=(!installed && deferredPrompt)?'flex':'none';
         }
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            refreshAlwahaInstallShareActions();
+            refreshAlwahaInstallActions();
         });
-        window.addEventListener('appinstalled', () => { deferredPrompt=null; refreshAlwahaInstallShareActions(); });
-        window.addEventListener('DOMContentLoaded', refreshAlwahaInstallShareActions, {once:true});
-        async function shareAlwahaApp() {
-            const shareData={title:'Alwaha-Pro',text:'جرّب تطبيق Alwaha-Pro',url:window.location.href};
-            if(typeof isAlwahaNativeAndroid==='function'&&isAlwahaNativeAndroid()&&window.alwahaAudioRoute?.shareApk){
-                try{await window.alwahaAudioRoute.shareApk();return;}
-                catch(error){console.warn('[Alwaha Share] APK share failed; falling back to app link:',error);}
-            }
-            try{
-                if(typeof navigator.share==='function'){await navigator.share(shareData);return;}
-                if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(shareData.url);triggerToastNotification('تم نسخ رابط التطبيق. أرسله عبر أي تطبيق مراسلة.','success');return;}
-                window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);
-            }catch(error){
-                if(error?.name==='AbortError')return;
-                console.warn('[Alwaha Share] App sharing failed:',error);
-                try{window.prompt('انسخ رابط تطبيق Alwaha-Pro وشاركه:',shareData.url);}
-                catch{triggerToastNotification('تعذرت مشاركة التطبيق من هذا الجهاز.','error');}
-            }
-        }
-
+        window.addEventListener('appinstalled', () => { deferredPrompt=null; refreshAlwahaInstallActions(); });
+        window.addEventListener('DOMContentLoaded', refreshAlwahaInstallActions, {once:true});
         async function promptAppInstallation() {
             if(installPromptInFlight)return;
             const promptEvent=deferredPrompt;
@@ -1379,7 +1357,7 @@ img,video,canvas{max-width:100%}
             }
             deferredPrompt=null;
             installPromptInFlight=true;
-            refreshAlwahaInstallShareActions();
+            refreshAlwahaInstallActions();
             try{
                 await promptEvent.prompt();
                 const choice=await promptEvent.userChoice;
@@ -1390,7 +1368,7 @@ img,video,canvas{max-width:100%}
                 triggerToastNotification('تعذر بدء التثبيت من هذا المتصفح. استخدم قائمة المتصفح أو افتح التطبيق المثبت.', 'error');
             }finally{
                 installPromptInFlight=false;
-                refreshAlwahaInstallShareActions();
+                refreshAlwahaInstallActions();
             }
         }
 
