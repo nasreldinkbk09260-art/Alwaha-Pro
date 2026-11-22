@@ -47,8 +47,8 @@ if (html.includes('notification-badge-nav') && html.includes('refreshAlwahaNotif
 else fail('global notifications or friend request realtime updates missing');
 if (html.includes('alwaha-notifications-open') && html.includes('alwaha-notification-panel')) pass('global notification viewport overlay present');
 else fail('global notification overlay missing');
-if (html.includes('window.alwahaAudioRoute?.shareApk') && html.includes('share-app-btn-main')) pass('native Android APK sharing is connected to the app share button');
-else fail('native Android APK share action missing');
+if (!html.includes('shareAlwahaApp') && !html.includes('share-app-btn-main') && !html.includes('shareApk')) pass('deprecated app-share UI and native APK-sharing path remain absent');
+else fail('deprecated app-share action returned');
 
 if (!fs.existsSync('admin-app')) console.log('INFO: standalone admin-app directory is absent from this supplied source bundle; only embedded admin UI could be audited.');
 if (notes.includes('لم يتم التحقق') || notes.includes('لم تُختبر') || notes.includes('لم تتوفر')) pass('repair notes record non-verified items');
