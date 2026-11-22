@@ -23,7 +23,20 @@
  <section id="usersPane" class="panel hidden"><div class="top"><h2>الحسابات</h2><button id="refreshUsers" class="secondary">تحديث</button></div><label for="search">بحث بالاسم أو المعرّف</label><input id="search" placeholder="اكتب كلمة للبحث"><div style="height:10px"></div><div id="usersList" class="muted">جارٍ التحميل…</div></section>
  <section id="auditPane" class="panel hidden"><div class="top"><h2>سجل الإجراءات الإدارية</h2><button id="refreshAudit" class="secondary">تحديث</button></div><div id="auditList" class="muted">جارٍ التحميل…</div><button id="loadMoreAudit" class="secondary hidden" style="width:100%;margin-top:10px">تحميل سجلات أقدم</button></section>
  <section id="maintenancePane" class="panel hidden"><h2>تنظيف ملفات التجارب</h2><div class="notice">هذا الإجراء يحذف فقط 18 ملفاً محدداً من ملفات الاختبار القديمة في مخزن media، بعد التحقق من أن مالكيها ليسوا حسابات موجودة. لا يحذف ملفات حساب الإدارة أو أي ملف جديد أو أي ملفات مستخدمين مستقبليين.</div><p class="muted">الحذف نهائي ويجري عبر Supabase Storage API؛ سيتم تسجيل العملية في سجل التدقيق.</p><button id="purgeTestMedia" class="reject" style="width:100%">حذف ملفات التجارب الـ18 نهائياً</button></section>
- <section id="plansPane" class="panel hidden"><div class="top"><h2>الخطط والحصص ووسائل الدفع</h2><button id="reloadManagementConfig" class="secondary">إعادة تحميل</button></div><p class="muted">تُحفظ الإعدادات في الخادم ولا يستطيع مستخدم التطبيق قراءتها مباشرة. حدود رسائل المحادثات السحابية اليومية والأسبوعية تُفحص في قاعدة البيانات. حد السوق المحلي يضبط نطاق عرض المنتجات فقط، وليس مدى موجات Bluetooth أو Wi‑Fi.</p><div class="notice">لا تضع كلمات مرور أو مفاتيح بوابات دفع أو بيانات بطاقات أو رموز CVV هنا. أدخل فقط اسم وسيلة الدفع والمعرّف/الحساب الذي تسمح بعرضه للمشترك وتعليمات التحويل. قبول الدفع آلياً غير مفعّل حتى إعداد مزود دفع موثوق واختباره.</div><label for="managementConfigJson">إعدادات JSON — الخطط المجانية والمدفوعة، الحصص، وأساليب الدفع</label><textarea id="managementConfigJson" rows="24" spellcheck="false" autocapitalize="off" style="width:100%;box-sizing:border-box;background:#081321;color:#d6f7ff;border:1px solid #344866;border-radius:12px;padding:12px;font:11px/1.7 ui-monospace,monospace;direction:ltr;white-space:pre;overflow:auto;"></textarea><div class="actions"><button id="saveManagementConfig" class="primary">حفظ الإعدادات بأمان</button><button id="formatManagementConfig" class="secondary">تنسيق JSON</button></div><p class="small">النطاق الافتراضي المجاني للسوق: 15 كم عند توفر إحداثيات الطرفين. الحصص الافتراضية: 100 رسالة مباشرة و50 رسالة سوق يومياً، و500 مباشرة و250 سوق أسبوعياً لكل مستخدم. يمكن تعديلها هنا. هذه الحدود تُطبق على الرسائل السحابية؛ ولا تدّعي اللوحة ضبط وقت المكالمات أو استهلاك الملفات ومسارات Mesh المحلية.</p><div id="managementConfigStatus" class="notice hidden" aria-live="polite"></div></section>
+ <section id="plansPane" class="panel hidden">
+  <div class="top"><h2>الخطط والحصص ووسائل الدفع</h2><button id="reloadManagementConfig" class="secondary">إعادة تحميل</button></div>
+  <p class="muted">إعدادات التشغيل تُحفظ في الخادم عبر API محمية. حدود الرسائل السحابية اليومية والأسبوعية يفرضها PostgreSQL؛ ونطاق السوق يحدد تقريب المنتجات جغرافياً فقط، لا مدى البلوتوث أو Wi‑Fi.</p>
+  <div class="notice">لا تحفظ أسرار بوابات الدفع أو أرقام البطاقات أو CVV أو كلمات مرور هنا. أدخل بيانات الدفع العامة التي وافقت على عرضها للمشترك وتعليمات التحويل فقط. الدفع اليدوي لا يتحول إلى اشتراك تلقائي حتى وجود تحقق موثوق وإجراء إداري معتمد.</div>
+  <div id="managementVisualEditor" style="display:grid;gap:14px;margin:12px 0;">
+   <div class="item"><h3>الحصة المجانية ونطاق السوق</h3><p class="muted">هذه الحدود تخص رسائل الإنترنت السحابية. رسائل Mesh المحلية ليست ضمن عداد الحصة السحابية، وتخضع لحدود نقل وموارد الجهاز.</p><div id="managementFreeFields" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;"></div></div>
+   <div class="item"><h3>الخطط المدفوعة — تجهيز وإعداد</h3><p class="notice">تفعيل الخطة المدفوعة والحصص الخاصة بها غير آلي حالياً؛ لا تعتبر الخطة مفعلة لحساب حتى وجود دورة اشتراك وتحقق دفع موثوقين. يمكنك إعداد الأسعار والحصص دون عرض ادعاء دفع مباشر.</p><div id="managementPlanFields" style="display:grid;gap:12px;"></div></div>
+   <div class="item"><div class="top"><h3>طرق الدفع اليدوية</h3><span class="muted">أربع طرق معروفة</span></div><p class="muted">فعّل الطريقة التي تريد إظهارها، وحدّث مرجع التحويل وتعليمات الدفع. لا تضع بيانات حساسة أو أسرار خاصة.</p><div id="managementPaymentFields" style="display:grid;gap:10px;"></div></div>
+  </div>
+  <div class="actions"><button id="saveManagementVisualConfig" class="primary">حفظ الإعدادات المرئية بأمان</button><button id="formatManagementConfig" class="secondary">تحديث محرر JSON</button></div>
+  <details class="item" style="margin-top:10px;"><summary style="cursor:pointer;color:#9bdfff;font-weight:700;">تحرير JSON المتقدم — للمراجعة اليدوية فقط</summary><label for="managementConfigJson">إعدادات الخادم</label><textarea id="managementConfigJson" rows="18" spellcheck="false" autocapitalize="off" style="width:100%;box-sizing:border-box;background:#081321;color:#d6f7ff;border:1px solid #344866;border-radius:12px;padding:12px;font:11px/1.7 ui-monospace,monospace;direction:ltr;white-space:pre;overflow:auto;"></textarea><button id="saveManagementConfig" class="secondary" style="margin-top:8px;">حفظ JSON المتقدم</button></details>
+  <p class="small">المدى الافتراضي: 15 كم لإظهار إعلانات السوق عند وجود إحداثيات. الافتراضي للحصة المجانية: 100 رسالة مباشرة و50 رسالة سوق يومياً، و500 مباشرة و250 سوق أسبوعياً. لا تتحكم هذه الإعدادات في جودة المكالمة أو استهلاك الملفات أو أقصى مدى راديو.</p>
+  <div id="managementConfigStatus" class="notice hidden" aria-live="polite"></div>
+ </section>
 </section>
 <p class="muted" style="text-align:center">مفتاح service_role لا يوجد في هذا التطبيق. كل إجراء إداري يمر عبر Edge Function موثقة وتُسجل نتيجته في سجل التدقيق.</p>
 </main>
@@ -33,6 +46,7 @@ const URL='https://kjuixjdtqwcsnxefftrt.supabase.co';
 const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqdWl4amR0cXdjc254ZWZmdHJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxMzUsImV4cCI6MjA5OTI4OTEzNX0.z1clWrAOEJSlMVzPJlQVX7LE9g8rUU7gTaPbvuYusf0';
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}}),$=id=>document.getElementById(id);
 let profile=null,users=[],userSearchTimer=null,usersSequence=0,auditOffset=0,auditHasMore=false,reportsOffset=0,reportsHasMore=false,supportOffset=0,supportHasMore=false;
+let managementConfigSnapshot=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt=v=>v?new Date(v).toLocaleString('ar'):'—';
 function message(id,text,kind=''){const e=$(id);e.textContent=text;e.className='notice '+kind;e.classList.remove('hidden')}
@@ -87,21 +101,73 @@ async function loadAuditLogs(reset=true){
  auditOffset+=rows.length;auditHasMore=Boolean(result.hasMore);$('loadMoreAudit').classList.toggle('hidden',!auditHasMore);
  }catch(e){if(reset)$('auditList').innerHTML=`<div class="notice error">${esc(e.message||'تعذر تحميل سجل التدقيق.')}</div>`;message('msg',e.message||'تعذر تحميل سجل التدقيق.','error')}
 }
+function managementField(label,path,value,type='number',min=0,max=500000){
+ const safePath=esc(path),safeValue=esc(value??'');
+ if(type==='checkbox')return '<label style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid #ffffff20;border-radius:9px;background:#ffffff05;"><input type="checkbox" data-config-path="'+safePath+'" '+(value===true?'checked':'')+'><span>'+esc(label)+'</span></label>';
+ return '<label style="display:grid;gap:5px;color:#c8d8e8;font-size:10px;">'+esc(label)+'<input data-config-path="'+safePath+'" type="'+type+'" '+(type==='number'?'min="'+min+'" max="'+max+'" step="1"':'maxlength="400"')+' value="'+safeValue+'" style="width:100%;box-sizing:border-box;background:#091321;color:#fff;border:1px solid #344866;border-radius:9px;padding:9px;font:11px Cairo,sans-serif;"></label>';
+}
+function renderManagementConfigEditor(config){
+ managementConfigSnapshot=JSON.parse(JSON.stringify(config||{}));
+ const free=config?.free||{};
+ const host=$('managementVisualEditor');if(!host)return;
+ $('managementFreeFields').innerHTML=[
+  managementField('نطاق إظهار السوق المجاني (كم — ليس مدى راديو)','free.local_market_radius_km',free.local_market_radius_km??15,'number',1,100),
+  managementField('الرسائل المباشرة يومياً','free.daily_direct_messages',free.daily_direct_messages??100,'number',0,100000),
+  managementField('الرسائل المباشرة أسبوعياً','free.weekly_direct_messages',free.weekly_direct_messages??500,'number',0,500000),
+  managementField('رسائل السوق يومياً','free.daily_market_messages',free.daily_market_messages??50,'number',0,100000),
+  managementField('رسائل السوق أسبوعياً','free.weekly_market_messages',free.weekly_market_messages??250,'number',0,500000)
+ ].join('');
+ const plans=Array.isArray(config?.plans)?config.plans:[];
+ $('managementPlanFields').innerHTML=plans.map((plan,index)=>'<article style="padding:11px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff04;"><div class="top"><strong>'+esc(plan.name||plan.id)+'</strong><span class="muted">الخطة '+esc(plan.id)+'</span></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;">'+[
+  managementField('تجهيز الخطة (لا يفعّل اشتراكاً)','plans.'+index+'.enabled',plan.enabled===true,'checkbox'),
+  managementField('السعر الشهري (جنيه)','plans.'+index+'.monthly_price_egp',plan.monthly_price_egp??0,'number',0,100000),
+  managementField('مباشر يومي','plans.'+index+'.daily_direct_messages',plan.daily_direct_messages??1000,'number',0,100000),
+  managementField('مباشر أسبوعي','plans.'+index+'.weekly_direct_messages',plan.weekly_direct_messages??5000,'number',0,500000),
+  managementField('السوق يومي','plans.'+index+'.daily_market_messages',plan.daily_market_messages??500,'number',0,100000),
+  managementField('السوق أسبوعي','plans.'+index+'.weekly_market_messages',plan.weekly_market_messages??2500,'number',0,500000)
+ ].join('')+'</div></article>').join('')||'<p class="muted">لا توجد خطط مسجلة.</p>';
+ const methods=Array.isArray(config?.payment_methods)?config.payment_methods:[];
+ const methodNames={instapay:'InstaPay',vodafone_cash:'Vodafone Cash',bank_transfer:'تحويل بنكي',manual:'وسيلة دفع يدوية أخرى'};
+ $('managementPaymentFields').innerHTML=methods.map((method,index)=>'<article style="padding:11px;border:1px solid #ffffff20;border-radius:10px;background:#ffffff04;"><div class="top"><strong>'+esc(methodNames[method.type]||method.type)+'</strong><span class="muted">'+esc(method.type)+'</span></div>'+[
+  managementField('إظهار هذه الطريقة','payment_methods.'+index+'.enabled',method.enabled===true,'checkbox'),
+  managementField('الاسم الظاهر','payment_methods.'+index+'.label',method.label||methodNames[method.type]||'وسيلة دفع','text'),
+  managementField('مرجع/حساب التحويل العلني','payment_methods.'+index+'.account_reference',method.account_reference||'','text'),
+  managementField('تعليمات للمشترك','payment_methods.'+index+'.instructions',method.instructions||'','text')
+ ].join('')+'</article>').join('')||'<p class="muted">لا توجد وسائل دفع معرفة.</p>';
+}
+function collectManagementConfigEditor(){
+ const config=JSON.parse(JSON.stringify(managementConfigSnapshot||{}));
+ const inputs=$('managementVisualEditor')?.querySelectorAll('[data-config-path]')||[];
+ for(const input of inputs){
+  const parts=input.dataset.configPath.split('.');let cursor=config;
+  for(let i=0;i<parts.length-1;i++){const key=/^\\d+$/.test(parts[i])?Number(parts[i]):parts[i];if(cursor[key]===undefined||cursor[key]===null)cursor[key]=/^\\d+$/.test(parts[i+1])?[]:{};cursor=cursor[key];}
+  const last=parts[parts.length-1],key=/^\\d+$/.test(last)?Number(last):last;
+  cursor[key]=input.type==='checkbox'?input.checked:input.type==='number'?Number(input.value):input.value;
+ }
+ return config;
+}
 async function loadManagementConfig(){
- try{const result=await adminApi('get_management_config');$('managementConfigJson').value=JSON.stringify(result.config||{},null,2);$('managementConfigStatus').classList.add('hidden')}
+ try{const result=await adminApi('get_management_config');managementConfigSnapshot=result.config||{};$('managementConfigJson').value=JSON.stringify(managementConfigSnapshot,null,2);renderManagementConfigEditor(managementConfigSnapshot);$('managementConfigStatus').classList.add('hidden')}
  catch(error){message('managementConfigStatus',error.message||'تعذر تحميل إعدادات الإدارة.','error')}
 }
 async function saveManagementConfig(){
  if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}
- const button=$('saveManagementConfig');button.disabled=true;
- try{const config=JSON.parse($('managementConfigJson').value);const result=await adminApi('save_management_config',{config});$('managementConfigJson').value=JSON.stringify(result.config||config,null,2);message('managementConfigStatus','تم حفظ الإعدادات في الخادم وسُجلت العملية في سجل التدقيق.','success');await loadAuditLogs(true)}
+ const button=$('saveManagementConfig');if(button)button.disabled=true;
+ try{const config=JSON.parse($('managementConfigJson').value);const result=await adminApi('save_management_config',{config});managementConfigSnapshot=result.config||config;$('managementConfigJson').value=JSON.stringify(managementConfigSnapshot,null,2);renderManagementConfigEditor(managementConfigSnapshot);message('managementConfigStatus','تم حفظ الإعدادات في الخادم وسُجلت العملية في سجل التدقيق.','success');await loadAuditLogs(true)}
  catch(error){message('managementConfigStatus',error.message||'تعذر حفظ الإعدادات. تحقق من صيغة JSON والحدود المسموحة.','error')}
- finally{button.disabled=false}
+ finally{if(button)button.disabled=false}
+}
+async function saveManagementVisualConfig(){
+ if(!profile?.is_admin){message('msg','انتهت صلاحية المدير.','error');return}
+ const button=$('saveManagementVisualConfig');if(button)button.disabled=true;
+ try{$('managementConfigJson').value=JSON.stringify(collectManagementConfigEditor(),null,2);await saveManagementConfig()}
+ catch(error){message('managementConfigStatus',error.message||'تعذر تجميع الإعدادات المرئية.','error')}
+ finally{if(button)button.disabled=false}
 }
 async function refresh(){await Promise.all([counts(),requests(),loadReports(true),loadSupportTickets(true),loadUsers(),loadAuditLogs(true),loadManagementConfig()])}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();const button=$('loginForm').querySelector('button');button.disabled=true;try{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await verifyAdmin(data.session)}catch(error){await db.auth.signOut();showLogin();message('loginMsg',error.message||'تعذر تسجيل الدخول أو لا توجد صلاحية إدارية.','error')}finally{button.disabled=false}});
 $('logout').addEventListener('click',async()=>{await db.auth.signOut();showLogin()});
-$('reloadManagementConfig').addEventListener('click',loadManagementConfig);$('saveManagementConfig').addEventListener('click',saveManagementConfig);$('formatManagementConfig').addEventListener('click',()=>{try{$('managementConfigJson').value=JSON.stringify(JSON.parse($('managementConfigJson').value),null,2);message('managementConfigStatus','تم تنسيق JSON محلياً دون حفظ.','success')}catch(error){message('managementConfigStatus','صيغة JSON غير صالحة؛ لم يتم حفظها.','error')}});
+$('reloadManagementConfig').addEventListener('click',loadManagementConfig);$('saveManagementConfig').addEventListener('click',saveManagementConfig);$('saveManagementVisualConfig').addEventListener('click',saveManagementVisualConfig);$('formatManagementConfig').addEventListener('click',()=>{try{$('managementConfigJson').value=JSON.stringify(JSON.parse($('managementConfigJson').value),null,2);message('managementConfigStatus','تم تنسيق JSON محلياً دون حفظ.','success')}catch(error){message('managementConfigStatus','صيغة JSON غير صالحة؛ لم يتم حفظها.','error')}});
 $('refreshRequests').addEventListener('click',requests);$('refreshReports').addEventListener('click',()=>loadReports(true));$('reportStatus').addEventListener('change',()=>loadReports(true));$('loadMoreReports').addEventListener('click',()=>loadReports(false));$('refreshSupport').addEventListener('click',()=>loadSupportTickets(true));$('supportStatus').addEventListener('change',()=>loadSupportTickets(true));$('loadMoreSupport').addEventListener('click',()=>loadSupportTickets(false));$('refreshUsers').addEventListener('click',loadUsers);$('refreshAudit').addEventListener('click',()=>loadAuditLogs(true));$('loadMoreAudit').addEventListener('click',()=>loadAuditLogs(false));
 $('search').addEventListener('input',()=>{clearTimeout(userSearchTimer);userSearchTimer=setTimeout(loadUsers,300)});
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('requestsPane').classList.toggle('hidden',b.dataset.tab!=='requests');$('reportsPane').classList.toggle('hidden',b.dataset.tab!=='reports');$('supportPane').classList.toggle('hidden',b.dataset.tab!=='support');$('usersPane').classList.toggle('hidden',b.dataset.tab!=='users');$('auditPane').classList.toggle('hidden',b.dataset.tab!=='audit');$('maintenancePane').classList.toggle('hidden',b.dataset.tab!=='maintenance');$('plansPane').classList.toggle('hidden',b.dataset.tab!=='plans');if(b.dataset.tab==='plans')loadManagementConfig();if(b.dataset.tab==='reports')loadReports(true);if(b.dataset.tab==='support')loadSupportTickets(true)}));
