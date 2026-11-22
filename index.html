@@ -5978,14 +5978,14 @@ async function submitNewProductToMarket() {
             empty.style.display = shown ? 'none' : 'block';
         }
 
-        function marketCardRequiresInternet({isOnline,localMeshEnabled,distanceKm,localRadiusKm}) {
+        function marketCardRequiresInternet({isOnline,localMeshEnabled,distanceKm,localRadiusKm,hasLocalRoute}) {
             const radius=Number(localRadiusKm);
             const distance=Number(distanceKm);
             const hasLocation=Number.isFinite(distance)&&distance>=0;
             const withinLocalRadius=hasLocation&&Number.isFinite(radius)&&radius>=1&&distance<=radius;
             if(!isOnline&&!localMeshEnabled)return true;
             if(!localMeshEnabled)return false;
-            return !withinLocalRadius;
+            return !withinLocalRadius||hasLocalRoute!==true;
         }
 
         async function renderProductsList(searchQuery = '') {
@@ -6050,14 +6050,27 @@ async function submitNewProductToMarket() {
             });
             else filtered.sort((a,b)=>(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0));
             if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:11px;padding:20px;line-height:1.8;">لا توجد نتائج في هذا النطاق. جرّب توسيع النطاق أو حذف البحث.</div>';return;}
+            const localRadiusForListing=radiusValue==='all'?configuredLocalRadiusKm:Math.min(configuredLocalRadiusKm,Math.max(1,Number(radiusValue)||configuredLocalRadiusKm));
+            const locallyReachableSellerIds=new Set();
+            if(localMeshEnabled&&marketSearchLatitude!==null&&marketSearchLongitude!==null){
+                const candidateSellerIds=[...new Set(filtered.filter(prod=>{
+                    const hasCoords=prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude));
+                    return hasCoords&&alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude))<=localRadiusForListing;
+                }).map(prod=>String(prod.seller_id||'')).filter(Boolean))].slice(0,120);
+                try{
+                    const reachable=await window.AlwahaLocalMesh?.canRouteToAccounts?.(candidateSellerIds)||[];
+                    for(const accountId of reachable)locallyReachableSellerIds.add(String(accountId));
+                }catch(error){console.warn('[Alwaha Market] local route preflight failed:',error);}
+            }
             window.__alwahaMarketProductsById=new Map(filtered.map(product=>[String(product.id),product]));
             const offlineBanner=usedOfflineMarketCache?'<div role="status" style="grid-column:1/-1;padding:9px 11px;border:1px solid #ffd88b55;border-radius:10px;background:#ffd88b0b;color:#ffe3a3;font-size:10px;line-height:1.8;">تعرض الآن قائمة السوق المحفوظة سابقاً لهذا الحساب. الصور أو التفاصيل غير المخزنة قد تحتاج إنترنت؛ التفاعل المحلي متاح فقط مع شبكة حرة نشطة وضمن النطاق المجاني.</div>':'';
             container.innerHTML=offlineBanner+filtered.map(prod=>{
               const hasBuyerLocation=marketSearchLatitude!==null&&marketSearchLongitude!==null;
               const hasProductLocation=prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude));
               const productDistanceKm=hasBuyerLocation&&hasProductLocation?alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)):null;
-              const localRadiusKm=radiusValue==='all'?configuredLocalRadiusKm:Math.min(configuredLocalRadiusKm,Math.max(1,Number(radiusValue)||configuredLocalRadiusKm));
-              const requiresInternet=marketCardRequiresInternet({isOnline:navigator.onLine!==false,localMeshEnabled,distanceKm:productDistanceKm,localRadiusKm:localRadiusKm});
+              const localRadiusKm=localRadiusForListing;
+              const hasLocalRoute=!localMeshEnabled||locallyReachableSellerIds.has(String(prod.seller_id||''));
+              const requiresInternet=marketCardRequiresInternet({isOnline:navigator.onLine!==false,localMeshEnabled,distanceKm:productDistanceKm,localRadiusKm,hasLocalRoute});
               const urls=Array.isArray(prod.image_urls)?prod.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
               if(!urls.length&&typeof prod.image_url==='string'&&/^https?:\/\//i.test(prod.image_url))urls.push(prod.image_url);
               const distanceLabel=marketSearchLatitude!==null&&marketSearchLongitude!==null&&prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))?`${alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)).toFixed(1)} كم`:'';
