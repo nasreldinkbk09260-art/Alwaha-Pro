@@ -4,14 +4,14 @@ import assert from 'node:assert/strict';
 
 const html=fs.readFileSync('index.html','utf8');
 const vault=fs.readFileSync('alwaha-local-vault.js','utf8');
-const block=html.match(/function marketCardRequiresInternet\(\{isOnline,localMeshEnabled,distanceKm,localRadiusKm\}\)\s*\{[\s\S]*?\n\s{8}\}/);
+const block=html.match(/function marketCardRequiresInternet\(\{isOnline,localMeshEnabled,distanceKm,localRadiusKm,hasLocalRoute\}\)\s*\{[\s\S]*?\n\s{8}\}/);
 assert.ok(block,'market card access policy must be centralized in one pure helper');
 const policy=vm.runInNewContext('('+block[0]+')');
 
 const cases=[
   ['online public listing remains interactive', {isOnline:true,localMeshEnabled:false,distanceKm:null,localRadiusKm:15}, false],
-  ['online Mesh listing inside free radius is local', {isOnline:true,localMeshEnabled:true,distanceKm:4.2,localRadiusKm:15}, false],
-  ['online Mesh listing outside free radius needs Internet', {isOnline:true,localMeshEnabled:true,distanceKm:15.1,localRadiusKm:15}, true],
+  ['online Mesh listing inside free radius with a verified route is local', {isOnline:true,localMeshEnabled:true,distanceKm:4.2,localRadiusKm:15,hasLocalRoute:true}, false],
+  ['online Mesh listing outside free radius needs Internet', {isOnline:true,localMeshEnabled:true,distanceKm:15.1,localRadiusKm:15,hasLocalRoute:true}, true],
   ['offline without Mesh cannot interact with cached listings', {isOnline:false,localMeshEnabled:false,distanceKm:2,localRadiusKm:15}, true],
   ['offline Mesh listing inside free radius and with a verified route remains available', {isOnline:false,localMeshEnabled:true,distanceKm:14.9,localRadiusKm:15,hasLocalRoute:true}, false],
   ['inside the configured radius without a pinned reachable seller still requires Internet', {isOnline:false,localMeshEnabled:true,distanceKm:3,localRadiusKm:15,hasLocalRoute:false}, true],
