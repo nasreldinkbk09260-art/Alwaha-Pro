@@ -78,7 +78,7 @@ function send(method,params){
 }
 async function evaluate(expression){
  const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture:true});
- if(r.exceptionDetails)throw new Error(r.exceptionDetails.text||'Browser script exception');
+ if(r.exceptionDetails){const detail=r.exceptionDetails.exception||{};throw new Error('Browser script exception: '+[r.exceptionDetails.text,detail.description,detail.value===undefined?'':String(detail.value)].filter(Boolean).join(' | ')+' | details='+JSON.stringify(r.exceptionDetails));}
  return r.result?r.result.value:undefined;
 }
 async function screenshot(name){
