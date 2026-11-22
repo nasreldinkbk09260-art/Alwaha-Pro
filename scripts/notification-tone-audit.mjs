@@ -17,8 +17,8 @@ assert.ok(app.includes('playAlwahaInboundSound(kind)')&&app.includes('playAmbien
 assert.ok(workflow.includes('alwaha_message_chime.wav')&&workflow.includes('alwaha_notification_chime.wav'),'Android build copies both WAV resources into res/raw');
 assert.ok(app.includes("playAlwahaInboundSound('message')")&&app.includes("playAlwahaInboundSound('notification')"),'incoming messages and notifications are wired to the one-shot sounds');
 assert.ok(worker.includes('./assets/sounds/message_chime.wav')&&worker.includes('./assets/sounds/notification_chime.wav'),'both sounds are precached for offline playback');
-assert.ok(polish.includes("safeGet('alwaha_call_ringtone_choice_version') !== '3'")&&polish.includes("safeSet('alwaha_call_ringtone_choice_version', '3')")&&polish.includes("safeSet('alwaha_ringtone_choice', 'saffron_tide')"),'Saffron Tide is the one-time default ringtone migration');
-assert.ok(polish.includes("return saved === 'marimba_bloom' ? 'marimba_bloom' : 'saffron_tide'"),'future app updates preserve the user-selected call ringtone');
+assert.ok(polish.includes("safeGet('alwaha_call_ringtone_choice_version') !== '4'")&&polish.includes("safeSet('alwaha_call_ringtone_choice_version', '4')")&&polish.includes("safeSet('alwaha_ringtone_choice', 'marimba_bloom')"),'Marimba Bloom is the one-time default call ringtone migration');
+assert.ok(polish.includes("alwaha_ringtone_user_selected")&&polish.includes("explicitlySelected")&&polish.includes("if (userInitiated) safeSet('alwaha_ringtone_user_selected', 'true')"),'explicit user ringtone choices are distinguished from automatic defaults and survive updates');
 assert.ok(polish.includes("./assets/sounds/saffron_tide.mp3")&&polish.includes("./assets/sounds/marimba_bloom.mp3")&&polish.includes('audio.loop = !preview'),'the two full-length call ringtones remain local and loop only for incoming calls');
 
 assert.ok(workflow.includes('npm run prebuild')&&readPackageScript(),'CI generates original tone resources before release audits');
@@ -28,4 +28,4 @@ function readPackageScript(){
   return typeof pkg.scripts?.prebuild==='string'&&pkg.scripts.prebuild.includes('scripts/generate-notification-tones.mjs');
 }
 
-console.log('NOTIFICATION_TONE_AUDIT=PASS (original one-shot chimes, persistent Saffron Tide default, user selection preservation, offline precache and Android resource generation)');
+console.log('NOTIFICATION_TONE_AUDIT=PASS (original one-shot chimes, persistent Marimba Bloom default, user selection preservation, offline precache and Android resource generation)');
