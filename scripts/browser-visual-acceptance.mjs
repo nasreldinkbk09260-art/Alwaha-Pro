@@ -180,7 +180,7 @@ async function auditActiveControls(label,expectedDuplicateScopes=null){
  const duplicateActions=[...describe(globalGroups,"global"),...[...cardGroups.values()].flatMap(groups=>describe(groups,"card"))];
  const directClickListenerCount=controls.reduce((sum,e)=>sum+(e.__alwahaAuditListeners||[]).filter(x=>x.type==="click").length,0);
  return {controls:controls.length,directClickListenerCount,duplicateIds,unnamed,implicitSubmit,duplicateActions};
-`);
+})()`);
  if(expectedDuplicateScopes){
   assert.equal(result.duplicateIds.length,0,label+': probe introduced duplicate DOM IDs');
   assert.equal(result.unnamed.length,0,label+': probe introduced unnamed controls');
