@@ -31,18 +31,6 @@ const callStart=html.indexOf('function updateCallUi(state, meta = {})'),callEnd=
 if(callUi.includes("callCloseBtn.style.display = state === 'idle' ? 'inline-block' : 'none'")&&callUi.includes("endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none'"))console.log('PASS: call close and hang-up are mutually exclusive.');else throw new Error('Call control de-duplication missing.');
 if(browserVisual.includes('auditActiveControls')&&browserVisual.includes('CONTROL-AUDIT.json')&&browserVisual.includes('duplicate visible semantic actions'))console.log('PASS: Chromium performs live semantic control inspection.');else throw new Error('Live semantic audit missing from browser runner.');
 
-const nativeAudioPlugin=fs.readFileSync('scripts/android/AlwahaAudioRoutePlugin.java','utf8');
-const browserVisual=fs.readFileSync('scripts/browser-visual-acceptance.mjs','utf8');
-if(html.includes('async function shareTextContent')&&html.includes('shareReelContent'))console.log('PASS: post and reel content-sharing actions remain independent.');else throw new Error('Post/reel content-sharing actions were removed unexpectedly.');
-if(!html.includes('share-app-btn-main')&&!html.includes('shareAlwahaApp')&&!nativeAudioPlugin.includes('shareApk'))console.log('PASS: application APK-share UI and native export method are absent.');else throw new Error('Removed application APK-share path has returned.');
-const homeStart=html.indexOf('<section id="home-section"'),marketStart=html.indexOf('<section id="market-section"',homeStart);
-const homeSection=homeStart>=0?html.slice(homeStart,marketStart<0?html.length:marketStart):'';
-if(!homeSection.includes('toggleInternalNotificationCenter')&&html.includes('notification-nav-item'))console.log('PASS: home uses the single persistent notification entry.');else throw new Error('Duplicate home notification entry detected.');
-const callStart=html.indexOf('function updateCallUi(state, meta = {})'),callEnd=html.indexOf('function startCallTimer()',callStart);
-const callUi=callStart>=0?html.slice(callStart,callEnd):'';
-if(callUi.includes("callCloseBtn.style.display = state === 'idle' ? 'inline-block' : 'none'")&&callUi.includes("endBtn.style.display = ['outgoing','connected','connecting'].includes(state) ? 'inline-block' : 'none'"))console.log('PASS: call close and hang-up controls are mutually exclusive.');else throw new Error('Call end/close control de-duplication missing.');
-if(browserVisual.includes('auditActiveControls')&&browserVisual.includes('CONTROL-AUDIT.json')&&browserVisual.includes('duplicate visible semantic actions'))console.log('PASS: mobile Chromium includes live DOM semantic control inspection.');else throw new Error('Live DOM semantic control inspection is missing.');
-
 const chessEngine=fs.readFileSync('assets/chess.min.js','utf8');
 if(/\bexport\s*\{/.test(chessEngine)||!chessEngine.includes("window.Chess=Chess"))throw new Error('Chess engine must expose window.Chess for the classic games runtime.');
 console.log('PASS: chess engine is compatible with the classic games runtime.');
