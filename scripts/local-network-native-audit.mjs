@@ -8,7 +8,6 @@ const workflow=read('.github/workflows/build-apk-aab-release.yml');
 const pkg=JSON.parse(read('package.json'));
 const html=read('index.html');
 const browser=read('scripts/browser-visual-acceptance.mjs');
-const mesh=read('alwaha-local-mesh.js');
 const meshKeyMigration=read('supabase/migrations/20261121042759_alwaha_mesh_public_keys.sql');
 const meshKeyTest=read('supabase/tests/20261121042759_alwaha_mesh_public_keys.sql');
 const build=read('scripts/build-web.mjs');
