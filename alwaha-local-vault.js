@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const DB_NAME='alwaha-pro-local-vault-v1', DB_VERSION=1, STORE='records';
-  const PREF_KEYS=['alwaha_theme','alwaha_season','alwaha_language','alwaha_data_saver','alwaha_reduced_motion','alwaha_ringtone_choice','alwaha_nav_order_v1','alwaha_nav_stack_v1','alwaha_nav_hidden_v1','alwaha_nav_position_v1'];
+  const PREF_KEYS=['alwaha_theme','alwaha_season','alwaha_language','alwaha_data_saver','alwaha_reduced_motion','alwaha_ringtone_choice','alwaha_call_ringtone_choice_version','alwaha_ringtone_user_selected','alwaha_call_ringtone_enabled','alwaha_message_sounds_enabled','alwaha_notification_sounds_enabled','alwaha_nav_order_v1','alwaha_nav_stack_v1','alwaha_nav_hidden_v1','alwaha_nav_position_v1'];
   const enc=new TextEncoder(), dec=new TextDecoder();
   let dbPromise=null;
   function openDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:'key'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB unavailable'));});return dbPromise;}
