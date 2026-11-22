@@ -500,6 +500,8 @@ jobs:
                   1
               )
               activity.write_text(source, encoding='utf-8')
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest = manifest_path.read_text(encoding='utf-8')
           service_marker = 'android:name=".AlwahaMeshBridgeService"'
           if service_marker not in manifest:
               service = """
