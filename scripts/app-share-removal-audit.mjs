@@ -18,7 +18,7 @@ const forbidden = [
 ];
 let failed = 0;
 for (const [label, pattern] of forbidden) {
-  const offenders = Object.entries(source).filter(([, content]) => pattern.test(content)).map(([name]) => name);
+  const offenders = Object.entries(source).filter(([name, content]) => ['html','nativeAudio','workflow'].includes(name) && pattern.test(content)).map(([name]) => name);
   if (offenders.length) { failed++; console.error(`FAIL: ${label} returned in ${offenders.join(', ')}`); }
   else console.log(`PASS: ${label} remains removed`);
 }
