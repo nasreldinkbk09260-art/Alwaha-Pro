@@ -163,6 +163,13 @@ try{
  await section('reels-section','reels');
  await visible('#reels-section h2','reels section heading');
  await visible('#reels-section button[onclick*="toggleFloatingAddMenu"]','add reels content button');
+ await click('#reels-section button[onclick*="toggleFloatingAddMenu"]','open reels content actions');
+ await waitFor(()=>evaluate('getComputedStyle(document.getElementById("floating-options-menu")).display==="flex"'),'reels content action menu');
+ await visible('#floating-options-menu','reels content action menu');
+ await auditActiveControls('reels add menu');
+ assert.equal(await evaluate('document.querySelectorAll("#floating-options-menu button[onclick=\\"toggleFloatingAddMenu(false)\\"]").length'),1,'Reels action menu must expose exactly one standalone close action.');
+ await click('#floating-options-menu button[onclick="toggleFloatingAddMenu(false)"]','close reels content action menu');
+ await waitFor(()=>evaluate('getComputedStyle(document.getElementById("floating-options-menu")).display==="none"'),'reels content menu closes');
  await auditActiveControls('reels');
  await screenshot('02-reels.png');
  await click('.nav-item.games-nav','games navigation');
@@ -197,7 +204,36 @@ try{
  await visible('#market-submit-product-btn','market publish action');
  await auditActiveControls('market sell');
  await screenshot('06-market-sell.png');
+ // Verify both buyer and seller listing tabs with an isolated test identity and fixture data.
+ await evaluate(`window.__marketTabSmoke={requireAuthenticatedUser,getCurrentAuthUser,supabaseFetch};
+ window.__ciMarketOwner={id:"ci-market-owner"};
+ window.__ciMarketProducts=[
+   {id:"ci-active-product",seller_id:"ci-market-owner",title:"CI Active Listing",price:"100",category:"اختبار",description:"Active fixture",image_url:"",image_urls:[],status:"active",created_at:new Date().toISOString()},
+   {id:"ci-archived-product",seller_id:"ci-market-owner",title:"CI Archived Listing",price:"200",category:"اختبار",description:"Archived fixture",image_url:"",image_urls:[],status:"archived",created_at:new Date().toISOString()},
+   {id:"ci-sold-product",seller_id:"ci-market-owner",title:"CI Sold Listing",price:"300",category:"اختبار",description:"Sold fixture",image_url:"",image_urls:[],status:"sold",created_at:new Date().toISOString()}
+ ];
+ requireAuthenticatedUser=async()=>window.__ciMarketOwner;
+ getCurrentAuthUser=async()=>window.__ciMarketOwner;
+ supabaseFetch=async url=>{
+   const path=String(url);
+   if(path.startsWith("products?seller_id=eq.ci-market-owner"))return window.__ciMarketProducts;
+   if(path.startsWith("market_transactions?select=id&limit=0"))return [];
+   if(path.startsWith("market_conversations?select=id"))return [];
+   if(path.startsWith("products?"))return [];
+   return [];
+ };
+ true;`);
  await evaluate('switchMarketSubView("buy")');
+ await visible('#market-buy-view','market buyer products tab');
+ await visible('#market-search-input','market buyer search');
+ await auditActiveControls('market buy');
+ await evaluate('switchMarketSubView("my-items")');
+ await waitFor(()=>evaluate('document.querySelector("#my-market-items-container")?.textContent.includes("CI Active Listing")&&document.querySelector("#my-market-items-container")?.textContent.includes("CI Archived Listing")&&document.querySelector("#my-market-items-container")?.textContent.includes("CI Sold Listing")'),'market seller listing fixtures and statuses');
+ await visible('#market-my-items-view','market seller listings tab');
+ await auditActiveControls('market my items');
+ const listingActions=await evaluate(`({activeEdit:!!document.querySelector('#my-market-items-container button[onclick*="editMyMarketItem"]'),activeArchive:!!document.querySelector('#my-market-items-container button[onclick*="deleteMyMarketItem"]'),activePromotion:!!document.querySelector('#my-market-items-container button[onclick*="promoteMyProduct"]'),archivedRepublish:!!document.querySelector('#my-market-items-container button[onclick*="reactivateMyProduct"]'),soldNoEdit:!document.querySelector('#my-market-items-container article button[onclick*="editMyMarketItem"]')})`);
+ assert.deepEqual(listingActions,{activeEdit:true,activeArchive:true,activePromotion:true,archivedRepublish:true,soldNoEdit:true},'Seller listing actions must match active, archived and sold listing states.');
+ await evaluate(`switchMarketSubView("buy");Object.assign(window,{requireAuthenticatedUser:window.__marketTabSmoke.requireAuthenticatedUser,getCurrentAuthUser:window.__marketTabSmoke.getCurrentAuthUser,supabaseFetch:window.__marketTabSmoke.supabaseFetch});delete window.__marketTabSmoke;delete window.__ciMarketOwner;delete window.__ciMarketProducts;`);
 
  // Buyer/seller transaction lifecycle against a disposable in-memory Supabase mock; no production writes.
  const deliverySetup=await evaluate(`window.__deliverySmoke={requireAuthenticatedUser,getCurrentAuthUser,supabaseFetch,prompt:window.prompt,confirm:window.confirm};
