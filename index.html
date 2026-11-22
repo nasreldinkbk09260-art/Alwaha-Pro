@@ -5978,6 +5978,16 @@ async function submitNewProductToMarket() {
             empty.style.display = shown ? 'none' : 'block';
         }
 
+        function marketCardRequiresInternet({isOnline,localMeshEnabled,distanceKm,localRadiusKm}) {
+            const radius=Number(localRadiusKm);
+            const distance=Number(distanceKm);
+            const hasLocation=Number.isFinite(distance)&&distance>=0;
+            const withinLocalRadius=hasLocation&&Number.isFinite(radius)&&radius>=1&&distance<=radius;
+            if(!isOnline&&!localMeshEnabled)return true;
+            if(!localMeshEnabled)return false;
+            return !withinLocalRadius;
+        }
+
         async function renderProductsList(searchQuery = '') {
             const requestId=++marketProductsRenderRequestId;
             const container=document.getElementById('market-products-list-container');if(!container)return;
@@ -5989,16 +5999,41 @@ async function submitNewProductToMarket() {
             if(requestId!==marketProductsRenderRequestId)return;
             // Backward compatibility: if optional columns/migrations are absent, load legacy products.
             const queryError=window.__alwahaLastApiError||{};
-            let usedLegacyMarketQuery=false;
+            let usedLegacyMarketQuery=false,usedOfflineMarketCache=false;
             if(!Array.isArray(products) && (queryError.status===400 || queryError.status===404)) {
                 usedLegacyMarketQuery=true;
                 products=await supabaseFetch('products?select=id,seller_id,title,price,category,description,image_url,created_at&order=created_at.desc&limit=120');
                 if(requestId!==marketProductsRenderRequestId)return;
                 if(Array.isArray(products)) products=products.map(p=>({...p,image_urls:p.image_url?[p.image_url]:[],status:p.status||'active'}));
             }
-            if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). ${escapeHtml(e.message||'تحقق من اتصال الإنترنت وصلاحيات القراءة في قاعدة البيانات.')}</div>`;return;}
-            marketLifecycleSchemaReady=!usedLegacyMarketQuery;
-            if(!products.length){container.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
+            if(!Array.isArray(products)){
+                const viewer=await getCurrentAuthUser();
+                const cached=viewer?await window.AlwahaLocalVault?.getAccountViewCache?.(viewer.id,'market-products'):null;
+                if(Array.isArray(cached)){
+                    products=cached;
+                    usedOfflineMarketCache=true;
+                }
+            }
+            if(!Array.isArray(products)){const e=window.__alwahaLastApiError||{};container.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:#ff9ab4;font-size:11px;padding:20px;line-height:1.9;">تعذر تحميل السوق (${escapeHtml(e.status||'اتصال')}). لا توجد قائمة محفوظة سابقاً لهذا الحساب؛ افتح السوق عند توفر الإنترنت لتحميلها محلياً. ${escapeHtml(e.message||'')}</div>`;return;}
+            marketLifecycleSchemaReady=!usedLegacyMarketQuery&&!usedOfflineMarketCache;
+            if(!usedOfflineMarketCache){
+                try{
+                    const viewer=await getCurrentAuthUser();
+                    if(viewer&&Array.isArray(products)){
+                        const safeSnapshot=products.slice(0,120).map(p=>({
+                            id:p.id,seller_id:p.seller_id,title:String(p.title||'').slice(0,160),price:String(p.price||'').slice(0,60),
+                            category:String(p.category||'').slice(0,60),description:String(p.description||'').slice(0,1200),
+                            image_url:String(p.image_url||'').slice(0,2048),image_urls:Array.isArray(p.image_urls)?p.image_urls.slice(0,6).filter(x=>typeof x==='string').map(x=>x.slice(0,2048)):[],
+                            created_at:p.created_at,status:p.status||'active',location_label:String(p.location_label||'').slice(0,120),
+                            latitude:Number.isFinite(Number(p.latitude))&&p.latitude!==null?Number(p.latitude):null,
+                            longitude:Number.isFinite(Number(p.longitude))&&p.longitude!==null?Number(p.longitude):null,
+                            promoted_until:p.promoted_until||null
+                        }));
+                        await window.AlwahaLocalVault?.saveAccountViewCache?.(viewer.id,'market-products',safeSnapshot);
+                    }
+                }catch(error){console.warn('[Alwaha Market] encrypted offline listing snapshot was not updated:',error);}
+            }
+            if(!products.length){container.innerHTML=usedOfflineMarketCache?'<div role="status" style="grid-column:1/-1;text-align:center;color:#ffe3a3;font-size:11px;padding:20px;">قائمة السوق المحفوظة لهذا الحساب فارغة. افتح السوق عند توفر الإنترنت لتحميل الإعلانات.</div>':'<div style="grid-column:1/-1;text-align:center;color:#aaa;font-size:12px;padding:20px;">لا توجد سلع معروضة.</div>';return;}
             const q=String(searchQuery||'').trim().toLowerCase();
             const radiusValue=document.getElementById('market-radius-select')?.value||'all';
             let filtered=products.filter(prod=>(!prod.status||prod.status==='active')&&(!q||`${prod.title||''} ${prod.price||''} ${prod.category||''} ${prod.description||''} ${prod.location_label||''}`.toLowerCase().includes(q)));
@@ -6016,12 +6051,13 @@ async function submitNewProductToMarket() {
             else filtered.sort((a,b)=>(Date.parse(b.promoted_until||'')>Date.now()?1:0)-(Date.parse(a.promoted_until||'')>Date.now()?1:0));
             if(!filtered.length){container.innerHTML='<div id="market-search-empty" style="grid-column:1/-1;text-align:center;color:#aaa;font-size:11px;padding:20px;line-height:1.8;">لا توجد نتائج في هذا النطاق. جرّب توسيع النطاق أو حذف البحث.</div>';return;}
             window.__alwahaMarketProductsById=new Map(filtered.map(product=>[String(product.id),product]));
-            container.innerHTML=filtered.map(prod=>{
+            const offlineBanner=usedOfflineMarketCache?'<div role="status" style="grid-column:1/-1;padding:9px 11px;border:1px solid #ffd88b55;border-radius:10px;background:#ffd88b0b;color:#ffe3a3;font-size:10px;line-height:1.8;">تعرض الآن قائمة السوق المحفوظة سابقاً لهذا الحساب. الصور أو التفاصيل غير المخزنة قد تحتاج إنترنت؛ التفاعل المحلي متاح فقط مع شبكة حرة نشطة وضمن النطاق المجاني.</div>':'';
+            container.innerHTML=offlineBanner+filtered.map(prod=>{
               const hasBuyerLocation=marketSearchLatitude!==null&&marketSearchLongitude!==null;
               const hasProductLocation=prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude));
               const productDistanceKm=hasBuyerLocation&&hasProductLocation?alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)):null;
               const localRadiusKm=radiusValue==='all'?configuredLocalRadiusKm:Math.min(configuredLocalRadiusKm,Math.max(1,Number(radiusValue)||configuredLocalRadiusKm));
-              const requiresInternet=localMeshEnabled&&(productDistanceKm===null||productDistanceKm>localRadiusKm);
+              const requiresInternet=marketCardRequiresInternet({isOnline:navigator.onLine!==false,localMeshEnabled,distanceKm:productDistanceKm,localRadiusKm:localRadiusKm});
               const urls=Array.isArray(prod.image_urls)?prod.image_urls.filter(url=>typeof url==='string'&&/^https?:\/\//i.test(url)).slice(0,6):[];
               if(!urls.length&&typeof prod.image_url==='string'&&/^https?:\/\//i.test(prod.image_url))urls.push(prod.image_url);
               const distanceLabel=marketSearchLatitude!==null&&marketSearchLongitude!==null&&prod.latitude!==null&&prod.longitude!==null&&Number.isFinite(Number(prod.latitude))&&Number.isFinite(Number(prod.longitude))?`${alwahaDistanceKm(marketSearchLatitude,marketSearchLongitude,Number(prod.latitude),Number(prod.longitude)).toFixed(1)} كم`:'';
