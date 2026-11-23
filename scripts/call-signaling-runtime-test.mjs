@@ -72,6 +72,8 @@ const stalledContext={
   stopCallTimer(){},
   resetAlwahaCallAudioRoute(){return new Promise(()=>{});},
   triggerToastNotification(){},
+  setTimeout,
+  clearTimeout,
   document:{getElementById(){return null;}}
 };
 vm.createContext(stalledContext);
@@ -89,6 +91,7 @@ assert.ok(ui.some(item=>item.modal===true),'remote-ended must reopen the call re
 assert.equal(stalled.call,null,'the media session is detached synchronously');
 assert.equal(stalled.roomChannel,null,'the room channel reference is detached synchronously');
 await stalled.endCleanupPromise;
+assert.ok(Date.now()-cleanupStartedAt>=10,'the cleanup probe must actually wait for its short timeout');
 assert.ok(Date.now()-cleanupStartedAt<250,'hung native audio and Realtime cleanup must be bounded');
 assert.ok(ui.some(item=>item.state==='idle'),'the call close action remains available after remote termination');
 
