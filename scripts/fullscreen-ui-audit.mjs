@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 const fail=[];const pass=(s)=>console.log('PASS:',s);const check=(s,v)=>{if(v)pass(s);else{console.error('FAIL:',s);fail.push(s);}};
 const html=fs.readFileSync('index.html','utf8'),games=fs.readFileSync('games.js','utf8'),exp=fs.readFileSync('alwaha-experience.js','utf8'),shell=fs.readFileSync('alwaha-modal-shell.js','utf8'),sw=fs.readFileSync('sw.js','utf8'),build=fs.readFileSync('scripts/build-web.mjs','utf8'),themeCss=fs.readFileSync('alwaha-theme-system.css','utf8');
+const cacheName=(sw.match(/const CACHE_NAME = ['"]([^'"]+)['"]/)||[])[1]||'';
+const hasValidCacheNamespace=cacheName.startsWith('alwaha-pro-v3.0.4-');
+function hasVersionedScript(asset){
+ const marker='src="./'+asset+'?v=',start=html.indexOf(marker);if(start<0)return false;
+ const revision=html.slice(start+marker.length).split('"')[0];
+ return !!revision&&sw.includes("'./"+asset+"'")&&sw.includes("'./"+asset+"?v="+revision+"'");
+}
 check('market button is beside buy/sell/my items and opens a dedicated page',html.includes('id="market-conversations-open"')&&html.includes('onclick="openMarketConversationsPage()"')&&html.includes('function openMarketConversationsPage()'));
 check('shared camera preview is queried by a scoped data attribute, not a duplicated ID',html.includes('data-camera-live-video')&&html.includes("document.querySelector('#camera-view-box video[data-camera-live-video]')")&&!html.includes('id="camera-live-video"'));
 check('original market conversation and transaction DOM is preserved and moved, not duplicated',html.includes('id="market-conversations-panel"')&&html.includes("placeholder.id='market-conversations-panel-placeholder'")&&html.includes("content.appendChild(panel)")&&html.includes('market-transactions-container'));
@@ -23,12 +30,12 @@ check('theme palette and backdrop are applied globally', html.includes('alwaha-t
 check('legacy season and old theme preferences are migrated to the three approved themes',exp.includes('OLD_SEASONS')&&exp.includes("safeGet('alwaha_theme')")&&exp.includes("nature:'oasis'")&&exp.includes("tech:'abyss'")&&exp.includes("soft:'default'"));
 check('permanent post/reel deletion explains scope and asks the user to preserve wanted content first',html.includes('لا توجد استعادة من داخل التطبيق')&&html.includes('احفظ نسخة من النص والصورة')&&html.includes('احفظ ملف الفيديو على الهاتف أولاً'));
 check('vault restore and local cleanup explain exactly what is replaced or cleared',fs.readFileSync('alwaha-local-vault.js','utf8').includes('ستُستبدل المسودات الحالية فقط')&&fs.readFileSync('alwaha-local-vault.js','utf8').includes('سيتم مسح المسودات المحلية المحفوظة فقط'));
-check('opening/closing notifications does not mark every notification read',/async function toggleInternalNotificationCenter\([\s\S]*?if\(center\.classList\.contains\('alwaha-notifications-open'\)\)[\s\S]*?window\.AlwahaModalShell/.test(html)&&html.includes('function markSingleNotificationRead'));
+check('opening and explicit close actions do not mark notifications read',/function closeInternalNotificationCenter\([\s\S]*?notificationRenderRequestId\+\+[\s\S]*?center\.style\.display='none'[\s\S]*?window\.AlwahaModalShell/.test(html)&&/async function toggleInternalNotificationCenter\([\s\S]*?requireAuthenticatedUser\([\s\S]*?renderInternalNotificationCenter\(\)/.test(html)&&html.includes('function markSingleNotificationRead'));
 check('accepting a request removes only its related request rows and does not wait for user-list refresh',/async function respondFriendRequest\([\s\S]*?await supabaseFetch\(`friend_requests\?id=eq\.[\s\S]*?relatedRows\.forEach\(row=>row\.remove\(\)\)[\s\S]*?void loadAllRegisteredUsersList\(\)/.test(html));
-check('modal module is included with versioned URL, web build and both service-worker cache paths',html.includes('src="./alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118"')&&build.includes('alwaha-modal-shell.js')&&sw.includes("'./alwaha-modal-shell.js'")&&sw.includes("'./alwaha-modal-shell.js?v=3.0.4-iphone-pwa-20261118'"));
+check('modal module is included with versioned URL, web build and both service-worker cache paths',hasVersionedScript('alwaha-modal-shell.js')&&build.includes('alwaha-modal-shell.js'));
 check('modal observation is coalesced and duplicate navigation observer is removed',shell.includes('syncScheduled=false')&&shell.includes('function scheduleSync()')&&shell.includes('new MutationObserver(records=>{if(hasRelevantMutation(records))scheduleSync();})')&&shell.includes('if(changed)window.AlwahaExperience?.syncDock?.();')&&!exp.includes('modalObserver')&&!exp.includes('new MutationObserver'));
 
-check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',sw.includes('alwaha-pro-v3.0.4-iphone-pwa-20261118')&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
+check('3.0.4 final service-worker cache namespace is active and legacy cache is not reused',hasValidCacheNamespace&&!sw.includes('alwaha-pro-v3.0.2-r7.5-seasonal-themes-20261103'));
 check('local-network share remains removed',!/(toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|openAlwahaLocalNetworkPanel)/.test(html));
 
 const functionNames=[...html.matchAll(/(?:async[ ]+)?function[ ]+([A-Za-z_$][A-Za-z0-9_$]*)[ ]*[(]/g)].map(match=>match[1]);
@@ -38,7 +45,7 @@ const navMarkup=navStart>=0&&navEnd>navStart?html.slice(navStart,navEnd):'';
 const sectionTags=html.match(/<section[^>]*>/g)||[];
 const appSectionIds=sectionTags.filter(tag=>tag.includes('app-section')).map(tag=>tag.match(/id=["']([^"']+)["']/)?.[1]).filter(Boolean);
 const navTargets=[...navMarkup.matchAll(/showSection[(]'([^']+)'/g)].map(match=>match[1]);
-check('all five available navigation buttons target real app sections while Games stay closed',navTargets.length===5&&navTargets.every(id=>id!=='games-section'&&appSectionIds.includes(id))&&new Set(navTargets).size===5&&/class="nav-item games-nav"[^>]*disabled[^>]*aria-disabled="true"/.test(navMarkup)&&!/<button[^>]*class="nav-item games-nav"[^>]*onclick=/.test(navMarkup));
+check('all six main navigation buttons target real app sections and multiplayer Games is enabled',navTargets.length===6&&navTargets.every(id=>appSectionIds.includes(id))&&new Set(navTargets).size===6&&navTargets.includes('games-section')&&/class="nav-item games-nav"[^>]*onclick="showSection\('games-section', this\)"/.test(navMarkup)&&!/<button[^>]*class="nav-item games-nav"[^>]*disabled/.test(navMarkup));
 check('profile subpages fill the dynamic viewport and respect Android safe areas',html.includes('.sub-profile-view-box{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;min-height:100svh!important;')&&html.includes('padding:max(16px,env(safe-area-inset-top))'));
 check('full-screen overlay shell uses fixed viewport bounds and internal scrolling',html.includes('.alwaha-fullscreen-layer{position:fixed!important;inset:0!important;')&&html.includes('height:100vh!important;height:100dvh!important;min-height:100svh!important;max-width:none!important;max-height:none!important;')&&html.includes('overflow:hidden!important;display:none;align-items:stretch!important;justify-content:stretch!important;'));
 check('Android back closes game QR camera with track cleanup and stops room polling before generic modal recovery',html.includes("typeof window.closeAlwahaGameQrScanner === 'function') { window.closeAlwahaGameQrScanner(); return;")&&html.includes("typeof window.closeAlwahaGameRoom === 'function') { window.closeAlwahaGameRoom(); return;")&&html.indexOf('gameQrScanner')<html.indexOf('const backLayers = Array.from(document.querySelectorAll('));

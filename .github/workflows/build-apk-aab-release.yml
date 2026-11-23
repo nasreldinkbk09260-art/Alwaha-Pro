@@ -6,8 +6,7 @@ name: Alwaha-Pro • APK/AAB CI + main-only website publish
 on:
   push:
     branches:
-      - main
-      - alwaha-pro-3.0.3-dev
+      - '**'
   workflow_dispatch:
 
 permissions:
@@ -79,6 +78,8 @@ jobs:
 
       - name: Type-check authenticated admin API
         run: deno check --node-modules-dir=auto supabase/functions/admin-api/index.ts
+      - name: Type-check authenticated ICE and public quota configuration API
+        run: deno check --node-modules-dir=auto supabase/functions/call-config/index.ts
       - name: Type-check username registration and login API
         run: deno check --node-modules-dir=auto supabase/functions/username-auth/index.ts
       - name: Type-check authenticated profile update API
@@ -112,6 +113,8 @@ jobs:
           test -s scripts/build-web.mjs
           test -s scripts/native-back-handler.mjs
           test -s scripts/android/AlwahaAudioRoutePlugin.java
+          test -s scripts/android/AlwahaLocalNetworkPlugin.java
+          test -s scripts/local-network-native-audit.mjs
           test -s games.js
           test -s production-polish.js
           test -s alwaha-call-feedback.js
@@ -174,6 +177,17 @@ jobs:
           test -s supabase/migrations/20261113050000_trigger_definer_empty_search_path.sql
           test -s supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql
           test -s supabase/tests/20261114230000_user_safety_reports_and_blocks.sql
+          test -s supabase/migrations/20261118180810_split_anon_public_content_policies.sql
+          test -s supabase/migrations/20261120010000_post_comment_counts_view.sql
+          test -s supabase/tests/20261120010000_post_comment_counts_view.sql
+          test -s supabase/migrations/20261120210000_marketplace_delivery_workflow.sql
+          test -s supabase/tests/20261120210000_marketplace_delivery_workflow.sql
+          test -s scripts/marketplace-delivery-audit.mjs
+
+          test -s supabase/tests/post-comment-counts-ci-bootstrap.sql
+
+          test -s supabase/tests/20261118180810_split_anon_public_content_policies.sql
+          test -s scripts/public-content-anon-policy-audit.mjs
           test -s supabase/functions/user-safety/index.ts
           test -s supabase/functions/profile-update/index.ts
           test -s supabase/functions/support-tickets/index.ts
@@ -244,6 +258,7 @@ jobs:
           node --check alwaha-modal-shell.js
           node --check alwaha-runtime-guard.js
           node --check alwaha-kids-room.js
+          node --check alwaha-profile-editor.js
           find scripts -maxdepth 1 -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
           test -s assets/chess.min.js
           node <<'NODE'
@@ -265,6 +280,9 @@ jobs:
         shell: bash
         run: npm run audit:release
 
+      - name: Audit anonymous public-content and authenticated block policies
+        run: npm run audit:public-content-rls
+
       - name: Run mobile performance and storage audit
         run: npm run audit:performance
 
@@ -277,6 +295,9 @@ jobs:
       - name: Run startup/runtime resilience audit
         run: npm run audit:runtime
 
+
+      - name: Audit native Wi-Fi Direct and Bluetooth discovery foundation
+        run: npm run audit:local-network-native
 
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
@@ -302,6 +323,12 @@ jobs:
       - name: Run profile registration, login, and privacy acceptance audit
         run: npm run audit:profile
 
+      - name: Run login responsiveness and inline error regression
+        run: npm run audit:auth-login
+
+      - name: Validate in-app beta update checker
+        run: npm run audit:update
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 
@@ -311,6 +338,9 @@ jobs:
       - name: Run marketplace purchase and sell acceptance audit
         run: npm run audit:marketplace-ui
 
+      - name: Run marketplace delivery request, privacy and transition audit
+        run: npm run audit:marketplace-delivery
+
       - name: Run cross-release repair reconciliation audit
         run: npm run audit:reconciliation
 
@@ -319,6 +349,8 @@ jobs:
 
       - name: Type-check server-authoritative game Edge Function
         run: deno check --node-modules-dir=auto supabase/functions/game-actions/index.ts
+      - name: Runtime-test server-authoritative game rules
+        run: deno test --node-modules-dir=auto supabase/functions/game-actions/game-rules.test.ts
       - name: Run server-authoritative multiplayer game audit
         run: npm run audit:games
       - name: Run retention, kids-room, and backup audit
@@ -342,7 +374,19 @@ jobs:
         shell: bash
         run: npm ci --no-audit --no-fund
 
-      - name: Audit dependency vulnerabilities
+      - name: Generate original notification chimes and run sound/reels audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run prebuild
+          npm run audit:notification-tones
+          npm run audit:reels
+
+      - name: Audit production dependency vulnerabilities
+        shell: bash
+        run: npm audit --omit=dev --audit-level=moderate
+
+      - name: Audit dependency vulnerabilities including build tooling
         shell: bash
         run: npm audit --audit-level=high
 
@@ -372,6 +416,29 @@ jobs:
           test -s dist/alwaha-theme-system.css
           echo 'Web build validated.'
 
+      - name: Set up Chrome for mobile visual acceptance
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          install-dependencies: true
+
+      - name: Run mobile browser visual acceptance
+        shell: bash
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          set -euo pipefail
+          node --check scripts/browser-visual-acceptance.mjs
+          node scripts/browser-visual-acceptance.mjs
+
+      - name: Upload browser visual screenshots
+        if: always() && hashFiles('artifacts/browser-visual/**') != ''
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: Alwaha-Pro-Browser-Visual-${{ github.run_number }}
+          path: artifacts/browser-visual/
+          if-no-files-found: warn
+
       - name: Create or sync Android project
         shell: bash
         run: |
@@ -380,6 +447,13 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+          test -s assets/sounds/message_chime.wav
+          test -s assets/sounds/notification_chime.wav
+          mkdir -p android/app/src/main/res/raw
+          cp assets/sounds/message_chime.wav android/app/src/main/res/raw/alwaha_message_chime.wav
+          cp assets/sounds/notification_chime.wav android/app/src/main/res/raw/alwaha_notification_chime.wav
+          test -s android/app/src/main/res/raw/alwaha_message_chime.wav
+          test -s android/app/src/main/res/raw/alwaha_notification_chime.wav
           test -s android/gradlew
           test -s android/app/build.gradle
           test -s android/app/src/main/AndroidManifest.xml
@@ -400,32 +474,12 @@ jobs:
           package_match = re.search(r'^package\s+([A-Za-z0-9_.]+);', source, re.M)
           if not package_match:
               raise SystemExit('Could not determine MainActivity package.')
-          template = Path('scripts/android/AlwahaAudioRoutePlugin.java').read_text(encoding='utf-8')
-          (activity.parent / 'AlwahaAudioRoutePlugin.java').write_text(template.replace('__ALWAHA_PACKAGE__', package_match.group(1)), encoding='utf-8')
-          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
-          manifest = manifest_path.read_text(encoding='utf-8')
-          provider_marker = 'android:authorities="${applicationId}.alwaha-fileprovider"'
-          if provider_marker not in manifest:
-              provider = """
-                  <provider
-                      android:name="androidx.core.content.FileProvider"
-                      android:authorities="${applicationId}.alwaha-fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true">
-                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/alwaha_file_paths" />
-                  </provider>
-              """
-              manifest, count = re.subn(r'</application>', provider + '\n    </application>', manifest, count=1)
-              if count != 1:
-                  raise SystemExit('Could not insert secure FileProvider into AndroidManifest.xml.')
-              manifest_path.write_text(manifest, encoding='utf-8')
-          xml_dir = Path('android/app/src/main/res/xml')
-          xml_dir.mkdir(parents=True, exist_ok=True)
-          (xml_dir / 'alwaha_file_paths.xml').write_text("""<?xml version="1.0" encoding="utf-8"?>
-          <paths xmlns:android="http://schemas.android.com/apk/res/android">
-              <cache-path name="shared_apk" path="shared-apk/" />
-          </paths>
-          """, encoding='utf-8')
+          for plugin_name in ('AlwahaAudioRoutePlugin', 'AlwahaLocalNetworkPlugin', 'AlwahaMeshBridgeService'):
+              template_path = Path('scripts/android') / f'{plugin_name}.java'
+              if not template_path.is_file():
+                  raise SystemExit(f'Missing native plugin template: {template_path}')
+              template = template_path.read_text(encoding='utf-8')
+              (activity.parent / f'{plugin_name}.java').write_text(template.replace('__ALWAHA_PACKAGE__', package_match.group(1)), encoding='utf-8')
           if 'registerPlugin(AlwahaAudioRoutePlugin.class)' not in source:
               if 'import android.os.Bundle;' not in source:
                   source = source.replace(package_match.group(0), package_match.group(0) + '\n\nimport android.os.Bundle;', 1)
@@ -443,7 +497,30 @@ jobs:
                   method = '\n        @Override\n        public void onCreate(Bundle savedInstanceState) {\n            registerPlugin(AlwahaAudioRoutePlugin.class);\n            super.onCreate(savedInstanceState);\n        }\n'
                   source = source[:body] + method + source[body:]
               activity.write_text(source, encoding='utf-8')
-          print('Registered AlwahaAudioRoutePlugin:', activity)
+          if 'registerPlugin(AlwahaLocalNetworkPlugin.class)' not in source:
+              if 'registerPlugin(AlwahaAudioRoutePlugin.class)' not in source:
+                  raise SystemExit('Audio route plugin registration marker is missing; refusing local network registration.')
+              source = source.replace(
+                  'registerPlugin(AlwahaAudioRoutePlugin.class);',
+                  'registerPlugin(AlwahaAudioRoutePlugin.class);\n        registerPlugin(AlwahaLocalNetworkPlugin.class);',
+                  1
+              )
+              activity.write_text(source, encoding='utf-8')
+          manifest_path = Path('android/app/src/main/AndroidManifest.xml')
+          manifest = manifest_path.read_text(encoding='utf-8')
+          service_marker = 'android:name=".AlwahaMeshBridgeService"'
+          if service_marker not in manifest:
+              service = """
+                  <service
+                      android:name=".AlwahaMeshBridgeService"
+                      android:exported="false"
+                      android:foregroundServiceType="connectedDevice" />
+              """
+              manifest, count = re.subn(r'</application>', service + '\n    </application>', manifest, count=1)
+              if count != 1:
+                  raise SystemExit('Could not register the non-exported bridge foreground service.')
+              manifest_path.write_text(manifest, encoding='utf-8')
+          print('Registered audio, local network plugins and private bridge foreground service:', activity)
           PY
 
 
@@ -457,18 +534,31 @@ jobs:
           path = Path('android/app/src/main/AndroidManifest.xml')
           source = path.read_text(encoding='utf-8')
           permissions = (
-              'android.permission.CAMERA',
-              'android.permission.RECORD_AUDIO',
-              'android.permission.MODIFY_AUDIO_SETTINGS',
-              'android.permission.ACCESS_COARSE_LOCATION',
-              'android.permission.ACCESS_FINE_LOCATION',
+              ('android.permission.FOREGROUND_SERVICE', ''),
+              ('android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE', ''),
+              ('android.permission.POST_NOTIFICATIONS', ''),
+              ('android.permission.CAMERA', ''),
+              ('android.permission.RECORD_AUDIO', ''),
+              ('android.permission.MODIFY_AUDIO_SETTINGS', ''),
+              ('android.permission.ACCESS_COARSE_LOCATION', ''),
+              ('android.permission.ACCESS_FINE_LOCATION', ''),
+              ('android.permission.ACCESS_WIFI_STATE', ''),
+              ('android.permission.CHANGE_WIFI_STATE', ''),
+              ('android.permission.CHANGE_NETWORK_STATE', ''),
+              ('android.permission.ACCESS_NETWORK_STATE', ''),
+              ('android.permission.NEARBY_WIFI_DEVICES', 'android:usesPermissionFlags="neverForLocation"'),
+              ('android.permission.BLUETOOTH_SCAN', 'android:usesPermissionFlags="neverForLocation"'),
+              ('android.permission.BLUETOOTH_CONNECT', ''),
+              ('android.permission.BLUETOOTH_ADVERTISE', ''),
+              ('android.permission.BLUETOOTH', 'android:maxSdkVersion="30"'),
+              ('android.permission.BLUETOOTH_ADMIN', 'android:maxSdkVersion="30"'),
           )
           app_pos = source.find('<application')
           if app_pos < 0:
               raise SystemExit('Could not find <application> in AndroidManifest.xml.')
           additions = [
-              f'    <uses-permission android:name="{permission}" />'
-              for permission in permissions
+              f'    <uses-permission android:name="{permission}" {attributes}/>'.replace(' />', '/>')
+              for permission, attributes in permissions
               if f'android:name="{permission}"' not in source
           ]
           if additions:
@@ -707,6 +797,28 @@ jobs:
           grep -Eq '^[[:space:]]*targetSdkVersion[[:space:]]*=?[[:space:]]*36([[:space:]]|$)' android/app/build.gradle
           echo 'Verified targetSdkVersion 36 for Google Play.'
 
+      - name: Add Google Nearby Connections SDK for automatic local mesh
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('android/app/build.gradle')
+          if not path.is_file():
+              raise SystemExit('Expected generated Android app/build.gradle.')
+          source = path.read_text(encoding='utf-8')
+          dependency = "implementation 'com.google.android.gms:play-services-nearby:19.5.1'"
+          if dependency not in source:
+              match = re.search(r'(?m)^dependencies\s*\{', source)
+              if not match:
+                  raise SystemExit('Could not find dependencies block; refusing to modify Gradle.')
+              source = source[:match.end()] + '\n    ' + dependency + source[match.end():]
+              path.write_text(source, encoding='utf-8')
+          print('Nearby Connections SDK dependency is present.')
+          PY
+
       - name: Build signed APK and AAB
         working-directory: android
         shell: bash
@@ -753,17 +865,21 @@ jobs:
             printf 'certificate_sha256_colon=%s\n' "$CERT_SHA256_COLON"
             printf 'signature_verified=true\n'
           } > release/APK-SIGNING-CERTIFICATE.txt
-          git archive --format=zip --prefix=Alwaha-Pro-3.0.4/ HEAD > release/Alwaha-Pro-3.0.4-Final-Source.zip
           printf 'version=3.0.4\nversion_code=%s\napplication_id=pro.alwaha.app\ntarget_sdk=36\nbranch=%s\ncommit=%s\nworkflow_run=%s\ncertificate_sha256=%s\ncertificate_sha256_colon=%s\n' "$GITHUB_RUN_NUMBER" "$GITHUB_REF_NAME" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$CERT_SHA256" "$CERT_SHA256_COLON" > release/BUILD-INFO.txt
           (
             cd release
-            sha256sum Alwaha-Pro-3.0.4.apk Alwaha-Pro-3.0.4.aab Alwaha-Pro-3.0.4-Final-Source.zip BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
+            sha256sum Alwaha-Pro-3.0.4.apk Alwaha-Pro-3.0.4.aab BUILD-INFO.txt APK-SIGNING-CERTIFICATE.txt > SHA256SUMS.txt
             sha256sum --check SHA256SUMS.txt
           )
-          test -s release/Alwaha-Pro-3.0.4-Final-Source.zip
-          echo 'Signed APK, AAB and tracked source archive verified successfully.'
+          test -s release/Alwaha-Pro-3.0.4.apk
+          test -s release/Alwaha-Pro-3.0.4.aab
+          if find release -maxdepth 1 -type f -iname '*source*.zip' | grep -q .; then
+            echo 'Source archives must never be uploaded as build artifacts.'
+            exit 1
+          fi
+          echo 'Signed APK, AAB and release verification files checked; no source archive is included.'
 
-      - name: Upload final source and Android artifacts
+      - name: Upload verified Android artifacts (no source archive)
         uses: actions/upload-artifact@v7.0.2
         with:
           name: Alwaha-Pro-3.0.4-build-${{ github.run_number }}
@@ -773,8 +889,8 @@ jobs:
 
 
   publish-release:
-    name: Publish verified public Android APK release
-    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
+    name: Publish verified public Android beta APK release
+    if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android
@@ -804,24 +920,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v$APP_VERSION"
+          TAG="v$APP_VERSION-beta.$GITHUB_RUN_NUMBER"
           APK="release-artifact/Alwaha-Pro-Android.apk"
           CHECKSUM="release-artifact/Alwaha-Pro-Android.apk.sha256"
           CERTIFICATE="release-artifact/APK-SIGNING-CERTIFICATE.txt"
           test -s "$CERTIFICATE"
-          NOTES="Alwaha-Pro $APP_VERSION Android release (Build #$GITHUB_RUN_NUMBER).
+          NOTES="Alwaha-Pro $APP_VERSION Android PUBLIC BETA (Build #$GITHUB_RUN_NUMBER).
 
           Source commit: $GITHUB_SHA
           Workflow run: $GITHUB_RUN_ID
 
-          This APK was built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums. The public certificate fingerprint is attached for Android developer/package verification.
+          This is a public beta APK built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums. The public certificate fingerprint is attached for Android developer/package verification.
 
           The AAB is reserved for store distribution and is not attached as a direct-install APK."
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION Beta $GITHUB_RUN_NUMBER" --notes "$NOTES" --prerelease
           else
-            gh release create "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+            gh release create "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION Beta $GITHUB_RUN_NUMBER" --notes "$NOTES" --prerelease
           fi
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk'
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk.sha256'
@@ -829,7 +945,7 @@ jobs:
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.4 website
-    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
+    if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android

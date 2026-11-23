@@ -4,7 +4,7 @@ import { build, transform } from 'esbuild';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
-const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'production-polish.js', 'alwaha-profile-editor.js', 'alwaha-call-feedback.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js', 'alwaha-smart-assistant.js', 'alwaha-theme-system.css'];
+const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'alwaha-update-checker.mjs', 'production-polish.js', 'alwaha-profile-editor.js', 'alwaha-call-feedback.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-local-mesh.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js', 'alwaha-smart-assistant.js', 'alwaha-theme-system.css'];
 
 for (const file of required) {
   if (!fs.existsSync(path.join(root, file))) {
@@ -64,6 +64,9 @@ for (const output of ['jsQR.min.js', 'qrcode-generator.min.js']) {
   }
 }
 
+const updateCheckerEntry = path.join(root, 'scripts', 'alwaha-update-checker-entry.mjs');
+if (!fs.existsSync(updateCheckerEntry)) throw new Error('Missing Android beta update checker entry point.');
+
 const nativeBackEntry = path.join(root, 'scripts', 'native-back-handler.mjs');
 if (!fs.existsSync(nativeBackEntry)) {
   throw new Error('Missing Android native back handler entry point.');
@@ -81,5 +84,16 @@ await build({
 if (!fs.existsSync(path.join(dist, 'alwaha-native-back-handler.js'))) {
   throw new Error('Android native back handler bundle was not generated.');
 }
+await build({
+  entryPoints: [path.join(root, 'scripts', 'alwaha-update-checker-entry.mjs')],
+  bundle: true,
+  platform: 'browser',
+  format: 'iife',
+  target: ['es2020'],
+  outfile: path.join(dist, 'alwaha-update-checker.js'),
+  legalComments: 'none',
+  logLevel: 'warning'
+});
+if (!fs.existsSync(path.join(dist, 'alwaha-update-checker.js'))) throw new Error('Alwaha update checker bundle was not generated.');
 console.log('Offline QR decoder and encoder minified into dist/assets/qr/.');
 console.log(`Web build complete: ${required.join(', ')}, QR runtime and alwaha-native-back-handler.js -> dist/`);

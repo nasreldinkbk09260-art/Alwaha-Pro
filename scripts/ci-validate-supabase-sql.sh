@@ -96,6 +96,10 @@ echo 'SUPABASE_SQL_REGRESSION=PASS (PostgreSQL fixture; pg_cron API mocked, not 
 echo 'APPLY TEST MIGRATION: 20261114230000_user_safety_reports_and_blocks.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114230000_user_safety_reports_and_blocks.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114230000_user_safety_reports_and_blocks.sql"
+echo 'APPLY TEST MIGRATION: 20261118180810_split_anon_public_content_policies.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261118180810_split_anon_public_content_policies.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261118180810_split_anon_public_content_policies.sql"
+echo 'PUBLIC_CONTENT_ANON_POLICY_SQL_REGRESSION=PASS'
 echo 'APPLY TEST MIGRATION: 20261114235000_marketplace_account_deletion_retention.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261114235000_marketplace_account_deletion_retention.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261114235000_marketplace_account_deletion_retention.sql"
@@ -113,12 +117,21 @@ echo 'APPLY TEST MIGRATION: 20261117010000_storage_upload_ownership.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/storage-upload-ci-bootstrap.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117010000_storage_upload_ownership.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117010000_storage_upload_ownership.sql"
+echo 'APPLY TEST MIGRATION: 20261121013606_chat_private_media_and_permissions.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121013606_chat_private_media_and_permissions.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121013606_chat_private_media_and_permissions.sql"
 echo 'APPLY TEST MIGRATION: 20261117170000_child_safety_urgent_reports.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117170000_child_safety_urgent_reports.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117170000_child_safety_urgent_reports.sql"
 echo 'APPLY TEST MIGRATION: 20261117140000_profile_gender_optional.sql'
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117140000_profile_gender_optional.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117140000_profile_gender_optional.sql"
+
+echo 'APPLY TEST MIGRATION: 20261121015302_admin_initial_email_requires_verification.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121015302_admin_initial_email_requires_verification.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121015302_admin_initial_email_requires_verification.sql"
+
+
 
 
 echo 'APPLY TEST MIGRATION: 20261117180000_support_tickets_private_intake.sql'
@@ -133,3 +146,33 @@ echo 'APPLY TEST MIGRATION: 20261117190000_admin_action_logs_report_and_support_
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261117190000_admin_action_logs_report_and_support_actions.sql"
 psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261117190000_admin_action_logs_report_and_support_actions.sql"
 echo 'ADMIN_ACTION_ALLOWLIST_REGRESSION=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261120010000_post_comment_counts_view.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/post-comment-counts-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120010000_post_comment_counts_view.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120010000_post_comment_counts_view.sql"
+
+echo 'APPLY TEST MIGRATION: 20261120210000_marketplace_delivery_workflow.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261120210000_marketplace_delivery_workflow.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261120210000_marketplace_delivery_workflow.sql"
+echo 'MARKETPLACE_DELIVERY_WORKFLOW=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261121013913_reel_view_metrics.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/reel-views-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121013913_reel_view_metrics.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121013913_reel_view_metrics.sql"
+echo 'REEL_METRICS_RLS_REGRESSION=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261121013915_cloud_chat_quotas.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/chat-quota-ci-bootstrap.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121013915_cloud_chat_quotas.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121013915_cloud_chat_quotas.sql"
+echo 'CHAT_QUOTA_SQL_REGRESSION=PASS'
+
+echo 'APPLY TEST MIGRATION: 20261121042759_alwaha_mesh_public_keys.sql'
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/migrations/20261121042759_alwaha_mesh_public_keys.sql"
+psql -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/20261121042759_alwaha_mesh_public_keys.sql"
+echo 'ALWAHA_MESH_PUBLIC_KEYS_RLS=PASS'
+
+
+

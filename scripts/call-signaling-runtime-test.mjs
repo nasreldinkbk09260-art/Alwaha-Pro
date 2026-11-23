@@ -4,19 +4,24 @@ import assert from 'node:assert/strict';
 
 const html=fs.readFileSync('index.html','utf8');
 const start=html.indexOf('class CallSignalingManager {');
-const marker='\n        }\n\n        async function startAlwahaCall';
+const marker='\n        let pendingKidsRoomAfterConnect = false;';
 const close=html.indexOf(marker,start);
-assert.ok(start>=0&&close>start,'CallSignalingManager source block is found');
-const classSource=html.slice(start,close+'\n        }'.length);
+assert.ok(start>=0&&close>start,'CallSignalingManager source block is found before the Kids Room chooser helpers');
+const classSource=html.slice(start,close).trim();
 const sent=[],topics=[],removed=[],tones=[],ui=[];
 const context={
   supabaseClient:{},
   sanitizeChannelPart:value=>String(value).replace(/[^A-Za-z0-9_-]/g,'_'),
   console,
   currentChatUser:'المتصل المتوقع',
-  window:{AlwahaCallFeedback:{play(kind){tones.push(kind);}}},
+  window:{addEventListener(){},AlwahaCallFeedback:{play(kind){tones.push(kind);}}},
   updateCallUi:(state,meta)=>ui.push({state,meta}),
-  setCallModal:open=>ui.push({modal:open})
+  setCallModal:open=>ui.push({modal:open}),
+  cancelPendingKidsRoomAfterConnect(){},
+  stopAlwahaCallRingtone(){},
+  stopCallTimer(){},
+  resetAlwahaCallAudioRoute(){return Promise.resolve();},
+  triggerToastNotification(){}
 };
 vm.createContext(context);
 vm.runInContext(classSource+'\nthis.CallSignalingManager=CallSignalingManager;',context,{filename:'index.html:CallSignalingManager'});
@@ -53,3 +58,41 @@ assert.ok(ui.some(x=>x.meta?.text==='الطرف مشغول حالياً.'),'busy
 assert.equal(tones.at(-1),'busy','busy state plays its distinct tone');
 
 console.log('CALL_SIGNALING_RUNTIME_AUDIT=PASS (market/friend routing, payload mode, cleanup, recipient/peer/session validation and busy UI state)');
+
+const stalledContext={
+  supabaseClient:{},
+  sanitizeChannelPart:value=>String(value).replace(/[^A-Za-z0-9_-]/g,'_'),
+  console,
+  currentChatUser:'الطرف الآخر',
+  window:{__alwahaCallTerminationRequested:false,addEventListener(){},closeAlwahaKidsMode(){},AlwahaCallFeedback:{stop(){},play(kind){tones.push(kind);}}},
+  updateCallUi:(state,meta)=>ui.push({state,meta}),
+  setCallModal:open=>ui.push({modal:open}),
+  cancelPendingKidsRoomAfterConnect(){},
+  stopAlwahaCallRingtone(){},
+  stopCallTimer(){},
+  resetAlwahaCallAudioRoute(){return new Promise(()=>{});},
+  triggerToastNotification(){},
+  setTimeout,
+  clearTimeout,
+  document:{getElementById(){return null;}}
+};
+vm.createContext(stalledContext);
+vm.runInContext(classSource+'\nthis.CallSignalingManager=CallSignalingManager;',stalledContext,{filename:'index.html:CallSignalingManager:stalled-cleanup'});
+const stalled=new stalledContext.CallSignalingManager();
+stalled.cleanupTimeoutMs=20;
+stalled.myId='recipient';stalled.peerId='peer';stalled.sessionId='session';stalled.mode='online';
+stalled.call={endCall(notify){assert.equal(notify,false);}};
+stalled.roomChannel={topic:'call-room'};
+stalled.client={removeChannel:()=>new Promise(()=>{})};
+const cleanupStartedAt=Date.now();
+await stalled.handleCallState('remote-ended');
+assert.ok(ui.some(item=>item.state==='idle'&&item.meta?.text==='أنهى الطرف الآخر المكالمة.'),'remote-ended must show the idle/close state before async cleanup finishes');
+assert.ok(ui.some(item=>item.modal===true),'remote-ended must reopen the call result view immediately');
+assert.equal(stalled.call,null,'the media session is detached synchronously');
+assert.equal(stalled.roomChannel,null,'the room channel reference is detached synchronously');
+await stalled.endCleanupPromise;
+assert.ok(Date.now()-cleanupStartedAt>=10,'the cleanup probe must actually wait for its short timeout');
+assert.ok(Date.now()-cleanupStartedAt<250,'hung native audio and Realtime cleanup must be bounded');
+assert.ok(ui.some(item=>item.state==='idle'),'the call close action remains available after remote termination');
+
+console.log('CALL_TERMINAL_UI_AUDIT=PASS (remote end reveals close state immediately; media/channel teardown is synchronous and asynchronous cleanup is deadline-bounded)');

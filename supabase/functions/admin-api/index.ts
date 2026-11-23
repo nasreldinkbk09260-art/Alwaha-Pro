@@ -32,9 +32,9 @@ const TEST_MEDIA_OBJECTS = [
 ] as const;
 const TEST_MEDIA_PURGE_CONFIRMATION = 'PURGE_TEST_MEDIA_20261114';
 
-type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_content_reports' | 'review_content_report' | 'list_support_tickets' | 'review_support_ticket' | 'list_audit_logs' | 'purge_test_media';
+type AdminAction = 'summary' | 'list_users' | 'list_verification_requests' | 'review_verification' | 'list_content_reports' | 'review_content_report' | 'list_support_tickets' | 'review_support_ticket' | 'list_audit_logs' | 'purge_test_media' | 'get_management_config' | 'save_management_config';
 const allowedActions = new Set<AdminAction>([
-  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_content_reports', 'review_content_report', 'list_support_tickets', 'review_support_ticket', 'list_audit_logs', 'purge_test_media',
+  'summary', 'list_users', 'list_verification_requests', 'review_verification', 'list_content_reports', 'review_content_report', 'list_support_tickets', 'review_support_ticket', 'list_audit_logs', 'purge_test_media', 'get_management_config', 'save_management_config',
 ]);
 
 function asObject(value: unknown): Record<string, unknown> {
@@ -48,6 +48,89 @@ function boundedInteger(value: unknown, fallback: number, min: number, max: numb
 }
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, (ch) => '\\' + ch);
+}
+
+const DEFAULT_MANAGEMENT_CONFIG = {
+  version: 1,
+  currency: 'EGP',
+  free: {
+    daily_direct_messages: 100,
+    weekly_direct_messages: 500,
+    daily_market_messages: 50,
+    weekly_market_messages: 250,
+    local_market_radius_km: 15,
+  },
+  plans: [
+    { id: 'plus', name: 'Plus', enabled: false, monthly_price_egp: 0, daily_direct_messages: 1000, weekly_direct_messages: 5000, daily_market_messages: 500, weekly_market_messages: 2500 },
+    { id: 'premium', name: 'Premium', enabled: false, monthly_price_egp: 0, daily_direct_messages: 5000, weekly_direct_messages: 25000, daily_market_messages: 2000, weekly_market_messages: 10000 },
+  ],
+  payment_methods: [
+    { type: 'instapay', label: 'InstaPay', account_reference: '', instructions: '', enabled: false },
+    { type: 'vodafone_cash', label: 'Vodafone Cash', account_reference: '', instructions: '', enabled: false },
+    { type: 'bank_transfer', label: 'تحويل بنكي', account_reference: '', instructions: '', enabled: false },
+    { type: 'manual', label: 'طريقة دفع يدوية أخرى', account_reference: '', instructions: '', enabled: false },
+  ],
+};
+
+function boundedConfigInteger(value: unknown, fallback: number, min: number, max: number): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) return fallback;
+  return n;
+}
+
+function normalizeManagementConfig(input: unknown) {
+  const source = asObject(input);
+  if (source.currency !== undefined && source.currency !== 'EGP') throw new Error('العملة المدعومة حالياً هي الجنيه المصري EGP.');
+  const freeSource = asObject(source.free);
+  const free = {
+    daily_direct_messages: boundedConfigInteger(freeSource.daily_direct_messages, DEFAULT_MANAGEMENT_CONFIG.free.daily_direct_messages, 0, 100_000),
+    weekly_direct_messages: boundedConfigInteger(freeSource.weekly_direct_messages, DEFAULT_MANAGEMENT_CONFIG.free.weekly_direct_messages, 0, 500_000),
+    daily_market_messages: boundedConfigInteger(freeSource.daily_market_messages, DEFAULT_MANAGEMENT_CONFIG.free.daily_market_messages, 0, 100_000),
+    weekly_market_messages: boundedConfigInteger(freeSource.weekly_market_messages, DEFAULT_MANAGEMENT_CONFIG.free.weekly_market_messages, 0, 500_000),
+    local_market_radius_km: boundedConfigInteger(freeSource.local_market_radius_km, DEFAULT_MANAGEMENT_CONFIG.free.local_market_radius_km, 1, 100),
+  };
+  if (free.weekly_direct_messages < free.daily_direct_messages || free.weekly_market_messages < free.daily_market_messages) {
+    throw new Error('يجب أن يكون الحد الأسبوعي مساوياً للحد اليومي أو أكبر منه.');
+  }
+  const allowedPaymentTypes = new Set(['instapay', 'vodafone_cash', 'bank_transfer', 'manual']);
+  const defaults = DEFAULT_MANAGEMENT_CONFIG.payment_methods;
+  const rawPayments = Array.isArray(source.payment_methods) ? source.payment_methods.slice(0, 4) : defaults;
+  const seenPaymentTypes = new Set<string>();
+  const payment_methods = rawPayments.map((item, index) => {
+    const row = asObject(item);
+    const type = String(row.type || '');
+    if (!allowedPaymentTypes.has(type) || seenPaymentTypes.has(type)) throw new Error('نوع أو تكرار وسيلة الدفع غير صالح.');
+    seenPaymentTypes.add(type);
+    return {
+      type,
+      label: String(row.label || defaults[index]?.label || 'وسيلة دفع').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 60),
+      account_reference: String(row.account_reference || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 120),
+      instructions: String(row.instructions || '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 400),
+      enabled: row.enabled === true,
+    };
+  });
+  const rawPlans = Array.isArray(source.plans) ? source.plans.slice(0, 2) : DEFAULT_MANAGEMENT_CONFIG.plans;
+  const allowedPlanIds = new Set(['plus', 'premium']);
+  const plans = rawPlans.map((item) => {
+    const row = asObject(item);
+    const id = String(row.id || '');
+    if (!allowedPlanIds.has(id)) throw new Error('معرّف الخطة غير صالح.');
+    return {
+      id,
+      name: String(row.name || id).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 40),
+      enabled: row.enabled === true,
+      monthly_price_egp: boundedConfigInteger(row.monthly_price_egp, 0, 0, 100_000),
+      daily_direct_messages: boundedConfigInteger(row.daily_direct_messages, 1000, 0, 100_000),
+      weekly_direct_messages: boundedConfigInteger(row.weekly_direct_messages, 5000, 0, 500_000),
+      daily_market_messages: boundedConfigInteger(row.daily_market_messages, 500, 0, 100_000),
+      weekly_market_messages: boundedConfigInteger(row.weekly_market_messages, 2500, 0, 500_000),
+    };
+  });
+  if (new Set(plans.map((plan) => plan.id)).size !== plans.length) throw new Error('لا يمكن تكرار الخطة نفسها.');
+  if (plans.some(plan => plan.weekly_direct_messages < plan.daily_direct_messages || plan.weekly_market_messages < plan.daily_market_messages)) {
+    throw new Error('يجب أن يكون الحد الأسبوعي للخطة مساوياً للحد اليومي أو أكبر منه.');
+  }
+  return { version: 1, currency: 'EGP', free, plans, payment_methods };
 }
 
 Deno.serve(async (req: Request) => {
@@ -140,7 +223,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(supportTicketId)) return json({ error: 'معرّف تذكرة الدعم غير صالح.' }, 400);
     supportTicketStatus = String(body.status || '');
     if (!['triaged','in_progress','resolved','closed'].includes(supportTicketStatus)) return json({ error: 'حالة تذكرة الدعم غير صالحة.' }, 400);
-    supportTicketNote = String(body.note || '').replace(/[\\u0000-\\u001f\\u007f]/g,' ').trim().slice(0,1000);
+    supportTicketNote = String(body.note || '').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,1000);
   }
   let reportId = '';
   let reportReviewStatus = '';
@@ -155,6 +238,12 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  let normalizedManagementConfig: ReturnType<typeof normalizeManagementConfig> | null = null;
+  if (action === 'save_management_config') {
+    try { normalizedManagementConfig = normalizeManagementConfig(body.config); }
+    catch (error) { return json({ error: error instanceof Error ? error.message : 'إعدادات الإدارة غير صالحة.' }, 400); }
+  }
+
   const auditDetails: Record<string, unknown> = {};
   if (action === 'list_users') Object.assign(auditDetails, { offset, limit, filtered: Boolean(query) });
   if (action === 'list_verification_requests') Object.assign(auditDetails, { status: requestStatus, offset, limit });
@@ -167,6 +256,7 @@ Deno.serve(async (req: Request) => {
   if (action === 'purge_test_media') Object.assign(auditDetails, {
     bucket: 'media', scope: 'fixed_test_only_orphaned_objects', requestedCount: TEST_MEDIA_OBJECTS.length,
   });
+  if (action === 'save_management_config') Object.assign(auditDetails, { configVersion: 1, enabledPaymentMethods: normalizedManagementConfig?.payment_methods.filter(method => method.enabled).length ?? 0, planCount: normalizedManagementConfig?.plans.length ?? 0 });
   const { data: audit, error: auditInsertError } = await server.from('admin_action_logs').insert({
     actor_user_id: user.id,
     action,
@@ -273,6 +363,24 @@ Deno.serve(async (req: Request) => {
       if (error) throw new Error('audit_log_query_failed');
       const page = data || [];
       result = { entries: page.slice(0, limit), offset, limit, hasMore: page.length > limit };
+    } else if (action === 'get_management_config') {
+      const { data, error } = await server.from('app_settings').select('value').eq('key', 'management_config_v1').maybeSingle();
+      if (error) throw new Error('management_config_read_failed');
+      let config = DEFAULT_MANAGEMENT_CONFIG;
+      if (data?.value) {
+        try { config = normalizeManagementConfig(JSON.parse(data.value)); }
+        catch (error) { console.error('Stored management config failed validation:', error instanceof Error ? error.message : 'invalid_config'); }
+      }
+      result = { config };
+    } else if (action === 'save_management_config') {
+      if (!normalizedManagementConfig) throw new Error('management_config_validation_missing');
+      const { error } = await server.from('app_settings').upsert({
+        key: 'management_config_v1',
+        value: JSON.stringify(normalizedManagementConfig),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'key' });
+      if (error) throw new Error('management_config_write_failed');
+      result = { config: normalizedManagementConfig, saved: true };
     } else if (action === 'purge_test_media') {
       const { data, error } = await server.storage.from('media').remove([...TEST_MEDIA_OBJECTS]);
       if (error) throw new Error('test_media_storage_remove_failed');

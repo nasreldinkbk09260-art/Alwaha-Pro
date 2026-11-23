@@ -7,7 +7,7 @@ DO $$ BEGIN
 END $$;
 
 CREATE SCHEMA auth;
-CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, phone text, raw_user_meta_data jsonb NOT NULL DEFAULT '{}'::jsonb);
+CREATE TABLE auth.users (id uuid PRIMARY KEY, email text, phone text, email_confirmed_at timestamptz, raw_user_meta_data jsonb NOT NULL DEFAULT '{}'::jsonb);
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT nullif(current_setting('request.jwt.claim.sub', true),'')::uuid
 $$;

@@ -25,7 +25,15 @@ else if (html.includes('respondFriendRequest') && html.includes('طلبات صد
 else fail('friend request response UI missing');
 if (migration.includes('messages_insert_sender_accepted_friends') && /fr\.status\s*=\s*'accepted'/.test(migration) && migration.includes('DROP POLICY IF EXISTS messages_insert_sender ON public.messages')) pass('SQL migration enforces accepted friendship for message inserts');
 else fail('accepted-friend message RLS migration incomplete');
-if (sw.includes('alwaha-pro-v3.0.4-iphone-pwa-20261118') && sw.includes('/storage/v1/object/public/') && /image\\\//.test(sw) && /rest\\\/v1/.test(sw)) pass('service worker caches static shell and public image media, not REST API');
+if (
+  /const CACHE_NAME = 'alwaha-pro-v3\.0\.4-[^']+'/.test(sw) &&
+  sw.includes("url.pathname.startsWith('/storage/v1/object/public/')") &&
+  sw.includes("response.ok && /^image\\//i.test(type)") &&
+  sw.includes('size<=2*1024*1024') &&
+  sw.includes("if (request.headers.has('Authorization')) return;") &&
+  sw.includes('rest\\/v1') &&
+  sw.includes('token|access_token|refresh_token|signature|sig|expires')
+) pass('service worker caches bounded public images and static shell, while excluding REST/API/authenticated/private media');
 else fail('service-worker cache namespace/safety guards incomplete');
 if (html.includes('alwaha-burgundy-velvet-background') && html.includes('alwaha-safe-modal-layout')) pass('burgundy velvet background and viewport-safe modal styling are present');
 else fail('requested background/modal styles missing');
@@ -39,8 +47,9 @@ if (html.includes('notification-badge-nav') && html.includes('refreshAlwahaNotif
 else fail('global notifications or friend request realtime updates missing');
 if (html.includes('alwaha-notifications-open') && html.includes('alwaha-notification-panel')) pass('global notification viewport overlay present');
 else fail('global notification overlay missing');
-if (html.includes('window.alwahaAudioRoute?.shareApk') && html.includes('share-app-btn-main')) pass('native Android APK sharing is connected to the app share button');
-else fail('native Android APK share action missing');
+const nativeAudioPlugin = read('scripts/android/AlwahaAudioRoutePlugin.java');
+if (!html.includes('share-app-btn-main') && !html.includes('shareAlwahaApp') && !nativeAudioPlugin.includes('shareApk')) pass('unrequested app APK-sharing UI and native route are removed');
+else fail('removed app APK-sharing UI or native route has returned');
 
 if (!fs.existsSync('admin-app')) console.log('INFO: standalone admin-app directory is absent from this supplied source bundle; only embedded admin UI could be audited.');
 if (notes.includes('لم يتم التحقق') || notes.includes('لم تُختبر') || notes.includes('لم تتوفر')) pass('repair notes record non-verified items');

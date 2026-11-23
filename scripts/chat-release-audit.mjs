@@ -6,15 +6,18 @@ const replyMigration=fs.readFileSync('supabase/migrations/20261108120000_real_ch
 const replyTest=fs.readFileSync('supabase/tests/20261108120000_message_reply_scope.sql','utf8');
 const friendAcceptMigration=fs.readFileSync('supabase/migrations/20261108130000_friend_request_acceptance_notification.sql','utf8');
 const friendAcceptTest=fs.readFileSync('supabase/tests/20261108130000_friend_request_acceptance_notification.sql','utf8');
+const marketCallMigration=fs.readFileSync('supabase/migrations/20261101210000_marketplace_transaction_archive_and_call_auth.sql','utf8');
 const checks = [
   ['audio action', 'initiateVoiceCall(\'online\')'],
-  ['unsupported local network entry points removed', !html.includes('openAlwahaLocalNetworkPanel') && !html.includes('الشبكة الحرة للأصدقاء القريبين') && !html.includes('إعدادات الشبكة القريبة')],
-  ['video action', 'initiateVideoCall()'],
+  ['one-tap local mesh toggle remains available in direct and market chat', html.includes('data-alwaha-mesh-toggle') && html.includes('toggleAlwahaLocalChatMode()') && html.includes('aria-pressed="false"')],
+  ['chat header does not expose nearby devices, names, manual selection or pairing UI', !html.includes('async function openAlwahaLocalDiscovery()') && !html.includes('data-connect-address') && !html.includes('data-pair-peer') && !html.includes('alwaha-local-peers')],
+  ['consented anonymous relay exposes encrypted message/file bridge and explicitly marks multi-hop calls unavailable', html.includes('وسيط لتمرير حزم رسائل مشفّرة') && html.includes('المكالمات الحية متعددة القفزات غير مفعلة حالياً') && html.includes('سيظهر لك أنت فقط إشعار نظام')],
+  ['video action opens the normal/Kids mode chooser', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"')],
   ['overflow menu', 'chat-more-menu'],
   ['profile menu action', 'openCurrentChatProfile()'],
   ['message refresh action', 'loadDirectMessages()'],
   ['privacy information action', 'showChatPrivacyInfo()'],
-  ['Bluetooth remains honestly disabled', 'المكالمات عبر البلوتوث لم تُنفذ بعد'],
+  ['audio/video calls over the anonymous local bridge are explicitly unavailable until a media transport is implemented', html.includes('مكالمات الصوت والفيديو عبر الجسر المحلي غير جاهزة بعد') && html.includes('المكالمات الحية عبر الجسر المجهول غير مفعّلة حالياً') && html.includes('الجسر المحلي الحالي مخصص للرسائل والملفات المشفّرة فقط')],
   ['video camera acquisition', 'getUserMedia({ audio: true, video: videoConstraints })'],
   ['video peer capture preserves aggregated remote tracks', 'this.remoteVideo.srcObject = combined'],
   ['camera switch action', 'switchCallCamera()'],
@@ -40,7 +43,16 @@ const checks = [
   ['market has dedicated chat modal', "modal.id='market-chat-modal'"],
   ['market has separate sender', 'async function sendMarketMessage()'],
   ['market conversation is tied to a listing', 'market_conversations?product_id=eq.'],
-  ['market seller welcome message is shown after opening chat', 'input.value=`السلام عليكم، هل ما زال المنتج'],
+  ['market seller welcome message is set after opening online or local conversation', (() => {
+    const start=html.indexOf('async function startMarketSellerChatInternal(');
+    const end=html.indexOf('async function renderCachedDirectConversationList(',start);
+    const body=start>=0&&end>start?html.slice(start,end):'';
+    return body.includes('await openMarketConversationChat(')
+      &&body.includes("localInput.value='السلام عليكم، هل ما زال المنتج")
+      &&body.includes("input.value=`السلام عليكم، هل ما زال المنتج")
+      &&body.includes('if(localInput&&!localInput.value.trim())')
+      &&body.includes('if(input&&!input.value.trim())');
+  })()],
   ['friend message gate remains', 'hasAcceptedAlwahaFriendship(peerId)'],
   ['notification opens do not auto-clear all unread items', 'markSingleNotificationRead'],
   ['friend request notification actions do not bubble to the parent card', 'event.stopPropagation();respondFriendRequest'],
@@ -49,12 +61,14 @@ const checks = [
   ['market conversation list supports the live pre-snapshot schema', 'market_conversations?select=id,product_id,buyer_id,seller_id,created_at&${filter}'],
   ['market snapshots are queried as an optional schema extension', 'market_conversations?id=in.(${idFilter})&select=id,listing_snapshot'],
   ['market message success does not wait for secondary list refresh', 'void renderMarketConversationsList();'],
-  ['market call entry is disabled until production Realtime policies and two-device QA are complete', html.includes('اتصال صوتي بالبائع — قريبًا') && html.includes('disabled aria-disabled="true"') && html.includes('مكالمات السوق الصوتية قريبًا')],
+  ['market call entry verifies the listing conversation participant and uses the private conversation-scoped call path', html.includes("async function callMarketSeller(") && html.includes("return startAlwahaCall('offline-market','audio'") && html.includes("return startAlwahaCall('market','audio'") && html.includes('market-call-room-') && html.includes('market-call-inbox-') && html.includes('webrtc-market-incoming') && html.includes('market_conversations?id=eq.') && html.includes('participantId)!==peerId')],
+  ['market detail page call action is active and routed to callMarketSeller', html.includes('onclick="callMarketSeller(') && html.includes('aria-label="اتصال صوتي موثق بالبائع"') && !html.includes('اتصال صوتي بالبائع — قريبًا')],
+  ['market call Realtime policies are private and restricted to actual conversation participants', marketCallMigration.includes('alwaha_market_call_channels_receive') && marketCallMigration.includes('alwaha_market_call_channels_send') && marketCallMigration.includes('realtime.topic()') && marketCallMigration.includes('market_conversations')],
   ['market call uses conversation-scoped realtime', 'market-call-room-'],
   ['market transaction snapshot is used', 'market_transactions?conversation_id'],
   ['transaction sale uses atomic server rpc', "rpc('complete_market_sale'"],
   ['warranty and archive retention are displayed with a seven-day warning grace', 'مهلة 7 أيام كاملة بعد الإشعار'],
-  ['kids mode is visibly deferred and its in-call control cannot be activated before device QA', html.includes('id="kidsModeBtn"') && html.includes('وضع الأطفال — قريبًا') && html.includes('disabled aria-disabled="true"') && !html.includes('onclick="toggleAlwahaKidsMode()"')],
+  ['video mode chooser offers normal video and Kids Room; Kids Room waits for connected remote video', html.includes('onclick="openVideoCallModeChooser()"') && html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') && html.includes('data-video-call-mode="kids"') && html.includes('onclick="toggleAlwahaKidsMode()"') && html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'") && html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1')],
   ['local encrypted backup module loaded', 'alwaha-local-vault.js'],
   ['home image picker compresses images before preview', 'compressImageFile(original,1400,.82)'],
   ['home image preview is read locally before any network upload', "reader.readAsDataURL(compressed)"],
@@ -69,6 +83,13 @@ const checks = [
 
   ['image themes persist locally', "safeSet('alwaha_theme',theme)"],
   ['floating navigation group position persists', 'safeSet(FREE_POSITION_KEY,JSON.stringify({x:point.x,y:point.y,orientation:pos}))'],
+  ['home post comment counts load asynchronously from an RLS-preserving aggregate with legacy fallback', html.includes('post_comment_counts?select=post_id,comments_count') && html.includes('async function loadHomePostCommentCounts(') && html.includes('void loadHomePostCommentCounts(container, requestId)') && html.includes('comments?select=target_id&target_type=eq.post&limit=20000')],
+  ['direct chat exposes voice note and image/video upload controls', html.includes('id="direct-chat-voice-button"') && html.includes("toggleChatVoiceRecording('direct')") && html.includes('id="direct-chat-media-input"') && html.includes('accept="image/*,video/*"')],
+  ['market chat exposes voice note and image/video upload controls', html.includes('id="market-chat-voice-button"') && html.includes("toggleChatVoiceRecording('market')") && html.includes('id="market-chat-media-input"') && html.includes('accept="image/*,video/*"')],
+  ['call end button closes the modal while remote termination reveals the exit UI before bounded cleanup', html.includes("if (endBtn) endBtn.onclick = () => terminateVoiceCall()") && html.includes('async runCleanup(task,label)') && html.includes('cleanupTimeoutMs') && html.includes('this.endCleanupPromise=Promise.all(cleanupTasks)') && html.includes("else if(state==='remote-ended')") && html.includes("const cleanup=this.end(false);") && html.includes("updateCallUi('idle',{target,text:terminal.text,indicator:terminal.indicator});") && html.includes('setCallModal(true);')],
+  ['offline direct inbox falls back to encrypted cached conversations and restores saved peer labels', html.includes('async function renderCachedDirectConversationList(') && html.includes('getAllDirectChatCaches?.(me.id)') && html.includes('getPeerProfileCache?.(user.id,peerId)') && html.includes('if(!Array.isArray(rows))')],
+
+  ['Kids Room remounts the active video streams, resumes playback, and restores saved element state', kids.includes("remotePort.appendChild(remote)") && kids.includes("remote.play?.()") && kids.includes("local.play?.()") && kids.includes('remoteWasMuted') && kids.includes('localWasMuted') && kids.includes('el.muted=remoteWasMuted') && kids.includes('el.muted=localWasMuted') && kids.includes("overlay.querySelector('#kids-exit').onclick=()=>close(true)")],
   ['feed retry state', 'إعادة المحاولة'],
   ['feed no network state', 'لا يوجد اتصال بالإنترنت'],
   ['feed request race guard', 'alwahaHomeFeedRequestId'],
@@ -92,8 +113,19 @@ const friendSendEnd=html.indexOf('async function renderConversationsList()',frie
 if(friendSendStart<0||friendSendEnd<0||!html.slice(friendSendStart,friendSendEnd).includes('hasAcceptedAlwahaFriendship(peerId)')){console.error('FAIL: friend chat accepted-friendship guard missing');failures++;}
 if(!html.includes('data-friend-request-id=\"${escapeJs(friendRequestId)}\"') || !html.includes('status=eq.pending')){console.error('FAIL: friend request response must bind to the pending request and its own notification');failures++;}
 const marketContactStart=html.indexOf('async function startMarketSellerChatInternal(');
-const marketContactEnd=html.indexOf('async function renderConversationsList()',marketContactStart);
-const marketContact=html.slice(marketContactStart,marketContactEnd);
-if(marketContact.indexOf('input.value=`السلام عليكم')<0 || marketContact.indexOf('return String(conversation.id)')<marketContact.indexOf('input.value=`السلام عليكم')){console.error('FAIL: seller welcome text must be set after opening chat');failures++;}
+const marketContactEnd=html.indexOf('async function renderCachedDirectConversationList(',marketContactStart);
+const marketContact=marketContactStart>=0&&marketContactEnd>marketContactStart?html.slice(marketContactStart,marketContactEnd):'';
+const firstChatOpen=marketContact.indexOf('await openMarketConversationChat(');
+const localGreeting=marketContact.indexOf("localInput.value='السلام عليكم");
+const localReturn=marketContact.indexOf('return String(conversation.id)',localGreeting);
+const onlineChatOpen=marketContact.indexOf('await openMarketConversationChat(',localReturn);
+const onlineGreeting=marketContact.indexOf('input.value=`السلام عليكم',onlineChatOpen);
+const onlineReturn=marketContact.indexOf('return String(conversation.id)',onlineGreeting);
+if(firstChatOpen<0 || localGreeting<firstChatOpen || localReturn<localGreeting
+   || onlineChatOpen<0 || onlineGreeting<onlineChatOpen || onlineReturn<onlineGreeting
+   || !marketContact.includes('if(localInput&&!localInput.value.trim())')
+   || !marketContact.includes('if(input&&!input.value.trim())')){
+  console.error('FAIL: seller welcome text must be set after opening online and local chats');failures++;
+}
 if(failures)process.exit(1);
 console.log(`Alwaha chat/feed candidate audit passed (${checks.length+1} checks).`);

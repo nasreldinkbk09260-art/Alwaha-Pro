@@ -10,6 +10,8 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: corsHeaders });
 const BUCKETS = ['media', 'avatars', 'posts', 'products'] as const;
+// Private conversation media is deleted with its uploader; it is never copied into the public marketplace archive.
+const DELETION_BUCKETS = [...BUCKETS, 'chat-media'] as const;
 const PAGE_SIZE = 500;
 const MAX_ROWS = 20000;
 const MAX_STORAGE_OBJECTS = 20000;
@@ -139,12 +141,42 @@ async function archiveMarketplaceReferences(
   }
   return replacements;
 }
+async function redactDeletedUserMarketplaceMedia(
+  db: any,
+  userId: string,
+): Promise<number> {
+  const rows = await collectRows(
+    db,
+    'market_messages',
+    'id,message',
+    query => query.eq('sender_id', userId),
+  );
+  let redacted = 0;
+  for (const row of rows) {
+    const message = String(row.message || '');
+    if (!message.startsWith('ALWAHA_MEDIA_V1:')) continue;
+    try {
+      const item = JSON.parse(message.slice('ALWAHA_MEDIA_V1:'.length));
+      if (item?.v !== 1 || typeof item.path !== 'string' || !item.path.startsWith(userId + '/')) continue;
+      const { error } = await db.from('market_messages')
+        .update({ message: 'تمت إزالة المرفق بعد حذف حساب صاحبه.' })
+        .eq('id', row.id)
+        .eq('sender_id', userId);
+      if (error) throw new Error('account_deletion_marketplace_media_reference_cleanup_failed');
+      redacted++;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'account_deletion_marketplace_media_reference_cleanup_failed') throw error;
+      // Non-media or malformed legacy rows are retained as text rather than trusted as a storage path.
+    }
+  }
+  return redacted;
+}
 async function deleteOwnedObjects(
   db: any,
   userId: string,
 ): Promise<number> {
   let removed = 0;
-  for (const bucket of BUCKETS) {
+  for (const bucket of DELETION_BUCKETS) {
     const objects: string[] = [];
     await listOwnedObjects(db, bucket, userId, objects);
     for (let offset = 0; offset < objects.length; offset += 1000) {
@@ -255,10 +287,12 @@ Deno.serve(async (req: Request) => {
     const { error: reelsError } = await admin.from('reels').delete().eq('author_id', user.id);
     if (reelsError) throw new Error('account_deletion_reels_cleanup_failed');
 
+    // Marketplace text and warranty snapshots remain; redact only the deleted user's private chat-media references.
+    const redactedMarketplaceMediaMessages = await redactDeletedUserMarketplaceMedia(admin, user.id);
     const removedObjects = await deleteOwnedObjects(admin, user.id);
     const { error: deletionError } = await admin.auth.admin.deleteUser(user.id);
     if (deletionError) throw new Error('account_deletion_auth_remove_failed');
-    return json({ ok: true, removedObjects, archivedMarketplaceImages: replacements.size, retainedMarketplaceRecords: true });
+    return json({ ok: true, removedObjects, archivedMarketplaceImages: replacements.size, redactedMarketplaceMediaMessages, retainedMarketplaceRecords: true });
   } catch (error) {
     console.error('account-deletion failed:', String(error));
     return json({ error: 'تعذر إكمال الحذف بأمان. لم يتم تأكيد حذف الحساب؛ قد يكون حُذف بعض المحتوى الاجتماعي، ويمكنك إعادة المحاولة.' }, 503);

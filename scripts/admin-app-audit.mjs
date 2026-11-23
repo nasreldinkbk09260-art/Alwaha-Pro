@@ -7,6 +7,7 @@ const migration=read('admin-app/supabase/migrations/20261102130000_admin_action_
 let checks=0,failed=0;
 function check(name,ok){checks++;if(ok)console.log(`PASS: ${name}`);else{failed++;console.error(`FAIL: ${name}`)}}
 check('admin app is a separate package identity',read('admin-app/capacitor.config.json').includes('pro.alwaha.admin'));
+check('admin dashboard identifies the linked core app version and independent admin version',html.includes('إدارة Alwaha-Pro 3.0.4')&&html.includes('إصدار لوحة الإدارة 1.0.0'));
 check('main app identity remains unchanged',read('capacitor.config.json').includes('pro.alwaha.app'));
 check('admin frontend invokes the protected Edge Function',html.includes("db.functions.invoke('admin-api'"));
 check('admin frontend loads the pinned local Supabase SDK without a runtime CDN dependency',html.includes('<script src="vendor/supabase/supabase.js"></script>')&&!html.includes('cdn.jsdelivr.net/npm/@supabase/supabase-js')&&read('admin-app/build.mjs').includes('adminSupabaseSdkSha256')&&read('admin-app/build.mjs').includes('crypto.createHash'));
@@ -23,6 +24,8 @@ check('admin API records pending/success/denied/error audit outcomes',api.includ
 check('admin Edge Function requires JWT verification in Supabase config',/\[functions\.admin-api\]\s*\nverify_jwt\s*=\s*true/.test(cfg));
 check('recovered admin log migration is RLS-locked and service-role-only',migration.includes('ENABLE ROW LEVEL SECURITY')&&migration.includes('REVOKE ALL ON TABLE public.admin_action_logs FROM PUBLIC, anon, authenticated')&&migration.includes('GRANT ALL ON TABLE public.admin_action_logs TO service_role'));
 check('admin app build and separate Android workflow exist',fs.existsSync('admin-app/build.mjs')&&fs.existsSync('.github/workflows/build-admin-apk.yml'));
+const adminWorkflow=read('.github/workflows/build-admin-apk.yml');
+check('admin APK workflow builds on main, release and work only, with manual dispatch',adminWorkflow.includes('      - main')&&adminWorkflow.includes('      - release')&&adminWorkflow.includes('      - work')&&adminWorkflow.includes('  workflow_dispatch:')&&!adminWorkflow.includes('alwaha-pro-3.0.3-dev'));
 check('admin Android configurator enforces separate package and target API 36',fs.existsSync('admin-app/scripts/configure-android-release.py')&&read('admin-app/scripts/configure-android-release.py').includes('targetSdkVersion')&&read('admin-app/scripts/configure-android-release.py').includes('pro.alwaha.admin'));
 check('admin audit-log source migration is included in PostgreSQL CI with privilege regression test',read('scripts/ci-validate-supabase-sql.sh').includes('admin_action_logs_source_recovery.sql')&&fs.existsSync('supabase/tests/20261102130000_admin_action_logs_source_recovery.sql'));
 
@@ -33,6 +36,16 @@ check('test-media cleanup uses Supabase Storage API, not SQL metadata deletion',
 check('cleanup stays behind JWT and server-side admin authorization',api.indexOf('auth.getUser(token)')<api.indexOf("server.storage.from('media').remove")&&api.indexOf("if (!profile?.is_admin)")<api.indexOf("server.storage.from('media').remove"));
 check('maintenance UI asks for confirmation and calls only the fixed cleanup action',html.includes('purgeTestMedia')&&html.includes('تأكيد نهائي')&&html.includes("adminApi('purge_test_media'"));
 check('archive purge and audit-action SQL migrations are committed',fs.existsSync('supabase/migrations/20261114153423_purge_test_legacy_archives_20261114.sql')&&fs.existsSync('supabase/migrations/20261114153527_admin_api_test_media_cleanup_action_20261114.sql'));
+check('admin UI has a plans, quotas and payment settings tab with reload/save controls',html.includes('data-tab="plans"')&&html.includes('plansPane')&&html.includes('managementConfigJson')&&html.includes('saveManagementConfig'));
+check('admin plans editor exposes visual free-market radius and daily/weekly quotas',html.includes('managementVisualEditor')&&html.includes('free.local_market_radius_km')&&html.includes('free.daily_direct_messages')&&html.includes('free.weekly_market_messages'));
+check('admin plans editor provides bounded visual controls for both paid plan configurations',html.includes("'plans.'+index+'.monthly_price_egp'")&&html.includes("'plans.'+index+'.weekly_market_messages'")&&html.includes('saveManagementVisualConfig'));
+check('admin plans editor exposes all four allowed manual payment methods without secret credential fields',html.includes('payment_methods.')&&html.includes('account_reference')&&html.includes('instructions')&&!html.includes('stripe_secret_key')&&!html.includes('card_number'));
+check('admin visual settings and advanced JSON share the same server-validated save action',html.includes('collectManagementConfigEditor')&&html.includes("adminApi('save_management_config'")&&html.includes('renderManagementConfigEditor'));
+check('admin API exposes audited get/save management configuration actions',api.includes("'get_management_config'")&&api.includes("'save_management_config'")&&api.includes(".from('app_settings')")&&api.includes("key: 'management_config_v1'"));
+check('management settings reject unsupported currency and payment-method types and bound quotas',api.includes("source.currency !== 'EGP'")&&api.includes("new Set(['instapay', 'vodafone_cash', 'bank_transfer', 'manual'])")&&api.includes('daily_direct_messages')&&api.includes('weekly_market_messages')&&api.includes('boundedConfigInteger'));
+check('payment settings are manual instructions only; no card or provider secrets are accepted',html.includes('لا تحفظ أسرار بوابات الدفع أو أرقام البطاقات أو CVV أو كلمات مرور هنا')&&!html.includes('stripe_secret_key')&&!html.includes('card_number'));
+check('cloud message quotas are database-enforced for direct and marketplace messages',read('supabase/migrations/20261121013915_cloud_chat_quotas.sql').includes('enforce_direct_chat_message_quota')&&read('supabase/migrations/20261121013915_cloud_chat_quotas.sql').includes('enforce_market_chat_message_quota')&&read('supabase/tests/20261121013915_cloud_chat_quotas.sql').includes('CHAT_QUOTA_SQL_REGRESSION')&&read('scripts/ci-validate-supabase-sql.sh').includes('20261121013915_cloud_chat_quotas.sql'));
+
 
 console.log(`ADMIN_APP_AUDIT=${failed?'FAIL':'PASS'} (${checks} checks)`);
 if(failed)process.exit(1);

@@ -1,13 +1,103 @@
 (() => {
   'use strict';
   const DB_NAME='alwaha-pro-local-vault-v1', DB_VERSION=1, STORE='records';
-  const PREF_KEYS=['alwaha_theme','alwaha_season','alwaha_language','alwaha_data_saver','alwaha_reduced_motion','alwaha_ringtone_choice','alwaha_nav_order_v1','alwaha_nav_stack_v1','alwaha_nav_hidden_v1','alwaha_nav_position_v1'];
+  const PREF_KEYS=['alwaha_theme','alwaha_season','alwaha_language','alwaha_data_saver','alwaha_reduced_motion','alwaha_ringtone_choice','alwaha_call_ringtone_choice_version','alwaha_ringtone_user_selected','alwaha_call_ringtone_enabled','alwaha_message_sounds_enabled','alwaha_notification_sounds_enabled','alwaha_nav_order_v1','alwaha_nav_stack_v1','alwaha_nav_hidden_v1','alwaha_nav_position_v1'];
   const enc=new TextEncoder(), dec=new TextDecoder();
   let dbPromise=null;
   function openDb(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,DB_VERSION);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:'key'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('IndexedDB unavailable'));});return dbPromise;}
   async function put(key,value){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put({key,value,updatedAt:new Date().toISOString()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
   async function all(){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);});}
   async function getRecord(key){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
+
+  async function getCacheCryptoKey(){
+    const row=await getRecord('crypto:offline-cache-key-v1');
+    if(row?.value&&row.value.type==='secret'&&row.value.algorithm?.name==='AES-GCM')return row.value;
+    const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    await put('crypto:offline-cache-key-v1',key);
+    return key;
+  }
+  async function putEncryptedCache(keyName,value){
+    const key=await getCacheCryptoKey(),iv=crypto.getRandomValues(new Uint8Array(12));
+    const plain=enc.encode(JSON.stringify(value));
+    if(plain.byteLength>5*1024*1024)throw new Error('Offline chat cache item exceeds the 5 MB limit.');
+    const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain);
+    await put(keyName,{version:1,iv:Array.from(iv),cipher:Array.from(new Uint8Array(cipher)),updatedAt:new Date().toISOString()});
+  }
+  async function getEncryptedCache(keyName){
+    const row=await getRecord(keyName),value=row?.value;
+    if(!value||value.version!==1||!Array.isArray(value.iv)||!Array.isArray(value.cipher))return null;
+    try{const key=await getCacheCryptoKey(),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:new Uint8Array(value.iv)},key,new Uint8Array(value.cipher));return JSON.parse(dec.decode(plain));}
+    catch(error){console.warn('[Alwaha Vault] encrypted offline cache could not be opened:',error);return null;}
+  }
+  async function saveDirectChatCache(userId,peerId,rows){
+    if(!userId||!peerId||!Array.isArray(rows))return;
+    const safe=rows.slice(-1000).map(row=>({id:row.id,sender_id:row.sender_id,receiver_id:row.receiver_id,message:String(row.message||'').slice(0,50000),created_at:row.created_at,read_at:row.read_at,reply_to_id:row.reply_to_id||null}));
+    await putEncryptedCache('cache:direct:'+String(userId)+':'+String(peerId),safe);
+  }
+  async function getDirectChatCache(userId,peerId){
+    if(!userId||!peerId)return null;
+    const rows=await getEncryptedCache('cache:direct:'+String(userId)+':'+String(peerId));
+    return Array.isArray(rows)?rows:null;
+  }
+  async function getAllDirectChatCaches(userId){
+    const rows=await all(),prefix='cache:direct:'+String(userId)+':',out=[];
+    for(const row of rows){if(typeof row.key==='string'&&row.key.startsWith(prefix)){const messages=await getEncryptedCache(row.key);out.push({peerId:row.key.slice(prefix.length),messages:Array.isArray(messages)?messages:[]});}}
+    return out;
+  }
+  async function saveMarketChatCache(userId,conversationId,rows){
+    if(!userId||!conversationId||!Array.isArray(rows))return;
+    const safe=rows.slice(-1000).map(row=>({id:row.id,conversation_id:row.conversation_id,sender_id:row.sender_id,message:String(row.message||'').slice(0,50000),created_at:row.created_at,read_at:row.read_at,reply_to_id:row.reply_to_id||null}));
+    await putEncryptedCache('cache:market:'+String(userId)+':'+String(conversationId),safe);
+  }
+  async function getMarketChatCache(userId,conversationId){
+    if(!userId||!conversationId)return null;
+    const rows=await getEncryptedCache('cache:market:'+String(userId)+':'+String(conversationId));
+    return Array.isArray(rows)?rows:null;
+  }
+  async function getAllMarketChatCaches(userId){
+    const rows=await all(),prefix='cache:market:'+String(userId)+':',out=[];
+    for(const row of rows){if(typeof row.key==='string'&&row.key.startsWith(prefix)){const messages=await getEncryptedCache(row.key);out.push({conversationId:row.key.slice(prefix.length),messages:Array.isArray(messages)?messages:[]});}}
+    return out;
+  }
+  const ACCOUNT_VIEW_CACHE_NAMES=new Set(['notifications','friend-requests','friend-relations','friend-directory','friend-requester-directory','market-transactions','pending-notification-reads','post-comment-counts','my-market-items','market-products']);
+  async function saveAccountViewCache(userId,viewName,value){
+    const name=String(viewName||'');
+    if(!userId||!ACCOUNT_VIEW_CACHE_NAMES.has(name))return false;
+    const safe=Array.isArray(value)?value.slice(0,500):value;
+    const size=enc.encode(JSON.stringify(safe)).byteLength;
+    if(size>2*1024*1024)throw new Error('Account view cache exceeds the 2 MB limit.');
+    await putEncryptedCache('cache:view:'+String(userId)+':'+name,safe);
+    return true;
+  }
+  async function getAccountViewCache(userId,viewName){
+    const name=String(viewName||'');
+    if(!userId||!ACCOUNT_VIEW_CACHE_NAMES.has(name))return null;
+    return await getEncryptedCache('cache:view:'+String(userId)+':'+name);
+  }
+  async function saveProfileCache(userId,profile){
+    if(!userId||!profile)return;
+    const safe={id:profile.id,first_name:profile.first_name,last_name:profile.last_name,username:profile.username,avatar_url:profile.avatar_url,gender:profile.gender,birthdate:profile.birthdate,bio:profile.bio,city:profile.city,country:profile.country,phone:profile.phone,website:profile.website,created_at:profile.created_at,updated_at:profile.updated_at,is_verified:profile.is_verified,is_admin:profile.is_admin===true,hide_email:profile.hide_email,hide_phone:profile.hide_phone};
+    await putEncryptedCache('cache:profile:'+String(userId),safe);
+  }
+  async function getProfileCache(userId){return userId?getEncryptedCache('cache:profile:'+String(userId)):null;}
+  async function savePeerProfileCache(userId,peerId,profile){
+    if(!userId||!peerId||!profile)return;
+    const safe={id:String(profile.id||peerId),first_name:String(profile.first_name||'').slice(0,80),last_name:String(profile.last_name||'').slice(0,80),username:String(profile.username||'').slice(0,40),gender:String(profile.gender||'').slice(0,24),created_at:profile.created_at||null,avatar_url:String(profile.avatar_url||'').slice(0,2048),is_verified:profile.is_verified===true};
+    await putEncryptedCache('cache:peer-profile:'+String(userId)+':'+String(peerId),safe);
+  }
+  async function getPeerProfileCache(userId,peerId){
+    if(!userId||!peerId)return null;
+    return await getEncryptedCache('cache:peer-profile:'+String(userId)+':'+String(peerId));
+  }
+  async function saveMarketConversationIndex(userId,rows){
+    if(!userId||!Array.isArray(rows))return;
+    await putEncryptedCache('cache:market-index:'+String(userId),rows.slice(0,200));
+  }
+  async function getMarketConversationIndex(userId){
+    const rows=userId?await getEncryptedCache('cache:market-index:'+String(userId)):null;
+    return Array.isArray(rows)?rows:null;
+  }
+
   async function removeRecord(key){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
   async function clear(){const db=await openDb();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
   async function clearDrafts(){const rows=await all(),keys=rows.filter(x=>typeof x.key==='string'&&x.key.startsWith('draft:')).map(x=>x.key);if(!keys.length)return 0;const db=await openDb();await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);for(const key of keys)store.delete(key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});return keys.length;}
@@ -91,6 +181,6 @@
     host.querySelector('#alwaha-vault-clean').onclick=async()=>{if(!confirm('سيتم مسح المسودات المحلية المحفوظة فقط. لن تُحذف منشوراتك أو رسائلك السحابية. أنشئ نسخة احتياطية أولاً. هل تتابع؟'))return;await clearDrafts();await render();};
   }
   function bindDrafts(){const fields=[['home-post-textarea','home-post'],['prod-name','market-listing:prod-name'],['prod-price','market-listing:prod-price'],['prod-desc-location','market-listing:prod-desc-location']];for(const [id,key] of fields){const el=document.getElementById(id);if(!el)continue;let timer=null;el.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>saveDraft(key,el.value).catch(console.warn),450);});}}
-  window.AlwahaLocalVault={put,getAll:all,getRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup};
+  window.AlwahaLocalVault={put,getAll:all,getRecord,removeRecord,saveDraft,getUsage,clearDrafts,collectCloudSnapshot,exportBackup,downloadSavedBackup,importBackup,saveAccountViewCache,getAccountViewCache,saveDirectChatCache,getDirectChatCache,getAllDirectChatCaches,saveMarketChatCache,getMarketChatCache,getAllMarketChatCaches,saveProfileCache,getProfileCache,savePeerProfileCache,getPeerProfileCache,saveMarketConversationIndex,getMarketConversationIndex};
   window.addEventListener('DOMContentLoaded',()=>{render().catch(console.warn);bindDrafts();restoreDrafts().catch(console.warn);});
 })();

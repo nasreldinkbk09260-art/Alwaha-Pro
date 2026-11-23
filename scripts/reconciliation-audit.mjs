@@ -30,23 +30,41 @@ function check(label, condition) { condition ? pass(label) : fail(label); }
 check('release version 3.0.4 is consistent across package, lockfile, manifest and title',
   pkg.version === '3.0.4' && JSON.parse(read('package-lock.json')).packages?.['']?.version === '3.0.4' && manifest.version === '3.0.4' && /<title>Alwaha-Pro 3\.0\.4<\/title>/.test(html));
 check('Capacitor identity is unchanged', cap.appId === 'pro.alwaha.app' && cap.appName === 'Alwaha-Pro' && cap.webDir === 'dist');
-check('3.0.4 final cache token agrees across all current audits',
-  sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-iphone-pwa-20261118'") &&
-  read('scripts/performance-audit.mjs').includes('alwaha-pro-v3\\.0\\.4-iphone-pwa-20261118') &&
-  read('scripts/field-repair-audit.mjs').includes('alwaha-pro-v3.0.4-iphone-pwa-20261118') &&
-  read('scripts/compatibility-audit.mjs').includes('alwaha-pro-v3.0.4-iphone-pwa-20261118'));
+check('service worker cache uses an extensible 3.0.4 namespace without a closed revision allowlist',
+  /const CACHE_NAME = ['"]alwaha-pro-v3\.0\.4-[^'"]+['"]/.test(sw) &&
+  /name\.startsWith\('alwaha-pro-'\)/.test(sw) &&
+  /\.filter\(\(name\) => name\.startsWith\('alwaha-pro-'\) && name !== CACHE_NAME\)/.test(sw) &&
+  /alwaha-pro-v3\\.0\\.4-/.test(read('scripts/field-repair-audit.mjs')) &&
+  read('scripts/compatibility-audit.mjs').includes("alwaha-pro-v3.0.4-"));
 
 // 3.0.1 final post-test repair family: field compatibility, audio routing, call UI and no mesh-share resurrection.
 check('3.0.1 field repairs remain: safe multiplayer viewport and notification overlay',
   games.includes('ALWAHA FIELD REPAIR: viewport-safe room dialog') && html.includes('alwaha-notifications-open'));
 check('native call speaker routing is bundled and defaults to earpiece',
   has(html,'speakerRouteBtn') && has(html,'setAlwahaCallSpeaker(false,true)') && native.includes('setRoute'));
-check('native audio-route and APK FileProvider plugin is retained',
-  native.includes('FileProvider.getUriForFile') && native.includes('setRoute'));
-check('local network/mesh share remains intentionally absent',
-  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section/.test(html+games));
-check('Bluetooth is honestly disabled, not represented as an implemented call path',
-  html.includes('المكالمات عبر البلوتوث لم تُنفذ بعد') && /aria-disabled=["']true["']/.test(html));
+check('native audio-route plugin remains while APK export is removed',
+  native.includes('setRoute') && native.includes('resetRoute') && !native.includes('FileProvider') && !native.includes('shareApk'));
+check('legacy unverified local-share panel and manual bridge discovery stay retired while encrypted Mesh is present',
+  !/toggleFreeMeshShareSystem|free-mode-toggle-main-btn|local-share-file-btn|radar-live-results|free-section|openAlwahaLocalDiscovery|alwaha-local-discovery-modal/.test(html+games) &&
+  read('alwaha-local-mesh.js').includes('deriveRouteHmacKey') &&
+  html.includes('data-alwaha-mesh-toggle'));
+check('Nearby Connections P2P cluster carries Alwaha-encrypted packet frames while live call media remains separately unclaimed',
+  (() => {
+    const plugin=read('scripts/android/AlwahaLocalNetworkPlugin.java');
+    const mesh=read('alwaha-local-mesh.js');
+    return plugin.includes('ConnectionsClient') &&
+      plugin.includes('Strategy.P2P_CLUSTER') &&
+      plugin.includes('startAdvertising') &&
+      plugin.includes('startDiscovery') &&
+      plugin.includes('sendPayload') &&
+      plugin.includes('onPayloadReceived') &&
+      plugin.includes('result.put("callMediaReady", false)') &&
+      html.includes('nearbyConnectionsSupported') &&
+      mesh.includes('ALWAHA_MESH_V1') &&
+      mesh.includes('sendLocalPacket') &&
+      mesh.includes('deriveRouteHmacKey') &&
+      !html.includes('BLE data transport ready');
+  })());
 
 // 3.0.1 R2 post-branch repairs: notifications, non-friend market messaging, feed coalescing and archive.
 check('home feed has a single-flight guard and bounded secondary requests',
@@ -84,11 +102,13 @@ check('market_messages.sender_id foreign-key advisor finding has a migration ind
   lifecycleSql.includes('market_messages_sender_id_idx') &&
   nonfriendTest.includes('Missing index for market_messages.sender_id foreign key'));
 
-// Kids mode: real source and call-audio track path are checked separately from device QA.
-check('kids mode is explicitly deferred in the app until real-device acceptance',
-  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && html.includes('id="kidsModeBtn"') &&
-  html.includes('وضع الأطفال — قريبًا') && html.includes('disabled aria-disabled="true"') &&
-  !html.includes('onclick="toggleAlwahaKidsMode()"'));
+// Kids Room is selectable from the video-call mode chooser; real-device acceptance remains a release gate.
+check('Kids Room is selectable and guarded until the video call has a remote stream',
+  kids.includes('وضع الأطفال متاح أثناء مكالمة فيديو متصلة فقط') && kids.includes('kids-parent-exit') &&
+  html.includes('function openVideoCallModeChooser()') && html.includes('data-video-call-mode="normal"') &&
+  html.includes('data-video-call-mode="kids"') && html.includes('onclick="toggleAlwahaKidsMode()"') &&
+  html.includes("kidsBtn.style.display=isVideo&&state==='connected'?'inline-block':'none'") &&
+  html.includes('remoteVideo?.srcObject && remoteVideo.readyState >= 1'));
 check('kids room includes local scene, both video streams, camera filters, toys, balloon, key and door lock',
   kids.includes('kids-video-port') && kids.includes('kids-local-port') && kids.includes('const filters=') &&
   kids.includes('data-toy') && kids.includes('kids-balloon') && kids.includes('kids-key') && kids.includes('kids-lock') && kids.includes('kids-door'));
@@ -104,9 +124,12 @@ check('kids effect sounds have a distinct WebRTC audio track and bridge to remot
 check('encrypted local backup supports export/import and excludes passwords/session/service keys',
   vault.includes('PBKDF2') && vault.includes('AES-GCM') && vault.includes('async function exportBackup') &&
   vault.includes('async function importBackup') && vault.includes('لا يتضمن كلمات المرور أو رموز الجلسة أو مفاتيح الخدمة'));
-check('three approved themes include the default plus two full-app image-free premium atmospheres',
+check('base themes stay available while new themes can register without a fixed UI-count allowlist',
   ['default','oasis','abyss'].every(x=>experience.includes(`id:'${x}'`)) &&
-  [...html.matchAll(/data-theme-choice="([^"]+)"/g)].length===3 &&
+  html.includes('window.AlwahaThemeRegistry') &&
+  html.includes('window.registerAlwahaTheme = function registerAlwahaTheme(definition)') &&
+  html.includes('window.AlwahaThemeRegistry[id] = theme') &&
+  html.includes('grid.appendChild(button)') &&
   themeCss.includes('body[data-alwaha-theme="oasis"] #alwaha-theme-backdrop') &&
   themeCss.includes('body[data-alwaha-theme="abyss"] #alwaha-theme-backdrop') &&
   !themeCss.includes('bg-aurora.webp') && !themeCss.includes('bg-underwater.webp') &&
@@ -128,13 +151,9 @@ check('nav drag has a lightweight comic follower with falling/recovered hat or s
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
-// Maintained application branches plus explicitly named validation branches; publish from main only.
-const pushBranchBlock = workflow.slice(workflow.indexOf('  push:'), workflow.indexOf('  workflow_dispatch:'));
-const workflowBranches = pushBranchBlock.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2).trim());
-const expectedWorkflowBranches = ['main','alwaha-pro-3.0.3-dev'];
-check('APK/AAB workflow watches main and only explicitly maintained validation/preparation branches',
-  workflowBranches.length === expectedWorkflowBranches.length &&
-  expectedWorkflowBranches.every(name => workflowBranches.includes(name)));
+// Development validation is intentionally open to new branch names; public publishing remains main-only.
+check('APK/AAB validation runs on every development branch without a branch allowlist',
+  workflow.includes("  push:\n    branches:\n      - '**'"));
 check('public website publication is gated to main',
   workflow.includes("if: github.ref == 'refs/heads/main'") &&
   workflow.includes('name: Publish Alwaha-Pro 3.0.4 website'));

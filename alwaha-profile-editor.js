@@ -68,7 +68,7 @@
       const modal = document.createElement('div');
       modal.id = 'sub-prof-profile-edit';
       modal.className = 'sub-profile-view-box';
-      modal.innerHTML = \`
+      modal.innerHTML = `
         <div class="alwaha-profile-editor-head"><h3><i class="fa-solid fa-user-pen"></i> تعديل بياناتي</h3><button type="button" class="btn-action alwaha-profile-editor-close" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button></div>
         <form id="alwaha-profile-editor-form" novalidate>
           <div class="alwaha-profile-editor-avatar"><img id="profile-edit-avatar-preview" src="icon.png" alt="معاينة الصورة الشخصية"><button type="button" id="profile-edit-avatar-button"><i class="fa-solid fa-image"></i> تغيير الصورة الشخصية</button><p>الصورة اختيارية ويمكنك تغييرها في أي وقت.</p></div>
@@ -80,7 +80,7 @@
           <label for="profile-edit-gender">النوع <small>(اختياري)</small></label><select id="profile-edit-gender"><option value="">— النوع اختياري —</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
           <label for="profile-edit-birthdate">تاريخ الميلاد <small>(اختياري)</small></label><input id="profile-edit-birthdate" type="date" autocomplete="bday">
           <button type="submit" id="profile-edit-save-button"><i class="fa-solid fa-floppy-disk"></i> حفظ بياناتي</button>
-        </form>\`;
+        </form>`;
       document.body.appendChild(modal);
       window.AlwahaModalShell?.sync?.();
       modal.querySelector('.alwaha-profile-editor-close')?.addEventListener('click', () => window.closeSubProfileView?.('sub-prof-profile-edit'));
@@ -91,7 +91,7 @@
     if (!$('alwaha-profile-editor-style')) {
       const style = document.createElement('style');
       style.id = 'alwaha-profile-editor-style';
-      style.textContent = \`
+      style.textContent = `
         #profile-section .profile-options-menu-list .profile-menu-btn,#profile-device-suite-toggle{width:100%;min-height:46px;box-sizing:border-box;border:1px solid rgba(255,255,255,.10);font:inherit;text-align:right;cursor:pointer}
         #profile-section .profile-menu-btn:focus-visible,#profile-device-suite-toggle:focus-visible{outline:2px solid #8bf4ff;outline-offset:3px}
         #profile-device-suite-toggle{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;margin:0 0 10px;background:rgba(139,244,255,.07);color:#8bf4ff;border-color:#8bf4ff33}
@@ -111,7 +111,7 @@
         #sub-prof-profile-edit #profile-edit-username,#sub-prof-profile-edit #profile-edit-phone{direction:ltr;text-align:left}
         #sub-prof-profile-edit #profile-edit-save-button{width:100%;min-height:46px;background:#8bf4ff;color:#07131b;border:0;border-radius:9px;font:800 13px Cairo,sans-serif;margin-top:8px}
         #sub-prof-profile-edit button:focus-visible,#sub-prof-profile-edit input:focus-visible,#sub-prof-profile-edit select:focus-visible{outline:2px solid #8bf4ff;outline-offset:2px}
-      \`;
+      `;
       document.head.appendChild(style);
     }
   }

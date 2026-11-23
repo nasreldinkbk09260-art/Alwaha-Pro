@@ -42,8 +42,8 @@ if (/<title>Alwaha-Pro 3\.0\.4<\/title>/i.test(html) &&
   pass("HTML title and currentAppVersion match 3.0.4");
 else fail("HTML release version mismatch");
 
-if (/CACHE_NAME\s*=\s*['"]alwaha-pro-v3\.0\.4-iphone-pwa-20261118['"]/.test(sw))
-  pass("service worker uses the current 3.0.4 three-theme cache namespace");
+if (sw.includes("const CACHE_NAME = 'alwaha-pro-v3.0.4-"))
+  pass("service worker uses an approved 3.0.4 release or private-test cache namespace");
 else fail("service worker cache namespace mismatch");
 
 if (html.includes("3.0.4 mobile performance guard") &&
@@ -62,11 +62,11 @@ if (workflow.includes("Alwaha-Pro-3.0.4.apk") &&
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
-const maintainedBranches = pushBranchBlock.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("- ")).map((line) => line.slice(2).trim());
-const expectedBranches = ["main", "alwaha-pro-3.0.3-dev"];
-if (maintainedBranches.length === expectedBranches.length && expectedBranches.every((name) => maintainedBranches.includes(name)))
-  pass("workflow includes main and only explicitly maintained validation/preparation branches");
-else fail("workflow branch allowlist contains an unexpected, missing, or unapproved branch");
+const validatesEveryDevelopmentBranch = /branches:\s*\n\s+- ['"]\*\*['"]/.test(pushBranchBlock);
+const publicReleaseJobs = workflow.split("\n").filter(line => line.trim() === "if: github.ref == 'refs/heads/main'");
+if (validatesEveryDevelopmentBranch && publicReleaseJobs.length >= 2 && !workflow.includes('ALWAHA_PUBLIC_RELEASE_ENABLED') && workflow.includes('--prerelease'))
+  pass("all branches receive validation while the explicitly requested beta publication is main-only and prerelease-scoped");
+else fail("development CI must accept every branch; beta publishing must remain main-only and prerelease-scoped");
 
 if (workflow.includes("npm run audit:performance"))
   pass("workflow invokes performance audit");
