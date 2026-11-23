@@ -82,14 +82,14 @@ stalled.myId='recipient';stalled.peerId='peer';stalled.sessionId='session';stall
 stalled.call={endCall(notify){assert.equal(notify,false);}};
 stalled.roomChannel={topic:'call-room'};
 stalled.client={removeChannel:()=>new Promise(()=>{})};
-const start=Date.now();
+const cleanupStartedAt=Date.now();
 await stalled.handleCallState('remote-ended');
 assert.ok(ui.some(item=>item.state==='idle'&&item.meta?.text==='أنهى الطرف الآخر المكالمة.'),'remote-ended must show the idle/close state before async cleanup finishes');
 assert.ok(ui.some(item=>item.modal===true),'remote-ended must reopen the call result view immediately');
 assert.equal(stalled.call,null,'the media session is detached synchronously');
 assert.equal(stalled.roomChannel,null,'the room channel reference is detached synchronously');
 await stalled.endCleanupPromise;
-assert.ok(Date.now()-start<250,'hung native audio and Realtime cleanup must be bounded');
+assert.ok(Date.now()-cleanupStartedAt<250,'hung native audio and Realtime cleanup must be bounded');
 assert.ok(ui.some(item=>item.state==='idle'),'the call close action remains available after remote termination');
 
 console.log('CALL_TERMINAL_UI_AUDIT=PASS (remote end reveals close state immediately; media/channel teardown is synchronous and asynchronous cleanup is deadline-bounded)');
