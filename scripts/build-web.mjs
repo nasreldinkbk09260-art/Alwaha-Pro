@@ -4,7 +4,7 @@ import { build, transform } from 'esbuild';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
-const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'alwaha-update-checker.mjs', 'scripts/alwaha-update-checker-entry.mjs', 'production-polish.js', 'alwaha-profile-editor.js', 'alwaha-call-feedback.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-local-mesh.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js', 'alwaha-smart-assistant.js', 'alwaha-theme-system.css'];
+const required = ['index.html', 'manifest.json', 'sw.js', 'icon.png', 'games.js', 'alwaha-update-checker.mjs', 'production-polish.js', 'alwaha-profile-editor.js', 'alwaha-call-feedback.js', 'compatibility.js', 'alwaha-local-vault.js', 'alwaha-local-mesh.js', 'alwaha-experience.js', 'alwaha-modal-shell.js', 'alwaha-runtime-guard.js', 'alwaha-kids-room.js', 'alwaha-smart-assistant.js', 'alwaha-theme-system.css'];
 
 for (const file of required) {
   if (!fs.existsSync(path.join(root, file))) {
@@ -63,6 +63,9 @@ for (const output of ['jsQR.min.js', 'qrcode-generator.min.js']) {
     throw new Error('Offline QR runtime asset was not generated: ' + output);
   }
 }
+
+const updateCheckerEntry = path.join(root, 'scripts', 'alwaha-update-checker-entry.mjs');
+if (!fs.existsSync(updateCheckerEntry)) throw new Error('Missing Android beta update checker entry point.');
 
 const nativeBackEntry = path.join(root, 'scripts', 'native-back-handler.mjs');
 if (!fs.existsSync(nativeBackEntry)) {
