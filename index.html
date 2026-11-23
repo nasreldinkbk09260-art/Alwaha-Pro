@@ -970,8 +970,8 @@ img,video,canvas{max-width:100%}
             <h3 style="color:#00ffff; font-size:16px; margin:0;">تسجيل الدخول</h3>
             <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')" aria-label="إغلاق تسجيل الدخول" title="إغلاق تسجيل الدخول"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" onkeydown="if(event.key==='Enter'){event.preventDefault();executeUserLoginAuth(event)}" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
-        <input type="password" id="login-password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();executeUserLoginAuth(event)}" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" onkeydown="handleLoginKeydown(event)" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="password" id="login-password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="handleLoginKeydown(event)" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
         <p id="profile-login-status" role="status" aria-live="polite" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:9px;background:rgba(255,255,255,.04);font-size:11px;line-height:1.8;color:#b8d7e8;"></p>
 
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
@@ -7138,6 +7138,12 @@ function triggerAnimeAiConverterFilter() {
                 profileAuthActionInFlight=false;
                 if(submitButton){submitButton.disabled=false;submitButton.removeAttribute('aria-busy');}
             }
+        }
+
+        function handleLoginKeydown(event){
+            if(event?.key!=='Enter')return;
+            event.preventDefault();
+            return executeUserLoginAuth(event);
         }
 
         async function executeUserLoginAuth(event){

@@ -7,6 +7,7 @@ const migration=read('admin-app/supabase/migrations/20261102130000_admin_action_
 let checks=0,failed=0;
 function check(name,ok){checks++;if(ok)console.log(`PASS: ${name}`);else{failed++;console.error(`FAIL: ${name}`)}}
 check('admin app is a separate package identity',read('admin-app/capacitor.config.json').includes('pro.alwaha.admin'));
+check('admin dashboard identifies the linked core app version and independent admin version',html.includes('إدارة Alwaha-Pro 3.0.4')&&html.includes('إصدار لوحة الإدارة 1.0.0'));
 check('main app identity remains unchanged',read('capacitor.config.json').includes('pro.alwaha.app'));
 check('admin frontend invokes the protected Edge Function',html.includes("db.functions.invoke('admin-api'"));
 check('admin frontend loads the pinned local Supabase SDK without a runtime CDN dependency',html.includes('<script src="vendor/supabase/supabase.js"></script>')&&!html.includes('cdn.jsdelivr.net/npm/@supabase/supabase-js')&&read('admin-app/build.mjs').includes('adminSupabaseSdkSha256')&&read('admin-app/build.mjs').includes('crypto.createHash'));
