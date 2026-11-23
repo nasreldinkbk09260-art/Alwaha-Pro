@@ -970,15 +970,16 @@ img,video,canvas{max-width:100%}
             <h3 style="color:#00ffff; font-size:16px; margin:0;">تسجيل الدخول</h3>
             <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeSubProfileView('sub-prof-login')" aria-label="إغلاق تسجيل الدخول" title="إغلاق تسجيل الدخول"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
-        <input type="password" id="login-password" placeholder="كلمة المرور" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:15px;">
+        <input type="text" id="login-id" placeholder="اسم المستخدم أو البريد الإلكتروني أو الهاتف القديم" autocomplete="username" autocapitalize="none" onkeydown="if(event.key==='Enter'){event.preventDefault();executeUserLoginAuth(event)}" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <input type="password" id="login-password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter'){event.preventDefault();executeUserLoginAuth(event)}" class="keyboard-target" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; padding:10px; border-radius:8px; color:#fff; font-size:12px; margin-bottom:10px;">
+        <p id="profile-login-status" role="status" aria-live="polite" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:9px;background:rgba(255,255,255,.04);font-size:11px;line-height:1.8;color:#b8d7e8;"></p>
 
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <a href="#" style="color:#00ff88; font-size:11px; text-decoration:none;" onclick="closeSubProfileView('sub-prof-login'); openSubProfileView('sub-prof-register')">ليس لديك حساب؟ أنشئ الآن</a>
             <a href="#" style="color:#ffd700; font-size:11px; text-decoration:none;" onclick="closeSubProfileView('sub-prof-login'); openSubProfileView('sub-prof-recovery')">نسيت كلمة السر؟</a>
         </div>
 
-        <button class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" id="profile-login-submit" onclick="executeUserLoginAuth()">دخول</button>
+        <button type="button" class="btn-action" style="width:100%; background:#00ffff; color:#000; padding:12px; border-radius:8px; font-size:13px;" id="profile-login-submit" onclick="executeUserLoginAuth(event)">دخول</button>
     </div>
 
     <div id="sub-prof-settings" class="sub-profile-view-box">
@@ -5028,14 +5029,22 @@ async function renderConversationsList(){
             }
             clearCallTimeout() { if(this.callTimeout!==null)clearTimeout(this.callTimeout);this.callTimeout=null; }
             scheduleCallTimeout(sessionId,delay,incomingPayload=null) {
-                this.clearCallTimeout();const seconds=Math.round(delay/1000);
-                this.callTimeout=setTimeout(async()=>{
+                this.clearCallTimeout();
+                const seconds=Math.round(delay/1000);
+                this.callTimeout=setTimeout(()=>{
                     if(this.sessionId!==sessionId)return;
-                    if(incomingPayload){if(this.pendingIncoming?.sessionId!==sessionId)return;await this.sendCallResult(incomingPayload.from,sessionId,'no-answer',this.mode).catch(()=>{});await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
-                    else{if(!this.call)return;await this.sendRoom({type:'end',reason:'no-answer'}).catch(()=>{});}
-                    const target=currentChatUser||incomingPayload?.displayName||'المستخدم';await this.end(false);
+                    if(incomingPayload&&this.pendingIncoming?.sessionId!==sessionId)return;
+                    if(!incomingPayload&&!this.call)return;
+                    const target=currentChatUser||incomingPayload?.displayName||'المستخدم';
+                    if(incomingPayload){
+                        void Promise.resolve().then(()=>this.sendCallResult(incomingPayload.from,sessionId,'no-answer',this.mode)).catch(error=>console.warn('[Alwaha Call] No-answer result failed:',error));
+                    }
+                    void Promise.resolve().then(()=>this.sendRoom({type:'end',reason:'no-answer'})).catch(error=>console.warn('[Alwaha Call] No-answer signal failed:',error));
+                    const cleanup=this.end(false);
                     updateCallUi('idle',{target,text:incomingPayload?'مكالمة فائتة — لم يتم الرد':'لم يتم الرد على المكالمة',indicator:'انتهت مهلة انتظار الرد بعد '+seconds+' ثانية.'});
-                    setCallModal(true);window.AlwahaCallFeedback?.play('no-answer');
+                    setCallModal(true);
+                    window.AlwahaCallFeedback?.play('no-answer');
+                    void cleanup.catch(error=>console.warn('[Alwaha Call] Timeout cleanup failed:',error));
                 },delay);
             }
             async subscribeChannel(channel) {
@@ -5187,8 +5196,13 @@ async function renderConversationsList(){
             async handleIncomingCallResult(payload) {
                 if(!payload||payload.to!==this.myId||payload.from!==this.peerId||!this.sessionId||payload.sessionId!==this.sessionId)return;
                 const states={rejected:{text:'لا يمكن الاتصال قبل قبول طلب الصداقة.',indicator:'المستخدم غير متاح للمكالمات قبل قبول الصداقة.',tone:'unavailable'},declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
-                const result=states[payload.status];if(!result)return;const target=currentChatUser||'المستخدم';
-                await this.end(false);updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
+                const result=states[payload.status];if(!result)return;
+                const target=currentChatUser||'المستخدم';
+                const cleanup=this.end(false);
+                updateCallUi('idle',{target,text:result.text,indicator:result.indicator});
+                setCallModal(true);
+                window.AlwahaCallFeedback?.play(result.tone);
+                void cleanup.catch(error=>console.warn('[Alwaha Call] Result cleanup failed:',error));
             }
             async handlePendingIncomingEnd(payload) {
                 if(!payload||!this.pendingIncoming||payload.sessionId!==this.pendingIncoming.sessionId)return;
@@ -5201,10 +5215,11 @@ async function renderConversationsList(){
                     'remote-ended':{text:'ألغى المتصل المكالمة قبل الرد.',indicator:'تم إلغاء طلب الاتصال قبل الإجابة.',tone:'ended'}
                 };
                 const result=states[reason],target=this.pendingIncoming.displayName||currentChatUser||'المستخدم';
-                await this.end(false);
+                const cleanup=this.end(false);
                 updateCallUi('idle',{target,text:result.text,indicator:result.indicator});
                 setCallModal(true);
                 window.AlwahaCallFeedback?.play(result.tone);
+                void cleanup.catch(error=>console.warn('[Alwaha Call] Pending incoming cleanup failed:',error));
             }
             async handleLocalMeshSignal(fromAccountId,payload) {
                 if(!payload||!fromAccountId)return;
@@ -5212,7 +5227,7 @@ async function renderConversationsList(){
                 const trusted=await window.AlwahaLocalMesh?.getPeerByAccountId(fromAccountId);if(!trusted)return;
                 if(payload.type==='call-result'){
                     if(payload.sessionId!==this.sessionId||fromAccountId!==this.peerId)return;
-                    const status=payload.status;if(['declined','busy','no-answer','unavailable'].includes(status)){const text={declined:'رفض الطرف الآخر المكالمة.',busy:'الطرف مشغول حالياً.', 'no-answer':'لم يتم الرد على المكالمة.',unavailable:'الجهاز غير متاح.'}[status];await this.end(false);updateCallUi('idle',{target:currentChatUser||'المستخدم',text,indicator:'انتهى طلب الاتصال المحلي.'});setCallModal(true);window.AlwahaCallFeedback?.play(status);}return;
+                    const status=payload.status;if(['declined','busy','no-answer','unavailable'].includes(status)){const text={declined:'رفض الطرف الآخر المكالمة.',busy:'الطرف مشغول حالياً.', 'no-answer':'لم يتم الرد على المكالمة.',unavailable:'الجهاز غير متاح.'}[status];const cleanup=this.end(false);updateCallUi('idle',{target:currentChatUser||'المستخدم',text,indicator:'انتهى طلب الاتصال المحلي.'});setCallModal(true);window.AlwahaCallFeedback?.play(status);void cleanup.catch(error=>console.warn('[Alwaha Mesh Call] Result cleanup failed:',error));}return;
                 }
                 if(payload.type!=='call-signal'||!payload.signal)return;
                 const signal=payload.signal;
@@ -5285,46 +5300,89 @@ async function renderConversationsList(){
                 updateCallUi('connecting', { target: currentChatUser || payload.displayName || payload.from, text:'جاري الاتصال...' });
             }
             async rejectIncoming() {
-                this.clearCallTimeout();stopAlwahaCallRingtone();
-                const payload=this.pendingIncoming;this.pendingIncoming=null;
-                if(payload&&(this.mode==='offline'||this.mode==='offline-market'))await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Mesh Call] Decline signal failed:',error));
-                else if(payload&&this.roomChannel)await this.sendRoom({type:'end',reason:'declined'}).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
+                this.clearCallTimeout();
+                stopAlwahaCallRingtone();
+                const payload=this.pendingIncoming;
+                this.pendingIncoming=null;
+                if(payload&&this.roomChannel){
+                    void Promise.resolve().then(()=>this.sendRoom({type:'end',reason:'declined'})).catch(error=>console.warn('[Alwaha Call] Decline signal failed:',error));
+                }
             }
             async handleCallState(state) {
                 if (window.__alwahaCallTerminationRequested) return;
                 const target=this.mode==='market'?'بائع السوق':(currentChatUser||'المستخدم');
-                if(state==='connected'){this.clearCallTimeout();window.AlwahaCallFeedback?.stop();window.AlwahaCallFeedback?.play('connected');updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});startCallTimer();if(this.mediaType==='video')scheduleKidsRoomAfterVideoConnect(this);}
-                else if(['declined','busy','no-answer','unavailable'].includes(state)){
-                    const states={declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'}};
-                    const result=states[state];await this.end(false);if(window.__alwahaCallTerminationRequested)return;updateCallUi('idle',{target,text:result.text,indicator:result.indicator});setCallModal(true);window.AlwahaCallFeedback?.play(result.tone);
-                }else if(state==='failed'){
-                    window.AlwahaCallFeedback?.stop();await this.end(false);if(window.__alwahaCallTerminationRequested)return;updateCallUi('idle',{target,text:'تعذر إتمام المكالمة.',indicator:'تحقق من الميكروفون والاتصال ثم حاول مجدداً.'});setCallModal(true);window.AlwahaCallFeedback?.play('failed');triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.','error');
-                }else if(state==='remote-ended'){
-                    window.AlwahaCallFeedback?.stop();await this.end(false);if(window.__alwahaCallTerminationRequested)return;updateCallUi('idle',{target,text:'أنهى الطرف الآخر المكالمة.',indicator:'انتهى الاتصال بين الجهازين.'});setCallModal(true);window.AlwahaCallFeedback?.play('ended');triggerToastNotification('أنهى الطرف الآخر المكالمة.','info');
+                if(state==='connected'){
+                    this.clearCallTimeout();
+                    window.AlwahaCallFeedback?.stop();
+                    window.AlwahaCallFeedback?.play('connected');
+                    updateCallUi('connected',{target,text:'تم الاتصال',indicator:'<i class="fa-solid fa-phone"></i> المكالمة متصلة'});
+                    startCallTimer();
+                    if(this.mediaType==='video')scheduleKidsRoomAfterVideoConnect(this);
+                    return;
+                }
+                const terminal={
+                    declined:{text:'رفض الطرف الآخر المكالمة.',indicator:'انتهى الطلب برفض الطرف الآخر.',tone:'declined'},
+                    busy:{text:'الطرف مشغول حالياً.',indicator:'يمكنك المحاولة مرة أخرى لاحقاً.',tone:'busy'},
+                    'no-answer':{text:'لم يتم الرد على المكالمة.',indicator:'انتهت مهلة انتظار الرد.',tone:'no-answer'},
+                    unavailable:{text:'المستخدم غير متاح حالياً.',indicator:'تعذر الوصول إلى جهاز الطرف الآخر.',tone:'unavailable'},
+                    'remote-ended':{text:'أنهى الطرف الآخر المكالمة.',indicator:'انتهى الاتصال بين الجهازين.',tone:'ended'},
+                    failed:{text:'تعذر إتمام المكالمة.',indicator:'تحقق من الميكروفون والاتصال ثم حاول مجدداً.',tone:'failed'}
+                }[state];
+                if(!terminal)return;
+                window.AlwahaCallFeedback?.stop();
+                const cleanup=this.end(false);
+                updateCallUi('idle',{target,text:terminal.text,indicator:terminal.indicator});
+                setCallModal(true);
+                window.AlwahaCallFeedback?.play(terminal.tone);
+                if(state==='failed')triggerToastNotification('تعذر إتمام المكالمة عبر WebRTC. تحقق من الميكروفون والاتصال.','error');
+                else if(state==='remote-ended')triggerToastNotification('أنهى الطرف الآخر المكالمة.','info');
+                void cleanup.catch(error=>console.warn('[Alwaha Call] Terminal cleanup failed:',error));
+            }
+            async runCleanup(task,label) {
+                const timeoutMs=Number(this.cleanupTimeoutMs)>0?Number(this.cleanupTimeoutMs):1200;
+                let timer=null;
+                try {
+                    const result=await Promise.race([
+                        Promise.resolve().then(task).then(()=>true),
+                        new Promise(resolve=>{timer=setTimeout(()=>resolve(false),timeoutMs);})
+                    ]);
+                    if(!result)console.warn('[Alwaha Call] Cleanup deadline reached:',label);
+                } catch(error) {
+                    console.warn('[Alwaha Call] Cleanup failed:',label,error);
+                } finally {
+                    if(timer!==null)clearTimeout(timer);
                 }
             }
             async end(notify = true, reason = 'ended') {
                 cancelPendingKidsRoomAfterConnect();
-                this.clearCallTimeout();window.AlwahaCallFeedback?.stop();stopAlwahaCallRingtone();
+                this.clearCallTimeout();
+                window.AlwahaCallFeedback?.stop();
+                stopAlwahaCallRingtone();
                 stopCallTimer();
-                if (typeof window.closeAlwahaKidsMode === 'function') { try { window.closeAlwahaKidsMode(); } catch (error) { console.warn('[Alwaha Kids] safe close failed:', error); } }
-                this.call?.endCall(notify,reason);
-                this.call = null;
-                this.pendingIncoming = null;
-                this.pendingRoomSignals = [];
-                this.pendingRoomSignalsToSend = [];
-                this.roomPeerReady = false;
-                this.mediaType = 'audio';
-                await resetAlwahaCallAudioRoute();
-                if (this.roomChannel && this.client) {
-                    try { await this.client.removeChannel(this.roomChannel); } catch (e) {}
+                if(typeof window.closeAlwahaKidsMode==='function'){
+                    try{window.closeAlwahaKidsMode();}catch(error){console.warn('[Alwaha Kids] safe close failed:',error);}
                 }
-                this.roomChannel = null;
-                this.roomId = null;
-                this.sessionId = null;
-                this.peerId = '';
-                this.conversationId = null;
-                this.mode = 'online';
+                const activeCall=this.call;
+                const roomChannel=this.roomChannel;
+                const client=this.client;
+                try{activeCall?.endCall(notify,reason);}catch(error){console.warn('[Alwaha Call] media teardown failed:',error);}
+                this.call=null;
+                this.pendingIncoming=null;
+                this.pendingRoomSignals=[];
+                this.pendingRoomSignalsToSend=[];
+                this.roomPeerReady=false;
+                this.mediaType='audio';
+                this.localOnly=false;
+                this.roomChannel=null;
+                this.roomId=null;
+                this.sessionId=null;
+                this.peerId='';
+                this.conversationId=null;
+                this.mode='online';
+                const cleanupTasks=[this.runCleanup(()=>resetAlwahaCallAudioRoute(),'audio route reset')];
+                if(roomChannel&&client)cleanupTasks.push(this.runCleanup(()=>client.removeChannel(roomChannel),'Realtime room removal'));
+                this.endCleanupPromise=Promise.all(cleanupTasks);
+                await this.endCleanupPromise;
             }
         }
 
@@ -6802,6 +6860,10 @@ function triggerAnimeAiConverterFilter() {
                 window.alwahaModalHistory.push(id);
                 try { history.pushState({alwahaModal:id}, '', location.href); } catch (e) {}
             }
+            if (id === 'sub-prof-login') {
+                const loginStatus=document.getElementById('profile-login-status');
+                if(loginStatus){loginStatus.textContent='';loginStatus.style.display='none';loginStatus.dataset.state='';}
+            }
             if (id === 'sub-prof-verify') {
                 const phone = document.getElementById('verification-phone-input');
                 if (phone && !phone.value) phone.value = localStorage.getItem('alwaha_profile_phone') || '';
@@ -7078,32 +7140,108 @@ function triggerAnimeAiConverterFilter() {
             }
         }
 
-        async function executeUserLoginAuth(){
-            if(profileAuthActionInFlight)return;
+        async function executeUserLoginAuth(event){
+            event?.preventDefault?.();
+            if(profileAuthActionInFlight)return false;
             profileAuthActionInFlight=true;
             const submitButton=document.getElementById('profile-login-submit');
-            if(submitButton){submitButton.disabled=true;submitButton.setAttribute('aria-busy','true');}
+            const loginStatus=document.getElementById('profile-login-status');
+            const passwordField=document.getElementById('login-password');
+            const originalButtonText=submitButton?.textContent||'دخول';
+            const showLoginStatus=(message,kind='info')=>{
+                if(loginStatus){
+                    loginStatus.textContent=String(message||'').slice(0,260);
+                    loginStatus.style.display='block';
+                    loginStatus.style.color=kind==='error'?'#ffb8c8':kind==='success'?'#8dffc5':'#b8d7e8';
+                    loginStatus.dataset.state=kind;
+                }
+                triggerToastNotification(message,kind);
+            };
+            if(loginStatus){loginStatus.textContent='';loginStatus.style.display='none';loginStatus.dataset.state='';}
+            if(submitButton){
+                submitButton.disabled=true;
+                submitButton.setAttribute('aria-busy','true');
+                submitButton.textContent='جارٍ التحقق من بيانات الدخول…';
+            }
             try {
-                if(!supabaseClient)return triggerToastNotification('خدمة المصادقة غير متاحة حاليًا.','error');
-                const rawLoginId=document.getElementById('login-id')?.value.trim()||'',loginId=rawLoginId.startsWith('@')?rawLoginId.slice(1).toLowerCase():rawLoginId,password=document.getElementById('login-password')?.value||'';
-                if(!loginId||!password)return triggerToastNotification('اكتب اسم المستخدم أو البريد الإلكتروني وكلمة المرور.','error');
+                if(!supabaseClient)return showLoginStatus('خدمة المصادقة غير متاحة حاليًا. تحقق من اتصال التطبيق ثم حاول مجددًا.','error'),false;
+                const rawLoginId=document.getElementById('login-id')?.value.trim()||'';
+                const loginId=rawLoginId.startsWith('@')?rawLoginId.slice(1).toLowerCase():rawLoginId;
+                const password=passwordField?.value||'';
+                if(!loginId||!password)return showLoginStatus('اكتب اسم المستخدم أو البريد الإلكتروني وكلمة المرور.','error'),false;
                 let data=null,error=null;
-                if(loginId.includes('@'))({data,error}=await supabaseClient.auth.signInWithPassword({email:loginId.toLowerCase(),password}));
-                else if(loginId.startsWith('+')||loginId.startsWith('00')){const phone=loginId.startsWith('00')?'+'+loginId.slice(2).replace(/[^0-9]/g,''):loginId.replace(/[^+0-9]/g,'');({data,error}=await supabaseClient.auth.signInWithPassword({phone,password}));if(error)return triggerToastNotification('دخول الهاتف متاح للحسابات القديمة المفعّلة عبر Phone Auth؛ جرّب اسم المستخدم.','error');}
-                else{const result=await supabaseClient.functions.invoke('username-auth',{body:{action:'login',username:loginId.toLowerCase(),password}});if(result.error||!result.data?.session)return triggerToastNotification(result.data?.error||'اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من نشر username-auth وتحديث قاعدة البيانات.','error');const sessionResult=await supabaseClient.auth.setSession({access_token:result.data.session.access_token,refresh_token:result.data.session.refresh_token});if(sessionResult.error)return triggerToastNotification('تعذر استعادة جلسة الدخول؛ حاول مرة أخرى.','error');data={user:result.data.user};}
-                if(error)return triggerToastNotification(formatAuthError(error),'error');
-                await hydrateAuthProfile(data?.user);syncUiWithLoadedProfileData();await Promise.all([initializeRealtimeCallInbox(),subscribeToNotifications(),subscribeToDirectMessages()]);
-                const passwordField=document.getElementById('login-password');if(passwordField)passwordField.value='';
-                triggerToastNotification('مرحبًا بعودتك إلى الواحة!','success');closeSubProfileView('sub-prof-login');
+                if(loginId.includes('@')){
+                    ({data,error}=await supabaseClient.auth.signInWithPassword({email:loginId.toLowerCase(),password}));
+                }else if(loginId.startsWith('+')||loginId.startsWith('00')){
+                    const phone=loginId.startsWith('00')?'+'+loginId.slice(2).replace(/[^0-9]/g,''):loginId.replace(/[^+0-9]/g,'');
+                    ({data,error}=await supabaseClient.auth.signInWithPassword({phone,password}));
+                    if(error)return showLoginStatus('دخول الهاتف متاح للحسابات القديمة المفعّلة عبر Phone Auth؛ جرّب اسم المستخدم أو البريد الإلكتروني.','error'),false;
+                }else{
+                    const result=await supabaseClient.functions.invoke('username-auth',{body:{action:'login',username:loginId.toLowerCase(),password}});
+                    if(result.error){
+                        let serverMessage=String(result.data?.error||'').trim();
+                        const status=Number(result.error?.status||result.error?.context?.status||0);
+                        if(!serverMessage){
+                            try{
+                                const response=result.error?.context;
+                                const readable=response?.clone?response.clone():response;
+                                const payload=await readable?.json?.();
+                                serverMessage=String(payload?.error||payload?.message||'').trim();
+                            }catch(_){}
+                        }
+                        if(status===429)return showLoginStatus('محاولات تسجيل الدخول كثيرة. انتظر قليلاً ثم حاول مرة أخرى.','error'),false;
+                        return showLoginStatus(serverMessage||'اسم المستخدم أو كلمة المرور غير صحيحة. تحقق من الاتصال ثم حاول مرة أخرى.','error'),false;
+                    }
+                    if(!result.data?.session?.access_token||!result.data?.session?.refresh_token){
+                        return showLoginStatus(result.data?.error||'لم تكتمل جلسة الحساب. حاول مرة أخرى.','error'),false;
+                    }
+                    const sessionResult=await supabaseClient.auth.setSession({
+                        access_token:result.data.session.access_token,
+                        refresh_token:result.data.session.refresh_token
+                    });
+                    if(sessionResult.error)return showLoginStatus(formatAuthError(sessionResult.error),'error'),false;
+                    data={user:result.data.user};
+                }
+                if(error)return showLoginStatus(formatAuthError(error),'error'),false;
+                if(!data?.user?.id)return showLoginStatus('لم تُرجع خدمة المصادقة بيانات الحساب. حاول مرة أخرى.','error'),false;
+
+                if(passwordField)passwordField.value='';
+                if(loginStatus){
+                    loginStatus.textContent='تم تسجيل الدخول. يجري تحميل بيانات الحساب…';
+                    loginStatus.style.display='block';
+                    loginStatus.style.color='#8dffc5';
+                    loginStatus.dataset.state='success';
+                }
+                closeSubProfileView('sub-prof-login');
+                triggerToastNotification('مرحبًا بعودتك إلى الواحة!','success');
+
+                // Authentication is complete. Profile hydration and Realtime subscriptions
+                // must not keep the login button locked or block the user interface.
+                void Promise.resolve().then(()=>hydrateAuthProfile(data.user))
+                    .then(()=>syncUiWithLoadedProfileData())
+                    .catch(error=>console.warn('[Alwaha Auth] Profile hydration after login failed:',error));
+                void Promise.allSettled([
+                    initializeRealtimeCallInbox(),
+                    subscribeToNotifications(),
+                    subscribeToDirectMessages()
+                ]).then(results=>{
+                    for(const result of results)if(result.status==='rejected')console.warn('[Alwaha Auth] Post-login subscription failed:',result.reason);
+                });
+                return true;
             } catch(error) {
                 console.warn('[Alwaha Auth] Login failed:',error);
-                triggerToastNotification('تعذر تسجيل الدخول الآن. تحقق من الاتصال ثم حاول مرة أخرى.','error');
+                const message=formatAuthError(error)||'تعذر تسجيل الدخول الآن. تحقق من الاتصال ثم حاول مرة أخرى.';
+                showLoginStatus(message,'error');
+                return false;
             } finally {
                 profileAuthActionInFlight=false;
-                if(submitButton){submitButton.disabled=false;submitButton.removeAttribute('aria-busy');}
+                if(submitButton){
+                    submitButton.disabled=false;
+                    submitButton.removeAttribute('aria-busy');
+                    submitButton.textContent=originalButtonText||'دخول';
+                }
             }
         }
-
         async function handleVerificationAvatarPick() {
             const user = await requireAuthenticatedUser('سجل الدخول أولاً لرفع الصورة الشخصية.');
             if (!user) return;

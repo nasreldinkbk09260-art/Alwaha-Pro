@@ -323,6 +323,9 @@ jobs:
       - name: Run profile registration, login, and privacy acceptance audit
         run: npm run audit:profile
 
+      - name: Run login responsiveness and inline error regression
+        run: npm run audit:auth-login
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 

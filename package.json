@@ -14,7 +14,7 @@
     "audit:field-repair": "node scripts/field-repair-audit.mjs",
     "audit:chat": "node scripts/chat-release-audit.mjs && node scripts/chat-media-offline-audit.mjs",
     "audit:compatibility": "node scripts/compatibility-audit.mjs",
-    "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs && node scripts/call-feedback-runtime-test.mjs && node scripts/call-signaling-runtime-test.mjs",
+    "audit:native-call-ui": "node scripts/native-call-ui-audit.mjs && node scripts/call-feedback-runtime-test.mjs && node scripts/call-signaling-runtime-test.mjs && node scripts/call-feedback-runtime-test.mjs",
     "audit:adaptive-video-quality": "node scripts/adaptive-video-quality-runtime-test.mjs",
     "audit:ui": "node scripts/ui-handler-audit.mjs",
     "audit:retention-kids-vault": "node scripts/retention-kids-vault-audit.mjs",
@@ -39,7 +39,8 @@
     "audit:public-content-rls": "node scripts/public-content-anon-policy-audit.mjs",
     "audit:marketplace-delivery": "node scripts/marketplace-delivery-audit.mjs",
     "audit:notification-tones": "node scripts/notification-tone-audit.mjs",
-    "audit:reels": "node scripts/reels-metrics-acceptance.mjs"
+    "audit:reels": "node scripts/reels-metrics-acceptance.mjs",
+    "audit:auth-login": "node scripts/auth-login-runtime-test.mjs"
   },
   "engines": {
     "node": ">=22"
