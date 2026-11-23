@@ -1,5 +1,5 @@
 // Profile editor and registration layout update 2026-11-17.
-const CACHE_NAME = 'alwaha-pro-v3.0.4-user-requests-20261120-audio-reels-v4';
+const CACHE_NAME = 'alwaha-pro-v3.0.4-beta-updater-20261123-v1';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,8 @@ const PRECACHE_ASSETS = [
   './alwaha-runtime-guard.js',
   './alwaha-kids-room.js',
   './alwaha-smart-assistant.js',
+  './alwaha-update-checker.js',
+  './alwaha-update-checker.js?v=3.0.4-beta-update-checker-20261123',
   './alwaha-theme-system.css',
   './production-polish.js?v=3.0.4-ringtone-default-saffron-20261120',
   './alwaha-profile-editor.js?v=3.0.4-dev',

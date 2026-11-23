@@ -40,7 +40,8 @@
     "audit:marketplace-delivery": "node scripts/marketplace-delivery-audit.mjs",
     "audit:notification-tones": "node scripts/notification-tone-audit.mjs",
     "audit:reels": "node scripts/reels-metrics-acceptance.mjs",
-    "audit:auth-login": "node scripts/auth-login-runtime-test.mjs"
+    "audit:auth-login": "node scripts/auth-login-runtime-test.mjs",
+    "audit:update": "node scripts/update-checker-audit.mjs"
   },
   "engines": {
     "node": ">=22"

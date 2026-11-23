@@ -3,6 +3,9 @@ import path from 'node:path';
 const fail = (message) => { console.error('FAIL:', message); process.exitCode = 1; };
 const read = (file) => { const full=path.join(process.cwd(),file); if(!fs.existsSync(full)){fail(`Missing required file: ${file}`);return '';} return fs.readFileSync(full,'utf8'); };
 const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('package.json')||'{}'), cap=JSON.parse(read('capacitor.config.json')||'{}'), lock=JSON.parse(read('package-lock.json')||'{}'), manifest=JSON.parse(read('manifest.json')||'{}');
+const updateChecker=read('alwaha-update-checker.mjs'), updateEntry=read('scripts/alwaha-update-checker-entry.mjs'), updateAudit=read('scripts/update-checker-audit.mjs');
+if(!html.includes('alwaha-update-checker.js?v=3.0.4-beta-update-checker-20261123')||!sw.includes("'./alwaha-update-checker.js'")||!updateEntry.includes("@capacitor/app")||!updateChecker.includes("releases?per_page=20")||!updateChecker.includes("Alwaha-Pro-Android.apk")||!updateChecker.includes("appStateChange")||!updateChecker.includes("window.open(downloadUrl")||!updateAudit.includes('UPDATE_CHECKER_AUDIT=PASS'))fail('Public beta update checker or regression audit is incomplete.');
+if(!pkg.scripts?.['audit:update'])fail('Update checker audit is not registered.');
 const officialSite=read('official-site/index.html');
 const versionedScript=(asset)=>{
   const marker='src="./'+asset+'?v=';

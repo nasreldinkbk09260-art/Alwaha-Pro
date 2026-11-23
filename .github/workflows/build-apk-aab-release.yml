@@ -326,6 +326,9 @@ jobs:
       - name: Run login responsiveness and inline error regression
         run: npm run audit:auth-login
 
+      - name: Validate in-app beta update checker
+        run: npm run audit:update
+
       - name: Run full-screen page and modal isolation audit
         run: npm run audit:fullscreen-ui
 
@@ -886,8 +889,8 @@ jobs:
 
 
   publish-release:
-    name: Publish verified public Android APK release
-    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
+    name: Publish verified public Android beta APK release
+    if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android
@@ -917,24 +920,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG="v$APP_VERSION"
+          TAG="v$APP_VERSION-beta.$GITHUB_RUN_NUMBER"
           APK="release-artifact/Alwaha-Pro-Android.apk"
           CHECKSUM="release-artifact/Alwaha-Pro-Android.apk.sha256"
           CERTIFICATE="release-artifact/APK-SIGNING-CERTIFICATE.txt"
           test -s "$CERTIFICATE"
-          NOTES="Alwaha-Pro $APP_VERSION Android release (Build #$GITHUB_RUN_NUMBER).
+          NOTES="Alwaha-Pro $APP_VERSION Android PUBLIC BETA (Build #$GITHUB_RUN_NUMBER).
 
           Source commit: $GITHUB_SHA
           Workflow run: $GITHUB_RUN_ID
 
-          This APK was built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums. The public certificate fingerprint is attached for Android developer/package verification.
+          This is a public beta APK built from main after all configured SQL, security, compatibility, performance and release checks passed. CI verified the Android APK signature and artifact SHA-256 checksums. The public certificate fingerprint is attached for Android developer/package verification.
 
           The AAB is reserved for store distribution and is not attached as a direct-install APK."
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --title "Alwaha-Pro $APP_VERSION Beta $GITHUB_RUN_NUMBER" --notes "$NOTES" --prerelease
           else
-            gh release create "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION" --notes "$NOTES" --latest
+            gh release create "$TAG" "$APK" "$CHECKSUM" "$CERTIFICATE" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Alwaha-Pro $APP_VERSION Beta $GITHUB_RUN_NUMBER" --notes "$NOTES" --prerelease
           fi
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk'
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx 'Alwaha-Pro-Android.apk.sha256'
@@ -942,7 +945,7 @@ jobs:
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.4 website
-    if: github.ref == 'refs/heads/main' && vars.ALWAHA_PUBLIC_RELEASE_ENABLED == 'true'
+    if: github.ref == 'refs/heads/main'
     needs:
       - sql-regression
       - build-android
