@@ -998,11 +998,8 @@ jobs:
       - name: Upload verified website
         uses: actions/upload-pages-artifact@v4
         with:
-          name: github-pages-attempt-${{ github.run_attempt }}
           path: dist/
 
       - name: Publish website
         id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          artifact_name: github-pages-attempt-${{ github.run_attempt }}
