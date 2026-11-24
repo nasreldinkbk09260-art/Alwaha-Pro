@@ -34,6 +34,7 @@ check('publish retains draft on failed upload or row creation',html.includes('ب
 check('publish clears text and image only after successful insert',/if\(textEl\)textEl\.value='';[\s\S]{0,350}pendingHomePostFile=null/.test(html));
 
 check('feed request has deadline and a single-flight guard',html.includes("alwahaUiDeadline(supabaseFetch('posts?select=*&order=created_at.desc&limit=100'), 9500, null)")&&html.includes('window.__alwahaHomeFeedInFlight'));
+check('rendered home feed hydrates each post comment count after cards mount',(()=>{const start=html.indexOf('async function renderHomePostsFeedInternal');const end=html.indexOf('async function renderHomePostsFeed()',start);const body=start>=0&&end>start?html.slice(start,end):'';const renderAt=body.indexOf("}).join('');"),hydrateAt=body.indexOf('void loadHomePostCommentCounts(container, requestId);');return renderAt>=0&&hydrateAt>renderAt;})());
 check('home comment totals use the aggregate count view with a bounded public-only offline fallback',
   html.includes("supabaseFetch('post_comment_counts?select=post_id,comments_count')")&&
   html.includes('isPublicPostCommentCounts')&&

@@ -151,9 +151,11 @@ check('nav drag has a lightweight comic follower with falling/recovered hat or s
 check('persisted nav position/order/hidden/stack controls exist', experience.includes('POSITION_KEY') &&
   experience.includes('ORDER_KEY') && experience.includes('HIDDEN_KEY') && experience.includes('alwaha-nav-stack'));
 
-// Development validation is intentionally open to new branch names; public publishing remains main-only.
-check('APK/AAB validation runs on every development branch without a branch allowlist',
-  workflow.includes("  push:\n    branches:\n      - '**'"));
+// The three permanent roles are the only branches that participate in CI.
+const pushBlock=workflow.slice(workflow.indexOf('  push:'),workflow.indexOf('  workflow_dispatch:'));
+const watchedBranches=pushBlock.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('- ')).map(line=>line.slice(2).trim());
+check('CI watches exactly the three permanent branches',
+  watchedBranches.length===3 && ['main','release','work'].every(name=>watchedBranches.includes(name)));
 check('public website publication is gated to main',
   workflow.includes("if: github.ref == 'refs/heads/main'") &&
   workflow.includes('name: Publish Alwaha-Pro 3.0.4 website'));
