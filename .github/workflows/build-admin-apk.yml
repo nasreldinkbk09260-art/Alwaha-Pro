@@ -102,7 +102,7 @@ jobs:
           mkdir -p release
           cp android/app/build/outputs/apk/release/app-release.apk release/Alwaha-Admin-1.0.0.apk
           cp android/app/build/outputs/bundle/release/app-release.aab release/Alwaha-Admin-1.0.0.aab
-          sha256sum release/* > release/SHA256SUMS.txt
+          (cd release && sha256sum Alwaha-Admin-1.0.0.apk Alwaha-Admin-1.0.0.aab > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: Alwaha-Admin-1.0.0-${{ github.run_number }}
