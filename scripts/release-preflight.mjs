@@ -6,6 +6,8 @@ const html=read('index.html'), games=read('games.js'), pkg=JSON.parse(read('pack
 const updateChecker=read('alwaha-update-checker.mjs'), updateEntry=read('scripts/alwaha-update-checker-entry.mjs'), updateAudit=read('scripts/update-checker-audit.mjs');
 if(!html.includes('alwaha-update-checker.js?v=3.0.4-beta-update-checker-20261123')||!read('sw.js').includes("'./alwaha-update-checker.js'")||!updateEntry.includes("@capacitor/app")||!updateChecker.includes("releases?per_page=20")||!updateChecker.includes("Alwaha-Pro-Android.apk")||!updateChecker.includes("appStateChange")||!updateChecker.includes("window.open(url")||!updateAudit.includes('UPDATE_CHECKER_AUDIT=PASS'))fail('Public beta update checker or regression audit is incomplete.');
 if(!pkg.scripts?.['audit:update'])fail('Update checker audit is not registered.');
+const pagesWorkflow=read('.github/workflows/build-apk-aab-release.yml');
+if(!pagesWorkflow.includes('uses: actions/upload-pages-artifact@v4')||!pagesWorkflow.includes('uses: actions/deploy-pages@v4')||pagesWorkflow.includes('github-pages-attempt-')||pagesWorkflow.includes('artifact_name:'))fail('GitHub Pages must use the canonical default artifact name and deploy input.');
 const officialSite=read('official-site/index.html');
 const versionedScript=(asset)=>{
   const marker='src="./'+asset+'?v=';
