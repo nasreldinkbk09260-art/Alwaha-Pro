@@ -49,3 +49,11 @@ Edge Function `admin-api`: ACTIVE، version 9، `verify_jwt=true`.
 
 ## migrations
 تاريخ migrations الإدارة الأصلية موجود في سجل Supabase. ملف `admin-app/supabase/migrations/20261102130000_admin_action_logs_source_recovery.sql` ترحيل استعادة مصدر لبيئة جديدة وليس نسخة تاريخية من migrations الأصلية؛ لا يعاد تطبيقه على الإنتاج الحالي.
+
+## دورة النشر العامة — 25 نوفمبر 2026
+- المصدر التشغيلي موحد على الفروع `main` و`release` و`work` فقط؛ التوزيع العام محصور في `main`.
+- آخر حزمة قبول سبقت الترقية العامة: Admin Build #36 على commit `cfdfe5cbfd612ee6fb93f25f6be8e25622e7fa8d`، ونجح فيها فحص Deno وبناء APK/AAB والتحقق من التوقيع وهوية `pro.alwaha.admin`.
+- يتم نشر APK وAAB لوحة الإدارة وإرفاق بصمات SHA-256 في إصدار تجريبي منفصل اسمه `admin-v1.0.0-beta.<build>` بعد نجاح بناء `main` فقط.
+- صفحة الإصدارات العامة: https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases
+- تنزيل اللوحة لا يمنح صلاحيات إدارية. كل عملية تبقى محكومة بجلسة مصادق عليها وبفحص `users.is_admin` في الخادم. لا يوضع رابط لوحة الإدارة في الموقع العام.
+- لا تتضمن اللوحة حالياً مساعد AI خارجي أو إدارة موظفين متعددة الأدوار أو حذف/حظر حسابات عامة؛ لا تعرض هذه الوظائف كأنها منفذة.
