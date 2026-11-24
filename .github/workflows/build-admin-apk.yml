@@ -1,12 +1,11 @@
 name: Alwaha Admin • Independent Android APK/AAB
-# Permanent lifecycle: main/release/work. The fourth branch is allowed only for isolated QA builds.
+# Permanent lifecycle: exactly main/release/work. No fourth build branch.
 on:
   push:
     branches:
       - main
       - release
       - work
-      - alwaha-pro-clean-rebuild-20261122
     paths:
       - 'admin-app/**'
       - 'supabase/functions/admin-api/**'
