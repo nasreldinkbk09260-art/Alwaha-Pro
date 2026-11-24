@@ -6,7 +6,9 @@ name: Alwaha-Pro • APK/AAB CI + main-only website publish
 on:
   push:
     branches:
-      - '**'
+      - main
+      - release
+      - work
   workflow_dispatch:
 
 permissions:
