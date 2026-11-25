@@ -9,6 +9,8 @@ on:
       - main
       - release
       - work
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch:
 
 permissions:
@@ -25,6 +27,43 @@ env:
   APP_ID: 'pro.alwaha.app'
 
 jobs:
+  detect-release-changes:
+    name: Detect whether public artifacts need publishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      publish: ${{ steps.detect.outputs.publish }}
+    steps:
+      - name: Checkout complete history for push comparison
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect publishable source changes
+        id: detect
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" != "push" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ ! "$BEFORE_SHA" =~ ^[0-9a-f]{40}$ ]] || [[ ! "$CURRENT_SHA" =~ ^[0-9a-f]{40}$ ]] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t changed_files < <(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
+          if (("${#changed_files[@]}" == 0)); then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif printf '%s\n' "${changed_files[@]}" | grep -Eqv '(^docs/|(^|/)[^/]+\.md$|^\.github/workflows/.*\.ya?ml$)'; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
   sql-regression:
     name: Validate marketplace SQL on disposable PostgreSQL
     runs-on: ubuntu-latest
@@ -892,8 +931,9 @@ jobs:
 
   publish-release:
     name: Publish verified public Android beta APK release
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.detect-release-changes.outputs.publish == 'true'
     needs:
+      - detect-release-changes
       - sql-regression
       - build-android
     runs-on: ubuntu-latest
@@ -947,8 +987,9 @@ jobs:
 
   publish-web:
     name: Publish Alwaha-Pro 3.0.4 website
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.detect-release-changes.outputs.publish == 'true'
     needs:
+      - detect-release-changes
       - sql-regression
       - build-android
       - publish-release
