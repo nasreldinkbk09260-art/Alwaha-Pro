@@ -1288,7 +1288,7 @@ img,video,canvas{max-width:100%}
     <div id="comments-modal-box" class="comments-modal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:15px;">
             <h3 style="color:#00ffff; margin:0; font-size:15px;"><i class="fa-solid fa-comments"></i> التعليقات</h3>
-            <button class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeCommentsModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="btn-action" style="background:transparent; color:#fff; font-size:16px;" onclick="closeCommentsModal()" aria-label="إغلاق نافذة التعليقات" title="إغلاق نافذة التعليقات"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div id="comments-list-container" style="height: calc(100vh - 160px); overflow-y: auto; margin-bottom:15px;"></div>
         <div style="display:flex; gap:8px;">
