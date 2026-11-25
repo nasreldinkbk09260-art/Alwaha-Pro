@@ -39,7 +39,7 @@ const buttons=[...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button\s*>/gi)].map((
         while(/\s/.test(open[i]||''))i++;
         if(open[i++]!=='='){at=lower.indexOf(needle,at+needle.length);continue;}
         while(/\s/.test(open[i]||''))i++;
-        const quote=open[i++];if(quote!=='\"'&&quote!==\"'\")return '';
+        const quote=open[i++];if(quote!==String.fromCharCode(34)&&quote!==String.fromCharCode(39))return '';
         const end=open.indexOf(quote,i);return end<0?'':open.slice(i,end);
       }
       at=lower.indexOf(needle,at+needle.length);
