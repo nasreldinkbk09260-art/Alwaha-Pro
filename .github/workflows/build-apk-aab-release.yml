@@ -58,7 +58,7 @@ jobs:
           mapfile -t changed_files < <(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
           if (("${#changed_files[@]}" == 0)); then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-          elif printf '%s\n' "${changed_files[@]}" | grep -Eqv '(^docs/|(^|/)[^/]+\.md$|^\.github/workflows/.*\.ya?ml$|^scripts/(release-preflight|performance-audit|reconciliation-audit|call-controls-runtime-test|smart-assistant-runtime-test)\.mjs$)'; then
+          elif printf '%s\n' "${changed_files[@]}" | grep -Eqv '(^docs/|(^|/)[^/]+\.md$|^\.github/workflows/.*\.ya?ml$|^scripts/(release-preflight|performance-audit|reconciliation-audit|call-controls-runtime-test|smart-assistant-runtime-test|button-route-inventory-audit)\.mjs$)'; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -363,6 +363,8 @@ jobs:
 
       - name: Run UI handler audit
         run: npm run audit:ui
+      - name: Audit complete static button-to-handler routing
+        run: node scripts/button-route-inventory-audit.mjs
 
       - name: Run profile registration, login, and privacy acceptance audit
         run: npm run audit:profile
