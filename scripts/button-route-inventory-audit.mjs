@@ -29,7 +29,7 @@ const ignored=new Set([
 ]);
 const buttons=[...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button\s*>/gi)].map((m,index)=>{
   const full=m[0],open=full.match(/^<button\b[^>]*>/i)?.[0]||'';
-  const attr=(name)=>open.match(new RegExp('\\b'+name+'\\s*=\\s*["\\']([^"\\']*)["\\']','i'))?.[1]||'';
+  const attr=(name)=>{const match=open.match(new RegExp("\\\\b"+name+"\\\\s*=\\\\s*(?:\\\"([^\\\"]*)\\\"|'([^']*)')","i"));return match?.[1]??match?.[2]??'';};
   const onclick=attr('onclick'),type=attr('type')||'button';
   const label=attr('aria-label')||attr('title')||full
     .replace(/<script[\s\S]*?<\/script>/gi,' ')
