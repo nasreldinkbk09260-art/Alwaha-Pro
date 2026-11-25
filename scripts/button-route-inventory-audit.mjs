@@ -65,7 +65,7 @@ for(const b of buttons){
   if(b.onclick){
     inlineCount++;
     const calls=[...b.onclick.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]).filter(name=>!ignored.has(name));
-    const forwardsToFileInput=/document\\.getElementById\\([^)]+\\)\\.click\\(\\)/.test(b.onclick);
+    const forwardsToFileInput=b.onclick.includes('document.getElementById(')&&b.onclick.includes(').click()');
     need(calls.length>0||forwardsToFileInput,'Button #'+b.index+' at line '+b.line+' has an onclick but no recognized action or file-input route.');
     for(const name of calls)need(definitions.has(name),'Button #'+b.index+' at line '+b.line+' calls undefined handler '+name+'.');
     continue;
