@@ -343,6 +343,9 @@ jobs:
       - name: Run native call and field UI audit
         run: npm run audit:native-call-ui
 
+      - name: Exercise call-control button routing
+        run: node scripts/call-controls-runtime-test.mjs
+
       - name: Run adaptive video quality runtime audit
         run: npm run audit:adaptive-video-quality
 
