@@ -7,7 +7,11 @@ const updateChecker=read('alwaha-update-checker.mjs'), updateEntry=read('scripts
 if(!html.includes('alwaha-update-checker.js?v=3.0.4-beta-update-checker-20261123')||!read('sw.js').includes("'./alwaha-update-checker.js'")||!updateEntry.includes("@capacitor/app")||!updateChecker.includes("releases?per_page=20")||!updateChecker.includes("Alwaha-Pro-Android.apk")||!updateChecker.includes("appStateChange")||!updateChecker.includes("window.open(url")||!updateAudit.includes('UPDATE_CHECKER_AUDIT=PASS'))fail('Public beta update checker or regression audit is incomplete.');
 if(!pkg.scripts?.['audit:update'])fail('Update checker audit is not registered.');
 const pagesWorkflow=read('.github/workflows/build-apk-aab-release.yml');
-if(!pagesWorkflow.includes('uses: actions/upload-pages-artifact@v4')||!pagesWorkflow.includes('uses: actions/deploy-pages@v4')||pagesWorkflow.includes('github-pages-attempt-')||pagesWorkflow.includes('artifact_name:'))fail('GitHub Pages must use the canonical default artifact name and deploy input.');
+const uniquePagesArtifact = 'github-pages-${{ github.run_id }}-${{ github.run_attempt }}';
+if(!pagesWorkflow.includes('uses: actions/upload-pages-artifact@v4')||
+   !pagesWorkflow.includes('uses: actions/deploy-pages@v4')||
+   !pagesWorkflow.includes('name: '+uniquePagesArtifact)||
+   !pagesWorkflow.includes('artifact_name: '+uniquePagesArtifact))fail('GitHub Pages artifact must be unique per workflow attempt and the deploy job must consume that exact artifact name.');
 const officialSite=read('official-site/index.html');
 const versionedScript=(asset)=>{
   const marker='src="./'+asset+'?v=';
@@ -278,8 +282,10 @@ if(!postCommentCountMigration.includes('security_invoker = true')||!postCommentC
 if(!localNetworkPlugin.includes('requestBluetoothEnable')||!localNetworkPlugin.includes('BluetoothAdapter.ACTION_REQUEST_ENABLE')||!localNetworkPlugin.includes('openWifiPanel')||!localNetworkPlugin.includes('Settings.Panel.ACTION_WIFI')||!html.includes('data-enable-bt')||!html.includes('data-enable-wifi'))fail('The one-tap bridge setup must expose user-approved Android Bluetooth and Wi-Fi activation controls.');
 if(!fs.existsSync('scripts/android/AlwahaAudioRoutePlugin.java'))fail('native audio route plugin is missing.');
 const triggerBlock=workflow.slice(workflow.indexOf('  push:'),workflow.indexOf('  workflow_dispatch:'));
-const watchedBranches=triggerBlock.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('- ')).map(line=>line.slice(2).trim());
-if(watchedBranches.length!==3||!['main','release','work'].every(branch=>watchedBranches.includes(branch))||!workflow.includes("if: github.ref == 'refs/heads/main'")||workflow.includes('ALWAHA_PUBLIC_RELEASE_ENABLED')||!workflow.includes('--prerelease')||!workflow.includes('TAG="v$APP_VERSION-beta.$GITHUB_RUN_NUMBER"'))fail('CI must watch exactly main/release/work while public beta publication remains main-only.');
+const branchList=triggerBlock.slice(triggerBlock.indexOf('branches:'),triggerBlock.indexOf('paths-ignore:')>=0?triggerBlock.indexOf('paths-ignore:'):triggerBlock.length);
+const watchedBranches=branchList.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('- ')).map(line=>line.slice(2).trim());
+const mainOnlyPublishCount=(workflow.match(/^\s*if:\s*github\.ref == 'refs\/heads\/main' && needs\.detect-release-changes\.outputs\.publish == 'true'\s*$/gm)||[]).length;
+if(watchedBranches.length!==3||!['main','release','work'].every(branch=>watchedBranches.includes(branch))||mainOnlyPublishCount!==2||workflow.includes('ALWAHA_PUBLIC_RELEASE_ENABLED')||!workflow.includes('--prerelease')||!workflow.includes('TAG="v$APP_VERSION-beta.$GITHUB_RUN_NUMBER"'))fail('CI must watch exactly main/release/work while public beta publication remains main-only and source-change gated.');
 
 if(!read('scripts/ci-validate-supabase-sql.sh').includes('20261121042759_alwaha_mesh_public_keys.sql')||!read('scripts/ci-validate-supabase-sql.sh').includes('supabase/tests/20261121042759_alwaha_mesh_public_keys.sql'))fail('Alwaha Mesh public-key directory migration and regression are not included in disposable PostgreSQL CI.');
 const supportTicketIndexMigration=read('supabase/migrations/20261118050000_support_tickets_assigned_to_index.sql');
