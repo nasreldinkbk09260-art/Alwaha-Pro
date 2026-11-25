@@ -62,12 +62,13 @@ if (workflow.includes("Alwaha-Pro-3.0.4.apk") &&
 else fail("workflow APK/AAB output names mismatch");
 
 const pushBranchBlock = workflow.slice(workflow.indexOf("  push:"), workflow.indexOf("  workflow_dispatch:"));
-const watchedBranches = pushBranchBlock.split("\n").map(line => line.trim()).filter(line => line.startsWith("- ")).map(line => line.slice(2).trim());
+const branchListBlock = pushBranchBlock.slice(pushBranchBlock.indexOf("branches:"), pushBranchBlock.indexOf("paths-ignore:") >= 0 ? pushBranchBlock.indexOf("paths-ignore:") : pushBranchBlock.length);
+const watchedBranches = branchListBlock.split("\n").map(line => line.trim()).filter(line => line.startsWith("- ")).map(line => line.slice(2).trim());
 const exactlyThreeBranches = watchedBranches.length === 3 && ["main","release","work"].every(branch => watchedBranches.includes(branch));
-const publicReleaseJobs = workflow.split("\n").filter(line => line.trim() === "if: github.ref == 'refs/heads/main'");
-if (exactlyThreeBranches && publicReleaseJobs.length >= 2 && !workflow.includes('ALWAHA_PUBLIC_RELEASE_ENABLED') && workflow.includes('--prerelease'))
-  pass("only main/release/work receive validation while public beta publication remains main-only and prerelease-scoped");
-else fail("CI must watch exactly main/release/work; beta publishing must remain main-only and prerelease-scoped");
+const publicReleaseJobs = workflow.match(/^\s*if:\s*github\.ref == 'refs\/heads\/main' && needs\.detect-release-changes\.outputs\.publish == 'true'\s*$/gm) || [];
+if (exactlyThreeBranches && publicReleaseJobs.length === 2 && !workflow.includes('ALWAHA_PUBLIC_RELEASE_ENABLED') && workflow.includes('--prerelease'))
+  pass("only main/release/work receive validation while public beta publication remains main-only, change-gated and prerelease-scoped");
+else fail("CI must watch exactly main/release/work; beta publishing must remain main-only, source-change-gated and prerelease-scoped");
 
 if (workflow.includes("npm run audit:performance"))
   pass("workflow invokes performance audit");

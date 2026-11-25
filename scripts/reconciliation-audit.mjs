@@ -153,11 +153,12 @@ check('persisted nav position/order/hidden/stack controls exist', experience.inc
 
 // The three permanent roles are the only branches that participate in CI.
 const pushBlock=workflow.slice(workflow.indexOf('  push:'),workflow.indexOf('  workflow_dispatch:'));
-const watchedBranches=pushBlock.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('- ')).map(line=>line.slice(2).trim());
+const branchListBlock=pushBlock.slice(pushBlock.indexOf('branches:'),pushBlock.indexOf('paths-ignore:')>=0?pushBlock.indexOf('paths-ignore:'):pushBlock.length);
+const watchedBranches=branchListBlock.split('\n').map(line=>line.trim()).filter(line=>line.startsWith('- ')).map(line=>line.slice(2).trim());
 check('CI watches exactly the three permanent branches',
   watchedBranches.length===3 && ['main','release','work'].every(name=>watchedBranches.includes(name)));
-check('public website publication is gated to main',
-  workflow.includes("if: github.ref == 'refs/heads/main'") &&
+check('public website and APK publication are gated to main and source changes',
+  (workflow.match(/^\s*if:\s*github\.ref == 'refs\/heads\/main' && needs\.detect-release-changes\.outputs\.publish == 'true'\s*$/gm)||[]).length===2 &&
   workflow.includes('name: Publish Alwaha-Pro 3.0.4 website'));
 check('obsolete 3.0.0 web-build workflow is retired',
   !fs.existsSync('.github/workflows/pages-web-300.yml'));
