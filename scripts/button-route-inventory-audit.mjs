@@ -29,7 +29,23 @@ const ignored=new Set([
 ]);
 const buttons=[...html.matchAll(/<button\b[^>]*>[\s\S]*?<\/button\s*>/gi)].map((m,index)=>{
   const full=m[0],open=full.match(/^<button\b[^>]*>/i)?.[0]||'';
-  const attr=(name)=>{const match=open.match(new RegExp("\\\\b"+name+"\\\\s*=\\\\s*(?:\\\"([^\\\"]*)\\\"|'([^']*)')","i"));return match?.[1]??match?.[2]??'';};
+  const attr=(name)=>{
+    const lower=open.toLowerCase(),needle=name.toLowerCase();
+    let at=lower.indexOf(needle);
+    while(at>=0){
+      const before=at===0?' ':open[at-1],after=open[at+needle.length]||' ';
+      if(!/[a-z0-9_:-]/i.test(before)&&!/[a-z0-9_:-]/i.test(after)){
+        let i=at+needle.length;
+        while(/\s/.test(open[i]||''))i++;
+        if(open[i++]!=='='){at=lower.indexOf(needle,at+needle.length);continue;}
+        while(/\s/.test(open[i]||''))i++;
+        const quote=open[i++];if(quote!=='\"'&&quote!==\"'\")return '';
+        const end=open.indexOf(quote,i);return end<0?'':open.slice(i,end);
+      }
+      at=lower.indexOf(needle,at+needle.length);
+    }
+    return '';
+  };
   const onclick=attr('onclick'),type=attr('type')||'button';
   const label=attr('aria-label')||attr('title')||full
     .replace(/<script[\s\S]*?<\/script>/gi,' ')
