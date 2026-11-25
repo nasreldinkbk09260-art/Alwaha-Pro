@@ -103,7 +103,8 @@ async function friendRequestResponse(){
   assert.deepEqual(JSON.parse(c.__calls[0].options.body),{status:'accepted'});
   assert.equal(related.removed,true,'the processed friend request row is removed immediately');
   assert.equal(unrelated.removed,false,'an unrelated friend request row stays visible');
-  assert.deepEqual(readIds,['ci-note-request-1'],'only the corresponding request notification is marked read');
+  assert.equal(readIds?.length,1,'exactly one related notification is marked read');
+  assert.equal(readIds?.[0],'ci-note-request-1','only the corresponding request notification is marked read');
   assert.equal(backgroundRefreshes,1,'the user list refresh is kicked off without being awaited');
   assert.equal(modalSyncs,1,'modal state is synchronized after the row is removed');
   assert.equal(c.__toasts.at(-1).kind,'success');
