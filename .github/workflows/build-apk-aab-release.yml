@@ -58,7 +58,7 @@ jobs:
           mapfile -t changed_files < <(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
           if (("${#changed_files[@]}" == 0)); then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-          elif printf '%s\n' "${changed_files[@]}" | grep -Eqv '(^docs/|(^|/)[^/]+\.md$|^\.github/workflows/.*\.ya?ml$|^scripts/(release-preflight|performance-audit|reconciliation-audit)\.mjs$)'; then
+          elif printf '%s\n' "${changed_files[@]}" | grep -Eqv '(^docs/|(^|/)[^/]+\.md$|^\.github/workflows/.*\.ya?ml$|^scripts/(release-preflight|performance-audit|reconciliation-audit|call-controls-runtime-test|smart-assistant-runtime-test)\.mjs$)'; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "publish=false" >> "$GITHUB_OUTPUT"
