@@ -28,6 +28,7 @@ if(typeof choose==='function'){
 check('assistant source does not call network APIs or Supabase',!source.includes('fetch(')&&!source.includes('SUPABASE')&&!source.includes('functions.invoke'));
 check('assistant explicitly operates from local UI state and device connectivity',source.includes('navigator.onLine')&&source.includes('home-post-textarea')&&source.includes('notification-badge-home'));
 
+const routedComposer={scrollIntoView(){routedTrace.push('draft-composer-scroll');}};
 const routedNodes={
   'alwaha-smart-assistant':{dataset:{},querySelector(){return routedTitle;}},
   'alwaha-smart-assistant-message':{textContent:''},
