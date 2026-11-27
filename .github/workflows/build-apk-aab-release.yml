@@ -1013,6 +1013,30 @@ jobs:
       - name: Checkout verified release source
         uses: actions/checkout@v7.0.1
 
+      - name: Pin public website downloads to this exact verified beta
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="v${APP_VERSION}-beta.${GITHUB_RUN_NUMBER}"
+          python3 - "$TAG" <<'PY'
+          import pathlib, sys
+          tag = sys.argv[1]
+          path = pathlib.Path("official-site/index.html")
+          content = path.read_text(encoding="utf-8")
+          base = "https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/"
+          content = content.replace(base + "latest/download/", base + "download/" + tag + "/")
+          if "releases/latest/download/" in content:
+              raise SystemExit("Official website still contains an unstable latest-download URL")
+          required = ["Alwaha-Pro-Android.apk", "Alwaha-Pro-Android.apk.sha256", "APK-SIGNING-CERTIFICATE.txt"]
+          for asset in required:
+              if base + "download/" + tag + "/" + asset not in content:
+                  raise SystemExit("Missing exact-beta download link: " + asset)
+          path.write_text(content, encoding="utf-8")
+          print("Pinned official website assets to", tag)
+          PY
+
       - name: Setup Node.js
         uses: actions/setup-node@v7.1.0
         with:
@@ -1039,6 +1063,14 @@ jobs:
           test -s dist/alwaha-theme-system.css
           grep -Fq '<title>Alwaha-Pro 3.0.4</title>' dist/index.html
           grep -Fq '<title>Alwaha-Pro | الموقع الرسمي</title>' dist/official/index.html
+          RELEASE_TAG="v${APP_VERSION}-beta.${GITHUB_RUN_NUMBER}"
+          grep -Fq "releases/download/${RELEASE_TAG}/Alwaha-Pro-Android.apk" dist/official/index.html
+          grep -Fq "releases/download/${RELEASE_TAG}/Alwaha-Pro-Android.apk.sha256" dist/official/index.html
+          grep -Fq "releases/download/${RELEASE_TAG}/APK-SIGNING-CERTIFICATE.txt" dist/official/index.html
+          if grep -Fq 'releases/latest/download/' dist/official/index.html; then
+            echo 'Unstable latest-download URL remains in the published site.' >&2
+            exit 1
+          fi
           node -e "const m=require('./dist/manifest.json'); if(m.version!=='3.0.4') process.exit(1)"
           echo 'Alwaha-Pro 3.0.4 website output verified.'
 
