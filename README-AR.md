@@ -5,8 +5,8 @@
 ## روابط المستخدمين
 - **التطبيق عبر المتصفح:** https://nasreldinkbk09260-art.github.io/Alwaha-Pro/
 - **الموقع الرسمي ودليل الاستخدام:** https://nasreldinkbk09260-art.github.io/Alwaha-Pro/official/
-- **تنزيل APK لأجهزة Android:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-Android.apk
-- **بصمة APK SHA-256:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/latest/download/Alwaha-Pro-Android.apk.sha256
+- **تنزيل APK لأجهزة Android:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/tag/v3.0.4-beta.1387
+- **بصمة APK SHA-256:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases/tag/v3.0.4-beta.1387.sha256
 - **الإصدارات الرسمية:** https://github.com/nasreldinkbk09260-art/Alwaha-Pro/releases
 
 إنشاء الحساب يتطلب الاسم واسم المستخدم وكلمة المرور وتأكيدها؛ البريد الإلكتروني والهاتف اختياريان. عند إضافة بريد حقيقي يجب تأكيده لاستخدامه في تسجيل الدخول والاستعادة. إذا تُرك البريد فارغًا، يمكن تسجيل الدخول باسم المستخدم وكلمة المرور، لكن لا تتاح استعادة كلمة المرور بالبريد عند نسيانها. الصورة واسم العائلة وبقية تفاصيل الملف اختيارية، ويمكن للمستخدم استكمالها أو تعديلها بعد التسجيل من زر «تعديل بياناتي».
